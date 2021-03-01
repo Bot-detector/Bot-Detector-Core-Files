@@ -4,6 +4,8 @@ The server and processing files for the Bot Detector Plugin
 --BEHOLD PRETTY CHARTS TO LURE YOU IN--
 
 (n = 6445) [Attack, Runecrafting, Strength][x, y, z]
+
+
 ![image](https://user-images.githubusercontent.com/5789682/109563187-707b6d00-7aad-11eb-9303-941bb29b7ceb.png)
 ![image](https://user-images.githubusercontent.com/5789682/109563206-74a78a80-7aad-11eb-86a2-54c61a5c3c01.png)
 ![image](https://user-images.githubusercontent.com/5789682/109563212-76714e00-7aad-11eb-9ace-5db5d3aaa38b.png)
