@@ -18,6 +18,7 @@ See what reviewers are saying about the plugin!
 ![image](https://user-images.githubusercontent.com/5789682/109558724-c77e4380-7aa7-11eb-9b2a-2ef36b232958.png)
 
 FAQ:
+
 Q: "Why do you need my IP?"
 A: I don't, and it's not stored anywhere. But we live in the year 2021 and computers have to talk to eachother so unfortunately your IP comes along for the ride with the Data.
 
