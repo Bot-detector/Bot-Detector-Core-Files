@@ -52,3 +52,7 @@ A: If I could have access to the OSRS database for Hiscores - this would take fa
 Q: "So, how do you detect who is a bot?"
 
 A: Well, we could use a variety of different methods - the one that I chose was to group every player together that has similar stats, and if that group gets banned more frequently than other groups then it's probably likely that the rest of the group is pretty bot-like or suspicious. This could also include gold-farmers, RWTers, etc. Any group with a high ban rate is suspicious and would be reported to Tipoff@Jagex.com
+
+Q: "Your code looks like trash"
+
+A: I'm a medical student that's doing this as a hobby, I'm learning as I go :(
