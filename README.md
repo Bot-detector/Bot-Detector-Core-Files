@@ -10,3 +10,7 @@ Workflow:
 3. Names are then scanned through the Hiscores and their stats are pulled. (https://github.com/Ferrariic/Python-Bot-Detector/blob/main/HiscoreNamePuller/HiscoreNamePuller.py)
 4. Players are then categorized and evaluated. (https://github.com/Ferrariic/Python-Bot-Detector/blob/main/Main/V100_Main.py)
 5. Players that meet criteria for being bot-like or suspicious are reported to tipoff@jagex.com
+
+See what reviewers are saying about the plugin!
+
+[Review 1](https://i.imgur.com/DfeeumQ.png)
