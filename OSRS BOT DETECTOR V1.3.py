@@ -1,11 +1,29 @@
-#!/usr/bin/env python
-# coding: utf-8
+# BSD 2-Clause License
 
-# In[8]:
+# Copyright (c) 2021, Ferrariic
+#All rights reserved.
 
+# Redistribution and use in source and binary forms, with or without
+#modification, are permitted provided that the following conditions are met:
 
-#Author RSN: Ferrariic - 2/8/2021
-#%matplotlib notebook
+# 1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 import pickle
 import time
 import datetime
@@ -458,11 +476,6 @@ for name,scores in PLAYERDATA:
     for skills in scores[79:80]:
         PLAYER_ZULRAH.append(skills[1])
         PLAYER_IND.append(skills[1])        
-        
-    
-        
-#PLAYER_ALL = [PLAYER_TOTAL, PLAYER_ATTACK, PLAYER_DEFENCE, PLAYER_STRENGTH, PLAYER_HITPOINTS, PLAYER_RANGED, PLAYER_PRAYER, PLAYER_MAGIC, PLAYER_COOKING, PLAYER_WOODCUTTING, PLAYER_FLETCHING, PLAYER_FISHING, PLAYER_FIREMAKING, PLAYER_CRAFTING, PLAYER_SMITHING, PLAYER_MINING, PLAYER_HERBLORE, PLAYER_AGILITY, PLAYER_THIEVING, PLAYER_SLAYER, PLAYER_FARMING, PLAYER_RUNECRAFT, PLAYER_HUNTER, PLAYER_CONSTRUCTION]
-#PLAYER_ALL = np.array(PLAYER_ALL)
 
 PLAYER_TRUE = PLAYER_IND
 PLAYER_IND = np.reshape(PLAYER_IND,(78,ENTRIES))
