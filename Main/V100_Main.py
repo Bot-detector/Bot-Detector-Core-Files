@@ -773,7 +773,7 @@ y_test = y_km[sep:]
 
 ######################################################################################################
 
-x_train = tf.keras.utils.normalize(x_train, axis=1) #Normalizing data, test and training
+x_train = tf.keras.utils.normalize(x_train, axis=1) #Normalizing data, test and training (This is a test NN it isn't what we'll be using)
 x_test = tf.keras.utils.normalize(x_test, axis=1)
 
 model = tf.keras.models.Sequential()
