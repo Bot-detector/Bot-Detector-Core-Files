@@ -13,4 +13,4 @@ Workflow:
 
 See what reviewers are saying about the plugin!
 
-[Review 1](https://i.imgur.com/DfeeumQ.png)
+![Review 1](https://i.imgur.com/DfeeumQ.png)
