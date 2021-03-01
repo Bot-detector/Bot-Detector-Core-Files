@@ -43,11 +43,14 @@ def post():
                 SERVERDATARAW.write(dataclean)
             SERVERDATARAW.close()
             SERVERDATARAW = open("TempINPUT.txt", "rt")
-            with open("PLAYERGATHERDATA.txt", "a") as SERVERDATA:
-                for line in SERVERDATARAW: 
-                    if line not in line_seen:
-                        SERVERDATA.write(line)
-                        line_seen.add(line)   
+            with open("PLAYERGATHERDATA1.txt", "a") as SERVERDATA:
+                for line in SERVERDATARAW:
+                    if len(line)<13:
+                        L = re.findall('[a-zA-Z0-9_-] *', line)
+                        line = ''.join(map(str, L))
+                        if line not in line_seen:
+                            SERVERDATA.write(line + '\n')
+                            line_seen.add(line)   
             return 'FINISHED'
             
 if __name__ == '__main__':
