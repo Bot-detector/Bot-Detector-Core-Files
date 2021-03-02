@@ -20,12 +20,6 @@ Workflow:
 4. Players are then categorized and evaluated. (https://github.com/Ferrariic/Python-Bot-Detector/blob/main/Main/V100_Main.py)
 5. Players that meet criteria for being bot-like or suspicious are reported to tipoff@jagex.com
 
-See what reviewers are saying about the plugin!
-
-![Review 1](https://i.imgur.com/DfeeumQ.png)
-![image](https://user-images.githubusercontent.com/5789682/109558682-b9c8be00-7aa7-11eb-9b19-996d2c91b273.png)
-![image](https://user-images.githubusercontent.com/5789682/109558724-c77e4380-7aa7-11eb-9b2a-2ef36b232958.png)
-
 FAQ:
 
 Q: "Why do you need my IP?"
