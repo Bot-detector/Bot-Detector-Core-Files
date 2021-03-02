@@ -1,4 +1,4 @@
-# [WORK IN PROGRESS] Python-Bot-Detector
+# [WORK IN PROGRESS] Bot Detector
 The server and processing files for the Bot Detector Plugin
 
 --BEHOLD PRETTY CHARTS TO LURE YOU IN--
