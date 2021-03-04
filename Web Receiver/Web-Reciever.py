@@ -58,7 +58,7 @@ def block_method(r = 0):
     ip_timelog[r][1] = time.time()
     
     if check == 1:
-        if response < 3:
+        if response < 250:
             if ip in ip_ban_list:
                 abort(403)
             else:
