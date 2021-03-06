@@ -31,13 +31,41 @@ from flask import Flask
 from flask import request
 import re
 import time
+import pickle
+import numpy as np
+import pandas as pd
+import time
+import os
+import requests
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import normalize
+from sklearn.preprocessing import scale
 
 line_seen = set()
 response = 0
+check = 0
 ip_timelog = []
 ip_ban_list = []
-check = 0
+ip_whitelist = [('127.0.0.1')]
 ipr = []
+PLAYER_NAME = []
+returned_data = []
+newplayername = []
+newplayerskills = []
+DATAarray = []
+userfixed = ""
+
+MAIN = "http://services.runescape.com/m=hiscore_oldschool/index_lite.ws?player="
+
+osrsknn = pickle.load(open("OSRS_KNN_V1","rb"))
+y_km = pickle.load(open("ykmfile","rb"))
+PLAYER_TRAIN = pickle.load(open("traindata","rb"))
+player_name = pickle.load(open("pnamefile","rb"))
+
+for name in player_name:
+    PLAYER_NAME.append(name.replace('\n',''))
+    
+##################################################################################################
 
 app = Flask(__name__)
 
@@ -58,40 +86,113 @@ def block_method(r = 0):
     ip_timelog[r][1] = time.time()
     
     if check == 1:
-        if response < 250:
-            if ip in ip_ban_list:
-                abort(403)
-            else:
-                ip_ban_list.append(ip)
-                abort(403)
+        if response < 1:
+            if ip not in ip_whitelist:
+                if ip in ip_ban_list:
+                    abort(403)
+                else:
+                    ip_ban_list.append(ip)
+                    abort(403)
         else:
-            if ip in ip_ban_list:
-                abort(403)
+            if ip not in ip_whitelist:
+                if ip in ip_ban_list:
+                    abort(403)
     print("Response Time: ", response)
     print("Timelog: ", ip_timelog)
     print("IP REC: ", ipr)
     print("Banlist: ", ip_ban_list)
+    print("Whitelist: ", ip_whitelist)
+    return 
 
 @app.route('/', methods =['POST'])
 def post():
-        if request.method == 'POST':
-            print(request.data)
-            datastr = str(request.data)
-            dataclean = datastr[1:].replace('\\r', '').strip("'[]").replace(', ','\n')
-            with open("TempINPUT.txt", "wt") as SERVERDATARAW:
-                SERVERDATARAW.write(dataclean)
-            SERVERDATARAW.close()
-            SERVERDATARAW = open("TempINPUT.txt", "rt")
-            with open("PLAYERGATHERDATA2.txt", "a") as SERVERDATA:
-                for line in SERVERDATARAW:
-                    if len(line)<13:
-                        L = re.findall('[a-zA-Z0-9_-] *', line)
-                        line = ''.join(map(str, L))
-                        if line not in line_seen:
-                            SERVERDATA.write(line + '\n')
-                            line_seen.add(line)
-            
-            return 'FINISHED'
-            
+    if request.method == 'POST':
+        print(request.data)
+        datastr = str(request.data)
+        dataclean = datastr[1:].replace('\\r', '').strip("'[]").replace(', ','\n')
+        with open("TempINPUT.txt", "wt") as SERVERDATARAW:
+            SERVERDATARAW.write(dataclean)
+        SERVERDATARAW.close()
+        SERVERDATARAW = open("TempINPUT.txt", "rt")
+        with open("PLAYERGATHERDATA2.txt", "a") as SERVERDATA:
+            for line in SERVERDATARAW:
+                if len(line)<13:
+                    L = re.findall('[a-zA-Z0-9_-] *', line)
+                    line = ''.join(map(str, L))
+                    if line not in line_seen:
+                        SERVERDATA.write(line + '\n')
+                        line_seen.add(line)
+    return 
+        
+@app.route('/user/<user>', methods =['GET'])
+def get(user):
+    userfixed = user.replace(' ','_')
+    print(userfixed)
+    if userfixed in PLAYER_NAME:
+        ind = PLAYER_NAME.index(userfixed)
+        osrsknn_predict = osrsknn.predict(PLAYER_TRAIN[ind].reshape(1,-1))
+        player_predprob = osrsknn.predict_proba(PLAYER_TRAIN[ind].reshape(1,-1))
+        print(osrsknn_predict)
+        print(player_predprob)
+        print(y_km[ind])
+        print(PLAYER_NAME[ind])
+    else:
+        try:
+            print("User not found. Currently evaluating user...")
+            pulldata(userfixed)
+        except: 
+            print("AN ERROR WAS ENCOUNTERED")
+    return 
+        
+def pulldata(userfixed):
+    url = MAIN+userfixed 
+    #print(url) 
+    response = requests.get(url) 
+    data = response.text 
+    try: 
+        if data.find('404 - Page not found') != -1:
+            print("PLAYER STATS UNREACHABLE.")
+        else:
+            r = str.split(data) 
+            DATAarray = [[float(n) for n in row.split(",")] for row in r]
+            print(DATAarray)
+            cleanup(DATAarray)
+    except: 
+        print("ERROR, try again later.")
+    return 
+#check for errors
+def cleanup(DATAarray):
+    PLAYER_IND = pickle.load(open("PIfile","rb"))
+
+    global newplayerskills
+    DATAcheck = np.asarray(DATAarray)
+    for x in range(0,len(DATAcheck)):
+        if (0<x<24):
+            newplayerskills = np.append(newplayerskills,DATAcheck[x][2])
+        if (24<x<80):
+            newplayerskills = np.append(newplayerskills,DATAcheck[x][1])
+
+    PLAYER_IND = np.reshape(PLAYER_IND,(78,12869))
+    PLAYER_IND = np.reshape(PLAYER_IND,(12869,78))
+    scaler = StandardScaler()
+    PLAYER_IND = scaler.fit_transform(PLAYER_IND)
+    print(newplayerskills)
+    newplayerskills = np.asarray(newplayerskills)
+    newplayerskills = scaler.transform(newplayerskills.reshape(1, -1))
+    
+    print("DATA CLEANED FOR USER")
+    osrsKNN(newplayerskills)
+    newplayerskills = []
+    return 
+
+def osrsKNN(newplayerskills):
+    print("SCANNING...")
+    osrsknn_predict = osrsknn.predict(newplayerskills.reshape(1, -1))
+    player_predprob = osrsknn.predict_proba(newplayerskills)
+    print("Group: "+str(osrsknn_predict))
+    print("Player Grouping Data: "+str(player_predprob))
+    print("PLAYER SUCCESSFULLY SCANNED")
+    return 
+
 if __name__ == '__main__':
     app.run(port="8000")
