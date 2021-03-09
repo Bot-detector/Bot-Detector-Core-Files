@@ -28,18 +28,13 @@
 
 from flask import request, abort, current_app as app
 from flask import Flask
-from flask import request
 import re
+import os
 import time
 import pickle
 import numpy as np
-import pandas as pd
-import time
-import os
 import requests
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import normalize
-from sklearn.preprocessing import scale
+from sklearn.preprocessing import Normalizer
 
 line_seen = set()
 response = 0
@@ -54,6 +49,11 @@ newplayername = []
 newplayerskills = []
 DATAarray = []
 userfixed = ""
+osrsknn_predict = -1
+
+tempnames = list()
+tempgroups = []
+tempind = 0
 
 MAIN = "http://services.runescape.com/m=hiscore_oldschool/index_lite.ws?player="
 
@@ -61,6 +61,11 @@ osrsknn = pickle.load(open("OSRS_KNN_V1","rb"))
 y_km = pickle.load(open("ykmfile","rb"))
 PLAYER_TRAIN = pickle.load(open("traindata","rb"))
 player_name = pickle.load(open("pnamefile","rb"))
+PLAYER_IND = pickle.load(open("PIfile","rb"))
+
+normal = Normalizer()
+PLAYER_IND = np.reshape(PLAYER_IND,(-1,78))
+PLAYER_IND = normal.fit_transform(PLAYER_IND)
 
 for name in player_name:
     PLAYER_NAME.append(name.replace('\n',''))
@@ -102,7 +107,6 @@ def block_method(r = 0):
     print("IP REC: ", ipr)
     print("Banlist: ", ip_ban_list)
     print("Whitelist: ", ip_whitelist)
-    return 
 
 @app.route('/', methods =['POST'])
 def post():
@@ -110,7 +114,7 @@ def post():
         print(request.data)
         datastr = str(request.data)
         dataclean = datastr[1:].replace('\\r', '').strip("'[]").replace(', ','\n')
-        with open("TempINPUT.txt", "wt") as SERVERDATARAW:
+        with open("INPUT.txt", "wt") as SERVERDATARAW:
             SERVERDATARAW.write(dataclean)
         SERVERDATARAW.close()
         SERVERDATARAW = open("TempINPUT.txt", "rt")
@@ -126,6 +130,7 @@ def post():
         
 @app.route('/user/<user>', methods =['GET'])
 def get(user):
+    global osrsknn_predict
     userfixed = user.replace(' ','_')
     print(userfixed)
     if userfixed in PLAYER_NAME:
@@ -136,34 +141,42 @@ def get(user):
         print(player_predprob)
         print(y_km[ind])
         print(PLAYER_NAME[ind])
+        return str(getResponse(osrsknn_predict)).strip('[]')
     else:
-        try:
-            print("User not found. Currently evaluating user...")
-            pulldata(userfixed)
-        except: 
-            print("AN ERROR WAS ENCOUNTERED")
+        if userfixed in tempnames:
+            tempind = tempnames.index(userfixed)
+            print("Name and Group taken from Storage.")
+            return str(tempgroups[tempind]).strip('[]')
+        else:
+            try:
+                print("User not found. Currently evaluating user...")
+                pulldata(userfixed)
+                return str(getResponse(osrsknn_predict)).strip('[]')
+            except: 
+                print("CODE ERROR")
     return 
         
 def pulldata(userfixed):
+    global osrsknn_predict
+    global tempnames
     url = MAIN+userfixed 
-    #print(url) 
     response = requests.get(url) 
     data = response.text 
     try: 
         if data.find('404 - Page not found') != -1:
-            print("PLAYER STATS UNREACHABLE.")
+            osrsknn_predict = -1
         else:
             r = str.split(data) 
             DATAarray = [[float(n) for n in row.split(",")] for row in r]
-            print(DATAarray)
             cleanup(DATAarray)
+            tempnames.append(userfixed)
+            print("Name list",tempnames)
     except: 
-        print("ERROR, try again later.")
-    return 
-#check for errors
-def cleanup(DATAarray):
-    PLAYER_IND = pickle.load(open("PIfile","rb"))
+        print("INTERNAL ERROR")
+    return
 
+def cleanup(DATAarray):
+    global normal
     global newplayerskills
     DATAcheck = np.asarray(DATAarray)
     for x in range(0,len(DATAcheck)):
@@ -172,27 +185,30 @@ def cleanup(DATAarray):
         if (24<x<80):
             newplayerskills = np.append(newplayerskills,DATAcheck[x][1])
 
-    PLAYER_IND = np.reshape(PLAYER_IND,(78,12869))
-    PLAYER_IND = np.reshape(PLAYER_IND,(12869,78))
-    scaler = StandardScaler()
-    PLAYER_IND = scaler.fit_transform(PLAYER_IND)
-    print(newplayerskills)
-    newplayerskills = np.asarray(newplayerskills)
-    newplayerskills = scaler.transform(newplayerskills.reshape(1, -1))
+    newplayerskills = np.asarray(newplayerskills.reshape(-1, 78))
+    newplayerskills = normal.transform(newplayerskills)
     
+    print(newplayerskills)
     print("DATA CLEANED FOR USER")
     osrsKNN(newplayerskills)
+    
     newplayerskills = []
     return 
 
 def osrsKNN(newplayerskills):
+    global osrsknn_predict
     print("SCANNING...")
     osrsknn_predict = osrsknn.predict(newplayerskills.reshape(1, -1))
     player_predprob = osrsknn.predict_proba(newplayerskills)
     print("Group: "+str(osrsknn_predict))
     print("Player Grouping Data: "+str(player_predprob))
     print("PLAYER SUCCESSFULLY SCANNED")
+    tempgroups.append(osrsknn_predict)
+    print(tempgroups)
     return 
+
+def getResponse(osrsknn_predict):
+    return osrsknn_predict
 
 if __name__ == '__main__':
     app.run(port="8000")
