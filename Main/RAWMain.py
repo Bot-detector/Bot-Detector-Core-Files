@@ -26,6 +26,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #######################################################################################
 
+# In[1]:
+
+#%matplotlib notebook
 import pickle
 import time
 import datetime
@@ -42,6 +45,11 @@ from sklearn.datasets import make_blobs
 from sklearn import datasets
 from sklearn import metrics
 from sklearn.preprocessing import scale
+from sklearn.preprocessing import Normalizer
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.cluster import MiniBatchKMeans
+from sklearn import metrics
 from scipy.spatial.distance import cdist
 import scipy.stats as stats
 from IPython.display import clear_output
@@ -50,24 +58,24 @@ import collections
 from yellowbrick.cluster import SilhouetteVisualizer
 from yellowbrick.cluster import InterclusterDistance
 from yellowbrick.datasets import load_nfl
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import normalize
 import tensorflow as tf
 
 
-PLAYERDATA_FILE1 = np.array(pickle.load(open("PLAYER_DATA_PICKLE3.pickle", "rb")), dtype=object) #file 1 name (new file)
+#PLAYERDATA_FILE1 = np.array(pickle.load(open("PLAYER_DATA_PICKLE4.pickle", "rb")), dtype=object) #file 1 name (new file)
 PLAYERDATA_FILE2 = np.array(pickle.load(open("PLAYERSHISCORES.pickle", "rb")), dtype=object) #file 2 name (old file)
 
-ENTRIES_FILE1 = 0
+#ENTRIES_FILE1 = 0
 ENTRIES_FILE2 = 0
 
-print("FILE1: ",ENTRIES_FILE1, "SHAPE:",np.shape(PLAYERDATA_FILE1))
+#print("FILE1: ",ENTRIES_FILE1, "SHAPE:",np.shape(PLAYERDATA_FILE1))
 print("FILE2: ",ENTRIES_FILE2,"SHAPE:",np.shape(PLAYERDATA_FILE2))
 
-PLAYERDATA = np.concatenate((PLAYERDATA_FILE1, PLAYERDATA_FILE2)) 
+#PLAYERDATA = np.concatenate((PLAYERDATA_FILE1, PLAYERDATA_FILE2)) 
+
+PLAYERDATA = PLAYERDATA_FILE2
 ENTRIES = PLAYERDATA.shape[0]
 
-with open("PLAYER_DATA_PICKLE4.pickle", "wb") as PLAYER_DATA_PICKLE: #STORES DATA AS .PICKLE (Use N+1 to avoid overwrite)
+with open("PLAYER_DATA_PICKLE5.pickle", "wb") as PLAYER_DATA_PICKLE: #STORES DATA AS .PICKLE (Use N+1 to avoid overwrite)
     pickle.dump(PLAYERDATA, PLAYER_DATA_PICKLE)
 
 print("NUMBER OF ENTRIES: ",ENTRIES)
@@ -478,23 +486,34 @@ for name,scores in PLAYERDATA:
     for skills in scores[79:80]:
         PLAYER_ZULRAH.append(skills[1])
         PLAYER_IND.append(skills[1])        
+        
+#######################################################################################    
 
 PLAYER_TRUE = PLAYER_IND
-PLAYER_IND = np.reshape(PLAYER_IND,(78,ENTRIES))
+
+PIfile = "PIfile"
+pickle.dump(PLAYER_IND,open(PIfile,"wb"))
 
 print(PLAYER_IND[0])
 print(PLAYER_NAME[0])
 
 MAX_VAL = np.amax(PLAYER_IND)
 MIN_VAL = np.amin(PLAYER_IND)
+
+
 print("Premax value:",MAX_VAL)
 print("Premin value:",MIN_VAL)
+print("Post shape: ",np.shape(PLAYER_IND))
 
-PLAYER_IND = normalize(PLAYER_IND, axis=1, norm='l1')
-PLAYER_IND = StandardScaler().fit_transform(PLAYER_IND)
-#PLAYER_IND = (PLAYER_IND-(MIN_VAL))/(MAX_VAL)
-PLAYER_IND = np.reshape(PLAYER_IND,(ENTRIES,78))
 
+PLAYER_IND = np.reshape(PLAYER_IND,(-1,78)) #take this below scaler to fix everything lol
+print("Final shape: ",np.shape(PLAYER_IND))
+########################################### DATA SCALE AND NORMALIZE [ENTRIES/78]
+
+transformer = Normalizer(norm ='l2')
+PLAYER_IND = transformer.fit_transform(PLAYER_IND)
+
+########################################### 
 MAX_VAL = np.amax(PLAYER_IND)
 MIN_VAL = np.amin(PLAYER_IND)
 print("Postmax value:",MAX_VAL)
@@ -506,15 +525,14 @@ print(PLAYER_NAME[0])
 print(np.shape(PLAYERDATA))
 
 
-# In[9]:
+# In[2]:
 
 
-n_clusters = 110
-kmeans = KMeans(n_clusters, init='k-means++', n_init=100, max_iter=3000, tol=0.0001) #KMEANS SCAN ATTEMPT
+n_clusters = 300
+kmeans = KMeans(n_clusters, init='k-means++') #KMEANS SCAN ATTEMPT
 kmeans.fit(PLAYER_IND)
 clusters = kmeans.cluster_centers_
 y_km = kmeans.fit_predict(PLAYER_IND)
-#score = silhouette_score(PLAYER_IND,kmeans.labels_,metric='euclidean')
 
 score = sklearn.metrics.silhouette_score(PLAYER_IND, kmeans.labels_, metric='euclidean')
 metascore = sklearn.metrics.silhouette_samples(PLAYER_IND, kmeans.labels_, metric='euclidean')
@@ -533,7 +551,7 @@ print("Max Metascore Value:"+str(MAX_metascore))
 print("Min Metascore Value:"+str(MIN_metascore))
 
 
-# In[10]:
+# In[3]:
 
 
 my_array = np.array(PLAYER_IND)
@@ -622,13 +640,13 @@ print(PLAYER_IND_df)
 print(type(PLAYER_IND_df))
 
 
-# In[11]:
+# In[4]:
 
 
-#sns.pairplot(data=PLAYER_IND_df, kind='reg')
+#sns.pairplot(data=PLAYER_IND_df,y_vars="SMITHING", kind='kde')
 
 
-# In[12]:
+# In[5]:
 
 
 ##########################################################################################################
@@ -759,58 +777,57 @@ PLAYER_TEXT_FILE.close()
 print("FINISHED")
 
 
-# In[13]:
+# In[6]:
 
 
-TRAIN_TEST_PERCENTAGE = 0.80
-sep = int(len(PLAYER_IND)*TRAIN_TEST_PERCENTAGE)
+np.shape(PLAYER_IND) #features
+np.shape(y_km) #labels
 
-x_train = PLAYER_IND[:sep]
-y_train = y_km
+XX_train, XX_test, yy_train, yy_test = train_test_split(PLAYER_IND, y_km, test_size=0.1)
 
-x_test = PLAYER_IND[sep:]
-y_test = y_km[sep:]
+knn = KNeighborsClassifier(n_neighbors=5, weights='distance', algorithm='brute')
+knn.fit(XX_train,yy_train)
+yy_pred = knn.predict(XX_test)
 
-######################################################################################################
+print("Accuracy:",metrics.accuracy_score(yy_test, yy_pred))
 
-x_train = tf.keras.utils.normalize(x_train, axis=1) #Normalizing data, test and training (This is a test NN it isn't what we'll be using)
-x_test = tf.keras.utils.normalize(x_test, axis=1)
+############## PLAYER LOOKUP #################
 
-model = tf.keras.models.Sequential()
-model.add(tf.keras.layers.Flatten()) #input layer
-model.add(tf.keras.layers.Dense(256, activation=tf.nn.relu)) #hidden layer 128 neurons, activation function relu
-model.add(tf.keras.layers.Dense(256, activation=tf.nn.relu)) #hidden layer 128 neurons, activation function relu
-model.add(tf.keras.layers.Dense(256, activation=tf.nn.relu)) #hidden layer 128 neurons, activation function relu
-model.add(tf.keras.layers.Dense(n_clusters, activation=tf.nn.softmax)) #output layer
+name = "Ferrariic"
+namemod = name+"\n"
 
-model.compile(optimizer='adam', 
-              loss='sparse_categorical_crossentropy',
-             metrics=['accuracy']) 
-        
-model.fit(x_train, y_train,validation_split = 0.1, epochs = 50)
+ind = PLAYER_NAME.index(namemod)
 
+player_predict = knn.predict(PLAYER_IND[ind].reshape(1,-1))
+player_predprob = knn.predict_proba(PLAYER_IND[ind].reshape(1,-1))
+print("Predicted group: ", player_predict)
+print(player_predprob)
+print(PLAYER_IND[ind].reshape(1,-1))
+print(y_km[ind])
+print(PLAYER_NAME[ind])
+print(ind)
 
-# In[14]:
+knnfile = "OSRS_KNN_V1"
+ykmfile = "ykmfile"
+traindata = "traindata"
+pnamefile = "pnamefile"
 
-
-model.save('OSRS-PLAYERSORT.model')
-new_model = tf.keras.models.load_model('OSRS-PLAYERSORT.model')
-predictions = new_model.predict(x_test)
-
-i = 0
-tally = 0
-failtally = 0
-for i in range(0,len(predictions)):
-    if(y_km[i] == np.argmax(predictions[i])):
-        tally += 1
-    else:
-        failtally += 1
-
-print("PASS: "+str(tally)+"| FAIL: "+str(failtally))
-print("MODEL PERCENT ACCURACY: "+"{:.2f}".format(tally/(tally+failtally)))
+pickle.dump(knn,open(knnfile,"wb"))
+pickle.dump(y_km,open(ykmfile,"wb"))
+pickle.dump(PLAYER_IND,open(traindata,"wb"))
+pickle.dump(PLAYER_NAME,open(pnamefile,"wb"))
 
 
-# In[15]:
+# In[7]:
+
+
+osrsknn = pickle.load(open("OSRS_KNN_V1","rb")) #LOAD PROGRAM
+osrsknn_predict = osrsknn.predict(PLAYER_IND[2].reshape(1,-1))
+print(osrsknn_predict)
+print(y_km[2])
+
+
+# In[8]:
 
 
 color = ['red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow','red','purple','green','blue','orange','pink','yellow']
@@ -898,8 +915,8 @@ Skilldict = {
 "ZULRAH":77
 }
 
-xaxis = 0
-yaxis = 20
+xaxis = 11
+yaxis = 75
 zaxis = 2
 
 for i in range(0,n_clusters):
@@ -921,4 +938,7 @@ ax.set_zlabel(str(zaxis))
 p = sns.jointplot(data=PLAYER_IND,x=PLAYER_IND[:,xaxis], y=PLAYER_IND[:,yaxis], kind='reg', space=0, height=5, ratio=4)
 p.plot_marginals(sns.rugplot, color="r", height=-0.15, clip_on= False)
 p.plot_joint(sns.kdeplot, color="r", zorder=5, levels=10)
+
+
+# In[ ]:
 
