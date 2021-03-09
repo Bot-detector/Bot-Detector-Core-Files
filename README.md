@@ -1,5 +1,5 @@
 # [WORK IN PROGRESS] Bot Detector
-The server and processing files for the Bot Detector Plugin
+The server and files for the Bot Detector Plugin.
 
 --BEHOLD PRETTY CHARTS TO LURE YOU IN--
 
