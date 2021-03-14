@@ -15,9 +15,9 @@ jobs:
     steps:
       - name: Docker
         run: |
-          sudo docker stop bot_detector
+          docker stop bot_detector
           pip3 install waitress
-          sudo docker-compose --verbose down
-          sudo docker-compose --verbose build --no-cache
-          sudo docker-compose --verbose up -d
+          docker-compose --verbose down
+          docker-compose --verbose build --no-cache
+          docker-compose --verbose up -d
           
