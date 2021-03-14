@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Docker
         run: |
-          sudo docker stop osrs_api
+          sudo docker stop bot_detector
           pip3 install waitress
           sudo docker-compose --verbose down
           sudo docker-compose --verbose build --no-cache

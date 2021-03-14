@@ -72,3 +72,23 @@ A: Well, we could use a variety of different methods - the one that I chose was 
 Q: "Your code looks like trash"
 
 A: I'm a medical student that's doing this as a hobby, I'm learning as I go :(
+
+
+
+## setup
+```
+python -m venv venv
+venv\Scripts\activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+# for admin purposes saving & upgrading
+
+```
+venv\Scripts\activate
+call pip freeze > requirements.txt
+powershell "(Get-Content requirements.txt) | ForEach-Object { $_ -replace '==', '>=' } | Set-Content requirements.txt"
+call pip install -r requirements.txt --upgrade
+call pip freeze > requirements.txt
+powershell "(Get-Content requirements.txt) | ForEach-Object { $_ -replace '>=', '==' } | Set-Content requirements.txt"
+```
