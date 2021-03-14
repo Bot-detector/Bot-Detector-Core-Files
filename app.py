@@ -10,7 +10,7 @@ def page_not_found(e):
 
 @app.route("/")
 def hello():
-   data = {'welcome': 'ban ban ban em all'}
+   data = {'welcome': 'test'}
    return jsonify(data)
 
 if __name__ == '__main__':
