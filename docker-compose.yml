@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  bot_detector:
+  osrs_api:
     container_name: bot_detector
     build: ./
     volumes:
