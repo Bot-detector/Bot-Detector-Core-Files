@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  osrs_api:
+    container_name: osrs_api
+    build: ./
+    volumes:
+    - ./:/usr/src/app
+    ports:
+    - 5000:5000

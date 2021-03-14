@@ -1,0 +1,23 @@
+name: Deployment workflow
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  checkout:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+
+  deploy:
+    runs-on: self-hosted
+    needs: [checkout]
+    steps:
+      - name: Docker
+        run: |
+          sudo docker stop osrs_api
+          pip3 install waitress
+          sudo docker-compose --verbose down
+          sudo docker-compose --verbose build --no-cache
+          sudo docker-compose --verbose up -d
+          
