@@ -1,5 +1,9 @@
-# [WORK IN PROGRESS] Bot Detector
-The server and files for the Bot Detector Plugin.
+# Bot Detector
+The core files for the Bot Detector Plugin.
+
+Workflow:
+
+![image](https://user-images.githubusercontent.com/5789682/111058485-ecd26080-845c-11eb-9a76-20c70745c6ba.png)
 
 --BEHOLD PRETTY CHARTS TO LURE YOU IN--
 
