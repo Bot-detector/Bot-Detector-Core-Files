@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Docker
         run: |
-          printf "${{ secrets.DB_URI }}" > ~/.env
+          echo "${{ secrets.DB_URI }}" > .env
           docker stop bot_detector
           pip3 install waitress
           docker-compose --verbose down
