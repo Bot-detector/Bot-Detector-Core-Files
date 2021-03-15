@@ -6,7 +6,7 @@ import datetime as dt
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import concurrent.futures as cf
-
+from SQL import insert_highscore, insert_player, update_player
 
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
@@ -261,7 +261,7 @@ def get_data(player_name):
 
 
 def mytasks(player_name):
-    from Functions.SQL import insert_highscore, insert_player, update_player
+    
     player = insert_player(player_name=player_name)
     data = get_data(player_name)
 

@@ -1,6 +1,6 @@
 
 
-from Functions.Config import db
+from Config import db
 from sqlalchemy import text
 from collections import namedtuple
 import time, random, string

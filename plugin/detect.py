@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from flask.json import jsonify
-from Functions.SQL import insert_report
+from SQL import insert_report
 import concurrent.futures as cf
 
 detect = Blueprint('detect', __name__, template_folder='templates')

@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from flask.json import jsonify
-from Functions.SQL import get_token, get_player, update_player, get_highscores_data
+from SQL import get_token, get_player, update_player, get_highscores_data
 import pandas as pd
 import json
 app_token = Blueprint('app_token', __name__, template_folder='templates')

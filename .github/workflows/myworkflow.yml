@@ -20,5 +20,5 @@ jobs:
           pip3 install waitress
           docker-compose --verbose down
           docker-compose --verbose build --no-cache
-          docker-compose --verbose up
+          docker-compose --verbose up -d
           

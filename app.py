@@ -2,9 +2,10 @@ from flask import jsonify
 from waitress import serve
 import requests
 # custom
-from .plugin.detect.detect import detect
-from .site.protected.tokens import app_token
-from .Functions.Config import app
+
+from mysite.tokens import app_token
+from plugin.detect import detect
+from Config import app
 
 app.register_blueprint(detect)
 app.register_blueprint(app_token)
