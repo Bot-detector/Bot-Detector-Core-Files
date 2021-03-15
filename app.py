@@ -1,11 +1,13 @@
-from flask import Flask, jsonify
+from flask import jsonify
 from waitress import serve
 import requests
 # custom
-from plugin.detect.detect import detect
-from Functions.Config import app
+from .plugin.detect.detect import detect
+from .site.protected.tokens import app_token
+from .Functions.Config import app
 
 app.register_blueprint(detect)
+app.register_blueprint(app_token)
 
 
 @app.errorhandler(404)

@@ -8,7 +8,6 @@ from requests.packages.urllib3.util.retry import Retry
 import concurrent.futures as cf
 
 
-
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",
@@ -222,8 +221,7 @@ def make_web_call(URL, user_agent_list, debug=True):
     # Make the request
     response = http.get(URL, headers=headers)
     if response.status_code == 404:
-        #TODO: player is banned
-        # TODO: if this is first time run, player is to low level
+        # if 404 player does not exist
         return None
     else:
         response.raise_for_status()
@@ -263,20 +261,21 @@ def get_data(player_name):
 
 
 def mytasks(player_name):
-    from Functions.SQL import insert_highscore, insert_player
-    data = get_data(player_name)
-    if data is None:
-        return None, None
+    from Functions.SQL import insert_highscore, insert_player, update_player
     player = insert_player(player_name=player_name)
+    data = get_data(player_name)
+
+    if data is None:
+        update_player(player.id, possible_ban=1, confirmed_ban=0)
+        return None, None
+
     skills, minigames = parse_highscores(data)
     insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
     return skills, minigames
 
 
-def main(player_names):
+def lookup_highscores(player_names):
     tasks = []
-    # TODO: for player_name in player_names:
-
     for player_name in player_names:
         tasks.append(([player_name]))
 
@@ -288,4 +287,4 @@ def main(player_names):
 
 if __name__ == '__main__':
     player_names = ['extreme4all', 'ferrariic']
-    main(player_names)
+    lookup_highscores(player_names)

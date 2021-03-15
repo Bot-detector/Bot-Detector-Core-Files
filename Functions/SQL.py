@@ -3,6 +3,7 @@
 from Functions.Config import db
 from sqlalchemy import text
 from collections import namedtuple
+import time, random, string
 
 
 def execute_sql(sql, param=None, debug=False, has_return=True):
@@ -79,3 +80,42 @@ def insert_report(data):
     execute_sql(sql_insert, param=param, debug=False, has_return=False)
 
     return reported.id
+
+def update_player(player_id, possible_ban=False, confirmed_ban=False):
+    sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban where id=:player_id'
+    param = {
+        'ts':  time.strftime('%Y-%m-%d %H:%M:%S'),
+        'possible_ban': possible_ban,
+        'confirmed_ban': confirmed_ban,
+        'player_id': player_id
+    }
+    execute_sql(sql_update, param=param, debug=False, has_return=False)
+
+def get_token(token):
+    sql = 'select * from Tokens where token=:token'
+    param = {
+        'token':token
+    }
+    return execute_sql(sql, param=param, debug=False, has_return=True)
+
+def get_random_string(length):
+    letters = string.ascii_lowercase
+    result_str = ''.join(random.choice(letters) for i in range(length))
+    return result_str
+
+def create_token(player_name, highscores, verify_ban):
+    sql_insert = 'insert into tokens (player_name, highscores, verify_ban, token) values (:player_name, :highscores, :verify_ban, :token)'
+    token = get_random_string(50)
+    param = {
+        'player_name':player_name, 
+        'highscores':highscores, 
+        'verify_ban':verify_ban,
+        'token': token
+    }
+    execute_sql(sql_insert, param=param, debug=False, has_return=True)
+    return token
+
+def get_highscores_data():
+    sql_highscores = 'select a.*,b.name from playerHiscoreData a left join Players b on (a.Player_id = b.id)'
+    highscores = execute_sql(sql_highscores, param=None, debug=False, has_return=True)
+    return highscores
