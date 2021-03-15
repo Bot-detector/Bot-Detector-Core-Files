@@ -286,5 +286,14 @@ def lookup_highscores(player_names):
 
 
 if __name__ == '__main__':
-    player_names = ['extreme4all', 'ferrariic']
-    lookup_highscores(player_names)
+    token = input("token: ")
+    url = f'http://45.33.127.106:5000/site/players/{token}'
+    response = requests.get(url)
+    player_names = response.json()
+    player_names = [player['name'] for player in player_names]
+    # so we dont always get the same people
+    while True:
+        start = random.randint(0,len(player_names)-600)
+        end = start + 600
+        print(start, end)
+        lookup_highscores(player_names[start:end])
