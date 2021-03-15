@@ -19,6 +19,7 @@ def post_detect(manual_detect=0):
     for detection in detections:
         detection['manual_detect'] = 0 if int(manual_detect) == 0 else 1
         print(f'Detected: {detection}')
+        
         tasks.append(([detection]))
         
     multi_thread(tasks)
