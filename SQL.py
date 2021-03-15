@@ -119,3 +119,8 @@ def get_highscores_data():
     sql_highscores = 'select a.*,b.name from playerHiscoreData a left join Players b on (a.Player_id = b.id)'
     highscores = execute_sql(sql_highscores, param=None, debug=False, has_return=True)
     return highscores
+
+def get_player_names():
+    sql ='select * from Players'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
