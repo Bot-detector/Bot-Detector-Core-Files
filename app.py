@@ -1,61 +1,39 @@
 from flask import Flask, jsonify
 from waitress import serve
+import requests
+# custom
+from plugin.detect.detect import detect
+from Functions.Config import app
 
-app = Flask(__name__)
+app.register_blueprint(detect)
 
 
 @app.errorhandler(404)
 def page_not_found(e):
-   return "<h1>404</h1><p>The resource could not be found.</p>", 404
+    return "<h1>404</h1><p>The resource could not be found.</p>", 404
+
 
 @app.route("/")
 def hello():
-   data = {'welcome': 'test'}
-   return jsonify(data)
+    data = {'welcome': 'test'}
+    return jsonify(data)
 
-@app.route('/plugin/detect/')
-def plugindetect():
-    return 'plugindetect'
-
-@app.route('/plugin/massdetect/')
-def pluginmassdetect():
-    return 'pluginmassdetect'
-
-@app.route('/plugin/send/')
-def pluginsend():
-    return 'pluginsend'
-
-@app.route('/plugin/heatmap/')
-def pluginheatmap():
-    return 'pluginheatmap'
-
-@app.route('/plugin/report/')
-def pluginreport():
-    return 'pluginreport'
-
-@app.route('/plugin/beta/')
-def pluginbeta():
-    return 'pluginbeta'
-
-@app.route('/stats/')
-def stats():
-    return 'stats'
-
-@app.route('/lookup/')
-def lookup():
-    return 'lookup'
-
-@app.route('/graphs/')
-def graphs():
-    return 'graphs'
-
-@app.route('/map/')
-def map():
-    return 'map'
-
-@app.route('/contact/')
-def contact():
-    return 'contact'
+# Hacky testing
+@app.route('/test')
+def test():
+    # expect list of dicts
+    detect = [{
+        'reporter': 'extreme4all',
+        'reported': 'farriic',
+        'region_id': '0',
+        'x':'0',
+        'y':'0',
+        'z':'0',
+        'ts':'0'
+    }]
+    requests.post('http://localhost:5000/plugin/detect/0', json=detect)
+    requests.post('http://localhost:5000/plugin/detect/1', json=detect)
+    return jsonify({'ok':'ok'})
 
 if __name__ == '__main__':
-   serve(app, host='127.0.0.1', port=5000)
+    serve(app, host='127.0.0.1', port=5000)
