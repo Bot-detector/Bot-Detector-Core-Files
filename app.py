@@ -1,6 +1,7 @@
 from flask import jsonify
 from waitress import serve
 import requests
+import logging
 # custom
 
 from mysite.tokens import app_token
@@ -10,9 +11,13 @@ from Config import app
 app.register_blueprint(detect)
 app.register_blueprint(app_token)
 
+logging.basicConfig(filename = 'flaskwebapp.log', \
+                    level = logging.WARNING, \
+                    format = f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 
 @app.errorhandler(404)
 def page_not_found(e):
+    app.logger.warning(e)
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
 
 
