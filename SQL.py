@@ -32,7 +32,10 @@ def get_player(player_name):
         'player_name': player_name
     }
     player_id = execute_sql(sql_player_id, param=param, debug=False, has_return=True)
-    return player_id[0]
+    try:
+        return player_id[0]
+    except:
+        return None
 
 
 def insert_player(player_name):
@@ -81,13 +84,14 @@ def insert_report(data):
 
     return reported.id
 
-def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0 ,debug=False):
-    sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban, confirmed_player=:confirmed_player where id=:player_id'
+def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0 ,debug=False):
+    sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban, confirmed_player=:confirmed_player, label_id=:label_id where id=:player_id'
     param = {
         'ts':  time.strftime('%Y-%m-%d %H:%M:%S'),
         'possible_ban': possible_ban,
         'confirmed_ban': confirmed_ban,
         'confirmed_player': confirmed_player,
+        'label_id': label_id,
         'player_id': player_id
     }
     execute_sql(sql_update, param=param, debug=debug, has_return=False)
