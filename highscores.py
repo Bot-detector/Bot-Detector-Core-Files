@@ -266,12 +266,13 @@ def mytasks(player_name):
     data = get_data(player_name)
     pb = player.possible_ban
     cb = player.confirmed_ban
+    lbl = player.label_id
     if data is None:
-        update_player(player.id, possible_ban=1, confirmed_ban=cb, debug=True)
+        update_player(player.id, possible_ban=1, confirmed_ban=cb, label_id=lbl, debug=True)
         return None, None
 
     skills, minigames = parse_highscores(data)
-    update_player(player.id, possible_ban=pb, confirmed_ban=cb, debug=False)
+    update_player(player.id, possible_ban=pb, confirmed_ban=cb, label_id=lbl, debug=False)
     insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
     return skills, minigames
 

@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from flask.json import jsonify
-from SQL import get_token, get_player, update_player, get_highscores_data, get_player_names
+from SQL import get_token, get_player, update_player, get_highscores_data, get_player_names, get_player_labels
 import pandas as pd
 import json
 app_token = Blueprint('app_token', __name__, template_folder='templates')
@@ -68,5 +68,17 @@ def get_players(token):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     data = get_player_names()
+    df = pd.DataFrame(data)
+    return jsonify(json.loads(df.to_json(orient='records')))
+
+
+@app_token.route('/site/labels/<token>', methods=['GET', 'POST'])
+def get_labels(token):
+    player_token = get_token(token)
+    print(player_token)
+    if not (player_token):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+
+    data = get_player_labels()
     df = pd.DataFrame(data)
     return jsonify(json.loads(df.to_json(orient='records')))

@@ -45,8 +45,14 @@ def insert_player(player_name):
         'player_name': player_name
     }
 
-    execute_sql(sql_insert, param=param, debug=False, has_return=False)
-    return get_player(player_name)
+    # this might be more efficient
+    # assuming that highscore scraping & duplicate player reports use this alot
+    player = get_player(player_name)
+    if player == None:
+        execute_sql(sql_insert, param=param, debug=False, has_return=False)
+        player = get_player(player_name)
+    
+    return player
 
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
@@ -126,6 +132,11 @@ def get_highscores_data():
     return highscores
 
 def get_player_names():
-    sql ='select * from Players'
+    sql ='select * from Players;'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
+
+def get_player_labels():
+    sql ='select * from Labels;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
