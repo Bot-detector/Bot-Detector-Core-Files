@@ -264,13 +264,14 @@ def mytasks(player_name):
     
     player = insert_player(player_name=player_name)
     data = get_data(player_name)
-
+    pb = player.possible_ban
+    cb = player.confirmed_ban
     if data is None:
-        update_player(player.id, possible_ban=1, confirmed_ban=0, debug=True)
+        update_player(player.id, possible_ban=1, confirmed_ban=cb, debug=True)
         return None, None
 
     skills, minigames = parse_highscores(data)
-    update_player(player.id, possible_ban=1, confirmed_ban=0, debug=False)
+    update_player(player.id, possible_ban=pb, confirmed_ban=cb, debug=False)
     insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
     return skills, minigames
 
@@ -294,7 +295,7 @@ if __name__ == '__main__':
     player_names = [player['name'] for player in player_names if player['possible_ban'] == 0]
     # so we dont always get the same people
     while True:
-        start = random.randint(0,len(player_names)-600)
-        end = start + 600
+        start = random.randint(0,len(player_names)-50)
+        end = start + 50
         print(start, end)
         lookup_highscores(player_names[start:end])
