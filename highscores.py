@@ -266,10 +266,11 @@ def mytasks(player_name):
     data = get_data(player_name)
 
     if data is None:
-        update_player(player.id, possible_ban=1, confirmed_ban=0)
+        update_player(player.id, possible_ban=1, confirmed_ban=0, debug=True)
         return None, None
 
     skills, minigames = parse_highscores(data)
+    update_player(player.id, possible_ban=1, confirmed_ban=0, debug=False)
     insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
     return skills, minigames
 
@@ -290,7 +291,7 @@ if __name__ == '__main__':
     url = f'http://45.33.127.106:5000/site/players/{token}'
     response = requests.get(url)
     player_names = response.json()
-    player_names = [player['name'] for player in player_names]
+    player_names = [player['name'] for player in player_names if player['possible_ban'] == 0]
     # so we dont always get the same people
     while True:
         start = random.randint(0,len(player_names)-600)

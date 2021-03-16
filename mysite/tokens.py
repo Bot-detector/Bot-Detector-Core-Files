@@ -21,8 +21,8 @@ def get_highscores(token):
     return jsonify(json.loads(df.to_json(orient='records')))
 
 
-@app_token.route('/site/verify/<token>/<playername>', methods=['GET', 'POST'])
-def verify_bot(token, playername):
+@app_token.route('/site/verify/<token>/<playername>/<bot>', methods=['GET', 'POST'])
+def verify_bot(token, playername, bot):
     player_token = get_token(token)
 
     if not (player_token):
@@ -30,10 +30,14 @@ def verify_bot(token, playername):
 
     if not (player_token[0].verify_ban == 1):
         return "<h1>404</h1><p>Invalid token</p>", 404
-
+    
+    bot = 0 if int(bot) == 0 else 1
     player = get_player(playername)
-    print(player)
-    update_player(player.id, possible_ban=1, confirmed_ban=1)
+    
+    if bot == 0:
+        update_player(player.id, possible_ban=0, confirmed_ban=0, confirmed_player=1)
+    else:
+        update_player(player.id, possible_ban=1, confirmed_ban=1, confirmed_player=0)
     return jsonify({'OK': 'report verified'})
 
 @app_token.route('/site/players/<token>', methods=['GET', 'POST'])
