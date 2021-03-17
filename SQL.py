@@ -156,7 +156,7 @@ def get_player_labels():
 
 
 def get_number_confirmed_bans():
-    sql = 'SELECT count(*) bans FROM Players WHERE confirmed_ban = 1;'
+    sql = 'SELECT COUNT(*) bans FROM Players WHERE confirmed_ban = 1;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data[0].bans
 
@@ -177,5 +177,10 @@ def get_report_stats():
                 confirmed_ban
             ) a;
     '''
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
+
+def get_number_tracked_players():
+    sql = 'COUNT(*) FROM Players;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
