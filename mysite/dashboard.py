@@ -11,9 +11,9 @@ dashboard = Blueprint('dashboard', __name__, template_folder='templates')
 
 @dashboard.route('/site/dashboard/gettotalbans', methods=['GET'])
 def get_total_bans():
-    num_of_bands = get_number_confirmed_bans()
+    num_of_bans = get_number_confirmed_bans()
     return_dict = {
-        "bans": num_of_bands
+        "bans": num_of_bans
     }
 
     return jsonify(return_dict)

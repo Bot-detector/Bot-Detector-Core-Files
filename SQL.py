@@ -3,7 +3,9 @@
 from Config import db
 from sqlalchemy import text
 from collections import namedtuple
-import time, random, string
+import time
+import random
+import string
 
 
 def execute_sql(sql, param=None, debug=False, has_return=True):
@@ -31,7 +33,8 @@ def get_player(player_name):
     param = {
         'player_name': player_name
     }
-    player_id = execute_sql(sql_player_id, param=param, debug=False, has_return=True)
+    player_id = execute_sql(sql_player_id, param=param,
+                            debug=False, has_return=True)
     try:
         return player_id[0]
     except:
@@ -51,8 +54,9 @@ def insert_player(player_name):
     if player == None:
         execute_sql(sql_insert, param=param, debug=False, has_return=False)
         player = get_player(player_name)
-    
+
     return player
+
 
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
@@ -90,7 +94,8 @@ def insert_report(data):
 
     return reported.id
 
-def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0 ,debug=False):
+
+def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, debug=False):
     sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban, confirmed_player=:confirmed_player, label_id=:label_id where id=:player_id;'
     param = {
         'ts':  time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -102,47 +107,54 @@ def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0
     }
     execute_sql(sql_update, param=param, debug=debug, has_return=False)
 
+
 def get_token(token):
     sql = 'select * from Tokens where token=:token;'
     param = {
-        'token':token
+        'token': token
     }
     return execute_sql(sql, param=param, debug=False, has_return=True)
+
 
 def get_random_string(length):
     letters = string.ascii_lowercase
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
 
+
 def create_token(player_name, highscores, verify_ban):
     sql_insert = 'insert into tokens (player_name, highscores, verify_ban, token) values (:player_name, :highscores, :verify_ban, :token);'
     token = get_random_string(50)
     param = {
-        'player_name':player_name, 
-        'highscores':highscores, 
-        'verify_ban':verify_ban,
+        'player_name': player_name,
+        'highscores': highscores,
+        'verify_ban': verify_ban,
         'token': token
     }
     execute_sql(sql_insert, param=param, debug=False, has_return=True)
     return token
 
+
 def get_highscores_data():
     sql_highscores = 'select a.*,b.name from playerHiscoreData a left join Players b on (a.Player_id = b.id);'
-    highscores = execute_sql(sql_highscores, param=None, debug=False, has_return=True)
+    highscores = execute_sql(sql_highscores, param=None,
+                             debug=False, has_return=True)
     return highscores
 
+
 def get_player_names():
-    sql ='select * from Players;'
+    sql = 'select * from Players;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
+
 
 def get_player_labels():
-    sql ='select * from Labels;'
+    sql = 'select * from Labels;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
-def get_number_confirmed_bans():
-    sql = 'SELECT * FROM `Players` WHERE confirmed_ban = 1';
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
 
-    return len(data)
+def get_number_confirmed_bans():
+    sql = 'SELECT count(*) bans FROM Players WHERE confirmed_ban = 1;'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data[0].bans

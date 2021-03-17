@@ -10,3 +10,4 @@ venv
 venv/
 
 .env
+flaskwebapp.log
