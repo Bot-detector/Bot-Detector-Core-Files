@@ -17,6 +17,7 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
 
     if has_return:
         rows = db.session.execute(sql, param)
+        db.session.close()
         Record = namedtuple('Record', rows.keys())
         records = [Record(*r) for r in rows.fetchall()]
 
@@ -70,7 +71,7 @@ def insert_highscore(player_id, skills, minigames):
         [player_id] + list(skills.values()) + list(minigames.values()))
 
     # f string is not so secure but we control the skills & minigames dict
-    sql_insert = f"insert into playerHiscoreData ({columns}) values ({values});"
+    sql_insert = f"insert ignore into playerHiscoreData ({columns}) values ({values});"
     execute_sql(sql_insert, param=None, debug=False, has_return=False)
 
 
@@ -123,15 +124,15 @@ def get_random_string(length):
 
 
 def create_token(player_name, highscores, verify_ban):
-    sql_insert = 'insert into tokens (player_name, highscores, verify_ban, token) values (:player_name, :highscores, :verify_ban, :token);'
-    token = get_random_string(50)
+    sql_insert = 'insert into Tokens (player_name, request_highscores, verify_ban, token) values (:player_name, :highscores, :verify_ban, :token);'
+    token = get_random_string(15)
     param = {
         'player_name': player_name,
         'highscores': highscores,
         'verify_ban': verify_ban,
         'token': token
     }
-    execute_sql(sql_insert, param=param, debug=False, has_return=True)
+    execute_sql(sql_insert, param=param, debug=False, has_return=False)
     return token
 
 

@@ -1,6 +1,6 @@
 import requests
 import random
-import os
+import time
 import datetime as dt
 # handling rate limits and stuf
 from requests.adapters import HTTPAdapter
@@ -289,11 +289,13 @@ def lookup_highscores(player_names):
 
 
 if __name__ == '__main__':
+    
     token = input("token: ")
     url = f'http://45.33.127.106:5000/site/players/{token}'
     response = requests.get(url)
     player_names = response.json()
-    player_names = [player['name'] for player in player_names if player['possible_ban'] == 0]
+    today = int(time.time())*1000
+    player_names = [player['name'] for player in player_names if player['possible_ban'] == 0 and (player['updated_at'] is None or player['updated_at'] < today)]
     # so we dont always get the same people
     while True:
         start = random.randint(0,len(player_names)-50)

@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from flask.json import jsonify
-from SQL import get_token, get_player, update_player, get_highscores_data, get_player_names, get_player_labels
+from SQL import get_token, get_player, update_player, get_highscores_data, get_player_names, get_player_labels, create_token
 import pandas as pd
 import json
 app_token = Blueprint('app_token', __name__, template_folder='templates')
@@ -29,7 +29,7 @@ def get_highscores(token):
 
 
 @app_token.route('/site/verify/<token>/<playername>')
-@app_token.route('/site/verify/<token>/<playername>/<bot>/')
+@app_token.route('/site/verify/<token>/<playername>/<bot>')
 @app_token.route('/site/verify/<token>/<playername>/<bot>/<label>')
 def verify_bot(token, playername, bot=0, label=0):
     # token verification
@@ -82,3 +82,19 @@ def get_labels(token):
     data = get_player_labels()
     df = pd.DataFrame(data)
     return jsonify(json.loads(df.to_json(orient='records')))
+
+@app_token.route('/site/token/<token>/<player_name>/<hiscore>')
+@app_token.route('/site/token/<token>/<player_name>/<hiscore>/<ban>')
+def create_user_token(token,player_name, hiscore=0, ban=0):
+    player_token = get_token(token)
+    print(player_token)
+
+    if not (player_token):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+
+    if not (player_token[0].create_token == 1):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+
+    token = create_token(player_name, highscores=hiscore, verify_ban=ban)
+    return jsonify({'Token':token})
+
