@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from flask.json import jsonify
-from SQL import get_number_confirmed_bans, get_number_tracked_players
+from SQL import get_number_confirmed_bans, get_number_tracked_players, get_report_stats
 import json
 
 dashboard = Blueprint('dashboard', __name__, template_folder='templates')
@@ -26,6 +26,11 @@ def get_total_tracked_players():
     }
 
     return jsonify(return_dict)
+
+@dashboard.route('/site/dashboard/getreportsstats', methods=['GET'])
+def get_total_reports():
+    report_stats = get_report_stats()
+    return jsonify(report_stats)
 
 # CORS Policy: Allow Access to These Methods From Any Origin
 @dashboard.after_request
