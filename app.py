@@ -11,6 +11,7 @@ from Config import app
 
 app.register_blueprint(detect)
 app.register_blueprint(app_token)
+app.register_blueprint(dashboard)
 
 logging.basicConfig(filename = 'flaskwebapp.log', \
                     level = logging.WARNING, \
