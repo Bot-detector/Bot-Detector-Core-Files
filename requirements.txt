@@ -28,3 +28,4 @@ tzlocal==2.1
 urllib3==1.26.3
 waitress==2.0.0
 Werkzeug==1.0.1
+Flask_Cors==3.0.10
