@@ -29,12 +29,16 @@ def get_total_tracked_players():
 
 @dashboard.route('/site/dashboard/getreportsstats', methods=['GET'])
 def get_total_reports():
-    report_stats = get_report_stats()
+    report_stats = get_report_stats()[0]
 
     return_dict = {
-        "data": report_stats
+        "bans": int(report_stats[0]),
+        "false_reports": int(report_stats[1]),
+        "total_reports": int(report_stats[2]),
+        "accuracy": float(report_stats[3])
     }
-    return jsonify(return_dict)
+
+    return (return_dict)
 
 # CORS Policy: Allow Access to These Methods From Any Origin
 @dashboard.after_request
