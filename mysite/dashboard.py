@@ -14,4 +14,4 @@ def get_total_bans():
     num_of_bands = get_number_confirmed_bans()
     return_str = "{ bans: " + str(num_of_bands) + "}"
 
-    return jsonify(json.load(return_str))
+    return jsonify(return_str)
