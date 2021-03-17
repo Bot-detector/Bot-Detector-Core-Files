@@ -9,7 +9,7 @@ dashboard = Blueprint('dashboard', __name__, template_folder='templates')
 # Dashboard Endpoints #
 #######################
 
-@dashboard.route('/site/players/getTotalBans', methods=['GET'])
+@dashboard.route('/site/dashboard/getTotalBans', methods=['GET'])
 def get_total_bans():
     num_of_bands = get_number_confirmed_bans()
     return_str = "{ bans: " + str(num_of_bands) + "}"
