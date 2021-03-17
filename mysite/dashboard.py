@@ -22,7 +22,7 @@ def get_total_bans():
 def get_total_tracked_players():
     num_of_players = get_number_tracked_players()
     return_dict = {
-        "players": num_of_players
+        "players": num_of_players[0]
     }
 
     return jsonify(return_dict)
