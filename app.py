@@ -5,6 +5,7 @@ import logging
 # custom
 
 from mysite.tokens import app_token
+from mysite.dashboard import dashboard
 from plugin.detect import detect
 from Config import app
 

@@ -140,3 +140,9 @@ def get_player_labels():
     sql ='select * from Labels;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
+
+def get_number_confirmed_bans():
+    sql = 'SELECT * FROM `Players` WHERE confirmed_ban = 1';
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+
+    return len(data)
