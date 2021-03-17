@@ -79,8 +79,8 @@ def insert_report(data):
     reporter = insert_player(data['reporter'])
     reported = insert_player(data['reported'])
     param = {
-        'reportedID': reporter.id,
-        'reportingID': reported.id,
+        'reportedID': reported.id,
+        'reportingID': reporter.id,
         'region_id': data['region_id'],
         'x_coord': data['x'],
         'y_coord': data['y'],

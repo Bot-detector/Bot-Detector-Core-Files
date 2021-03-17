@@ -25,6 +25,7 @@ def get_highscores(token):
 
     data = get_highscores_data()
     df = pd.DataFrame(data)
+
     return jsonify(json.loads(df.to_json(orient='records')))
 
 
@@ -69,6 +70,7 @@ def get_players(token):
 
     data = get_player_names()
     df = pd.DataFrame(data)
+
     return jsonify(json.loads(df.to_json(orient='records')))
 
 
@@ -81,11 +83,13 @@ def get_labels(token):
 
     data = get_player_labels()
     df = pd.DataFrame(data)
+
     return jsonify(json.loads(df.to_json(orient='records')))
+
 
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>')
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>/<ban>')
-def create_user_token(token,player_name, hiscore=0, ban=0):
+def create_user_token(token, player_name, hiscore=0, ban=0):
     player_token = get_token(token)
     print(player_token)
 
@@ -96,5 +100,4 @@ def create_user_token(token,player_name, hiscore=0, ban=0):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     token = create_token(player_name, highscores=hiscore, verify_ban=ban)
-    return jsonify({'Token':token})
-
+    return jsonify({'Token': token})
