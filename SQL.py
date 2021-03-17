@@ -159,3 +159,23 @@ def get_number_confirmed_bans():
     sql = 'SELECT count(*) bans FROM Players WHERE confirmed_ban = 1;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data[0].bans
+
+def get_report_stats():
+    sql = '''
+        SELECT
+            sum(bans) bans,
+            sum(false_reports) false_reports,
+            sum(bans) + sum(false_reports) total_reports,
+            sum(bans)/ (sum(bans) + sum(false_reports)) accuracy
+        FROM (
+            SELECT 
+                confirmed_ban,
+                sum(confirmed_ban) bans,
+                sum(confirmed_player) false_reports
+            FROM Players
+            GROUP BY
+                confirmed_ban
+            ) a;
+    '''
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
