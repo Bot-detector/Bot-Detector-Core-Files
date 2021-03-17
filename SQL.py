@@ -181,6 +181,6 @@ def get_report_stats():
     return data
 
 def get_number_tracked_players():
-    sql = 'COUNT(*) FROM Players;'
+    sql = 'SELECT COUNT(*) FROM Players;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
