@@ -6,7 +6,9 @@ import datetime as dt
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import concurrent.futures as cf
-from SQL import insert_highscore, insert_player, update_player
+import json
+import pandas as pd
+from SQL import insert_highscore, insert_player, update_player, get_player, get_player_names
 
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
@@ -221,7 +223,8 @@ def make_web_call(URL, user_agent_list, debug=True):
     # Make the request
     response = http.get(URL, headers=headers)
     if response.status_code == 404:
-        # if 404 player does not exist
+        # TODO: player is banned, handled in mystasks
+
         return None
     else:
         response.raise_for_status()
@@ -235,15 +238,17 @@ def make_web_call(URL, user_agent_list, debug=True):
 
 @logging
 def parse_highscores(data):
+    # get list of keys from dict
     skills_keys = list(skills.keys())
     minigames_keys = list(minigames.keys())
-
+    # data is huge array
     for index, row in enumerate(data):
-
         if index < len(skills):
+            # skills row [rank, lvl, xp]
             skills[skills_keys[index]] = row.split(',')[2]
         else:
             index = index - (len(skills))
+            # skills row [rank, Score]
             minigames[minigames_keys[index]] = row.split(',')[1]
     return skills, minigames
 
@@ -251,54 +256,148 @@ def parse_highscores(data):
 @logging
 def get_data(player_name):
     url = f'https://secure.runescape.com/m=hiscore_oldschool/index_lite.ws?player={player_name}'
+    # make a webcall
     data = make_web_call(url, user_agent_list)
+
+    # if webcall returns nothing then signal player is banned
     if data is None:
         return None
 
+    # splitlines will return an array
     data = data.text.splitlines()
-
     return data
 
 
 def mytasks(player_name):
-    
-    player = insert_player(player_name=player_name)
+    # get data
     data = get_data(player_name)
+
+    # get player if return is none, the player does not exist
+    player = get_player(player_name)
+    if player is None:
+        player = insert_player(player_name)
+
+    # player variables
     pb = player.possible_ban
     cb = player.confirmed_ban
-    lbl = player.label_id
+
+    # if hiscore data is none, then player is banned
     if data is None:
-        update_player(player.id, possible_ban=1, confirmed_ban=cb, label_id=lbl, debug=True)
+        print('update player', player_name)
+        update_player(player.id, possible_ban=1, confirmed_ban=cb, debug=True)
         return None, None
 
+    # else we parse the hiscore data
     skills, minigames = parse_highscores(data)
-    update_player(player.id, possible_ban=pb, confirmed_ban=cb, label_id=lbl, debug=False)
+
+    # update the player so updated at is recent
+    update_player(player.id, possible_ban=0, confirmed_ban=cb, debug=False)
+
+    # insert in hiscore data
     insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
+
     return skills, minigames
 
 
-def lookup_highscores(player_names):
+def main(player_names):
+    # create a list of tasks
     tasks = []
     for player_name in player_names:
         tasks.append(([player_name]))
-
+    # multi thread each task in tasklist
     with cf.ProcessPoolExecutor() as executor:
         futures = {executor.submit(mytasks, task[0]) for task in tasks}
         for future in cf.as_completed(futures):
-            skills, minigames = future.result()
+            # we don't care about the return values
+            _, _ = future.result()
+
+
+def get_players():
+    # get data
+    data = get_player_names()
+    df = pd.DataFrame(data)
+
+    player_names = json.loads(df.to_json(orient='records'))
+    #player_names = response.json()
+
+    # filter data, to today
+    interval_in_secons = 24*60*60
+    today = time.time()
+    offset = (today % interval_in_secons)
+    rounded = today - offset
+    today = rounded*1000
+
+    # print(datetime.fromtimestamp(rounded), today)
+
+    p_names = []
+    for player in player_names:
+
+        p_updated = player['updated_at']
+        if p_updated is None:
+            p_updated = 0
+
+        # skip if player is banned
+        if not (player['confirmed_ban'] == 0):
+            continue
+
+        # skip if we already updated the player
+        if p_updated > today:
+            continue
+
+        # append player to player name list
+        p_names.append(player['name'])
+
+    print(len(p_names))
+    return p_names
+
+
+def run_hiscore():
+    print(dt.datetime.today())
+    i, t = 0, 0
+    batch_size = 50
+    # endless loops
+    while True:
+        # if loop is 0 aka first run then get the player names from the db
+        # if loop is 20* batch_size
+        if i == 0 or i == 20:
+            i = 1
+            player_names = get_players()
+
+            # if total players is less then batch size
+            if batch_size > len(player_names):
+                end = True
+            else:
+                end = False
+
+            # if batch size is empty
+            if len(player_names) == 0:
+                break
+        else:
+            i += 1
+            t += 50
+
+        if not (end):
+            # start + batch_size can maximum be the length of players
+            n_players = len(player_names) - batch_size
+            # take a random starting point
+            start = random.randint(0, n_players)
+            # endpoint is start + batchsize
+            end = start + batch_size
+            # batch to scrape
+            scrape_list = player_names[start:end]
+        else:
+            scrape_list = player_names
+            start, end = 0, 0
+
+        print(len(player_names), t, start, end)
+
+        # get hiscores of all the players in batch
+        main(scrape_list)
+
+        # remove scraped players from our list of players
+        player_names = [
+            player for player in player_names if player not in scrape_list]
 
 
 if __name__ == '__main__':
-    
-    token = input("token: ")
-    url = f'http://45.33.127.106:5000/site/players/{token}'
-    response = requests.get(url)
-    player_names = response.json()
-    today = int(time.time())*1000
-    player_names = [player['name'] for player in player_names if player['possible_ban'] == 0 and (player['updated_at'] is None or player['updated_at'] < today)]
-    # so we dont always get the same people
-    while True:
-        start = random.randint(0,len(player_names)-50)
-        end = start + 50
-        print(start, end)
-        lookup_highscores(player_names[start:end])
+    run_hiscore()
