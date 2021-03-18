@@ -184,3 +184,31 @@ def get_number_tracked_players():
     sql = 'SELECT COUNT(*) count FROM Players;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
+
+def get_player_table_stats():
+    sql = ''' 
+        SELECT 
+            count(*) Players_checked, 
+            Date(updated_at) last_checked_date
+        FROM `Players` 
+        GROUP BY
+            Date(updated_at)
+        order BY
+            Date(updated_at) DESC
+    '''
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
+
+def get_hiscore_table_stats():
+    sql = ''' 
+        SELECT 
+            count(*) hiscore_Players_checked, 
+            Date(timestamp) hiscore_checked_date
+        FROM playerHiscoreData
+        GROUP BY
+            Date(timestamp)
+        order BY
+            Date(timestamp) DESC;
+    '''
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
