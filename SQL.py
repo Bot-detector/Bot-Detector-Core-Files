@@ -90,7 +90,7 @@ def insert_report(data):
     }
 
     columns = list_to_string(list(param.keys()))
-    sql_insert = f'insert into Reports ({columns}) values (:reportedID, :reportingID, :region_id, :x_coord, :y_coord, :z_coord, :timestamp, :manual_detect);'
+    sql_insert = f'insert ignore into Reports ({columns}) values (:reportedID, :reportingID, :region_id, :x_coord, :y_coord, :z_coord, :timestamp, :manual_detect);'
     execute_sql(sql_insert, param=param, debug=False, has_return=False)
 
     return reported.id

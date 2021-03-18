@@ -16,13 +16,21 @@ def multi_thread(tasks):
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
 def post_detect(manual_detect=0):
     detections = request.get_json()
+    manual_detect = 0 if int(manual_detect) == 0 else 1
     tasks = []
-
+    
+    # multithread might cause issue on server
+    mt = True
+    
     for detection in detections:
-        detection['manual_detect'] = 0 if int(manual_detect) == 0 else 1
+        detection['manual_detect'] = manual_detect
         print(f'Detected: {detection}')
-        
-        tasks.append(([detection]))
-        
-    multi_thread(tasks)
+        if mt:
+            tasks.append(([detection]))
+        else:
+            insert_report(detection)
+    
+    if mt:
+        multi_thread(tasks)
+
     return jsonify({'OK': 'OK'})
