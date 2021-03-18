@@ -191,8 +191,6 @@ def get_number_tracked_players():
 def get_contributions(contributor):
     contributor_id = int(get_player(contributor)[0])
 
-    print(contributor_id)
-
     reported_ids_query = \
     '''
     SELECT reportedID
@@ -205,14 +203,11 @@ def get_contributions(contributor):
     }
 
     reported_ids_data = execute_sql(reported_ids_query, param=params, debug=False, has_return=True)
-
     reported_ids = [int(record[0]) for record in reported_ids_data]
-
-    print(reported_ids)
 
     bans_query = \
     '''
-    SELECT SUM(confirmed_ban) as bans FROM Players WHERE id in (:ids);
+    SELECT SUM(confirmed_ban) as bans FROM Players WHERE id in :ids;
     '''
 
     params = {
@@ -221,19 +216,13 @@ def get_contributions(contributor):
 
     bans_data = execute_sql(bans_query, param=params, debug=False, has_return=True)
 
-    print(bans_data)
-
     data = {
         "reports": len(reported_ids_data),
-        "bans": len(bans_data)
+        "bans": int(bans_data[0])
     }
 
     return data
 
-'''
-        "num_reported": 0,
-        "players_banned": 0
-'''
 
 def get_player_table_stats():
     sql = ''' 
@@ -248,6 +237,7 @@ def get_player_table_stats():
     '''
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
+
 
 def get_hiscore_table_stats():
     sql = ''' 
