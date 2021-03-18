@@ -36,22 +36,6 @@ def hello():
     data = {'welcome': 'test'}
     return jsonify(data)
 
-# Hacky testing
-@app.route('/test')
-def test():
-    # expect list of dicts
-    detect = [{
-        'reporter': 'extreme4all',
-        'reported': 'farriic',
-        'region_id': '0',
-        'x':'0',
-        'y':'0',
-        'z':'0',
-        'ts':'0'
-    }]
-    requests.post('http://localhost:5000/plugin/detect/0', json=detect)
-    requests.post('http://localhost:5000/plugin/detect/1', json=detect)
-    return jsonify({'ok':'ok'})
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True, use_reloader=False)
