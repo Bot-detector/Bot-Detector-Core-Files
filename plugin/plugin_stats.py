@@ -13,6 +13,13 @@ def get_contributions(contributor=""):
     else:
         contributions = SQL.get_contributions(contributor)
 
-        return contributions
+        print(contributions)
+
+        return_dict = {
+            "reports": len(contributions),
+            "bans": sum(r[2] for r in contributions)
+        }
+
+        return return_dict
 
 

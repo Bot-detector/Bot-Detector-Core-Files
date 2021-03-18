@@ -191,37 +191,25 @@ def get_number_tracked_players():
 def get_contributions(contributor):
     contributor_id = int(get_player(contributor)[0])
 
-    reported_ids_query = \
-    '''
-    SELECT reportedID
-	    FROM Reports 
-		WHERE reportingID = :reporting_id;
+    query= '''
+    
+        SELECT 
+            rptr.name reporter_name,
+            rptd.name reported_name,
+            rptd.confirmed_ban
+        from Reports rpts
+        inner join Players rptr on(rpts.reportingID = rptr.id)
+        inner join Players rptd on(rpts.reportedID = rptd.id)
+        
     '''
 
     params = {
         "reporting_id": contributor_id
     }
 
-    reported_ids_data = execute_sql(reported_ids_query, param=params, debug=False, has_return=True)
-    reported_ids = [int(record[0]) for record in reported_ids_data]
+    reported_ids_data = execute_sql(query, param=params, debug=False, has_return=True)
 
-    bans_query = \
-    '''
-    SELECT SUM(confirmed_ban) as bans FROM Players WHERE id in :ids;
-    '''
-
-    params = {
-        "ids": reported_ids
-    }
-
-    bans_data = execute_sql(bans_query, param=params, debug=False, has_return=True)
-
-    data = {
-        "reports": len(reported_ids_data),
-        "bans": int(bans_data[0])
-    }
-
-    return data
+    return reported_ids_data
 
 
 def get_player_table_stats():
