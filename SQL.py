@@ -43,10 +43,6 @@ def get_player(player_name):
         player_id = player_id[0]
         
     return player_id
-    # try:
-    #     return player_id[0]
-    # except:
-    #     return None
 
 
 def insert_player(player_name):
@@ -55,14 +51,8 @@ def insert_player(player_name):
     param = {
         'player_name': player_name
     }
-
-    # this might be more efficient
-    # assuming that highscore scraping & duplicate player reports use this alot
+    execute_sql(sql_insert, param=param, debug=False, has_return=False)
     player = get_player(player_name)
-    if player == None:
-        execute_sql(sql_insert, param=param, debug=False, has_return=False)
-        player = get_player(player_name)
-
     return player
 
 
