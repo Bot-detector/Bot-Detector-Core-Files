@@ -278,20 +278,21 @@ def mytasks(player_name):
         player = insert_player(player_name)
 
     # player variables
-    pb = player.possible_ban
     cb = player.confirmed_ban
+    cp = player.confirmed_player
+    lbl = player.label
 
     # if hiscore data is none, then player is banned
     if data is None:
         print('update player', player_name)
-        update_player(player.id, possible_ban=1, confirmed_ban=cb, debug=True)
+        update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl)
         return None, None
 
     # else we parse the hiscore data
     skills, minigames = parse_highscores(data)
 
     # update the player so updated at is recent
-    update_player(player.id, possible_ban=0, confirmed_ban=cb, debug=False)
+    update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl)
 
     # insert in hiscore data
     insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
@@ -400,4 +401,6 @@ def run_hiscore():
 
 
 if __name__ == '__main__':
-    run_hiscore()
+    # run_hiscore()
+    player = get_player('extreme4all')
+    print(player)

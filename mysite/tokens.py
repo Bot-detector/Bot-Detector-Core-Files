@@ -51,12 +51,11 @@ def verify_bot(token, playername, bot=0, label=0):
     if not (label_int) or not (bot_int) or player == None:
         return "<h1>404</h1><p>Invalid parameters</p>", 404
 
+    # player is a bot
     if bot == 0:
-        update_player(player.id, possible_ban=0, confirmed_ban=0,
-                      label_id=player.label_id, confirmed_player=1)
+        update_player(player.id, possible_ban=0, confirmed_ban=0, label_id=1, confirmed_player=1)
     else:
-        update_player(player.id, possible_ban=1,
-                      confirmed_ban=1, label_id=label, confirmed_player=0)
+        update_player(player.id, possible_ban=1, confirmed_ban=1, label_id=label, confirmed_player=0)
 
     return jsonify({'OK': 'report verified', 'bot': bot})
 

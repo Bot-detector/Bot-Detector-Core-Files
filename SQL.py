@@ -34,13 +34,15 @@ def get_player(player_name):
     param = {
         'player_name': player_name
     }
-    player_id = execute_sql(sql_player_id, param=param,
+    
+    # returns a list of players
+    player = execute_sql(sql_player_id, param=param,
                             debug=False, has_return=True)
     
-    if len(player_id) == 0:
+    if len(player) == 0:
         player_id = None
     else:
-        player_id = player_id[0]
+        player_id = player[0] 
         
     return player_id
 
