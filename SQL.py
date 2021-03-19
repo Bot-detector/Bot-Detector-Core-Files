@@ -186,7 +186,6 @@ def get_number_tracked_players():
 
 #TODO: use contributor
 def get_contributions(contributor):
-    contributor_id = int(get_player(contributor)[0])
 
     query= '''
         SELECT 
@@ -197,16 +196,17 @@ def get_contributions(contributor):
         inner join Players rptr on(rpts.reportingID = rptr.id)
         inner join Players rptd on(rpts.reportedID = rptd.id)
         WHERE 1=1
-        	and rptr.name = "Seltzer Bro"
+        	and rptr.name = :contributor
     '''
 
     params = {
-        "reporting_id": contributor_id
+        "contributor": contributor
     }
 
-    reported_ids_data = execute_sql(query, param=params, debug=False, has_return=True)
+    data = execute_sql(query, param=params, debug=False, has_return=True)
 
-    return reported_ids_data
+    return data
+
 
 #TODO: route & visual on website
 def get_player_table_stats():
