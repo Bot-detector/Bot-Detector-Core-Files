@@ -19,7 +19,7 @@ app.register_blueprint(app_token)
 app.register_blueprint(dashboard)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-    sched.add_job(run_hiscore, 'interval', hours=24, start_date=datetime.date.today())
+    sched.add_job(run_hiscore, 'interval', hours=1, start_date=datetime.date.today())
     sched.start()
 
 

@@ -184,12 +184,11 @@ def get_number_tracked_players():
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
-
+#TODO: use contributor
 def get_contributions(contributor):
     contributor_id = int(get_player(contributor)[0])
 
     query= '''
-    
         SELECT 
             rptr.name reporter_name,
             rptd.name reported_name,
@@ -197,7 +196,8 @@ def get_contributions(contributor):
         from Reports rpts
         inner join Players rptr on(rpts.reportingID = rptr.id)
         inner join Players rptd on(rpts.reportedID = rptd.id)
-        
+        WHERE 1=1
+        	and rptr.name = "Seltzer Bro"
     '''
 
     params = {
@@ -208,7 +208,7 @@ def get_contributions(contributor):
 
     return reported_ids_data
 
-
+#TODO: route & visual on website
 def get_player_table_stats():
     sql = ''' 
         SELECT 
@@ -223,7 +223,7 @@ def get_player_table_stats():
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
-
+#TODO: route & visual on website
 def get_hiscore_table_stats():
     sql = ''' 
         SELECT 
