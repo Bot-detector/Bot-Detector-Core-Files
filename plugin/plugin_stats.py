@@ -9,11 +9,9 @@ plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 def get_contributions(contributor=""):
 
     if(contributor==""):
-        return "<h1>404</h1><p>You must include a Runescape Name in your query.</p>", 400
+        return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
     else:
         contributions = SQL.get_contributions(contributor)
-
-        print(contributions)
 
         return_dict = {
             "reports": len(contributions),
