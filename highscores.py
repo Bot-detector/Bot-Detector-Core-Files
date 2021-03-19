@@ -401,6 +401,4 @@ def run_hiscore():
 
 
 if __name__ == '__main__':
-    # run_hiscore()
-    player = get_player('extreme4all')
-    print(player)
+    run_hiscore()
