@@ -17,6 +17,7 @@ jobs:
         run: |
           echo "${{ secrets.DB_URI }}" > .env
           docker stop bot_detector
+          docker system prune -a -f
           pip3 install waitress
           docker-compose --verbose down
           docker-compose --verbose build --no-cache
