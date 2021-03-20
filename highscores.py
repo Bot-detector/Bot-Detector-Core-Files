@@ -274,17 +274,17 @@ def mytasks(player_name):
 
     # get player if return is none, the player does not exist
     player = get_player(player_name)
+    
     if player is None:
         player = insert_player(player_name)
 
     # player variables
     cb = player.confirmed_ban
     cp = player.confirmed_player
-    lbl = player.label
+    lbl = player.label_id
 
     # if hiscore data is none, then player is banned
     if data is None:
-        print('update player', player_name)
         update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl)
         return None, None
 
