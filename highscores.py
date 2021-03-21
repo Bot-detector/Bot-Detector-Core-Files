@@ -4,7 +4,7 @@ import time
 import datetime as dt
 # handling rate limits and stuf
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 import concurrent.futures as cf
 import json
 import pandas as pd
