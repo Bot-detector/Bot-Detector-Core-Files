@@ -1,14 +1,34 @@
 from flask import Blueprint, request
 from flask.json import jsonify
-from SQL import insert_report
+import SQL, Config
 import concurrent.futures as cf
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
+def custom_hiscore(detection):
+
+    # get reporter & reported
+    reporter = SQL.get_player(detection['reporter'])
+    reported = SQL.get_player(detection['reported'])
+
+    # if reporter or reported is None (=player does not exist), create player
+    if reporter is None:
+        reporter = SQL.insert_player(detection['reporter'])
+
+    if reported is None:
+        reported = SQL.insert_player(detection['reported'])
+
+    # change in detection
+    detection['reported'] = reported.id
+    detection['reporter'] = reporter.id
+
+    # insert into reports
+    SQL.insert_report(detection)
+    
 
 def multi_thread(tasks):
     with cf.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(insert_report, task[0]) for task in tasks}
+        futures = {executor.submit(custom_hiscore, task[0]) for task in tasks}
         for future in cf.as_completed(futures):
             _ = future.result()
 
@@ -24,13 +44,16 @@ def post_detect(manual_detect=0):
     
     for detection in detections:
         detection['manual_detect'] = manual_detect
-        print(f'Detected: {detection}')
+        # print(f'Detected: {detection}')
         if mt:
             tasks.append(([detection]))
         else:
-            insert_report(detection)
+            # note when using lambda you cannot have return values
+            Config.sched.add_job(lambda: custom_hiscore(detection))
     
     if mt:
-        multi_thread(tasks)
+        # note when using lambda you cannot have return values
+        Config.sched.add_job(lambda: multi_thread(tasks))
+        
 
     return jsonify({'OK': 'OK'})

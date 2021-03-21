@@ -75,11 +75,9 @@ def insert_highscore(player_id, skills, minigames):
 
 
 def insert_report(data):
-    reporter = insert_player(data['reporter'])
-    reported = insert_player(data['reported'])
     param = {
-        'reportedID': reported.id,
-        'reportingID': reporter.id,
+        'reportedID': data['reported'],
+        'reportingID': data['reporter'],
         'region_id': data['region_id'],
         'x_coord': data['x'],
         'y_coord': data['y'],
@@ -87,13 +85,12 @@ def insert_report(data):
         'timestamp': data['ts'],
         'manual_detect': data['manual_detect']
     }
-
+    # list of column values
     columns = list_to_string(list(param.keys()))
-    sql_insert = f'insert ignore into Reports ({columns}) values (:reportedID, :reportingID, :region_id, :x_coord, :y_coord, :z_coord, :timestamp, :manual_detect);'
+    values = list_to_string([f':{column}' for column in list(param.keys())])
+
+    sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
     execute_sql(sql_insert, param=param, debug=False, has_return=False)
-
-    return reported.id
-
 
 def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, debug=False):
     sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban, confirmed_player=:confirmed_player, label_id=:label_id where id=:player_id;'
