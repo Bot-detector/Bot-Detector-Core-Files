@@ -354,28 +354,27 @@ def get_players():
 
 def run_hiscore():
     print(dt.datetime.today())
-    i, t = 0, 0
+    total = 0
     batch_size = 50
+    refresh_factor = 10
+
+    refresh_rate = batch_size * refresh_factor
+    
     # endless loops
     while True:
-        # if loop is 0 aka first run then get the player names from the db
-        # if loop is 20* batch_size
-        if i == 0 or i == 20:
-            i = 1
+        
+        if total % refresh_rate == 0:
             player_names = get_players()
 
-            # if total players is less then batch size
-            if batch_size > len(player_names):
-                end = True
-            else:
-                end = False
+        # if batch size is empty
+        if len(player_names) == 0:
+            break
 
-            # if batch size is empty
-            if len(player_names) == 0:
-                break
+        # if total players is less then batch size
+        if batch_size > len(player_names):
+            end = True
         else:
-            i += 1
-            t += 50
+            end = False
 
         if not (end):
             # start + batch_size can maximum be the length of players
@@ -387,18 +386,18 @@ def run_hiscore():
             # batch to scrape
             scrape_list = player_names[start:end]
         else:
-            scrape_list = player_names
             start, end = 0, 0
+            scrape_list = player_names
 
-        print(len(player_names), t, start, end)
+        print(len(player_names), total, start, end)
 
         # get hiscores of all the players in batch
         main(scrape_list)
+        total += len(scrape_list)
 
         # remove scraped players from our list of players
         player_names = [
             player for player in player_names if player not in scrape_list]
-
 
 if __name__ == '__main__':
     run_hiscore()
