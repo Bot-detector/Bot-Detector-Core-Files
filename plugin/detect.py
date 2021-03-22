@@ -25,6 +25,7 @@ def custom_hiscore(detection):
 
     # insert into reports
     SQL.insert_report(detection)
+    print(detection)
     
 
 def multi_thread(tasks):
@@ -42,6 +43,7 @@ def post_detect(manual_detect=0):
     
     # multithread might cause issue on server
     mt = True
+    job = True
 
     # remove duplicates
     df = pd.DataFrame(detections)
@@ -55,11 +57,17 @@ def post_detect(manual_detect=0):
             tasks.append(([detection]))
         else:
             # note when using lambda you cannot have return values
-            Config.sched.add_job(lambda: custom_hiscore(detection))
-    
+            if job:
+                Config.sched.add_job(lambda: custom_hiscore(detection))
+            else:
+                custom_hiscore(detection)
     if mt:
         # note when using lambda you cannot have return values
-        Config.sched.add_job(lambda: multi_thread(tasks))
+        if job:
+            Config.sched.add_job(lambda: multi_thread(tasks))
+        else:
+            multi_thread(tasks)
+
         
 
     return jsonify({'OK': 'OK'})

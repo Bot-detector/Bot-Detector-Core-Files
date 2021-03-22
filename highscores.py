@@ -223,7 +223,7 @@ def make_web_call(URL, user_agent_list, debug=True):
     # Make the request
     response = http.get(URL, headers=headers)
     if response.status_code == 404:
-        # TODO: player is banned, handled in mystasks
+        # player is banned, handled in mystasks
 
         return None
     else:
