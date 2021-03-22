@@ -8,7 +8,7 @@ from urllib3.util.retry import Retry
 import concurrent.futures as cf
 import json
 import pandas as pd
-from SQL import insert_highscore, insert_player, update_player, get_player, get_player_names
+import SQL
 
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
@@ -273,10 +273,10 @@ def mytasks(player_name):
     data = get_data(player_name)
 
     # get player if return is none, the player does not exist
-    player = get_player(player_name)
+    player = SQL.get_player(player_name)
     
     if player is None:
-        player = insert_player(player_name)
+        player = SQL.insert_player(player_name)
 
     # player variables
     cb = player.confirmed_ban
@@ -285,17 +285,17 @@ def mytasks(player_name):
 
     # if hiscore data is none, then player is banned
     if data is None:
-        update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl)
+        SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl)
         return None, None
 
     # else we parse the hiscore data
     skills, minigames = parse_highscores(data)
 
     # update the player so updated at is recent
-    update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl)
+    SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl)
 
     # insert in hiscore data
-    insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
+    SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
 
     return skills, minigames
 
@@ -315,7 +315,7 @@ def main(player_names):
 
 def get_players():
     # get data
-    data = get_player_names()
+    data = SQL.get_player_names()
     df = pd.DataFrame(data)
 
     player_names = json.loads(df.to_json(orient='records'))
