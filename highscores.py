@@ -285,14 +285,14 @@ def mytasks(player_name):
 
     # if hiscore data is none, then player is banned
     if data is None:
-        SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl)
+        SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         return None, None
 
     # else we parse the hiscore data
     skills, minigames = parse_highscores(data)
 
     # update the player so updated at is recent
-    SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl)
+    SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
 
     # insert in hiscore data
     SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
