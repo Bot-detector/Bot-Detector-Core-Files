@@ -17,7 +17,6 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
 
     if has_return:
         rows = db.session.execute(sql, param)
-        db.session.close()
         Record = namedtuple('Record', rows.keys())
         records = [Record(*r) for r in rows.fetchall()]
 
@@ -133,7 +132,8 @@ def create_token(player_name, highscores, verify_ban):
 
 
 def get_highscores_data():
-    sql_highscores = 'select a.*,b.name from playerHiscoreData a left join Players b on (a.Player_id = b.id);'
+    sql_highscores = 'SELECT a.*,b.name FROM hiscoreTableLatest a left join Players b on (a.Player_id = b.id);'
+    #sql_highscores = 'select a.*,b.name from playerHiscoreData a left join Players b on (a.Player_id = b.id);'
     highscores = execute_sql(sql_highscores, param=None,
                              debug=False, has_return=True)
     return highscores
