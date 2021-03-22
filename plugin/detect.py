@@ -2,6 +2,7 @@ from flask import Blueprint, request
 from flask.json import jsonify
 import SQL, Config
 import concurrent.futures as cf
+import pandas as pd
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
@@ -41,7 +42,12 @@ def post_detect(manual_detect=0):
     
     # multithread might cause issue on server
     mt = True
-    
+
+    # remove duplicates
+    df = pd.DataFrame(detections)
+    df.drop_duplicates(subset=['reporter','reported','region_id'],inplace=True)
+    detections = df.to_dict('records')
+
     for detection in detections:
         detection['manual_detect'] = manual_detect
         # print(f'Detected: {detection}')
