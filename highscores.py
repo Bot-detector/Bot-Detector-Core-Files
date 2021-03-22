@@ -306,7 +306,8 @@ def main(player_names):
     for player_name in player_names:
         tasks.append(([player_name]))
     # multi thread each task in tasklist
-    with cf.ProcessPoolExecutor() as executor:
+    # ThreadPoolExecutor  ProcessPoolExecutor
+    with cf.ThreadPoolExecutor() as executor:
         futures = {executor.submit(mytasks, task[0]) for task in tasks}
         for future in cf.as_completed(futures):
             # we don't care about the return values
