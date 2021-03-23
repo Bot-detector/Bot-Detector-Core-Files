@@ -7,6 +7,21 @@ import time
 import random
 import string
 
+'''
+    Functions for SQL Queries
+'''
+
+
+def list_to_string(l):
+    string_list = ', '.join(str(item) for item in l)
+    return string_list
+
+
+def get_random_string(length):
+    letters = string.ascii_lowercase
+    result_str = ''.join(random.choice(letters) for i in range(length))
+    return result_str
+
 
 def execute_sql(sql, param=None, debug=False, has_return=True):
     # example
@@ -28,22 +43,49 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
         db.session.commit()
 
 
+'''
+    Players Table
+'''
+
+
+def get_player_names():
+    sql = 'select * from Players;'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
+
+
 def get_player(player_name):
     sql_player_id = 'select * from Players where name = :player_name;'
     param = {
         'player_name': player_name
     }
-    
+
     # returns a list of players
-    player = execute_sql(sql_player_id, param=param,
-                            debug=False, has_return=True)
-    
+    player = execute_sql(
+        sql=sql_player_id,
+        param=param,
+        debug=False,
+        has_return=True
+    )
+
     if len(player) == 0:
         player_id = None
     else:
-        player_id = player[0] 
-        
+        player_id = player[0]
+
     return player_id
+
+
+def get_number_confirmed_bans():
+    sql = 'SELECT COUNT(*) bans FROM Players WHERE confirmed_ban = 1;'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data[0].bans
+
+
+def get_number_tracked_players():
+    sql = 'SELECT COUNT(*) count FROM Players;'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
 
 
 def insert_player(player_name):
@@ -57,9 +99,22 @@ def insert_player(player_name):
     return player
 
 
-def list_to_string(l):
-    string_list = ', '.join(str(item) for item in l)
-    return string_list
+def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, debug=False):
+    sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban, confirmed_player=:confirmed_player, label_id=:label_id where id=:player_id;'
+    param = {
+        'ts':  time.strftime('%Y-%m-%d %H:%M:%S'),
+        'possible_ban': possible_ban,
+        'confirmed_ban': confirmed_ban,
+        'confirmed_player': confirmed_player,
+        'label_id': label_id,
+        'player_id': player_id
+    }
+    execute_sql(sql_update, param=param, debug=debug, has_return=False)
+
+
+'''
+    playerHiscoreData Table
+'''
 
 
 def insert_highscore(player_id, skills, minigames):
@@ -71,6 +126,11 @@ def insert_highscore(player_id, skills, minigames):
     # f string is not so secure but we control the skills & minigames dict
     sql_insert = f"insert ignore into playerHiscoreData ({columns}) values ({values});"
     execute_sql(sql_insert, param=None, debug=False, has_return=False)
+
+
+'''
+    Reports Table
+'''
 
 
 def insert_report(data):
@@ -91,17 +151,10 @@ def insert_report(data):
     sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
     execute_sql(sql_insert, param=param, debug=False, has_return=False)
 
-def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, debug=False):
-    sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban, confirmed_player=:confirmed_player, label_id=:label_id where id=:player_id;'
-    param = {
-        'ts':  time.strftime('%Y-%m-%d %H:%M:%S'),
-        'possible_ban': possible_ban,
-        'confirmed_ban': confirmed_ban,
-        'confirmed_player': confirmed_player,
-        'label_id': label_id,
-        'player_id': player_id
-    }
-    execute_sql(sql_update, param=param, debug=debug, has_return=False)
+
+'''
+    Tokens Table
+'''
 
 
 def get_token(token):
@@ -110,12 +163,6 @@ def get_token(token):
         'token': token
     }
     return execute_sql(sql, param=param, debug=False, has_return=True)
-
-
-def get_random_string(length):
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
-    return result_str
 
 
 def create_token(player_name, highscores, verify_ban):
@@ -131,18 +178,9 @@ def create_token(player_name, highscores, verify_ban):
     return token
 
 
-def get_highscores_data():
-    sql_highscores = 'SELECT * FROM hiscoreTableLatest;'
-    #sql_highscores = 'select a.*,b.name from playerHiscoreData a left join Players b on (a.Player_id = b.id);'
-    highscores = execute_sql(sql_highscores, param=None,
-                             debug=False, has_return=True)
-    return highscores
-
-
-def get_player_names():
-    sql = 'select * from Players;'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
-    return data
+'''
+    Labels Table
+'''
 
 
 def get_player_labels():
@@ -151,10 +189,21 @@ def get_player_labels():
     return data
 
 
-def get_number_confirmed_bans():
-    sql = 'SELECT COUNT(*) bans FROM Players WHERE confirmed_ban = 1;'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
-    return data[0].bans
+'''
+    Queries using Views
+'''
+
+
+def get_highscores_data():
+    sql_highscores = 'SELECT * FROM hiscoreTableLatest;'
+    highscores = execute_sql(sql_highscores, param=None,
+                             debug=False, has_return=True)
+    return highscores
+
+
+'''
+    Joined & complex Queries
+'''
 
 
 def get_report_stats():
@@ -177,16 +226,10 @@ def get_report_stats():
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
-
-def get_number_tracked_players():
-    sql = 'SELECT COUNT(*) count FROM Players;'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
-    return data
-
-#TODO: use contributor
+# TODO: use contributor
 def get_contributions(contributor):
 
-    query= '''
+    query = '''
         SELECT 
             rptr.name reporter_name,
             rptd.name reported_name,
@@ -196,6 +239,7 @@ def get_contributions(contributor):
         inner join Players rptd on(rpts.reportedID = rptd.id)
         WHERE 1=1
         	and rptr.name = :contributor
+        ;
     '''
 
     params = {
@@ -207,7 +251,7 @@ def get_contributions(contributor):
     return data
 
 
-#TODO: route & visual on website
+# TODO: route & visual on website
 def get_player_table_stats():
     sql = ''' 
         SELECT 
@@ -218,11 +262,12 @@ def get_player_table_stats():
             Date(updated_at)
         order BY
             Date(updated_at) DESC
+        ;
     '''
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
-#TODO: route & visual on website
+# TODO: route & visual on website
 def get_hiscore_table_stats():
     sql = ''' 
         SELECT 
@@ -232,7 +277,8 @@ def get_hiscore_table_stats():
         GROUP BY
             Date(timestamp)
         order BY
-            Date(timestamp) DESC;
+            Date(timestamp) DESC
+        ;
     '''
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data

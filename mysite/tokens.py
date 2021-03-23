@@ -100,6 +100,25 @@ def create_user_token(token, player_name, hiscore=0, ban=0):
     These routes are accessible if you have a token
 '''
 
+@app_token.route('/site/player/<token>/<player_name>', methods=['GET', 'POST'])
+def get_player_route(token, player_name):
+    # get token
+    player_token = SQL.get_token(token)
+
+    # verify token
+    if not (player_token):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+
+    
+    # get data
+    data = SQL.get_player(player_name)
+    if data is None:
+        return jsonify({None:None})
+    # parse data
+    df = pd.DataFrame([data])
+    myjson = df.to_json(orient='records')
+
+    return jsonify(json.loads(myjson))
 
 @app_token.route('/site/players/<token>', methods=['GET', 'POST'])
 def get_players(token):
