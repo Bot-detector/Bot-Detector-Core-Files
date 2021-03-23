@@ -200,6 +200,10 @@ def get_highscores_data():
                              debug=False, has_return=True)
     return highscores
 
+def get_players_to_scrape():
+    sql = 'select * from playersToScrape;'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
 
 '''
     Joined & complex Queries

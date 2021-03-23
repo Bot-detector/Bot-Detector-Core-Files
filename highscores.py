@@ -323,7 +323,7 @@ def main(player_names):
 
 def get_players():
     # get data
-    data = SQL.get_player_names()
+    data = SQL.get_players_to_scrape()
     df = pd.DataFrame(data)
 
     player_names = json.loads(df.to_json(orient='records'))
