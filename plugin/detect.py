@@ -29,7 +29,7 @@ def custom_hiscore(detection):
     
 
 def multi_thread(tasks):
-    with cf.ProcessPoolExecutor() as executor:
+    with cf.ThreadPoolExecutor() as executor:
         futures = {executor.submit(custom_hiscore, task[0]) for task in tasks}
         for future in cf.as_completed(futures):
             _ = future.result()
