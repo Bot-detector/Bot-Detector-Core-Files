@@ -29,7 +29,7 @@ def custom_hiscore(detection):
     
 
 def multi_thread(tasks):
-    with cf.ThreadPoolExecutor() as executor:
+    with cf.ProcessPoolExecutor() as executor:
         futures = {executor.submit(custom_hiscore, task[0]) for task in tasks}
         for future in cf.as_completed(futures):
             _ = future.result()
@@ -42,7 +42,7 @@ def post_detect(manual_detect=0):
     tasks = []
     
     # multithread might cause issue on server
-    mt = False
+    mt = True
     job = True
 
     # remove duplicates
@@ -58,12 +58,14 @@ def post_detect(manual_detect=0):
         else:
             # note when using lambda you cannot have return values
             if job:
+                # schedule job
                 Config.sched.add_job(lambda: custom_hiscore(detection))
             else:
                 custom_hiscore(detection)
     if mt:
         # note when using lambda you cannot have return values
         if job:
+            print('schedule mt')
             Config.sched.add_job(lambda: multi_thread(tasks))
         else:
             multi_thread(tasks)

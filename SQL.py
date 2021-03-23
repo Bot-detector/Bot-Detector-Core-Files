@@ -24,6 +24,7 @@ def get_random_string(length):
 
 
 def execute_sql(sql, param=None, debug=False, has_return=True):
+    session = db.create_scoped_session()
     # example
     sql = text(sql)
     if debug:
@@ -31,7 +32,7 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
         print(f'Param: {param}')
 
     if has_return:
-        rows = db.session.execute(sql, param)
+        rows = session.execute(sql, param)
         # db.session.close()
         Record = namedtuple('Record', rows.keys())
         records = [Record(*r) for r in rows.fetchall()]
@@ -40,9 +41,9 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
             print(f'keys: {rows.keys()}')
         return records
     else:
-        db.session.execute(sql, param)
-        db.session.commit()
-
+        session.execute(sql, param)
+        session.commit()
+    session.remove()
 
 '''
     Players Table
@@ -65,7 +66,7 @@ def get_player(player_name):
     player = execute_sql(
         sql=sql_player_id,
         param=param,
-        debug=True,
+        debug=False,
         has_return=True
     )
 
@@ -95,7 +96,7 @@ def insert_player(player_name):
     param = {
         'player_name': player_name
     }
-    execute_sql(sql_insert, param=param, debug=True, has_return=False)
+    execute_sql(sql_insert, param=param, debug=False, has_return=False)
     player = get_player(player_name)
     return player
 
@@ -150,7 +151,7 @@ def insert_report(data):
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
     sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
-    execute_sql(sql_insert, param=param, debug=True, has_return=False)
+    execute_sql(sql_insert, param=param, debug=False, has_return=False)
 
 
 '''
