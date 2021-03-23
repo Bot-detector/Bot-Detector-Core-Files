@@ -32,7 +32,7 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
 
     if has_return:
         rows = db.session.execute(sql, param)
-        db.session.close()
+        # db.session.close()
         Record = namedtuple('Record', rows.keys())
         records = [Record(*r) for r in rows.fetchall()]
 
