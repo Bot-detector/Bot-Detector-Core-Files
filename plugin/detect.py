@@ -25,15 +25,17 @@ def custom_hiscore(detection):
 
     # insert into reports
     SQL.insert_report(detection)
-    print(detection)
+    return 1
     
 
 def multi_thread(tasks):
+    actions_done = 0
     with cf.ProcessPoolExecutor() as executor:
         futures = {executor.submit(custom_hiscore, task[0]) for task in tasks}
         for future in cf.as_completed(futures):
-            _ = future.result()
-
+            actions_done += future.result()
+            if actions_done % 100 == 0:
+                print('     Completed',actions_done, 'detections')
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
 def post_detect(manual_detect=0):
@@ -48,11 +50,11 @@ def post_detect(manual_detect=0):
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
+    print('     detections Shape',df.shape)
     detections = df.to_dict('records')
 
     for detection in detections:
         detection['manual_detect'] = manual_detect
-        # print(f'Detected: {detection}')
         if mt:
             tasks.append(([detection]))
         else:
@@ -65,11 +67,8 @@ def post_detect(manual_detect=0):
     if mt:
         # note when using lambda you cannot have return values
         if job:
-            print('schedule mt')
             Config.sched.add_job(lambda: multi_thread(tasks))
         else:
             multi_thread(tasks)
-
-        
 
     return jsonify({'OK': 'OK'})
