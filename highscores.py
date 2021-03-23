@@ -226,7 +226,7 @@ def make_web_call(URL, user_agent_list, debug=True):
         'http':Config.proxy_http,
         'https': Config.proxy_https
     }
-    print(proxies)
+    # print(proxies)
     # Make the request
     response = http.get(URL, headers=headers, proxies=proxies)
     if response.status_code == 404:
