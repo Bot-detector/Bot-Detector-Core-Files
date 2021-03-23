@@ -65,7 +65,7 @@ def get_player(player_name):
     player = execute_sql(
         sql=sql_player_id,
         param=param,
-        debug=False,
+        debug=True,
         has_return=True
     )
 
@@ -95,7 +95,7 @@ def insert_player(player_name):
     param = {
         'player_name': player_name
     }
-    execute_sql(sql_insert, param=param, debug=False, has_return=False)
+    execute_sql(sql_insert, param=param, debug=True, has_return=False)
     player = get_player(player_name)
     return player
 
@@ -150,7 +150,7 @@ def insert_report(data):
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
     sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
-    execute_sql(sql_insert, param=param, debug=False, has_return=False)
+    execute_sql(sql_insert, param=param, debug=True, has_return=False)
 
 
 '''

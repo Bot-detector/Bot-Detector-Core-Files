@@ -324,6 +324,10 @@ def main(player_names):
 def get_players():
     # get data
     data = SQL.get_players_to_scrape()
+    if len(data) == 0:
+        print('no players to scrape')
+        return []
+
     df = pd.DataFrame(data)
 
     player_names = json.loads(df.to_json(orient='records'))
