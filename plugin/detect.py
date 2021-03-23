@@ -47,7 +47,7 @@ def post_detect(manual_detect=0):
 
     # remove duplicates
     df = pd.DataFrame(detections)
-    df.drop_duplicates(subset=['reporter','reported','region_id'],inplace=True)
+    df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
     detections = df.to_dict('records')
 
     for detection in detections:

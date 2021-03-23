@@ -16,4 +16,4 @@ app.config["SQLALCHEMY_DATABASE_URI"] = sql_uri
 db = SQLAlchemy(app)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-   sched = BackgroundScheduler(daemon=True)
+   sched = BackgroundScheduler(daemon=False)
