@@ -112,8 +112,11 @@ def get_player_route(token, player_name):
     
     # get data
     data = SQL.get_player(player_name)
+
+    # if there is no data return
     if data is None:
-        return jsonify({None:None})
+        return "<h1>404</h1><p>Player not found</p>", 404
+
     # parse data
     df = pd.DataFrame([data])
     myjson = df.to_json(orient='records')

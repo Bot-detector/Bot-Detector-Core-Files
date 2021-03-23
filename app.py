@@ -19,7 +19,8 @@ app.register_blueprint(app_token)
 app.register_blueprint(dashboard)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-    sched.add_job(run_hiscore, 'interval', hours=1, start_date=datetime.date.today())
+    started = True
+    sched.add_job(run_hiscore, 'interval', minutes=1, start_date=datetime.date.today())
     sched.start()
 
 
@@ -33,7 +34,7 @@ def page_not_found(e):
 @app.route("/")
 def hello():
 
-    data = {'welcome': 'test'}
+    data = {'welcome': 'test', 'job': started}
     return jsonify(data)
 
 
