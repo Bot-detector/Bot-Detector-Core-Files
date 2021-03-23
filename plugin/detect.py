@@ -42,7 +42,7 @@ def post_detect(manual_detect=0):
     tasks = []
     
     # multithread might cause issue on server
-    mt = True
+    mt = False
     job = True
 
     # remove duplicates
