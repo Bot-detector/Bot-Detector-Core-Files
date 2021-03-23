@@ -8,7 +8,9 @@ from urllib3.util.retry import Retry
 import concurrent.futures as cf
 import json
 import pandas as pd
+# custom
 import SQL
+import Config
 
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
@@ -220,8 +222,13 @@ def make_web_call(URL, user_agent_list, debug=True):
     http.mount("https://", adapter)
     http.mount("http://", adapter)
 
+    proxies = {
+        'http':Config.proxy_http,
+        'https': Config.proxy_https
+    }
+    print(proxies)
     # Make the request
-    response = http.get(URL, headers=headers)
+    response = http.get(URL, headers=headers, proxies=proxies)
     if response.status_code == 404:
         # player is banned, handled in mystasks
 

@@ -6,6 +6,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 load_dotenv(find_dotenv(), verbose=True)
 sql_uri = os.environ.get('sql_uri')
+proxy_http = os.environ.get('proxy_http')
+proxy_https = os.environ.get('proxy_https')
 
 app = Flask(__name__)
 

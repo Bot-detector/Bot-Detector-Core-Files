@@ -132,7 +132,7 @@ def create_token(player_name, highscores, verify_ban):
 
 
 def get_highscores_data():
-    sql_highscores = 'SELECT a.*,b.name FROM hiscoreTableLatest a left join Players b on (a.Player_id = b.id);'
+    sql_highscores = 'SELECT * FROM hiscoreTableLatest;'
     #sql_highscores = 'select a.*,b.name from playerHiscoreData a left join Players b on (a.Player_id = b.id);'
     highscores = execute_sql(sql_highscores, param=None,
                              debug=False, has_return=True)

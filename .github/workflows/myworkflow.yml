@@ -16,6 +16,8 @@ jobs:
       - name: Docker
         run: |
           echo "${{ secrets.DB_URI }}" > .env
+          echo "${{ secrets.HTTP_PROXY }}" >> .env
+          echo "${{ secrets.HTTPS_PROXY }}" >> .env
           docker stop bot_detector
           docker system prune -a -f
           pip3 install waitress

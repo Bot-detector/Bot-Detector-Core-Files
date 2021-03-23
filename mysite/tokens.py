@@ -24,7 +24,6 @@ def get_highscores(token):
     # get token
     player_token = SQL.get_token(token)
 
-    print(player_token)
     # verify token
     if not (player_token):
         return "<h1>404</h1><p>Invalid token</p>", 404
