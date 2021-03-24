@@ -1,38 +1,14 @@
 # Bot Detector
 The core files for the Bot Detector Plugin.
 
-https://www.patreon.com/bot_detector
+Patreon: https://www.patreon.com/bot_detector
+
 Workflow:
 
 ![image](https://user-images.githubusercontent.com/5789682/112380944-628dc600-8cc0-11eb-8924-4e5fa7ed2c45.png)
 
---BEHOLD PRETTY CHARTS TO LURE YOU IN--
-
-(n = 6445) [Attack, Runecrafting, Strength][x, y, z]
-
-
-![image](https://user-images.githubusercontent.com/5789682/109563187-707b6d00-7aad-11eb-9303-941bb29b7ceb.png)
-![image](https://user-images.githubusercontent.com/5789682/109563206-74a78a80-7aad-11eb-86a2-54c61a5c3c01.png)
-![image](https://user-images.githubusercontent.com/5789682/109563212-76714e00-7aad-11eb-9ace-5db5d3aaa38b.png)
-
-An example of some bot-like activity visualized with a kde overlaying a scatter plot: (Attack, Smithing) (n = 6445)
-
-![image](https://user-images.githubusercontent.com/5789682/109696288-e558b080-7b5a-11eb-8050-4fd5620bc551.png)
-
-A visualized example of a normal distribution of players (Firemaking, Wintertodt Kills) (n = 6445)
-
-![image](https://user-images.githubusercontent.com/5789682/109696744-5ef09e80-7b5b-11eb-8776-2c608cdb2e0b.png)
-
-
 --README--
 1. The files within this repo are used in conjunction with https://github.com/Ferrariic/bot-detector on RuneLite.
-
-Workflow:
-1. Player names are retrieved from Players (RuneLite Plugin Hub - https://github.com/Ferrariic/bot-detector)
-2. Names are sent to the server and processed for machine readability. (https://github.com/Ferrariic/Python-Bot-Detector/blob/main/Web-Reciever.py)
-3. Names are then scanned through the Hiscores and their stats are pulled. (https://github.com/Ferrariic/Python-Bot-Detector/blob/main/HiscoreNamePuller/HiscoreNamePuller.py)
-4. Players are then categorized and evaluated. (https://github.com/Ferrariic/Python-Bot-Detector/blob/main/Main/V100_Main.py)
-5. Players that meet criteria for being bot-like or suspicious are reported to tipoff@jagex.com
 
 FAQ:
 
