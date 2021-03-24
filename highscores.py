@@ -319,7 +319,7 @@ def main(player_names):
 '''
     end old
 '''
-@logging
+# @logging
 def my_sql_task(data, player_name):
     # get player if return is none, the player does not exist
     player = SQL.get_player(player_name)
@@ -361,7 +361,7 @@ def multi_thread(tasks):
         for future in cf.as_completed(futures):
             player_name = futures[future]
 
-            print(f'mt got player: {player_name}')
+            # print(f'mt got player: {player_name}')
 
             data = future.result()
             
