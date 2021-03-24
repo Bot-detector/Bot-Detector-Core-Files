@@ -58,7 +58,8 @@ def print_log():
 
 @app.route("/hiscorescraper")
 def hiscorescraper():
-    sched.add_job(run_hiscore)
+    for _ in range(5):
+        sched.add_job(run_hiscore)
     return redirect('/log')
 
 if __name__ == '__main__':
