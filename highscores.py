@@ -204,7 +204,7 @@ def logging(f):
     return wrapper
 
 
-def make_web_call(URL, user_agent_list, debug=True):
+def make_web_call(URL, user_agent_list, debug=False):
     # Pick a random user agent
     user_agent = random.choice(user_agent_list)
     # Set the headers
@@ -244,7 +244,7 @@ def make_web_call(URL, user_agent_list, debug=True):
     return response
 
 
-@logging
+# @logging
 def parse_highscores(data):
     # get list of keys from dict
     skills_keys = list(skills.keys())
@@ -261,7 +261,7 @@ def parse_highscores(data):
     return skills, minigames
 
 
-@logging
+# @logging
 def get_data(player_name):
     url = f'https://secure.runescape.com/m=hiscore_oldschool/index_lite.ws?player={player_name}'
     # make a webcall
@@ -366,10 +366,10 @@ def get_players():
 
 
 def run_hiscore():
-    lg.debug(f'     Starting hiscore Scraper: {dt.datetime}')
+    lg.debug(f'     Starting hiscore Scraper: {dt.datetime.now()}')
     total = 0
     batch_size = 50
-    refresh_factor = 10
+    refresh_factor = 20
 
     refresh_rate = batch_size * refresh_factor
     
@@ -402,7 +402,7 @@ def run_hiscore():
             start, end = 0, 0
             scrape_list = player_names
 
-        lg.debug(f'hi score scraper status: TODO:{len(player_names)}, DONE:{total}, batch: start: {start}, end: {end}')
+        lg.debug(f'hi score scraper status: TODO:{len(player_names)}, DONE:{total}, batch: start: {start}, end: {end}, date: {dt.datetime.now()}')
 
         # get hiscores of all the players in batch
         main(scrape_list)
