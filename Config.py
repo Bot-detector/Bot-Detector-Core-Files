@@ -13,6 +13,7 @@ app = Flask(__name__)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["SQLALCHEMY_DATABASE_URI"] = sql_uri
+app.config['SQLALCHEMY_MAX_OVERFLOW'] = 200
 db = SQLAlchemy(app)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
