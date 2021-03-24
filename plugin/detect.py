@@ -33,7 +33,7 @@ def insync_detect(detections, manual_detect):
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
         custom_hiscore(detection)
-        if idx % 100 == 0 and idx != 0:
+        if idx % 500 == 0 and idx != 0:
             logging.debug(msg=f'      Completed {idx}/{len(detections)}')
 
     logging.debug(msg=f'      Done: Completed {idx} detections')

@@ -39,6 +39,8 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
 
         if debug:
             print(f'keys: {rows.keys()}')
+            
+        session.remove()
         return records
     else:
         session.execute(sql, param)
@@ -104,7 +106,7 @@ def insert_player(player_name):
 def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, debug=False):
     sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban, confirmed_player=:confirmed_player, label_id=:label_id where id=:player_id;'
     param = {
-        'ts':  time.strftime('%Y-%m-%d %H:%M:%S'),
+        'ts':  time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime()),
         'possible_ban': possible_ban,
         'confirmed_ban': confirmed_ban,
         'confirmed_player': confirmed_player,
