@@ -360,8 +360,9 @@ def multi_thread(tasks):
 
     i = 0
     with cf.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(get_data, task[0]): task[0] for task in mt_tasks}
 
+        futures = {executor.submit(get_data, task[0]): task[0] for task in mt_tasks}
+        start = dt.datetime.now()
         for future in cf.as_completed(futures):
             i += 1
             player_name = futures[future]
@@ -370,8 +371,11 @@ def multi_thread(tasks):
             
             my_sql_task(data=data, player_name=player_name)
             if i % 100 == 0:
-                lg.debug(f'     hiscores scraped: {i}')
-                print(f'     hiscores scraped: {i}')
+                end = dt.datetime.now()
+                t = start - end
+                lg.debug(f'     hiscores scraped: {i}, took: {t}')
+                print(f'     hiscores scraped: {i}, took: {t}')
+                start = dt.datetime.now()
 
 def get_players():
     # get data
@@ -455,8 +459,8 @@ def run_hiscore():
             start, end = 0, 0
             scrape_list = player_names
 
-        lg.debug(f'hi score scraper status: TODO:{len(player_names)}, DONE:{total}, batch: start: {start}, end: {end}, date: {dt.datetime.now()}')
-        print(f'hi score scraper status: TODO:{len(player_names)}, DONE:{total}, batch: start: {start}, end: {end}, date: {dt.datetime.now()}')
+        lg.debug(f'hiscore scraper status: TODO:{len(player_names)}, DONE:{total}, batch: start: {start}, end: {end}, date: {dt.datetime.now()}')
+        print(f'hiscore scraper status: TODO: {len(player_names)}, DONE: {total}, batch: start: {start}, end: {end}, date: {dt.datetime.now()}')
         # get hiscores of all the players in batch
         if mt:
             multi_thread(scrape_list)
