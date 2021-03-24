@@ -14,8 +14,8 @@ from plugin.detect import detect
 from Config import app, sched
 from highscores import run_hiscore
 
-import sys
-sys.stdout = open('error.log', 'a')
+# import sys
+# sys.stdout = open('error.log', 'a')
 
 logging.FileHandler(filename="error.log", mode='a')
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
