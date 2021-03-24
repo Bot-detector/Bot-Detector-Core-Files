@@ -11,3 +11,5 @@ venv/
 
 .env
 flaskwebapp.log
+
+error.log

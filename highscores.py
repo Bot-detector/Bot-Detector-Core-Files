@@ -9,8 +9,6 @@ import concurrent.futures as cf
 import json
 import pandas as pd
 # custom
-import SQL
-import Config
 
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",

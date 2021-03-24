@@ -1,8 +1,9 @@
-from flask import jsonify
+from flask import jsonify, render_template_string
 from waitress import serve
 import requests
 import datetime
 import os
+import logging
 #import logging
 # custom
 
@@ -12,6 +13,14 @@ from plugin.plugin_stats import plugin_stats
 from plugin.detect import detect
 from Config import app, sched
 from highscores import run_hiscore
+
+import sys
+sys.stdout = open('error.log', 'a')
+
+logging.FileHandler(filename="error.log", mode='a')
+logging.basicConfig(filename='error.log', level=logging.DEBUG)
+logger = logging.getLogger()
+print = logger.info
 
 app.register_blueprint(plugin_stats)
 app.register_blueprint(detect)
@@ -36,6 +45,13 @@ def hello():
 
     data = {'welcome': 'test', 'job': started}
     return jsonify(data)
+
+@app.route("/log")
+def print_log():
+    with open("error.log", "r") as f:
+        content = f.read()
+        return render_template_string("<pre>{{ content }}</pre>", content=content)
+
 
 
 if __name__ == '__main__':

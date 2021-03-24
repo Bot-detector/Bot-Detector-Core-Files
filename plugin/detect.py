@@ -3,6 +3,8 @@ from flask.json import jsonify
 import SQL, Config
 import concurrent.futures as cf
 import pandas as pd
+import sys
+import logging
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
@@ -35,7 +37,7 @@ def multi_thread(tasks):
         for future in cf.as_completed(futures):
             actions_done += future.result()
             if actions_done % 100 == 0:
-                print('     Completed',actions_done, 'detections')
+                logging.debug(msg=f'      Completed {actions_done} detections')
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
 def post_detect(manual_detect=0):
@@ -50,8 +52,10 @@ def post_detect(manual_detect=0):
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
-    print('     detections Shape',df.shape)
+    
     detections = df.to_dict('records')
+
+    logging.debug(msg=f'      detections Shape {df.shape} detections')
 
     for detection in detections:
         detection['manual_detect'] = manual_detect
@@ -61,13 +65,13 @@ def post_detect(manual_detect=0):
             # note when using lambda you cannot have return values
             if job:
                 # schedule job
-                Config.sched.add_job(lambda: custom_hiscore(detection))
+                Config.sched.add_job(lambda: custom_hiscore(detection), replace_existing=False, name='detect')
             else:
                 custom_hiscore(detection)
     if mt:
         # note when using lambda you cannot have return values
         if job:
-            Config.sched.add_job(lambda: multi_thread(tasks))
+            Config.sched.add_job(lambda: multi_thread(tasks), replace_existing=False, name='mt detect')
         else:
             multi_thread(tasks)
 
