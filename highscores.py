@@ -372,7 +372,7 @@ def multi_thread(tasks):
             my_sql_task(data=data, player_name=player_name)
             if i % 100 == 0:
                 end = dt.datetime.now()
-                t = start - end
+                t = end - start
                 lg.debug(f'     hiscores scraped: {i}, took: {t}')
                 print(f'     hiscores scraped: {i}, took: {t}')
                 start = dt.datetime.now()
