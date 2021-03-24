@@ -420,8 +420,8 @@ def run_hiscore():
     lg.debug(f'     Starting hiscore Scraper: {dt.datetime.now()}')
     print(f'     Starting hiscore Scraper: {dt.datetime.now()}')
     total = 0
-    batch_size = 500
-    refresh_factor = 4
+    batch_size = 2000
+    refresh_factor = 2
 
     refresh_rate = batch_size * refresh_factor
     
