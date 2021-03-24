@@ -8,7 +8,10 @@ from urllib3.util.retry import Retry
 import concurrent.futures as cf
 import json
 import pandas as pd
+import logging as lg
 # custom
+import Config
+import SQL
 
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
@@ -221,7 +224,7 @@ def make_web_call(URL, user_agent_list, debug=True):
     http.mount("http://", adapter)
 
     proxies = {
-        'http':Config.proxy_http,
+        'http': Config.proxy_http,
         'https': Config.proxy_https
     }
     # print(proxies)
@@ -363,7 +366,7 @@ def get_players():
 
 
 def run_hiscore():
-    print(dt.datetime.today())
+    lg.debug(f'     Starting hiscore Scraper: {dt.datetime}')
     total = 0
     batch_size = 50
     refresh_factor = 10
@@ -399,7 +402,7 @@ def run_hiscore():
             start, end = 0, 0
             scrape_list = player_names
 
-        print(len(player_names), total, start, end)
+        lg.debug(f'hi score scraper status: TODO:{len(player_names)}, DONE:{total}, batch: start: {start}, end: {end}')
 
         # get hiscores of all the players in batch
         main(scrape_list)
