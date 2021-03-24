@@ -322,7 +322,7 @@ def main(player_names):
 '''
     end old
 '''
-@logging
+# @logging
 def my_sql_task(data, player_name):
     # get player if return is none, the player does not exist
     player = SQL.get_player(player_name)
@@ -358,15 +358,20 @@ def multi_thread(tasks):
     for task in tasks:
         mt_tasks.append(([task]))
 
+    i = 0
     with cf.ProcessPoolExecutor() as executor:
         futures = {executor.submit(get_data, task[0]): task[0] for task in mt_tasks}
 
         for future in cf.as_completed(futures):
+            i += 1
             player_name = futures[future]
 
             data = future.result()
             
             my_sql_task(data=data, player_name=player_name)
+            if i % 100 == 0:
+                lg.debug(f'     hiscores scraped: {i}')
+                print(f'     hiscores scraped: {i}')
 
 def get_players():
     # get data
