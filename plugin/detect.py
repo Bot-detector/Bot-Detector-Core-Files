@@ -27,52 +27,29 @@ def custom_hiscore(detection):
 
     # insert into reports
     SQL.insert_report(detection)
-    return 1
-    
 
-def multi_thread(tasks):
-    actions_done = 0
-    with cf.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(custom_hiscore, task[0]): task[0] for task in tasks}
-        for future in cf.as_completed(futures):
-            actions_done += future.result()
-            if actions_done % 100 == 0:
-                logging.debug(msg=f'      Completed {actions_done} detections')
+
+def insync_detect(detections, manual_detect):
+    for idx, detection in enumerate(detections):
+        detection['manual_detect'] = manual_detect
+        custom_hiscore(detection)
+        if idx % 100 == 0 and idx != 0:
+            logging.debug(msg=f'      Completed {idx}/{len(detections)}')
+
+    logging.debug(msg=f'      Done: Completed {idx} detections')
+
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
 def post_detect(manual_detect=0):
     detections = request.get_json()
     manual_detect = 0 if int(manual_detect) == 0 else 1
-    tasks = []
-    
-    # multithread might cause issue on server
-    mt = False
-    job = True
-
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
     
     detections = df.to_dict('records')
 
-    logging.debug(msg=f'      detections Shape {df.shape} detections')
-
-    for detection in detections:
-        detection['manual_detect'] = manual_detect
-        if mt:
-            tasks.append(([detection]))
-        else:
-            # note when using lambda you cannot have return values
-            if job:
-                # schedule job
-                Config.sched.add_job(lambda: custom_hiscore(detection), replace_existing=False, name='detect')
-            else:
-                custom_hiscore(detection)
-    if mt:
-        # note when using lambda you cannot have return values
-        if job:
-            Config.sched.add_job(lambda: multi_thread(tasks), replace_existing=False, name='mt detect')
-        else:
-            multi_thread(tasks)
+    logging.debug(msg=f'      Received detections: DF shape: {df.shape}')
+    Config.sched.add_job(lambda: insync_detect(detections, manual_detect), replace_existing=False, name='detect')
 
     return jsonify({'OK': 'OK'})
