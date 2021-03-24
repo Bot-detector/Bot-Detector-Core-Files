@@ -1,4 +1,4 @@
-from flask import jsonify, render_template_string
+from flask import jsonify, render_template_string, redirect
 from waitress import serve
 import requests
 import datetime
@@ -19,6 +19,7 @@ sys.stdout = open('error.log', 'a')
 
 logging.FileHandler(filename="error.log", mode='a')
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
+logging.getLogger("requests").setLevel(logging.WARNING)
 logger = logging.getLogger()
 print = logger.info
 
@@ -29,7 +30,7 @@ app.register_blueprint(dashboard)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
-    sched.add_job(run_hiscore, 'interval', minutes=10, start_date=datetime.date.today())
+    sched.add_job(run_hiscore, 'interval', hours=1, start_date=datetime.date.today())
     sched.start()
 
 
@@ -52,7 +53,10 @@ def print_log():
         content = f.read()
         return render_template_string("<pre>{{ content }}</pre>", content=content)
 
-
+@app.route("/hiscorescraper")
+def hiscorescraper():
+    sched.add_job(run_hiscore)
+    return redirect('/log')
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True, use_reloader=False)
