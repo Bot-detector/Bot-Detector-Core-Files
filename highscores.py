@@ -307,20 +307,11 @@ def mytasks(player_name):
 
     return skills, minigames
 
-
+@logging
 def main(player_names):
-    # create a list of tasks
-    tasks = []
-    for player_name in player_names:
-        tasks.append(([player_name]))
-    # multi thread each task in tasklist
-    # ThreadPoolExecutor  ProcessPoolExecutor
-    with cf.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(mytasks, task[0]) for task in tasks}
-        for future in cf.as_completed(futures):
-            # we don't care about the return values
-            _, _ = future.result()
 
+    for player_name in player_names:
+        Config.sched.add_job(lambda: mytasks(player_name), replace_existing=False, name='hiscore')
 
 def get_players():
     # get data
@@ -335,9 +326,9 @@ def get_players():
     #player_names = response.json()
 
     # filter data, to today
-    interval_in_secons = 24*60*60
+    interval_in_seconds = 24*60*60
     today = time.time()
-    offset = (today % interval_in_secons)
+    offset = (today % interval_in_seconds)
     rounded = today - offset
     today = rounded*1000
 
