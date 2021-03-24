@@ -359,7 +359,7 @@ def get_players():
 def run_hiscore():
     lg.debug(f'     Starting hiscore Scraper: {dt.datetime.now()}')
     total = 0
-    batch_size = 50
+    batch_size = 1_000_000
     refresh_factor = 20
 
     refresh_rate = batch_size * refresh_factor
