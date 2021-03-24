@@ -179,6 +179,7 @@ minigames = {
     "sarachnis": "",
     "scorpia": "",
     "skotizo": "",
+    "Tempoross":"",
     "the_gauntlet": "",
     "the_corrupted_gauntlet": "",
     "theatre_of_blood": "",
@@ -199,12 +200,12 @@ def logging(f):
         start = dt.datetime.now()
         result = f(*args, **kwargs)
         end = dt.datetime.now()
-        print(f'{f.__name__} took: {end - start}')
+        print(f'    {f.__name__} took: {end - start}')
         return result
     return wrapper
 
 
-def make_web_call(URL, user_agent_list, debug=False):
+def make_web_call(URL, user_agent_list, debug=True):
     # Pick a random user agent
     user_agent = random.choice(user_agent_list)
     # Set the headers
@@ -229,6 +230,7 @@ def make_web_call(URL, user_agent_list, debug=False):
     }
     # print(proxies)
     # Make the request
+
     response = http.get(URL, headers=headers, proxies=proxies)
     if response.status_code == 404:
         # player is banned, handled in mystasks
@@ -239,8 +241,7 @@ def make_web_call(URL, user_agent_list, debug=False):
 
     if debug:
         print(f'Requesting: {URL}')
-        print(
-            f'Response: Status code: {response.status_code}, response length: {len(response.text)}')
+        print(f'Response: Status code: {response.status_code}, response length: {len(response.text)}')
     return response
 
 
@@ -276,6 +277,9 @@ def get_data(player_name):
     return data
 
 
+'''
+    old
+'''
 def mytasks(player_name):
     # get data
     data = get_data(player_name)
@@ -307,11 +311,61 @@ def mytasks(player_name):
 
     return skills, minigames
 
-@logging
+# @logging
 def main(player_names):
-
     for player_name in player_names:
         Config.sched.add_job(lambda: mytasks(player_name), replace_existing=False, name='hiscore')
+
+'''
+    end old
+'''
+@logging
+def my_sql_task(data, player_name):
+    # get player if return is none, the player does not exist
+    player = SQL.get_player(player_name)
+    
+    if player is None:
+        player = SQL.insert_player(player_name)
+
+    # player variables
+    cb = player.confirmed_ban
+    cp = player.confirmed_player
+    lbl = player.label_id
+
+    # if hiscore data is none, then player is banned
+    if data is None:
+        SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
+        return None, None
+
+    # else we parse the hiscore data
+    skills, minigames = parse_highscores(data)
+
+    # update the player so updated at is recent
+    SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
+
+    # insert in hiscore data
+    SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
+    
+
+def multi_thread(tasks):
+    # multi thread the requesting of data
+    lg.debug(f'     Starting multithread: {dt.datetime.now()}')
+    print(f'     Starting multithread: {dt.datetime.now()}')
+    mt_tasks = []
+    for task in tasks:
+        mt_tasks.append(([task]))
+
+    with cf.ProcessPoolExecutor() as executor:
+        futures = {executor.submit(get_data, task[0]): task[0] for task in mt_tasks}
+
+        for future in cf.as_completed(futures):
+            player_name = futures[future]
+
+            print(f'mt got player: {player_name}')
+
+            data = future.result()
+            
+            my_sql_task(data=data, player_name=player_name)
 
 def get_players():
     # get data
@@ -352,18 +406,20 @@ def get_players():
         # append player to player name list
         p_names.append(player['name'])
 
-    print(len(p_names))
+    print('players to scan:', len(p_names))
     return p_names
 
 
 def run_hiscore():
     lg.debug(f'     Starting hiscore Scraper: {dt.datetime.now()}')
+    print(f'     Starting hiscore Scraper: {dt.datetime.now()}')
     total = 0
-    batch_size = 1_000_000
+    batch_size = 50
     refresh_factor = 20
 
     refresh_rate = batch_size * refresh_factor
     
+    mt = True
     # endless loops
     while True:
         
@@ -394,9 +450,12 @@ def run_hiscore():
             scrape_list = player_names
 
         lg.debug(f'hi score scraper status: TODO:{len(player_names)}, DONE:{total}, batch: start: {start}, end: {end}, date: {dt.datetime.now()}')
-
+        print(f'hi score scraper status: TODO:{len(player_names)}, DONE:{total}, batch: start: {start}, end: {end}, date: {dt.datetime.now()}')
         # get hiscores of all the players in batch
-        main(scrape_list)
+        if mt:
+            multi_thread(scrape_list)
+        else:
+            main(scrape_list)
         total += len(scrape_list)
 
         # remove scraped players from our list of players

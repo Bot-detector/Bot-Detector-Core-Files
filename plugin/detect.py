@@ -33,7 +33,7 @@ def custom_hiscore(detection):
 def multi_thread(tasks):
     actions_done = 0
     with cf.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(custom_hiscore, task[0]) for task in tasks}
+        futures = {executor.submit(custom_hiscore, task[0]): task[0] for task in tasks}
         for future in cf.as_completed(futures):
             actions_done += future.result()
             if actions_done % 100 == 0:
