@@ -373,8 +373,8 @@ def multi_thread(tasks):
             if i % 100 == 0:
                 end = dt.datetime.now()
                 t = end - start
-                lg.debug(f'     hiscores scraped: {i}, took: {t}')
-                print(f'     hiscores scraped: {i}, took: {t}')
+                lg.debug(f'     hiscores scraped: {i}, took: {t}, {dt.datetime.now()}')
+                print(f'     hiscores scraped: {i}, took: {t}, {dt.datetime.now()}')
                 start = dt.datetime.now()
 
 def get_players():

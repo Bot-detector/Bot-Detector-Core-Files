@@ -33,7 +33,7 @@ app.register_blueprint(dashboard)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
-    sched.add_job(run_hiscore, 'interval', minutes=10, start_date=datetime.date.today(), replace_existing=True)
+    sched.add_job(run_hiscore, 'interval', minutes=30, start_date=datetime.date.today(), replace_existing=True)
     sched.start()
 
 
@@ -58,8 +58,7 @@ def print_log():
 
 @app.route("/hiscorescraper")
 def hiscorescraper():
-    for _ in range(5):
-        sched.add_job(run_hiscore)
+    sched.add_job(run_hiscore)
     return redirect('/log')
 
 if __name__ == '__main__':
