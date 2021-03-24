@@ -13,6 +13,9 @@ import logging as lg
 import Config
 import SQL
 
+lg.getLogger("requests").setLevel(lg.WARNING)
+lg.getLogger("urllib3").setLevel(lg.WARNING)
+
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",

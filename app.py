@@ -20,6 +20,8 @@ sys.stdout = open('error.log', 'a')
 logging.FileHandler(filename="error.log", mode='a')
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 logger = logging.getLogger()
 print = logger.info
 
