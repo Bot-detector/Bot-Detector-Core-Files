@@ -1,9 +1,10 @@
 # Bot Detector
 The core files for the Bot Detector Plugin.
 
+https://www.patreon.com/bot_detector
 Workflow:
 
-![image](https://user-images.githubusercontent.com/5789682/111058485-ecd26080-845c-11eb-9a76-20c70745c6ba.png)
+![image](https://user-images.githubusercontent.com/5789682/112380944-628dc600-8cc0-11eb-8924-4e5fa7ed2c45.png)
 
 --BEHOLD PRETTY CHARTS TO LURE YOU IN--
 
