@@ -22,7 +22,7 @@ logging.basicConfig(filename='error.log', level=logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger('flask_cors').level = logging.DEBUG
+logging.getLogger('flask_cors').level = logging.WARNING
 
 logger = logging.getLogger()
 print = logger.info
