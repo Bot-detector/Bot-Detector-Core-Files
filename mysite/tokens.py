@@ -53,9 +53,6 @@ def verify_bot(token):
 
     player_token = SQL.get_token(token)
 
-    print("sup")
-    print(player_token)
-
     # verify token
     if not (player_token):
         return "Invalid Token", 405
@@ -64,7 +61,6 @@ def verify_bot(token):
         return "Invalid Token", 405
 
     form_data = request.get_json()
-    print(form_data)
 
     # input verification
     bot, bot_int = intTryParse(form_data['bot'])
