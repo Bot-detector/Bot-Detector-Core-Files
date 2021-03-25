@@ -18,7 +18,7 @@ def intTryParse(value):
 '''
 
 
-@app_token.route('/site/highscores/<token>', methods=['POST', 'OPTIONS'])
+@app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
 def get_highscores(token):
 
     # get token
