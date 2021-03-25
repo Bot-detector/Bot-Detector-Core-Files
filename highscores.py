@@ -323,7 +323,7 @@ def main(player_names):
     end old
 '''
 # @logging
-def my_sql_task(data, player_name):
+def my_sql_task(data, player_name, has_return=False):
     # get player if return is none, the player does not exist
     player = SQL.get_player(player_name)
     
@@ -348,6 +348,9 @@ def my_sql_task(data, player_name):
 
     # insert in hiscore data
     SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
+
+    if has_return:
+        return SQL.get_highscores_data_oneplayer(player_id=player.id)
     
 
 def multi_thread(tasks):
@@ -373,9 +376,10 @@ def multi_thread(tasks):
             if i % 100 == 0:
                 end = dt.datetime.now()
                 t = end - start
-                lg.debug(f'     hiscores scraped: {i}, took: {t}, {dt.datetime.now()}')
-                print(f'     hiscores scraped: {i}, took: {t}, {dt.datetime.now()}')
+                lg.debug(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
+                print(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
                 start = dt.datetime.now()
+
 
 def get_players():
     # get data
@@ -471,6 +475,11 @@ def run_hiscore():
         # remove scraped players from our list of players
         player_names = [
             player for player in player_names if player not in scrape_list]
+
+
+def scrape_one(player_name):
+    data = get_data(player_name)
+    return my_sql_task(data, player_name)
 
 if __name__ == '__main__':
     run_hiscore()

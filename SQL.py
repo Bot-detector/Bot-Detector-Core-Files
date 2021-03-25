@@ -204,6 +204,15 @@ def get_highscores_data():
                              debug=False, has_return=True)
     return highscores
 
+def get_highscores_data_oneplayer(player_id):
+    sql_highscores = 'SELECT * FROM hiscoreTableLatest where Player_id = :player_id;'
+    param  ={
+        'player_id':player_id
+    }
+    highscores = execute_sql(sql=sql_highscores, param=param,
+                             debug=False, has_return=True)
+    return highscores
+
 def get_players_to_scrape():
     sql = 'select * from playersToScrape;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
