@@ -173,11 +173,6 @@ def get_labels(token):
 
     return jsonify(json.loads(myjson))
 
-# CORS Policy: Allow Access to These Methods From Any Origin
-@app_token.before_request
-def before_request():
-    print("We got it")
-
 
 # CORS Policy: Allow Access to These Methods From Any Origin
 @app_token.after_request
