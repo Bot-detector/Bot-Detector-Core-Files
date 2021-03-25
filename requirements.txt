@@ -29,3 +29,4 @@ urllib3==1.26.3
 waitress==2.0.0
 Werkzeug==1.0.1
 cryptography==3.4.6
+Flask-Cors==3.0.10

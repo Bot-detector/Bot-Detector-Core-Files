@@ -1,11 +1,10 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, make_response, after_this_request
 from flask.json import jsonify
 import SQL
 import pandas as pd
 import json
 
 app_token = Blueprint('app_token', __name__, template_folder='templates')
-
 
 def intTryParse(value):
     try:
@@ -19,8 +18,9 @@ def intTryParse(value):
 '''
 
 
-@app_token.route('/site/highscores/<token>', methods=['GET', 'POST'])
+@app_token.route('/site/highscores/<token>', methods=['POST', 'OPTIONS'])
 def get_highscores(token):
+
     # get token
     player_token = SQL.get_token(token)
 
@@ -41,39 +41,56 @@ def get_highscores(token):
     return jsonify(json.loads(myjson))
 
 
-@app_token.route('/site/verify/<token>/<playername>')
-@app_token.route('/site/verify/<token>/<playername>/<bot>')
-@app_token.route('/site/verify/<token>/<playername>/<bot>/<label>')
-def verify_bot(token, playername, bot=0, label=0):
-    # get token
+@app_token.route('/site/verify/<token>', methods=['POST', 'OPTIONS'])
+def verify_bot(token):
+
+    #Preflight
+    if request.method == 'OPTIONS':
+        response = make_response()
+        header = response.headers
+        header['Access-Control-Allow-Origin'] = '*'
+        return response
+
     player_token = SQL.get_token(token)
+
+    print("sup")
+    print(player_token)
 
     # verify token
     if not (player_token):
-        return "<h1>404</h1><p>Invalid token</p>", 404
+        return "Invalid Token", 405
 
     if not (player_token[0].verify_ban == 1):
-        return "<h1>404</h1><p>Invalid token</p>", 404
+        return "Invalid Token", 405
 
-    # get data
-    player = SQL.get_player(playername)
+    form_data = request.get_json()
+    print(form_data)
 
     # input verification
-    bot, bot_int = intTryParse(bot)
-    label, label_int = intTryParse(label)
+    bot, bot_int = intTryParse(form_data['bot'])
+    label, label_int = intTryParse(form_data['label'])
 
-    if not (label_int) or not (bot_int) or player == None:
-        return "<h1>404</h1><p>Invalid parameters</p>", 404
+    playerNames = form_data['names']
 
-    # player is a bot
-    if bot == 0:
-        SQL.update_player(player.id, possible_ban=0,
+    if not (bot_int) or len(playerNames) == 0:
+        return "Invalid Parameters", 405
+
+    # get data
+    for name in playerNames:
+
+        player = SQL.get_player(name)
+
+        if player:
+            if bot == 0:
+                SQL.update_player(player.id, possible_ban=0,
                           confirmed_ban=0, label_id=1, confirmed_player=1)
-    else:
-        SQL.update_player(player.id, possible_ban=1,
+            else:
+                SQL.update_player(player.id, possible_ban=1,
                           confirmed_ban=1, label_id=label, confirmed_player=0)
 
-    return jsonify({'OK': 'report verified', 'bot': bot})
+    return 'OK'
+
+
 
 
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>')
@@ -159,3 +176,19 @@ def get_labels(token):
     myjson = df.to_json(orient='records')
 
     return jsonify(json.loads(myjson))
+
+# CORS Policy: Allow Access to These Methods From Any Origin
+@app_token.before_request
+def before_request():
+    print("We got it")
+
+
+# CORS Policy: Allow Access to These Methods From Any Origin
+@app_token.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Headers',
+                         "Origin, X-Requested-With, Content-Type, Accept, x-auth")
+    response.headers.add('Access-Control-Allow-Methods',
+                         'GET, POST, OPTIONS, PUT, PATCH, DELETE')
+    return response
+
