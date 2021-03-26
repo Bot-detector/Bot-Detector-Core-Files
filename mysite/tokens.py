@@ -134,6 +134,7 @@ def get_player_route(token, player_name):
 
     return jsonify(json.loads(myjson))
 
+@app_token.route('/site/players/<token>', methods=['GET', 'POST'])
 @app_token.route('/site/players/<token>/<ofInterest>', methods=['GET', 'POST'])
 def get_players(token, ofInterest=None):
     # verify token
