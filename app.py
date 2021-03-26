@@ -62,7 +62,7 @@ def print_log():
 @app.route("/hiscorescraper")
 def hiscorescraper():
     for _ in range(5):
-        sched.add_job(run_hiscore, name='manual run hiscore', max_instances=20)
+        sched.add_job(run_hiscore, name='manual run hiscore', max_instances=20, replace_existing=False)
         sleep(1)
     return redirect('/log')
 
