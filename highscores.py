@@ -372,7 +372,7 @@ def multi_thread(tasks):
 
             data = future.result()
             
-            Config.sched.add_job(lambda: my_sql_task(data=data, player_name=player_name))
+            Config.sched.add_job(lambda: my_sql_task(data=data, player_name=player_name), replace_existing=False, name='hiscore SQL')
             if i % 100 == 0:
                 end = dt.datetime.now()
                 t = end - start

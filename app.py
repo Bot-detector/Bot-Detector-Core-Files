@@ -1,3 +1,4 @@
+from time import sleep
 from flask import jsonify, render_template_string, redirect
 from waitress import serve
 import requests
@@ -36,6 +37,7 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
     for _ in range(10):
         sched.add_job(run_hiscore, 'interval', minutes=10, start_date=datetime.date.today(), replace_existing=False, max_instances=10, name='run_hiscore')
+        sleep(1)
     sched.start()
 
 
