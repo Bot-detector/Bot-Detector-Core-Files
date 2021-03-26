@@ -18,7 +18,7 @@ def train_model():
     
     df =            pf.get_highscores()
     df_players =    pf.get_players()
-    df_labels =     pf.get_labels()
+    df_labels =     pf.get_labels() # TODO: only parent labels?
 
     # pandas pipeline
     df_preprocess = (df
@@ -36,7 +36,7 @@ def train_model():
     
 
     #TODO: save pca to file
-    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=20, pca=None)
+    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=40, pca=None)
     dump(value=pca_model, filename=f'Predictions/models/pca_{today}_100.joblib')
 
     df_pca = df_pca.merge(df_players, left_index=True, right_index=True, how='inner')
@@ -45,7 +45,7 @@ def train_model():
 
     # getting labels with more then 5 players
     lbl_df = pd.DataFrame(df_pca[['label']].value_counts(), columns=['players'])
-    mask = (lbl_df['players'] > 5)
+    mask = (lbl_df['players'] > 50)
     lbl_df = lbl_df[mask].copy()
     lbl_df.reset_index(inplace=True)
     lbls = lbl_df['label'].tolist()
@@ -67,9 +67,9 @@ def train_model():
     # gaussian model
     gnb = GaussianNB()
     gnb.fit(train_x, train_y)
-    model_score = round(gnb.score(test_x, test_y),4) *100
+    model_score = round(gnb.score(test_x, test_y)*100,2)
     dump(value=gnb, filename=f'Predictions/models/gnb_{today}_{model_score}.joblib')
-
+    print('Score: ',model_score)
 
 def predict_model(player_name=None):
     features = pf.best_file_path(startwith='features', dir='Predictions/models')
@@ -104,7 +104,7 @@ def predict_model(player_name=None):
         .pipe(pf.f_normalize)
     )
     df_preprocess = df_preprocess[features].copy()
-    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=20, pca=pca)
+    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=40, pca=pca)
 
     gnb_proba = gnb.predict_proba(df_pca)
     df_gnb_proba_max = gnb_proba.max(axis=1)
@@ -122,5 +122,5 @@ def predict_model(player_name=None):
     #TODO: wtie to database
 
 if __name__ == '__main__':
-    # train_model()
+    train_model()
     predict_model(player_name='extreme4all')

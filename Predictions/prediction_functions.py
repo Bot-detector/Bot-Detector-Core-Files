@@ -51,7 +51,8 @@ def start_pipeline(df):
 @logging
 def clean_dataset(df, skills_list, minigames_list):
     # sort by timestamp, drop duplicates keep last
-    df = df.sort_values('timestamp').drop_duplicates('Player_id',keep='last')
+    df.sort_values('timestamp', inplace=True)
+    # df.drop_duplicates('Player_id', keep='last', inplace=True)
 
     # drop unrelevant columns
     df.drop(columns=['id','timestamp','ts_date','Player_id'], inplace=True)
@@ -78,6 +79,8 @@ def features(df, skills_list):
     for skill in skills_list:
         df[f'{skill}/total'] = df[skill] / total
 
+    # df['pvm_median'] =  df[['attack','defence','strength','hitpoints','ranged','magic']].median(axis=1)/total
+    # df['pvm_mean'] =    df[['attack','defence','strength','hitpoints','ranged','magic']].mean(axis=1)/total
     # replace infinities & nan
     df = df.replace([np.inf, -np.inf], 0) 
     df.fillna(0, inplace=True)
@@ -94,7 +97,7 @@ def filter_relevant_features(df):
     
     # if a row has no data it returns -1
     # if the median of the dataset is below 0 then that feature is mostly empty
-    mask = (bad_features['median'] < 1)
+    mask = (bad_features['median'] < 10)
     bad_features = bad_features[mask].index
 
     # filter out bad features
