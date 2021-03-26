@@ -16,23 +16,38 @@ def intTryParse(value):
 '''
     Tokens with extra verification on token
 '''
-
-
-@app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
-def get_highscores(token):
-
-    # get token
+def verify_token(token, verifcation):
     player_token = SQL.get_token(token)
 
-    # verify token
     if not (player_token):
-        return "<h1>404</h1><p>Invalid token</p>", 404
+        return False
 
-    if not (player_token[0].request_highscores == 1):
+    if verifcation == 'hiscores':
+        if not (player_token[0].request_highscores == 1):
+            return False
+
+    if verifcation == 'ban':
+        if not (player_token[0].verify_ban == 1):
+            return False
+
+    if verifcation == 'create_token':
+        if not (player_token[0].create_token == 1):
+            return False
+    
+    return True
+
+
+@app_token.route('/site/highscores/<token>/<ofInterest>', methods=['POST', 'GET'])
+def get_highscores(token, ofInterest=None):
+
+    if verify_token(token, verifcation='hiscore'):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     # get data
-    data = SQL.get_highscores_data()
+    if ofInterest is None:
+        data = SQL.get_highscores_data()
+    else:
+        data = SQL.get_hiscores_of_interst()
 
     # format data
     df = pd.DataFrame(data)
@@ -51,14 +66,8 @@ def verify_bot(token):
         header['Access-Control-Allow-Origin'] = '*'
         return response
 
-    player_token = SQL.get_token(token)
-
-    # verify token
-    if not (player_token):
-        return "Invalid Token", 405
-
-    if not (player_token[0].verify_ban == 1):
-        return "Invalid Token", 405
+    if verify_token(token, verifcation='ban'):
+        return "<h1>404</h1><p>Invalid token</p>", 404
 
     form_data = request.get_json()
 
@@ -92,14 +101,8 @@ def verify_bot(token):
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>')
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>/<ban>')
 def create_user_token(token, player_name, hiscore=0, ban=0):
-    # get token
-    player_token = SQL.get_token(token)
 
-    # verify token
-    if not (player_token):
-        return "<h1>404</h1><p>Invalid token</p>", 404
-
-    if not (player_token[0].create_token == 1):
+    if verify_token(token, verifcation='create_token'):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     # Create token
@@ -115,14 +118,10 @@ def create_user_token(token, player_name, hiscore=0, ban=0):
 
 @app_token.route('/site/player/<token>/<player_name>', methods=['GET', 'POST'])
 def get_player_route(token, player_name):
-    # get token
-    player_token = SQL.get_token(token)
-
     # verify token
-    if not (player_token):
+    if verify_token(token, verifcation=None):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
-    
     # get data
     data = SQL.get_player(player_name)
 
@@ -136,17 +135,17 @@ def get_player_route(token, player_name):
 
     return jsonify(json.loads(myjson))
 
-@app_token.route('/site/players/<token>', methods=['GET', 'POST'])
-def get_players(token):
-    # get token
-    player_token = SQL.get_token(token)
-
+@app_token.route('/site/players/<token>/<ofInterest>', methods=['GET', 'POST'])
+def get_players(token, ofInterest=None):
     # verify token
-    if not (player_token):
+    if verify_token(token, verifcation=None):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     # get data
-    data = SQL.get_player_names()
+    if ofInterest is None:
+        data = SQL.get_player_names()
+    else:
+        data = SQL.get_players_of_interest()
 
     # parse data
     df = pd.DataFrame(data)
@@ -157,11 +156,8 @@ def get_players(token):
 
 @app_token.route('/site/labels/<token>', methods=['GET', 'POST'])
 def get_labels(token):
-    # get token
-    player_token = SQL.get_token(token)
-
     # verify token
-    if not (player_token):
+    if verify_token(token, verifcation=None):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     # get data
