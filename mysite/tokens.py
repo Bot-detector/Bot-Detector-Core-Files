@@ -33,14 +33,13 @@ def verify_token(token, verifcation):
     if verifcation == 'create_token':
         if not (player_token[0].create_token == 1):
             return False
-    
     return True
 
-
+@app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
 @app_token.route('/site/highscores/<token>/<ofInterest>', methods=['POST', 'GET'])
 def get_highscores(token, ofInterest=None):
 
-    if verify_token(token, verifcation='hiscore'):
+    if not (verify_token(token, verifcation='hiscore')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     # get data
@@ -66,7 +65,7 @@ def verify_bot(token):
         header['Access-Control-Allow-Origin'] = '*'
         return response
 
-    if verify_token(token, verifcation='ban'):
+    if not (verify_token(token, verifcation='ban')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     form_data = request.get_json()
@@ -102,7 +101,7 @@ def verify_bot(token):
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>/<ban>')
 def create_user_token(token, player_name, hiscore=0, ban=0):
 
-    if verify_token(token, verifcation='create_token'):
+    if not (verify_token(token, verifcation='create_token')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     # Create token
@@ -119,7 +118,7 @@ def create_user_token(token, player_name, hiscore=0, ban=0):
 @app_token.route('/site/player/<token>/<player_name>', methods=['GET', 'POST'])
 def get_player_route(token, player_name):
     # verify token
-    if verify_token(token, verifcation=None):
+    if not (verify_token(token, verifcation=None)):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     # get data
@@ -138,7 +137,7 @@ def get_player_route(token, player_name):
 @app_token.route('/site/players/<token>/<ofInterest>', methods=['GET', 'POST'])
 def get_players(token, ofInterest=None):
     # verify token
-    if verify_token(token, verifcation=None):
+    if not (verify_token(token, verifcation=None)):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     # get data
@@ -157,7 +156,7 @@ def get_players(token, ofInterest=None):
 @app_token.route('/site/labels/<token>', methods=['GET', 'POST'])
 def get_labels(token):
     # verify token
-    if verify_token(token, verifcation=None):
+    if not (verify_token(token, verifcation=None)):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     # get data
