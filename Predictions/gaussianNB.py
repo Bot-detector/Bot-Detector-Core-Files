@@ -14,7 +14,7 @@ from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
 
 
-def train_model():
+def train_model(n_pca):
     
     df =            pf.get_highscores()
     df_players =    pf.get_players()
@@ -36,7 +36,7 @@ def train_model():
     
 
     #TODO: save pca to file
-    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=40, pca=None)
+    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=None)
     dump(value=pca_model, filename=f'Predictions/models/pca_{today}_100.joblib')
 
     df_pca = df_pca.merge(df_players, left_index=True, right_index=True, how='inner')
@@ -71,7 +71,7 @@ def train_model():
     dump(value=gnb, filename=f'Predictions/models/gnb_{today}_{model_score}.joblib')
     print('Score: ',model_score)
 
-def predict_model(player_name=None):
+def predict_model(player_name=None, n_pca=20):
     features = pf.best_file_path(startwith='features', dir='Predictions/models')
     features = load(features)
 
@@ -98,13 +98,13 @@ def predict_model(player_name=None):
     df_preprocess = (df
         .pipe(pf.start_pipeline)
         .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-        #.pipe(pf.filter_relevant_features)
+        .pipe(pf.filter_relevant_features)
         .pipe(pf.features, ed.skills_list)
         .pipe(pf.f_standardize)
         .pipe(pf.f_normalize)
     )
     df_preprocess = df_preprocess[features].copy()
-    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=40, pca=pca)
+    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=pca)
 
     gnb_proba = gnb.predict_proba(df_pca)
     df_gnb_proba_max = gnb_proba.max(axis=1)
@@ -122,5 +122,5 @@ def predict_model(player_name=None):
     #TODO: wtie to database
 
 if __name__ == '__main__':
-    train_model()
-    predict_model(player_name='extreme4all')
+    train_model(n_pca=20)
+    predict_model(player_name='extreme4all', n_pca=20)

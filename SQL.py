@@ -213,11 +213,21 @@ def get_highscores_data_oneplayer(player_id):
                              debug=False, has_return=True)
     return highscores
 
+def get_hiscores_of_interst():
+    sql ='SELECT htl.* FROM hiscoreTableLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)'
+    highscores = execute_sql(sql=sql, param=None,
+                             debug=False, has_return=True)
+    return highscores
+
 def get_players_to_scrape():
     sql = 'select * from playersToScrape;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
+def get_players_of_interest():
+    sql = 'select * from playersOfInterest;'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
 '''
     Joined & complex Queries
 '''

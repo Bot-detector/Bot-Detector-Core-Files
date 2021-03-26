@@ -410,6 +410,10 @@ def get_players():
             p_updated = 0
 
         # skip if player is banned
+        if not (player['possible_ban'] == 0):
+            continue
+
+        # skip if player is banned
         if not (player['confirmed_ban'] == 0):
             continue
 

@@ -19,14 +19,14 @@ def logging(f):
     return wrapper
 
 def get_highscores():
-    data = SQL.get_highscores_data()
+    data = SQL.get_hiscores_of_interst()
     df_hiscore = pd.DataFrame(data)
 
     print(f'hiscore: {df_hiscore.shape}')
     return df_hiscore
 
 def get_players():
-    data = SQL.get_player_names()
+    data = SQL.get_players_of_interest()
     players = pd.DataFrame(data)
 
     df_players = players
