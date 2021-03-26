@@ -214,7 +214,7 @@ def get_highscores_data_oneplayer(player_id):
     return highscores
 
 def get_hiscores_of_interst():
-    sql ='SELECT htl.* FROM hiscoreTableLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)'
+    sql ='SELECT htl.*, poi.name FROM hiscoreTableLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)'
     highscores = execute_sql(sql=sql, param=None,
                              debug=False, has_return=True)
     return highscores
