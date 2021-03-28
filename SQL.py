@@ -260,7 +260,8 @@ def get_contributions(contributor):
         SELECT 
             rptr.name reporter_name,
             rptd.name reported_name,
-            rptd.confirmed_ban
+            rptd.confirmed_ban,
+            rptd.possible_ban
         from Reports rpts
         inner join Players rptr on(rpts.reportingID = rptr.id)
         inner join Players rptd on(rpts.reportedID = rptd.id)
