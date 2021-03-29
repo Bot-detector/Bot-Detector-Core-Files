@@ -13,3 +13,6 @@ venv/
 flaskwebapp.log
 
 error.log
+
+Predictions/models
+Predictions/models/

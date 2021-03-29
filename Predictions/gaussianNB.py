@@ -13,7 +13,6 @@ import highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
 
-
 def train_model(n_pca):
     
     df =            pf.get_highscores()
@@ -21,15 +20,17 @@ def train_model(n_pca):
     df_labels =     pf.get_labels() # TODO: only parent labels?
 
     # pandas pipeline
-    df_preprocess = (df
+    df_clean = (df
         .pipe(pf.start_pipeline)
         .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
         .pipe(pf.filter_relevant_features)
-        .pipe(pf.features, ed.skills_list)
+        .pipe(pf.f_features, ed.skills_list)
+    )
+    df_preprocess = (df_clean
+        .pipe(pf.start_pipeline)
         .pipe(pf.f_standardize)
         .pipe(pf.f_normalize)
     )
-
     today = time.strftime('%Y-%m-%d', time.gmtime())
     columns = df_preprocess.columns.tolist()
     dump(value=columns, filename=f'Predictions/models/features_{today}_100.joblib')
@@ -37,11 +38,12 @@ def train_model(n_pca):
 
     #TODO: save pca to file
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=None)
-    dump(value=pca_model, filename=f'Predictions/models/pca_{today}_100.joblib')
+    dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
+    print(f'pca shape: {df_pca.shape}')
 
-    df_pca = df_pca.merge(df_players, left_index=True, right_index=True, how='inner')
-    df_pca = df_pca.merge(df_labels, left_on='label_id', right_index=True, how='left')
-
+    df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
+    df_pca = df_pca.merge(df_labels,    left_on='label_id', right_index=True, how='left')
+    
 
     # getting labels with more then 5 players
     lbl_df = pd.DataFrame(df_pca[['label']].value_counts(), columns=['players'])
@@ -49,7 +51,7 @@ def train_model(n_pca):
     lbl_df = lbl_df[mask].copy()
     lbl_df.reset_index(inplace=True)
     lbls = lbl_df['label'].tolist()
-
+    print('labels: ', len(lbls), lbls)
 
     # creating x, y data, with players that a label
     mask = ~(df_pca['label_id'] == 0) & (df_pca['label'].isin(lbls))
@@ -71,40 +73,49 @@ def train_model(n_pca):
     dump(value=gnb, filename=f'Predictions/models/gnb_{today}_{model_score}.joblib')
     print('Score: ',model_score)
 
-def predict_model(player_name=None, n_pca=20):
-    features = pf.best_file_path(startwith='features', dir='Predictions/models')
+def predict_model(player_name=None):
+    features, _ = pf.best_file_path(startwith='features', dir='Predictions/models')
     features = load(features)
 
-    pca = pf.best_file_path(startwith='pca', dir='Predictions/models')
+    pca, n_pca = pf.best_file_path(startwith='pca', dir='Predictions/models')
     pca = load(pca)
 
-    labels = pf.best_file_path(startwith='labels', dir='Predictions/models')
+    labels, _ = pf.best_file_path(startwith='labels', dir='Predictions/models')
     labels = load(labels)
 
-    gnb = pf.best_file_path(startwith='gnb', dir='Predictions/models')
+    gnb, _ = pf.best_file_path(startwith='gnb', dir='Predictions/models')
     gnb = load(gnb)
 
     if player_name is None:
         df = pf.get_highscores()
+        df_players =    pf.get_players()
     else:
         player = SQL.get_player(player_name)
 
         if player is None:
             df = highscores.scrape_one(player_name)
+            player = SQL.get_player(player_name)
         else:
             df = SQL.get_highscores_data_oneplayer(player.id)
+
         df = pd.DataFrame(df)
+        df_players = pf.get_players(players=pd.DataFrame([player]))
+        
     
-    df_preprocess = (df
+    df_clean = (df
         .pipe(pf.start_pipeline)
         .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
         .pipe(pf.filter_relevant_features)
-        .pipe(pf.features, ed.skills_list)
+        .pipe(pf.f_features, ed.skills_list)
+    )
+    df_preprocess = (df_clean
+        .pipe(pf.start_pipeline)
         .pipe(pf.f_standardize)
         .pipe(pf.f_normalize)
     )
+
     df_preprocess = df_preprocess[features].copy()
-    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=pca)
+    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=int(n_pca), pca=pca)
 
     gnb_proba = gnb.predict_proba(df_pca)
     df_gnb_proba_max = gnb_proba.max(axis=1)
@@ -114,13 +125,15 @@ def predict_model(player_name=None, n_pca=20):
     df_gnb_predictions =    pd.DataFrame(gnb_pred,          index=df_pca.index, columns=['prediction'])
     df_gnb_proba =          pd.DataFrame(gnb_proba,         index=df_pca.index, columns=labels).round(4)
 
-    result = df_gnb_predictions
-    result = result.merge(df_gnb_proba_max, left_index=True, right_index=True)
-    result = result.merge(df_gnb_proba, left_index=True, right_index=True)
-    print(result.head())
+    df_resf = df_players
+    df_resf = df_resf.merge(df_gnb_predictions, left_index=True, right_index=True, suffixes=('','_prediction'), how='inner')
+    df_resf = df_resf.merge(df_gnb_proba_max,   left_index=True, right_index=True, how='inner')
+    df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('','_probability'), how='inner')
+    # df_resf = df_resf.merge(df_clean,           left_index=True, right_index=True, how='left')
+    print(df_resf.head())
 
-    #TODO: wtie to database
+    #TODO: write to database
 
 if __name__ == '__main__':
-    train_model(n_pca=20)
-    predict_model(player_name='extreme4all', n_pca=20)
+    # train_model(n_pca=35)
+    predict_model() # player_name='extreme4all'
