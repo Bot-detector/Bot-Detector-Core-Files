@@ -64,4 +64,4 @@ def get_detects(rsn=""):
     except TypeError:
         times_reported = 0
 
-    return jsonify(times_reported)
+    return (times_reported)
