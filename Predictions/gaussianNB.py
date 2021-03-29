@@ -88,7 +88,7 @@ def predict_model(player_name=None):
 
     if player_name is None:
         df = pf.get_highscores()
-        df_players =    pf.get_players()
+        df_players =  pf.get_players(with_id=True)
     else:
         player = SQL.get_player(player_name)
 
@@ -99,7 +99,7 @@ def predict_model(player_name=None):
             df = SQL.get_highscores_data_oneplayer(player.id)
 
         df = pd.DataFrame(df)
-        df_players = pf.get_players(players=pd.DataFrame([player]))
+        df_players = pf.get_players(players=pd.DataFrame([player]), with_id=True)
         
     
     df_clean = (df
@@ -125,15 +125,20 @@ def predict_model(player_name=None):
     df_gnb_predictions =    pd.DataFrame(gnb_pred,          index=df_pca.index, columns=['prediction'])
     df_gnb_proba =          pd.DataFrame(gnb_proba,         index=df_pca.index, columns=labels).round(4)
 
-    df_resf = df_players
+    df_resf = df_players[['id']]
     df_resf = df_resf.merge(df_gnb_predictions, left_index=True, right_index=True, suffixes=('','_prediction'), how='inner')
     df_resf = df_resf.merge(df_gnb_proba_max,   left_index=True, right_index=True, how='inner')
     df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('','_probability'), how='inner')
     # df_resf = df_resf.merge(df_clean,           left_index=True, right_index=True, how='left')
     print(df_resf.head())
+    return df_resf
 
     #TODO: write to database
 
+def save_model():
+    train_model(n_pca=35)
+    df = predict_model(player_name=None)
+
 if __name__ == '__main__':
     # train_model(n_pca=35)
-    predict_model() # player_name='extreme4all'
+    predict_model(player_name='extreme4all') # player_name='extreme4all'

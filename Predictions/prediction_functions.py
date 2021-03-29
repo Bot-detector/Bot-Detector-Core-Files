@@ -28,14 +28,17 @@ def get_highscores():
     print(f'hiscore: {df_hiscore.shape}')
     return df_hiscore
 
-def get_players(players=None):
+def get_players(players=None, with_id=False):
     if players is None:
         data = SQL.get_players_of_interest()
         players = pd.DataFrame(data)
 
     df_players = players
     df_players.set_index('name', inplace=True)
-    df_players.drop(columns=['created_at','updated_at','id'], inplace=True)
+    if with_id:
+        df_players.drop(columns=['created_at','updated_at'], inplace=True)
+    else:
+        df_players.drop(columns=['created_at','updated_at','id'], inplace=True)
 
     df_players['label_id'] = df_players['label_id'].replace(37, 0) # pvm to unkown
     df_players['label_id'] = df_players['label_id'].replace(36, 0) # pvm to unkown
