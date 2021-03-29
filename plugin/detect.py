@@ -53,3 +53,11 @@ def post_detect(manual_detect=0):
     Config.sched.add_job(lambda: insync_detect(detections, manual_detect), replace_existing=False, name='detect')
 
     return jsonify({'OK': 'OK'})
+
+
+@detect.route('/plugin/detect/<rsn>', methods=['GET'])
+def get_detects(rsn=""):
+    result = SQL.get_times_manually_reported(rsn)
+    times_reported = int(result[0][0])
+
+    return jsonify({'times_reported': times_reported})
