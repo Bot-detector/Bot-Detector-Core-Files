@@ -3,7 +3,6 @@ from dotenv import load_dotenv, find_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.executors.pool import ProcessPoolExecutor
 from flask_cors import CORS
 
 load_dotenv(find_dotenv(), verbose=True)
@@ -22,4 +21,4 @@ db = SQLAlchemy(app)
 CORS(app, resources={r"/.*": {"origins": "*"}})
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-   sched = BackgroundScheduler(daemon=False, executors={'default': ProcessPoolExecutor(max_workers=1)})
+   sched = BackgroundScheduler(daemon=False)
