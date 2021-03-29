@@ -362,7 +362,7 @@ def multi_thread(tasks):
         mt_tasks.append(([task]))
 
     i = 0
-    with cf.ProcessPoolExecutor() as executor:
+    with cf.ThreadPoolExecutor() as executor:
 
         futures = {executor.submit(get_data, task[0]): task[0] for task in mt_tasks}
         start = dt.datetime.now()
