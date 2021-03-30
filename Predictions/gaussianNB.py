@@ -74,6 +74,12 @@ def train_model(n_pca):
     print('Score: ',model_score)
 
 def predict_model(player_name=None):
+    scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
+    scaler = load(scaler)
+
+    transformer, _ = pf.best_file_path(startwith='normalizer', dir='Predictions/models')
+    transformer = load(transformer)
+
     features, _ = pf.best_file_path(startwith='features', dir='Predictions/models')
     features = load(features)
 
@@ -86,6 +92,8 @@ def predict_model(player_name=None):
     gnb, _ = pf.best_file_path(startwith='gnb', dir='Predictions/models')
     gnb = load(gnb)
 
+    # if no player name is given, take all players
+    # if a player name is given, check if we have a record for this player else scrape that player
     if player_name is None:
         df = pf.get_highscores()
         df_players =  pf.get_players(with_id=True)
@@ -108,13 +116,15 @@ def predict_model(player_name=None):
         .pipe(pf.filter_relevant_features)
         .pipe(pf.f_features, ed.skills_list)
     )
+
     df_preprocess = (df_clean
         .pipe(pf.start_pipeline)
-        .pipe(pf.f_standardize)
-        .pipe(pf.f_normalize)
+        .pipe(pf.f_standardize, scaler=scaler)
+        .pipe(pf.f_normalize, transformer=transformer)
     )
 
     df_preprocess = df_preprocess[features].copy()
+    print(df_preprocess.head())
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=int(n_pca), pca=pca)
 
     gnb_proba = gnb.predict_proba(df_pca)
@@ -140,5 +150,5 @@ def save_model():
     df = predict_model(player_name=None)
 
 if __name__ == '__main__':
-    # train_model(n_pca=35)
-    predict_model(player_name='extreme4all') # player_name='extreme4all'
+    train_model(n_pca=35)
+    predict_model(player_name='NyleRivers') # player_name='extreme4all'

@@ -3,7 +3,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import datetime as dt
 import numpy as np
-from sklearn.preprocessing import StandardScaler, RobustScaler
+import time
+from joblib import dump, load
+
+from sklearn.preprocessing import StandardScaler, RobustScaler, Normalizer
 from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 # custom
@@ -95,7 +98,7 @@ def clean_dataset(df, skills_list, minigames_list):
 @logging
 def f_features(df, skills_list):
     # save total column to variable
-
+    # print(df.columns)
     total = df['total']
 
     # for each skill, calculate ratio
@@ -123,7 +126,10 @@ def f_features(df, skills_list):
     return df
 
 @logging
-def filter_relevant_features(df):
+def filter_relevant_features(df, myfeatures=None):
+    if myfeatures is not None:
+        return df[myfeatures].copy()
+
     # all features
     features =  df.columns
 
@@ -137,19 +143,35 @@ def filter_relevant_features(df):
 
     # filter out bad features
     my_feature_fields = ['zalcano', 'wintertodt']
-    features = [f for f in features if f not in bad_features] + my_feature_fields
+    features = [f for f in features if f not in bad_features]
+    _ = [features.append(f) for f in my_feature_fields if f not in features]
 
     return df[features].copy()
 
 @logging
-def f_standardize(df):
-    scaler = RobustScaler() 
-    X_scaled = scaler.fit_transform(df) 
+def f_standardize(df, scaler=None):
+    if scaler is None:
+        print('new scaler')
+        scaler = RobustScaler()
+        scaler = scaler.fit(df)
+
+        today = time.strftime('%Y-%m-%d')
+        dump(value=scaler, filename=f'Predictions/models/scaler_{today}_100.joblib')
+    
+    X_scaled = scaler.transform(df) 
     return pd.DataFrame(X_scaled, columns=df.columns, index=df.index)
 
 @logging
-def f_normalize(df):
-    X_normalized = normalize(df)
+def f_normalize(df, transformer=None):
+    if transformer is None:
+        print('new normalizer')
+        transformer = Normalizer()
+        transformer = transformer.fit(df)
+
+        today = time.strftime('%Y-%m-%d')
+        dump(value=transformer, filename=f'Predictions/models/normalizer_{today}_100.joblib')
+
+    X_normalized = transformer.transform(df)
     return pd.DataFrame(X_normalized, columns=df.columns, index=df.index)
 
 def f_pca(df, n_components=2, pca=None):

@@ -17,6 +17,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = sql_uri
 app.config['SQLALCHEMY_MAX_OVERFLOW'] = 2000
 app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
+session = db.create_scoped_session()
 
 CORS(app, resources={r"/.*": {"origins": "*"}})
 

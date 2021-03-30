@@ -1,5 +1,6 @@
 
 
+import Config
 from Config import db
 from sqlalchemy import text
 from collections import namedtuple
@@ -23,8 +24,8 @@ def get_random_string(length):
     return result_str
 
 
-def execute_sql(sql, param=None, debug=False, has_return=True):
-    session = db.create_scoped_session()
+def execute_sql(sql, param=None, debug=False, has_return=True, session=Config.session):
+    session()
     # example
     sql = text(sql)
     if debug:
@@ -45,7 +46,7 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
     else:
         session.execute(sql, param)
         session.commit()
-    session.remove()
+        session.remove()
 
 '''
     Players Table
