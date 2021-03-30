@@ -113,10 +113,9 @@ def predict_model(player_name=None):
     df_clean = (df
         .pipe(pf.start_pipeline)
         .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-        .pipe(pf.filter_relevant_features)
         .pipe(pf.f_features, ed.skills_list)
+        .pipe(pf.filter_relevant_features, myfeatures=features) # after feature creation in testing
     )
-
     df_preprocess = (df_clean
         .pipe(pf.start_pipeline)
         .pipe(pf.f_standardize, scaler=scaler)
@@ -150,5 +149,5 @@ def save_model():
     df = predict_model(player_name=None)
 
 if __name__ == '__main__':
-    train_model(n_pca=35)
-    predict_model(player_name='NyleRivers') # player_name='extreme4all'
+    # train_model(n_pca=35)
+    predict_model(player_name='extreme4all') # player_name='extreme4all'
