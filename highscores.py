@@ -406,12 +406,13 @@ def get_players():
     for player in player_names:
 
         p_updated = player['updated_at']
+        
         if p_updated is None:
             p_updated = 0
 
         # skip if player is banned
-        if not (player['possible_ban'] == 0):
-            continue
+        # if not (player['possible_ban'] == 0):
+        #     continue
 
         # skip if player is banned
         if not (player['confirmed_ban'] == 0):
