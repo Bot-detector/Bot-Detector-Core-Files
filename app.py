@@ -8,6 +8,8 @@ import logging
 #import logging
 # custom
 
+import scraper.hiscoreScraper as scraper
+# from scraper.hiscoreScraper import run_scraper
 from mysite.tokens import app_token
 from mysite.dashboard import dashboard
 from plugin.plugin_stats import plugin_stats
@@ -35,8 +37,9 @@ app.register_blueprint(dashboard)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
-    sched.add_job(run_hiscore, 'interval', minutes=10, start_date=datetime.date.today(),name='run_hiscore', max_instances=5)
-    sleep(1)
+    # sched.add_job(run_hiscore, 'interval', minutes=10, start_date=datetime.date.today(),name='run_hiscore', max_instances=5)
+    sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=datetime.date.today(), name='run_hiscore', max_instances=1, coalesce=True)
+
     sched.start()
 
 
@@ -61,9 +64,7 @@ def print_log():
 
 @app.route("/hiscorescraper")
 def hiscorescraper():
-    
-    sched.add_job(run_hiscore, name='run_hiscore', max_instances=5)
-        
+    sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=1, coalesce=True)
     return redirect('/log')
 
 if __name__ == '__main__':

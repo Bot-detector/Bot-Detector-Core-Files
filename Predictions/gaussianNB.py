@@ -9,7 +9,8 @@ from joblib import dump, load
 import time
 # custom imports
 import SQL
-import highscores
+# import highscores
+from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
 
