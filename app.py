@@ -15,7 +15,7 @@ from mysite.dashboard import dashboard
 from plugin.plugin_stats import plugin_stats
 from plugin.detect import detect
 from Config import app, sched
-from highscores import run_hiscore
+# from highscores import run_hiscore
 
 # import sys
 # sys.stdout = open('error.log', 'a')
@@ -38,7 +38,7 @@ app.register_blueprint(dashboard)
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
     # sched.add_job(run_hiscore, 'interval', minutes=10, start_date=datetime.date.today(),name='run_hiscore', max_instances=5)
-    sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=datetime.date.today(), name='run_hiscore', max_instances=1, coalesce=True)
+    sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=datetime.date.today(), name='run_hiscore', max_instances=2, coalesce=True)
 
     sched.start()
 
@@ -64,7 +64,7 @@ def print_log():
 
 @app.route("/hiscorescraper")
 def hiscorescraper():
-    sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=1, coalesce=True)
+    sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=2, coalesce=True)
     return redirect('/log')
 
 if __name__ == '__main__':
