@@ -16,6 +16,9 @@ import SQL
 lg.getLogger("requests").setLevel(lg.WARNING)
 lg.getLogger("urllib3").setLevel(lg.WARNING)
 
+counter = 0
+
+
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",
@@ -197,7 +200,6 @@ minigames = {
     "zulrah": ""
 }
 
-
 def logging(f):
     def wrapper(*args, **kwargs):
         start = dt.datetime.now()
@@ -205,6 +207,8 @@ def logging(f):
         end = dt.datetime.now()
         print(f'    {f.__name__} took: {end - start}')
         return result
+
+
     return wrapper
 
 
@@ -322,13 +326,20 @@ def main(player_names):
 '''
     end old
 '''
-# @logging
+@logging
 def my_sql_task(data, player_name, has_return=False):
+
+
     # get player if return is none, the player does not exist
     player = SQL.get_player(player_name)
     
     if player is None:
         player = SQL.insert_player(player_name)
+
+    #global counter
+    #counter += 1
+    #lg.debug(str(counter) + "SQL TASK: " + player_name + " ID: " + str(player.id))
+
 
     # player variables
     cb = player.confirmed_ban
