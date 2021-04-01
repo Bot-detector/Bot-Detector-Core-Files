@@ -159,7 +159,13 @@ def run_scraper():
 
     df = pd.DataFrame(data)
     players = df['name'].to_list()
-    random.shuffle(players)
+
+    n = 5000
+    if n > len(players):
+        n = len(players)
+
+    players = random.sample(players, n)
+
     multi_thread(players)
 
 
