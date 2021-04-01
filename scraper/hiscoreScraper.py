@@ -172,7 +172,7 @@ def run_scraper():
     players = df['name'].to_list()
 
     # define selections size
-    n = 2000
+    n = 10000
     if n > len(players):
         n = len(players)
 
