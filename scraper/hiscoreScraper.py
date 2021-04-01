@@ -152,20 +152,34 @@ def multi_thread(players):
 def run_scraper():
     lg.debug(f'     Starting hiscore scraper: {dt.datetime.now()}')
     print(f'     Starting hiscore scraper: {dt.datetime.now()}')
+
+    # get palyers to scrape
     data = SQL.get_players_to_scrape()
+
+    # check if there are any players to scrape
     if len(data) == 0:
         print('no players to scrape')
         return []
 
+    # array of named tuple to dataframe
     df = pd.DataFrame(data)
+
+    # remove all possible banned
+    mask = ~(df['possible_ban'] == 1)
+    df = df[mask]
+
+    # create array of players (names)
     players = df['name'].to_list()
 
-    n = 5000
+    # define selections size
+    n = 2000
     if n > len(players):
         n = len(players)
 
+    # get a random sample from players with selection size
     players = random.sample(players, n)
 
+    # multi thread scrape players
     multi_thread(players)
 
 
