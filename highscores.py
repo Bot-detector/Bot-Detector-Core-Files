@@ -16,9 +16,6 @@ import SQL
 lg.getLogger("requests").setLevel(lg.WARNING)
 lg.getLogger("urllib3").setLevel(lg.WARNING)
 
-counter = 0
-
-
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36",
@@ -336,11 +333,6 @@ def my_sql_task(data, player_name, has_return=False):
     if player is None:
         player = SQL.insert_player(player_name)
 
-    #global counter
-    #counter += 1
-    #lg.debug(str(counter) + "SQL TASK: " + player_name + " ID: " + str(player.id))
-
-
     # player variables
     cb = player.confirmed_ban
     cp = player.confirmed_player
@@ -444,7 +436,7 @@ def run_hiscore():
     lg.debug(f'     Starting hiscore Scraper: {dt.datetime.now()}')
     print(f'     Starting hiscore Scraper: {dt.datetime.now()}')
     total = 0
-    batch_size = 500
+    batch_size = 100
     refresh_factor = 2
 
     refresh_rate = batch_size * refresh_factor
