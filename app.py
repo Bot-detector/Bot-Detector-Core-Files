@@ -24,8 +24,8 @@ logging.FileHandler(filename="error.log", mode='a')
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger('flask_cors').level = logging.WARNING
+# logging.getLogger("apscheduler").setLevel(logging.WARNING)
+logging.getLogger('flask_cors').setLevel(logging.WARNING)
 
 logger = logging.getLogger()
 print = logger.info
@@ -39,7 +39,9 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
     # sched.add_job(run_hiscore, 'interval', minutes=10, start_date=datetime.date.today(),name='run_hiscore', max_instances=5)
     sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=datetime.date.today(), name='run_hiscore', max_instances=4, coalesce=True)
-
+    for job in sched.get_jobs():
+        logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+        print(f'    Job: {job.name}, {job.trigger}, {job.func}')
     sched.start()
 
 
@@ -65,6 +67,9 @@ def print_log():
 @app.route("/hiscorescraper")
 def hiscorescraper():
     sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=4, coalesce=True)
+    for job in sched.get_jobs():
+        logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+        print(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return redirect('/log')
 
 if __name__ == '__main__':

@@ -24,8 +24,7 @@ def get_random_string(length):
     return result_str
 
 
-def execute_sql(sql, param=None, debug=False, has_return=True, session=Config.session):
-    session()
+def execute_sql(sql, param=None, debug=False, has_return=True):
     # example
     sql = text(sql)
     if debug:
@@ -33,7 +32,7 @@ def execute_sql(sql, param=None, debug=False, has_return=True, session=Config.se
         print(f'Param: {param}')
 
     if has_return:
-        rows = session.execute(sql, param)
+        rows = db.session.execute(sql, param)
         # db.session.close()
         Record = namedtuple('Record', rows.keys())
         records = [Record(*r) for r in rows.fetchall()]
@@ -41,12 +40,12 @@ def execute_sql(sql, param=None, debug=False, has_return=True, session=Config.se
         if debug:
             print(f'keys: {rows.keys()}')
             
-        session.remove()
+        db.session.remove()
         return records
     else:
-        session.execute(sql, param)
-        session.commit()
-        session.remove()
+        db.session.execute(sql, param)
+        db.session.commit()
+        db.session.remove()
 
 '''
     Players Table
