@@ -165,8 +165,8 @@ def run_scraper():
     df = pd.DataFrame(data)
 
     # remove all possible banned
-    mask = ~(df['possible_ban'] == 1)
-    df = df[mask]
+    # mask = ~(df['possible_ban'] == 1)
+    # df = df[mask]
 
     # create array of players (names)
     players = df['name'].to_list()
