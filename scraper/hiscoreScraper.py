@@ -119,6 +119,10 @@ def my_sql_task(data, player_name, has_return=False):
     if has_return:
         return SQL.get_highscores_data_oneplayer(player_id=player.id)
 
+def mytempfunction(player_name):
+    data = get_data(player_name)
+    my_sql_task(data=data, player_name=player_name)
+
 def multi_thread(players):
     # create a list of tasks to multithread
     tasks = []
@@ -130,7 +134,7 @@ def multi_thread(players):
     with cf.ThreadPoolExecutor() as executor:
 
         # submit each task to be executed
-        futures = {executor.submit(get_data, task[0]): task[0] for task in tasks}
+        futures = {executor.submit(mytempfunction, task[0]): task[0] for task in tasks} # get_data
 
         # get start time
         start = dt.datetime.now()
@@ -138,7 +142,7 @@ def multi_thread(players):
             i += 1
             player_name = futures[future]
             data = future.result()
-            my_sql_task(data=data, player_name=player_name)
+            # my_sql_task(data=data, player_name=player_name) # moved this to mytempfunction
 
             # some logging
             if i % 100 == 0:
