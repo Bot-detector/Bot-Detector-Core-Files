@@ -48,11 +48,13 @@ def execute_sql(sql, param=None, debug=True, has_return=True):
             print(f'keys: {rows.keys()}')
             
         session.close()
+        conn.close()
         return records
     else:
         session.execute(sql, param)
         session.commit()
         session.close()
+        conn.close()
         # session.remove()
 
 '''
