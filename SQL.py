@@ -28,9 +28,10 @@ def get_random_string(length):
 
 def execute_sql(sql, param=None, debug=True, has_return=True):
     Config.engine.dispose()
+    engine = Config.engine.connect()
     
     # engine = Config.db.create_engine(Config.sql_uri, engine_opts={})
-    with Session(Config.engine) as session:
+    with Session(engine) as session:
         sql = text(sql)
         if debug:
             print(f'SQL : {sql}')
