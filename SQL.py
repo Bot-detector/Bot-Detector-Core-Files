@@ -47,7 +47,8 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
             return records
         else:
             conn.execute(sql, param)
-            conn.commit()
+            
+            # conn.commit()
             # db.session.remove()
 
 '''
