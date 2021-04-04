@@ -131,7 +131,7 @@ def multi_thread(players):
 
     i = 0
     # multithreaded executor
-    with cf.ThreadPoolExecutor() as executor:
+    with cf.ProcessPoolExecutor() as executor:
 
         # submit each task to be executed
         futures = {executor.submit(mytempfunction, task[0]): task[0] for task in tasks} # get_data
