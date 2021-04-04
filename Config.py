@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from flask_cors import CORS
+import sqlalchemy
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -24,6 +25,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 # create database connection
 db = SQLAlchemy(app)
 db.session = db.create_scoped_session()
+engine = sqlalchemy.create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool)
 
 # some cors stuf?
 CORS(app, resources={r"/.*": {"origins": "*"}})
