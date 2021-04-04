@@ -52,6 +52,7 @@ def execute_sql(sql, param=None, debug=True, has_return=True):
     else:
         session.execute(sql, param)
         session.commit()
+        session.close()
         # session.remove()
 
 '''
