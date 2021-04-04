@@ -7,6 +7,8 @@ from collections import namedtuple
 import time
 import random
 import string
+from sqlalchemy.orm import Session
+import logging
 
 '''
     Functions for SQL Queries
@@ -24,18 +26,20 @@ def get_random_string(length):
     return result_str
 
 
-def execute_sql(sql, param=None, debug=False, has_return=True):
+def execute_sql(sql, param=None, debug=True, has_return=True):
     Config.engine.dispose()
-
+    
     # engine = Config.db.create_engine(Config.sql_uri, engine_opts={})
-    with Config.engine.connect() as conn:
+    with Session(Config.engine) as session:
         sql = text(sql)
         if debug:
             print(f'SQL : {sql}')
             print(f'Param: {param}')
+            logging.debug(f'    SQL : {sql}')
+            logging.debug(f'    Param: {param}')
 
         if has_return:
-            rows = conn.execute(sql, param)
+            rows = session.execute(sql, param)
             # db.session.close()
             Record = namedtuple('Record', rows.keys())
             records = [Record(*r) for r in rows.fetchall()]
@@ -46,9 +50,8 @@ def execute_sql(sql, param=None, debug=False, has_return=True):
             # db.session.remove()
             return records
         else:
-            conn.execute(sql, param)
-            
-            # conn.commit()
+            session.execute(sql, param)
+            session.commit()
             # db.session.remove()
 
 '''
