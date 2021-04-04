@@ -26,6 +26,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
 db.session = db.create_scoped_session()
 engine = sqlalchemy.create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool)
+Session = sqlalchemy.orm.sessionmaker(bind=engine)
 
 # some cors stuf?
 CORS(app, resources={r"/.*": {"origins": "*"}})

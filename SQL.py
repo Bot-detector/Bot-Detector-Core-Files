@@ -7,7 +7,6 @@ from collections import namedtuple
 import time
 import random
 import string
-from sqlalchemy.orm import Session
 import logging
 
 '''
@@ -28,10 +27,10 @@ def get_random_string(length):
 
 def execute_sql(sql, param=None, debug=True, has_return=True):
     Config.engine.dispose()
-    engine = Config.engine.connect()
+    conn = Config.engine.connect()
     
     # engine = Config.db.create_engine(Config.sql_uri, engine_opts={})
-    with Session(engine) as session:
+    with Config.Session(bind=conn) as session:
         sql = text(sql)
         if debug:
             print(f'SQL : {sql}')
