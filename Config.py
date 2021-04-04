@@ -18,7 +18,7 @@ app = Flask(__name__)
 # config flask app
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["SQLALCHEMY_DATABASE_URI"] = sql_uri
-# app.config['SQLALCHEMY_MAX_OVERFLOW'] = 2000
+# app.config['SQLALCHEMY_MAX_OVERFLOW'] = 2000: 
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 # create database connection
