@@ -26,7 +26,7 @@ def get_random_string(length):
 
 def execute_sql(sql, param=None, debug=False, has_return=True):
     
-    engine = Config.db.create_engine(Config.sql_uri, engine_opts={})
+    engine = Config.db.create_engine(Config.sql_uri)
     with engine.connect() as conn:
         sql = text(sql)
         if debug:
