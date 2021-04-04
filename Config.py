@@ -31,8 +31,8 @@ CORS(app, resources={r"/.*": {"origins": "*"}})
 # create apscheduler, backgroundscheduler
 
 executors = {
-   'default': ThreadPoolExecutor(max_workers=4),
-   'processpool': ProcessPoolExecutor(max_workers=4)
+   # 'default': ThreadPoolExecutor(max_workers=4),
+   'default': ProcessPoolExecutor() # processpool
 }
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
