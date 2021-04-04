@@ -26,28 +26,28 @@ def get_random_string(length):
 
 def execute_sql(sql, param=None, debug=False, has_return=True):
     
-    engine = Config.db.create_engine(Config.sql_uri, engine_opts={})
-    with engine.connect() as conn:
-        sql = text(sql)
+    # engine = Config.db.create_engine(Config.sql_uri, engine_opts={})
+    # with engine.connect() as conn:
+    sql = text(sql)
+    if debug:
+        print(f'SQL : {sql}')
+        print(f'Param: {param}')
+
+    if has_return:
+        rows = db.session.execute(sql, param)
+        # db.session.close()
+        Record = namedtuple('Record', rows.keys())
+        records = [Record(*r) for r in rows.fetchall()]
+
         if debug:
-            print(f'SQL : {sql}')
-            print(f'Param: {param}')
-
-        if has_return:
-            rows = conn.execute(sql, param)
-            # db.session.close()
-            Record = namedtuple('Record', rows.keys())
-            records = [Record(*r) for r in rows.fetchall()]
-
-            if debug:
-                print(f'keys: {rows.keys()}')
-                
-            # db.session.remove()
-            return records
-        else:
-            conn.execute(sql, param)
-            conn.commit()
-            # db.session.remove()
+            print(f'keys: {rows.keys()}')
+            
+        # db.session.remove()
+        return records
+    else:
+        db.session.execute(sql, param)
+        db.session.commit()
+        db.session.remove()
 
 '''
     Players Table
