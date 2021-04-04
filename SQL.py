@@ -47,12 +47,12 @@ def execute_sql(sql, param=None, debug=True, has_return=True):
         if debug:
             print(f'keys: {rows.keys()}')
             
-        session.remove()
+        session.close()
         return records
     else:
         session.execute(sql, param)
         session.commit()
-        session.remove()
+        # session.remove()
 
 '''
     Players Table
