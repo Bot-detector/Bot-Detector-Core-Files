@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from joblib import dump, load
 import time
 import concurrent.futures as cf
+import logging as lg
 # custom imports
 import SQL
 # import highscores
@@ -34,6 +35,10 @@ def train_model(n_pca):
         .pipe(pf.f_standardize)
         .pipe(pf.f_normalize)
     )
+    
+    print(os.listdir())
+    lg.debug(os.listdir())
+
     today = time.strftime('%Y-%m-%d', time.gmtime())
     columns = df_preprocess.columns.tolist()
     dump(value=columns, filename=f'Predictions/models/features_{today}_100.joblib')
