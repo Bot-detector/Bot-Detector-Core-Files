@@ -9,6 +9,7 @@ import logging
 # custom
 
 import scraper.hiscoreScraper as scraper
+from Predictions import model
 # from scraper.hiscoreScraper import run_scraper
 from mysite.tokens import app_token
 from mysite.dashboard import dashboard
@@ -41,6 +42,10 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
     # sched.add_job(run_hiscore, 'interval', minutes=10, start_date=datetime.date.today(),name='run_hiscore', max_instances=5)
     sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=datetime.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
+    n_pca = 50
+    sched.add_job(model.save_model, 'interval', day=1 ,args=[n_pca], replace_existing=True, name='save_model')
+    logging.debug('jobsstore')
+    print('jobstore')
     for job in sched.get_jobs():
         logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
         print(f'    Job: {job.name}, {job.trigger}, {job.func}')
