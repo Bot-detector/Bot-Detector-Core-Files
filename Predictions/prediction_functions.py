@@ -6,8 +6,7 @@ import numpy as np
 import time
 from joblib import dump, load
 
-from sklearn.preprocessing import StandardScaler, RobustScaler, Normalizer
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import RobustScaler, Normalizer
 from sklearn.decomposition import PCA
 # custom
 import SQL
@@ -24,7 +23,7 @@ def logging(f):
         return result
     return wrapper
 
-def get_highscores():
+def get_highscores(ofinterest=True):
     data = SQL.get_hiscores_of_interst()
     df_hiscore = pd.DataFrame(data)
 
@@ -98,27 +97,32 @@ def clean_dataset(df, skills_list, minigames_list):
 @logging
 def f_features(df, skills_list):
     # save total column to variable
-    # print(df.columns)
     total = df['total']
 
     # for each skill, calculate ratio
     for skill in skills_list:
         df[f'{skill}/total'] = df[skill] / total
 
-    df['wintertodt_feature'] = (df['wintertodt']*19000-670*19000)/df['firemaking']
+    wintertodt_fm = df['wintertodt']*30_000
+    lvl50skill = 101_333
+    df['wintertodt_feature'] = wintertodt_fm/(df['firemaking'] - lvl50skill)
     df['wintertodt_feature'] = np.where(df['wintertodt_feature'] < 0, 0, df['wintertodt_feature'])
-    # df['winterdtodt_flag'] = np.where(df['wintertodt']>670,1,0)
+    df['winterdtodt_flag'] = np.where(df['wintertodt'] > 670, 1, 0)
 
-    zalcano_mining      = df['zalcano']*13500/15
-    zalcano_smithing    = df['zalcano']*3000/15
-    zalcano_rc          = df['zalcano']*1500/15
+    zalcano_mining      = df['zalcano']*13_500/15
+    zalcano_smithing    = df['zalcano']*3_000/15
+    zalcano_rc          = df['zalcano']*1_500/15
+    lvl70skill          = 737_627
 
-    df['zalcano_feature'] = (zalcano_mining/df['mining']*3 + 
-                             zalcano_smithing/df['smithing']*2 + 
+    df['zalcano_feature'] = (zalcano_mining/(df['mining']-lvl70skill)*3 + 
+                             zalcano_smithing/(df['smithing']-lvl70skill)*2 + 
                              zalcano_rc/df['runecraft']*5)/10
 
     df['median_feature'] = df[skills_list].median(axis=1)
     df['mean_feature'] = df[skills_list].mean(axis=1)
+    df['std_feature'] = df[skills_list].std(axis=1)
+
+
     # replace infinities & nan
     df = df.replace([np.inf, -np.inf], 0) 
     df.fillna(0, inplace=True)

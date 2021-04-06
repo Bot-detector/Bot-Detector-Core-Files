@@ -1,8 +1,15 @@
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from flask import Blueprint, request, make_response, after_this_request
 from flask.json import jsonify
-import SQL
+
 import pandas as pd
 import json
+
+import SQL
+import Config
+from Predictions import model
 
 app_token = Blueprint('app_token', __name__, template_folder='templates')
 
@@ -95,8 +102,6 @@ def verify_bot(token):
     return 'OK'
 
 
-
-
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>')
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>/<ban>')
 def create_user_token(token, player_name, hiscore=0, ban=0):
@@ -110,6 +115,14 @@ def create_user_token(token, player_name, hiscore=0, ban=0):
     # return created token
     return jsonify({'Token': token})
 
+@app_token.route('/site/predictions/<token>', methods=['POST', 'GET'])
+def create_predictions(token):
+    if not (verify_token(token, verifcation='create_token')):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+
+    n_pca = 50
+    Config.sched.add_job(model.save_model ,args=[n_pca], replace_existing=True, name='save_model')
+    return jsonify({'OK': 'OK'})
 
 '''
     These routes are accessible if you have a token

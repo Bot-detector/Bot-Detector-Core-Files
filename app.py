@@ -15,6 +15,7 @@ from mysite.dashboard import dashboard
 from plugin.plugin_stats import plugin_stats
 from plugin.detect import detect
 from Config import app, sched
+from mysite.predictions import app_predictions
 # from highscores import run_hiscore
 
 # import sys
@@ -34,6 +35,7 @@ app.register_blueprint(plugin_stats)
 app.register_blueprint(detect)
 app.register_blueprint(app_token)
 app.register_blueprint(dashboard)
+app.register_blueprint(app_predictions)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True

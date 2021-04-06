@@ -4,9 +4,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import numpy as np
 from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from joblib import dump, load
 import time
+import concurrent.futures as cf
 # custom imports
 import SQL
 # import highscores
@@ -67,11 +69,14 @@ def train_model(n_pca):
     # train test split but make sure to have all the labels form y
     train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.3, random_state=42, stratify=y)
 
-    # gaussian model
-    gnb = GaussianNB()
-    gnb.fit(train_x, train_y)
-    model_score = round(gnb.score(test_x, test_y)*100,2)
-    dump(value=gnb, filename=f'Predictions/models/gnb_{today}_{model_score}.joblib')
+    # model = GaussianNB()
+    model_name = 'rfc'
+    model = RandomForestClassifier(n_estimators=100)
+    model.fit(train_x, train_y)
+    
+    model_score = round(model.score(test_x, test_y)*100,2)
+
+    dump(value=model, filename=f'Predictions/models/model-{model_name}_{today}_{model_score}.joblib')
     print('Score: ',model_score)
 
 def predict_model(player_name=None):
@@ -90,8 +95,8 @@ def predict_model(player_name=None):
     labels, _ = pf.best_file_path(startwith='labels', dir='Predictions/models')
     labels = load(labels)
 
-    gnb, _ = pf.best_file_path(startwith='gnb', dir='Predictions/models')
-    gnb = load(gnb)
+    model, _ = pf.best_file_path(startwith='model', dir='Predictions/models')
+    model = load(model)
 
     # if no player name is given, take all players
     # if a player name is given, check if we have a record for this player else scrape that player
@@ -124,31 +129,80 @@ def predict_model(player_name=None):
     )
 
     df_preprocess = df_preprocess[features].copy()
-    print(df_preprocess.head())
+
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=int(n_pca), pca=pca)
 
-    gnb_proba = gnb.predict_proba(df_pca)
-    df_gnb_proba_max = gnb_proba.max(axis=1)
-    gnb_pred = gnb.predict(df_pca)
+    proba = model.predict_proba(df_pca)
+    df_proba_max = proba.max(axis=1)
+    pred = model.predict(df_pca)
 
-    df_gnb_proba_max =      pd.DataFrame(df_gnb_proba_max,  index=df_pca.index, columns=['Predicted confidence'])
-    df_gnb_predictions =    pd.DataFrame(gnb_pred,          index=df_pca.index, columns=['prediction'])
-    df_gnb_proba =          pd.DataFrame(gnb_proba,         index=df_pca.index, columns=labels).round(4)
+    df_gnb_proba_max =      pd.DataFrame(df_proba_max,  index=df_pca.index, columns=['Predicted confidence'])
+    df_gnb_predictions =    pd.DataFrame(pred,          index=df_pca.index, columns=['prediction'])
+    df_gnb_proba =          pd.DataFrame(proba,         index=df_pca.index, columns=labels).round(4)
 
     df_resf = df_players[['id']]
     df_resf = df_resf.merge(df_gnb_predictions, left_index=True, right_index=True, suffixes=('','_prediction'), how='inner')
     df_resf = df_resf.merge(df_gnb_proba_max,   left_index=True, right_index=True, how='inner')
     df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('','_probability'), how='inner')
     # df_resf = df_resf.merge(df_clean,           left_index=True, right_index=True, how='left')
-    print(df_resf.head())
     return df_resf
 
-    #TODO: write to database
-
-def save_model():
-    train_model(n_pca=35)
+def save_model(n_pca=50):
+    train_model(n_pca=50)
     df = predict_model(player_name=None)
+
+    # parse data to format int
+    int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction']]
+    df[int_columns] = df[int_columns]*100
+    df[int_columns] = df[int_columns].astype(int)
+    df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
+    print(df.head())
+
+    # create table
+    columns = df.columns.tolist()
+    columns.remove('prediction')
+
+    table_name = 'Predictions'
+    droptable = f'DROP TABLE IF EXISTS {table_name};'
+    createtable = f'CREATE TABLE IF NOT EXISTS {table_name} (name varchar(12), prediction text, {" INT, ".join(columns)} INT);'
+    indexname = 'ALTER TABLE playerdata.Predictions ADD UNIQUE name (name);'
+
+    SQL.execute_sql(droptable,      param=None, debug=True, has_return=False)
+    SQL.execute_sql(createtable,    param=None, debug=True, has_return=False)
+    SQL.execute_sql(indexname,    param=None, debug=True, has_return=False)
+
+    #because prediction must be first column
+    ordered_columns = ['prediction'] + columns
+    df = df[ordered_columns]
+    df.reset_index(inplace=True)
+    
+    # insert rowss
+    data = df.to_dict('records')
+    multi_thread(data)
+
+def insert_prediction(row):
+        values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
+        sql_insert = f'insert ignore into Predictions values ({values});'
+        SQL.execute_sql(sql_insert,      param=row, debug=True, has_return=False)
+
+def multi_thread(data):
+    # create a list of tasks to multithread
+    tasks = []
+    for row in data:
+        tasks.append(([row]))
+
+    # multithreaded executor
+    with cf.ProcessPoolExecutor() as executor:
+
+        # submit each task to be executed
+        futures = {executor.submit(insert_prediction, task[0]): task[0] for task in tasks} # get_data
+
+        # get start time
+        for future in cf.as_completed(futures):
+            _ = futures[future]
+            _ = future.result()
 
 if __name__ == '__main__':
     # train_model(n_pca=35)
-    predict_model(player_name='extreme4all') # player_name='extreme4all'
+    save_model()
+    # df = predict_model(player_name='extreme4all') # player_name='extreme4all'
