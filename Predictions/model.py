@@ -35,9 +35,8 @@ def train_model(n_pca):
         .pipe(pf.f_standardize)
         .pipe(pf.f_normalize)
     )
-    
-    print(os.listdir())
-    lg.debug(os.listdir())
+
+
 
     today = time.strftime('%Y-%m-%d', time.gmtime())
     columns = df_preprocess.columns.tolist()
@@ -153,6 +152,8 @@ def predict_model(player_name=None):
     return df_resf
 
 def save_model(n_pca=50):
+    print(os.listdir())
+    lg.debug(os.listdir())
     train_model(n_pca=50)
     df = predict_model(player_name=None)
 
