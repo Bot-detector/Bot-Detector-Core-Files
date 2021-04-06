@@ -15,4 +15,12 @@ def get_prediction(player_name):
     df['name'] = player_name
     myjson = df.to_json(orient='records')
 
+    return_dict = {
+        "id": int(df['id']),
+        "name": player_name,
+        "prediction": df['prediction']
+    }
+
+    print(myjson)
+
     return jsonify(json.loads(myjson))

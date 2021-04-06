@@ -146,6 +146,7 @@ def predict_model(player_name=None):
     df_gnb_proba =          pd.DataFrame(proba,         index=df_pca.index, columns=labels).round(4)
 
     df_resf = df_players[['id']]
+
     df_resf = df_resf.merge(df_gnb_predictions, left_index=True, right_index=True, suffixes=('','_prediction'), how='inner')
     df_resf = df_resf.merge(df_gnb_proba_max,   left_index=True, right_index=True, how='inner')
     df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('','_probability'), how='inner')

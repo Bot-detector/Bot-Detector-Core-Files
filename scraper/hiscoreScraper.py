@@ -19,6 +19,8 @@ from scraper import extra_data as ed
 lg.getLogger("requests").setLevel(lg.WARNING)
 lg.getLogger("urllib3").setLevel(lg.WARNING)
 
+counter = 0
+
 
 def make_web_call(URL, user_agent_list, debug=False):
     # Pick a random user agent
@@ -113,8 +115,12 @@ def my_sql_task(data, player_name, has_return=False):
     # update the player so updated at is recent
     SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
 
+    global counter
+    counter += 1
+    print(str(counter) + " SQL TASK: " + player_name + " ID: " + str(player.id))
+
     # insert in hiscore data
-    SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
+    SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames, counter=counter)
 
     if has_return:
         return SQL.get_highscores_data_oneplayer(player_id=player.id)

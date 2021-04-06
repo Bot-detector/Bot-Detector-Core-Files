@@ -131,15 +131,18 @@ def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0
 '''
 
 
-def insert_highscore(player_id, skills, minigames):
+def insert_highscore(player_id, skills, minigames, counter):
+
     columns = list_to_string(
         ['player_id'] + list(skills.keys()) + list(minigames.keys()))
     values = list_to_string(
         [player_id] + list(skills.values()) + list(minigames.values()))
 
+    print("TASK: " + str(counter) + " Highscores Insertion: " + str(player_id) + " " + values)
+
     # f string is not so secure but we control the skills & minigames dict
     sql_insert = f"insert ignore into playerHiscoreData ({columns}) values ({values});"
-    execute_sql(sql_insert, param=None, debug=False, has_return=False)
+    execute_sql(sql_insert, param=None, debug=True, has_return=False)
 
 
 '''
@@ -340,4 +343,14 @@ def get_times_manually_reported(reportedName):
     }
 
     data = execute_sql(sql, param=param, debug=False, has_return=True)
+    return data
+
+
+def get_region_report_stats():
+
+    sql = '''
+        SELECT * FROM `reportedRegion` ORDER BY `reportedRegion`.`region_id` ASC
+    '''
+
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
