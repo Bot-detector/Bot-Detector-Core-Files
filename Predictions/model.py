@@ -82,6 +82,7 @@ def train_model(n_pca):
 
     dump(value=model, filename=f'Predictions/models/model-{model_name}_{today}_{model_score}.joblib')
     print('Score: ',model_score)
+    lg.debug(f'Score: {model_score}')
 
 def predict_model(player_name=None):
     scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
@@ -173,9 +174,9 @@ def save_model(n_pca=50):
     createtable = f'CREATE TABLE IF NOT EXISTS {table_name} (name varchar(12), prediction text, {" INT, ".join(columns)} INT);'
     indexname = 'ALTER TABLE playerdata.Predictions ADD UNIQUE name (name);'
 
-    SQL.execute_sql(droptable,      param=None, debug=True, has_return=False)
-    SQL.execute_sql(createtable,    param=None, debug=True, has_return=False)
-    SQL.execute_sql(indexname,    param=None, debug=True, has_return=False)
+    SQL.execute_sql(droptable,      param=None, debug=False, has_return=False)
+    SQL.execute_sql(createtable,    param=None, debug=False, has_return=False)
+    SQL.execute_sql(indexname,      param=None, debug=False, has_return=False)
 
     #because prediction must be first column
     ordered_columns = ['prediction'] + columns
@@ -189,7 +190,7 @@ def save_model(n_pca=50):
 def insert_prediction(row):
         values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
         sql_insert = f'insert ignore into Predictions values ({values});'
-        SQL.execute_sql(sql_insert,      param=row, debug=True, has_return=False)
+        SQL.execute_sql(sql_insert,      param=row, debug=False, has_return=False)
 
 def multi_thread(data):
     # create a list of tasks to multithread
