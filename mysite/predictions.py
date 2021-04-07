@@ -3,6 +3,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Blueprint, jsonify
 import json
+import numpy as np
 
 import Config
 from Predictions import model
@@ -13,9 +14,11 @@ app_predictions = Blueprint('predictions', __name__, template_folder='templates'
 def get_prediction(player_name):
     df = model.predict_model(player_name=player_name)
     df['name'] = player_name
-    if df['Predicted confidence'] < 0.75:
-        df['prediction'] = 'Unsure'
-        
+    print(df.head())
+
+    mask = (df['Predicted confidence'] < 0.75)
+    df.loc[mask, 'prediction'] = 'Unsure'
+
     myjson = df.to_json(orient='records')
 
     return jsonify(json.loads(myjson))

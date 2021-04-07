@@ -76,13 +76,16 @@ def train_model(n_pca):
     # model = GaussianNB()
     model_name = 'rfc'
     model = RandomForestClassifier(n_estimators=100)
-    model.fit(train_x, train_y)
+    model = model.fit(train_x, train_y)
     
     model_score = round(model.score(test_x, test_y)*100,2)
+    model = model.fit(x, y)
 
     dump(value=model, filename=f'Predictions/models/model-{model_name}_{today}_{model_score}.joblib')
     print('Score: ',model_score)
     lg.debug(f'Score: {model_score}')
+
+    
 
 def predict_model(player_name=None):
     scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
@@ -155,6 +158,7 @@ def predict_model(player_name=None):
 def save_model(n_pca=50):
     print(os.listdir())
     lg.debug(os.listdir())
+    
     train_model(n_pca=50)
     df = predict_model(player_name=None)
 
