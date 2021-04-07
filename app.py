@@ -16,6 +16,7 @@ from plugin.plugin_stats import plugin_stats
 from plugin.detect import detect
 from Config import app, sched
 from mysite.predictions import app_predictions
+from Predictions import model
 # from highscores import run_hiscore
 
 # import sys
@@ -39,8 +40,10 @@ app.register_blueprint(app_predictions)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
-    # sched.add_job(run_hiscore, 'interval', minutes=10, start_date=datetime.date.today(),name='run_hiscore', max_instances=5)
     sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=datetime.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
+    
+    sched.add_job(model.save_model,trigger='interval', days=1, start_date=datetime.date.today() ,args=[50], replace_existing=True, name='save_model')
+    sched.add_job(model.save_model ,args=[50], replace_existing=True, name='save_model') # on startup
     for job in sched.get_jobs():
         logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
         print(f'    Job: {job.name}, {job.trigger}, {job.func}')
