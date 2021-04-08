@@ -8,6 +8,7 @@ def get_contributions(contributor=""):
 
     if(contributor==""):
         return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
+
     else:
         contributions = SQL.get_contributions(contributor)
 
@@ -26,4 +27,20 @@ def get_contributions(contributor=""):
 
         return return_dict
 
+@plugin_stats.route('/stats/getcontributorid/<contributor>', methods=['GET'])
+def get_contributor_id(contributor=""):
+    if (contributor == ""):
+        return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
+
+    else:
+        player = SQL.get_player(contributor)
+
+        if(player):
+            return_dict = {
+                "id": player.id
+            }
+
+            return return_dict
+        else:
+            return "<h1>400</h1><p>Player not found.</p>", 400
 
