@@ -27,15 +27,21 @@ def logging(f):
     return wrapper
 
 def get_highscores(ofinterest=True):
-    data = SQL.get_hiscores_of_interst()
+    if ofinterest:
+        data = SQL.get_hiscores_of_interst()
+    else:
+        data = SQL.get_highscores_data()
     df_hiscore = pd.DataFrame(data)
 
     print(f'hiscore: {df_hiscore.shape}')
     return df_hiscore
 
-def get_players(players=None, with_id=False):
+def get_players(players=None, with_id=False, ofinterest=True):
     if players is None:
-        data = SQL.get_players_of_interest()
+        if ofinterest:
+            data = SQL.get_players_of_interest()
+        else:
+            data = SQL.get_player_names()
         players = pd.DataFrame(data)
 
     df_players = players
@@ -45,18 +51,7 @@ def get_players(players=None, with_id=False):
     else:
         df_players.drop(columns=['created_at','updated_at','id'], inplace=True)
 
-    df_players['label_id'] = df_players['label_id'].replace(37, 0) # pvm to unkown
-    df_players['label_id'] = df_players['label_id'].replace(36, 0) # pvm to unkown
-    df_players['label_id'] = df_players['label_id'].replace(18, 5) # mining to mining bot       #
-    df_players['label_id'] = df_players['label_id'].replace(34, 5) # mining gf to mining bot    #
-    df_players['label_id'] = df_players['label_id'].replace(29, 17) # alching gf to magic       #
-    df_players['label_id'] = df_players['label_id'].replace(23, 17) # alching to magic          #
-    df_players['label_id'] = df_players['label_id'].replace(33, 17) # magic gf to magic         #
-    df_players['label_id'] = df_players['label_id'].replace(15, 16) # smithing gf to smithing   #
-    df_players['label_id'] = df_players['label_id'].replace(28, 27) # zalcano gf to zalcano     #
-    df_players['label_id'] = df_players['label_id'].replace(26, 5) # blastmine gf  to mining    #
-    df_players['label_id'] = df_players['label_id'].replace(22, 5) # blast mine to mining       #
-    df_players['label_id'] = df_players['label_id'].replace(31, 8) # herblore gf to herblore    #
+    df_players['label_id'] = df_players['label_id'].replace(22, 5)
 
     print(f'players: {df_players.shape}')
     return df_players
@@ -90,42 +85,68 @@ def clean_dataset(df, skills_list, minigames_list):
 
     # total is sum of all skills
     df['total'] = df[skills_list].sum(axis=1)
+    
 
     # replace -1 values
     df[skills_list] = df[skills_list].replace(-1, 1)
     df[minigames_list] = df[minigames_list].replace(-1, 0)
 
+    df['boss_total'] = df[minigames_list].sum(axis=1)
+
+    mask = (df['total'] > 1_000_000)
+
+    df = df[mask].copy()
+    return df
+
+def zalcano_feature(df):
+    zalcano_mining      = df['zalcano'] * 13_500    / 15
+    zalcano_smithing    = df['zalcano'] * 3_000     / 15
+    zalcano_rc          = df['zalcano'] * 1_500     / 15
+    lvl70skill          = 737_627
+
+    df['zalcano_feature'] = (
+        zalcano_mining      / (df['mining']     - lvl70skill) + 
+        zalcano_smithing    / (df['smithing']   - lvl70skill) + 
+        zalcano_rc          / (df['runecraft'])
+    )
+        
+    req = ['agility','construction','farming','herblore','hunter','smithing','woodcutting']
+
+    df['zalcano_flag_feature']              = np.where(df[req].min(axis=1) > lvl70skill, 1, 0) 
+    df['zalcano_req_overshoot_feature']     = df[req].mean(axis=1) - lvl70skill
+    return df
+
+def wintertodt_feature(df):
+    wintertodt_fm = df['wintertodt']*30_000
+    lvl50skill = 101_333
+
+    df['wintertodt_feature']        = wintertodt_fm/(df['firemaking'] - lvl50skill)
+
+    df['wintertodt_lag_feature']    = np.where(df['wintertodt'] > 670, 1, 0)
     return df
 
 @logging
-def f_features(df, skills_list):
+def f_features(df, skills_list, minigames_list):
     # save total column to variable
     total = df['total']
+    boss_total =  df['boss_total']
 
     # for each skill, calculate ratio
     for skill in skills_list:
         df[f'{skill}/total'] = df[skill] / total
 
-    wintertodt_fm = df['wintertodt']*30_000
-    lvl50skill = 101_333
-    df['wintertodt_feature'] = wintertodt_fm/(df['firemaking'] - lvl50skill)
-    df['wintertodt_feature'] = np.where(df['wintertodt_feature'] < 0, 0, df['wintertodt_feature'])
-    df['winterdtodt_flag'] = np.where(df['wintertodt'] > 670, 1, 0)
+    for boss in minigames_list:
+         df[f'{boss}/boss_total'] = df[boss] / boss_total
 
-    zalcano_mining      = df['zalcano']*13_500/15
-    zalcano_smithing    = df['zalcano']*3_000/15
-    zalcano_rc          = df['zalcano']*1_500/15
-    lvl70skill          = 737_627
 
-    df['zalcano_feature'] = (zalcano_mining/(df['mining']-lvl70skill)*3 + 
-                             zalcano_smithing/(df['smithing']-lvl70skill)*2 + 
-                             zalcano_rc/df['runecraft']*5)/10
+    df = wintertodt_feature(df)
+    df = zalcano_feature(df)
 
     df['median_feature'] = df[skills_list].median(axis=1)
     df['mean_feature'] = df[skills_list].mean(axis=1)
     df['std_feature'] = df[skills_list].std(axis=1)
 
-
+    # df['bot_name_feature'] = botname(df)
     # replace infinities & nan
     df = df.replace([np.inf, -np.inf], 0) 
     df.fillna(0, inplace=True)
@@ -133,10 +154,10 @@ def f_features(df, skills_list):
     return df
 
 @logging
-def filter_relevant_features(df, myfeatures=None):
+def filter_relevant_features(df, skills_list ,myfeatures=None):
     if myfeatures is not None:
         return df[myfeatures].copy()
-
+        
     # all features
     features =  df.columns
 
@@ -149,8 +170,12 @@ def filter_relevant_features(df, myfeatures=None):
     bad_features = bad_features[mask].index
 
     # filter out bad features
-    my_feature_fields = ['zalcano', 'wintertodt']
-    features = [f for f in features if f not in bad_features]
+    my_feature_fields = ['zalcano', 
+                         'wintertodt', 
+                         'total',
+                         'zalcano/boss_total'
+                         ] + skills_list
+    features = [f for f in features if f not in bad_features or 'feature' in f or '/total' in f]
     _ = [features.append(f) for f in my_feature_fields if f not in features]
 
     return df[features].copy()
