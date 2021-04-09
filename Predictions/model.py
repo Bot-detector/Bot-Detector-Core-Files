@@ -177,7 +177,7 @@ def predict_model(player_name=None):
         .pipe(pf.start_pipeline)
         .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
         .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
-        .pipe(pf.filter_relevant_features, myfeatures=features) # after feature creation in testing
+        .pipe(pf.filter_relevant_features, ed.skills_list,myfeatures=features) # after feature creation in testing
     )
     df_preprocess = (df_clean
         .pipe(pf.start_pipeline)
