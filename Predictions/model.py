@@ -184,8 +184,8 @@ def predict_model(player_name=None):
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
-            "prediction": "Stats Too Low",
-            "proba_max": 0,
+            "prediction_label": "Stats Too Low",
+            "prediction_confidence": 0,
             "gnb_predictions": "",
             "gnb_proba": ""
         }
@@ -202,8 +202,8 @@ def predict_model(player_name=None):
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
-            "prediction": "Stats Too Low",
-            "proba_max": 0,
+            "prediction_label": "Stats Too Low",
+            "prediction_confidence": 0,
             "gnb_predictions": "",
             "gnb_proba": ""
         }
