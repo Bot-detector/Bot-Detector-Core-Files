@@ -171,14 +171,27 @@ def predict_model(player_name=None):
 
         df = pd.DataFrame(df)
         df_players = pf.get_players(players=pd.DataFrame([player]), with_id=True)
-        
-    
-    df_clean = (df
-        .pipe(pf.start_pipeline)
-        .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-        .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
-        .pipe(pf.filter_relevant_features, ed.skills_list,myfeatures=features) # after feature creation in testing
-    )
+
+    try:
+        df_clean = (df
+            .pipe(pf.start_pipeline)
+            .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
+            .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
+            .pipe(pf.filter_relevant_features, ed.skills_list,myfeatures=features) # after feature creation in testing
+        )
+    except KeyError as k:
+
+        prediction_data = {
+            "player_id": -1,
+            "player_name": player_name,
+            "prediction": "Stats Too Low",
+            "proba_max": 0,
+            "gnb_predictions": "",
+            "gnb_proba": ""
+        }
+
+        return prediction_data
+
     df_preprocess = (df_clean
         .pipe(pf.start_pipeline)
         .pipe(pf.f_standardize, scaler=scaler)
@@ -194,16 +207,19 @@ def predict_model(player_name=None):
     pred = model.predict(df_pca)
 
     df_gnb_proba_max =      pd.DataFrame(df_proba_max,  index=df_pca.index, columns=['Predicted confidence'])
-    df_gnb_predictions =    pd.DataFrame(pred,          index=df_pca.index, columns=['prediction'])
     df_gnb_proba =          pd.DataFrame(proba,         index=df_pca.index, columns=labels).round(4)
 
-    df_resf = df_players[['id']]
 
-    df_resf = df_resf.merge(df_gnb_predictions, left_index=True, right_index=True, suffixes=('','_prediction'), how='inner')
-    df_resf = df_resf.merge(df_gnb_proba_max,   left_index=True, right_index=True, how='inner')
-    df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('','_probability'), how='inner')
-    # df_resf = df_resf.merge(df_clean,           left_index=True, right_index=True, how='left')
-    return df_resf
+    prediction_data = {
+        "player_id": int(df['Player_id'].values[0]),
+        "player_name": df['name'].values[0],
+        "prediction": pred[0],
+        "proba_max": df_gnb_proba_max,
+        "gnb_predictions": df_gnb_proba,
+        "gnb_proba": df_gnb_proba
+    }
+
+    return prediction_data
 
 
 def save_model(n_pca=50):

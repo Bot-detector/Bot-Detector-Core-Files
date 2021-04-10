@@ -25,7 +25,7 @@ pycparser==2.20
 PyMySQL==1.0.2
 pyrsistent==0.17.3
 python-dateutil==2.8.1
-python-dotenv==0.15.0
+python-dotenv
 pytz==2021.1
 requests==2.25.1
 scikit-learn==0.24.1
