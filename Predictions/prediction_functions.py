@@ -114,6 +114,7 @@ def zalcano_feature(df):
 
     df['zalcano_flag_feature']              = np.where(df[req].min(axis=1) > lvl70skill, 1, 0) 
     df['zalcano_req_overshoot_feature']     = df[req].mean(axis=1) - lvl70skill
+    # df['zalcano_req_overshoot_feature']     = np.where(df['zalcano_req_overshoot_feature'] < 0, 0, df['zalcano_req_overshoot_feature'])
     return df
 
 def wintertodt_feature(df):
