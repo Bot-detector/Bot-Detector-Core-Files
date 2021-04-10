@@ -213,7 +213,7 @@ def save_model(n_pca=50):
     
     train_model(n_pca=50)
     df = predict_model(player_name=None)
-
+    lg.debug(f'data shape: {df.shape}')
     # parse data to format int
     int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction']]
     df[int_columns] = df[int_columns]*100

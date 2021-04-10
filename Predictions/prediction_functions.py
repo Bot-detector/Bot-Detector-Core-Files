@@ -143,6 +143,8 @@ def f_features(df, skills_list, minigames_list):
     df = wintertodt_feature(df)
     df = zalcano_feature(df)
 
+    # df['rangebot_feature'] = (df['ranged'] + df['hitpoints'])/total
+
     df['median_feature'] = df[skills_list].median(axis=1)
     df['mean_feature'] = df[skills_list].mean(axis=1)
     df['std_feature'] = df[skills_list].std(axis=1)
