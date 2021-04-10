@@ -37,5 +37,5 @@ def get_prediction(player_name):
 
 def sort_predictions(preds):
 
-    return dict(sorted(preds.items(), key=lambda item: item[1]))
+    return list(sorted(preds.items(), key=lambda item: item[1]))
 
