@@ -22,8 +22,8 @@ def get_prediction(player_name):
         secondary_predictions = prediction_data['gnb_predictions'].to_dict(orient='records')[0]
 
         return_dict = {
-            "id": prediction_data['player_id'],
-            "name": prediction_data['player_name'],
+            "player_id": prediction_data['player_id'],
+            "player_name": prediction_data['player_name'],
             "prediction_label": prediction_data['prediction'],
             "prediction_confidence": top_prediction['Predicted confidence'],
             "secondary_predictions": sort_predictions(secondary_predictions)
