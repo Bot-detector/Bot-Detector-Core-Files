@@ -159,7 +159,7 @@ def predict_model(player_name=None):
     # if a player name is given, check if we have a record for this player else scrape that player
     if player_name is None:
         df = pf.get_highscores(ofinterest=False)
-        df_players =  pf.get_players(with_id=True, ofinterest=False)
+        df_players = pf.get_players(with_id=True, ofinterest=False)
     else:
         player = SQL.get_player(player_name)
 
@@ -172,44 +172,18 @@ def predict_model(player_name=None):
         df = pd.DataFrame(df)
         df_players = pf.get_players(players=pd.DataFrame([player]), with_id=True)
 
-    try:
-        df_clean = (df
-            .pipe(pf.start_pipeline)
-            .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-            .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
-            .pipe(pf.filter_relevant_features, ed.skills_list,myfeatures=features) # after feature creation in testing
-        )
-    except KeyError as k:
-
-        prediction_data = {
-            "player_id": -1,
-            "player_name": player_name,
-            "prediction_label": "Stats Too Low",
-            "prediction_confidence": 0,
-            "gnb_predictions": "",
-            "gnb_proba": ""
-        }
-
-        return prediction_data
-
-    try:
-        df_preprocess = (df_clean
-            .pipe(pf.start_pipeline)
-            .pipe(pf.f_standardize, scaler=scaler)
-            .pipe(pf.f_normalize, transformer=transformer)
-        )
-    except ValueError as v:
-        prediction_data = {
-            "player_id": -1,
-            "player_name": player_name,
-            "prediction_label": "Stats Too Low",
-            "prediction_confidence": 0,
-            "gnb_predictions": "",
-            "gnb_proba": ""
-        }
-
-        return prediction_data
-
+    df_clean = (df
+                .pipe(pf.start_pipeline)
+                .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
+                .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
+                .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
+                # after feature creation in testing
+                )
+    df_preprocess = (df_clean
+                     .pipe(pf.start_pipeline)
+                     .pipe(pf.f_standardize, scaler=scaler)
+                     .pipe(pf.f_normalize, transformer=transformer)
+                     )
 
     df_preprocess = df_preprocess[features].copy()
 
@@ -219,20 +193,18 @@ def predict_model(player_name=None):
     df_proba_max = proba.max(axis=1)
     pred = model.predict(df_pca)
 
-    df_gnb_proba_max =      pd.DataFrame(df_proba_max,  index=df_pca.index, columns=['Predicted confidence'])
-    df_gnb_proba =          pd.DataFrame(proba,         index=df_pca.index, columns=labels).round(4)
+    df_gnb_proba_max = pd.DataFrame(df_proba_max, index=df_pca.index, columns=['Predicted confidence'])
+    df_gnb_predictions = pd.DataFrame(pred, index=df_pca.index, columns=['prediction'])
+    df_gnb_proba = pd.DataFrame(proba, index=df_pca.index, columns=labels).round(4)
 
+    df_resf = df_players[['id']]
 
-    prediction_data = {
-        "player_id": int(df['Player_id'].values[0]),
-        "player_name": df['name'].values[0],
-        "prediction": pred[0],
-        "proba_max": df_gnb_proba_max,
-        "gnb_predictions": df_gnb_proba,
-        "gnb_proba": df_gnb_proba
-    }
-
-    return prediction_data
+    df_resf = df_resf.merge(df_gnb_predictions, left_index=True, right_index=True, suffixes=('', '_prediction'),
+                            how='inner')
+    df_resf = df_resf.merge(df_gnb_proba_max, left_index=True, right_index=True, how='inner')
+    df_resf = df_resf.merge(df_gnb_proba, left_index=True, right_index=True, suffixes=('', '_probability'), how='inner')
+    # df_resf = df_resf.merge(df_clean,           left_index=True, right_index=True, how='left')
+    return df_resf
 
 
 def save_model(n_pca=50):
