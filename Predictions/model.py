@@ -192,11 +192,24 @@ def predict_model(player_name=None):
 
         return prediction_data
 
-    df_preprocess = (df_clean
-        .pipe(pf.start_pipeline)
-        .pipe(pf.f_standardize, scaler=scaler)
-        .pipe(pf.f_normalize, transformer=transformer)
-    )
+    try:
+        df_preprocess = (df_clean
+            .pipe(pf.start_pipeline)
+            .pipe(pf.f_standardize, scaler=scaler)
+            .pipe(pf.f_normalize, transformer=transformer)
+        )
+    except ValueError as v:
+        prediction_data = {
+            "player_id": -1,
+            "player_name": player_name,
+            "prediction": "Stats Too Low",
+            "proba_max": 0,
+            "gnb_predictions": "",
+            "gnb_proba": ""
+        }
+
+        return prediction_data
+
 
     df_preprocess = df_preprocess[features].copy()
 
