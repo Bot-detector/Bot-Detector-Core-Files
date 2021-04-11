@@ -34,6 +34,6 @@ def get_prediction(player_name):
 def sort_predictions(preds):
 
     #removes any 0% prediction values then sorts the dictionary in descending order by value
-    return list(sorted(({k: v for k, v in preds.items() if v > 0}).items(),  key=lambda item: item[1], reverse=True))
+    return list(sorted(({k: v for k, v in preds.items() if v > 0}).items(),  key=lambda item: item[1]))
 
 
