@@ -2,7 +2,7 @@ from time import sleep
 from flask import jsonify, render_template_string, redirect
 from waitress import serve
 import requests
-import datetime
+import datetime as dt
 import os
 import logging
 #import logging
@@ -30,7 +30,7 @@ logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.WARNING)
 
 logger = logging.getLogger()
-print = logger.info
+# print = logger.info
 
 app.register_blueprint(plugin_stats)
 app.register_blueprint(detect)
@@ -40,13 +40,18 @@ app.register_blueprint(app_predictions)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
-    sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=datetime.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
+    today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
+    today18h = today18h + dt.timedelta(hours=18)
+
+    sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
     
-    sched.add_job(model.save_model,trigger='interval', days=1, start_date=datetime.date.today() ,args=[50], replace_existing=True, name='save_model')
+    sched.add_job(model.save_model,trigger='interval', days=1, start_date=today18h ,args=[50], replace_existing=True, name='save_model')
     sched.add_job(model.save_model ,args=[50], replace_existing=True, name='save_model') # on startup
+    
     for job in sched.get_jobs():
         logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
         print(f'    Job: {job.name}, {job.trigger}, {job.func}')
+
     sched.start()
 
 

@@ -126,6 +126,13 @@ def wintertodt_feature(df):
     df['wintertodt_lag_feature']    = np.where(df['wintertodt'] > 670, 1, 0)
     return df
 
+def botname(df):
+    mask = (df.index.astype(str).str[0:2].str.isdigit())
+    df['botname_feature'] = 0
+    df.loc[mask,'botname_feature'] = 1
+
+    return df
+
 @logging
 def f_features(df, skills_list, minigames_list):
     # save total column to variable
@@ -142,7 +149,7 @@ def f_features(df, skills_list, minigames_list):
 
     df = wintertodt_feature(df)
     df = zalcano_feature(df)
-
+    df = botname(df)
     # df['rangebot_feature'] = (df['ranged'] + df['hitpoints'])/total
 
     df['median_feature'] = df[skills_list].median(axis=1)
