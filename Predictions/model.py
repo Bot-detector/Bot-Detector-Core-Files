@@ -172,18 +172,43 @@ def predict_model(player_name=None):
         df = pd.DataFrame(df)
         df_players = pf.get_players(players=pd.DataFrame([player]), with_id=True)
 
-    df_clean = (df
-                .pipe(pf.start_pipeline)
-                .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-                .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
-                .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
-                # after feature creation in testing
-                )
-    df_preprocess = (df_clean
-                     .pipe(pf.start_pipeline)
-                     .pipe(pf.f_standardize, scaler=scaler)
-                     .pipe(pf.f_normalize, transformer=transformer)
-                     )
+    try:
+        df_clean = (df
+                    .pipe(pf.start_pipeline)
+                    .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
+                    .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
+                    .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
+                    # after feature creation in testing
+                    )
+    except KeyError as k:
+
+        prediction_data = {
+            "player_id": -1,
+            "player_name": player_name,
+            "prediction_label": "Stats Too Low",
+            "prediction_confidence": 0,
+            "gnb_predictions": "",
+            "gnb_proba": ""
+        }
+
+        return prediction_data
+    try:
+        df_preprocess = (df_clean
+                         .pipe(pf.start_pipeline)
+                         .pipe(pf.f_standardize, scaler=scaler)
+                         .pipe(pf.f_normalize, transformer=transformer)
+                         )
+    except ValueError as v:
+        prediction_data = {
+            "player_id": -1,
+            "player_name": player_name,
+            "prediction_label": "Stats Too Low",
+            "prediction_confidence": 0,
+            "gnb_predictions": "",
+            "gnb_proba": ""
+        }
+
+        return prediction_data
 
     df_preprocess = df_preprocess[features].copy()
 

@@ -14,20 +14,26 @@ app_predictions = Blueprint('predictions', __name__, template_folder='templates'
 def get_prediction(player_name):
     df = model.predict_model(player_name=player_name)
     df['name'] = player_name
-    print(df.head())
 
     mask = (df['Predicted confidence'] < 0.75)
     df.loc[mask, 'prediction'] = 'Unsure'
 
-    myjson = df.to_json(orient='records')
+    prediction_dict = df.to_dict(orient='records')[0]
 
     return_dict = {
-        "id": int(df['id']),
-        "name": player_name,
-        "prediction": df['prediction']
+        "player_id": int(prediction_dict.pop("id")),
+        "player_name": prediction_dict.pop("name"),
+        "prediction_label": prediction_dict.pop("prediction"),
+        "prediction_confidence": prediction_dict.pop("Predicted confidence"),
+        "secondary_predictiions": sort_predictions(prediction_dict)
     }
 
-    print(myjson)
 
-    return jsonify(json.loads(myjson))
+    return json.dumps(return_dict, sort_keys=False)
+
+def sort_predictions(preds):
+
+    #removes any 0% prediction values then sorts the dictionary in descending order by value
+    return list(sorted(({k: v for k, v in preds.items() if v > 0}).items(),  key=lambda item: item[1], reverse=True))
+
 
