@@ -15,8 +15,8 @@ def get_prediction(player_name):
     df = model.predict_model(player_name=player_name)
     df['name'] = player_name
 
-    mask = (df['Predicted confidence'] < 0.75)
-    df.loc[mask, 'prediction'] = 'Unsure'
+    #mask = (df['Predicted confidence'] < 0.75)
+    #df.loc[mask, 'prediction'] = 'Unsure'
 
     prediction_dict = df.to_dict(orient='records')[0]
 
