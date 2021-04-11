@@ -25,7 +25,7 @@ def get_prediction(player_name):
         "player_name": prediction_dict.pop("name"),
         "prediction_label": prediction_dict.pop("prediction"),
         "prediction_confidence": prediction_dict.pop("Predicted confidence"),
-        "secondary_predictiions": sort_predictions(prediction_dict)
+        "secondary_predictions": sort_predictions(prediction_dict)
     }
 
 
