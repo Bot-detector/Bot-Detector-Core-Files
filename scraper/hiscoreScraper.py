@@ -10,7 +10,7 @@ import logging as lg
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import concurrent.futures as cf
-
+import traceback
 # custom
 import Config
 import SQL
@@ -119,6 +119,9 @@ def my_sql_task(data, player_name, has_return=False):
     counter += 1
     print(str(counter) + " SQL TASK: " + player_name + " ID: " + str(player.id))
 
+    if sum(list (skills.values()) + list (minigames.values())) <=0:
+        return None, None
+
     # insert in hiscore data
     SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames, counter=counter)
 
@@ -127,7 +130,8 @@ def my_sql_task(data, player_name, has_return=False):
 
 def mytempfunction(player_name):
     data = get_data(player_name)
-    my_sql_task(data=data, player_name=player_name)
+    _,_ = my_sql_task(data=data, player_name=player_name)
+    return 1
 
 def multi_thread(players):
     # create a list of tasks to multithread
@@ -135,28 +139,32 @@ def multi_thread(players):
     for player in players:
         tasks.append(([player]))
 
-    i = 0
     # multithreaded executor
     with cf.ProcessPoolExecutor() as executor:
+        try:
+            # submit each task to be executed
+            futures = {executor.submit(mytempfunction, task[0]): task[0] for task in tasks} # get_data
 
-        # submit each task to be executed
-        futures = {executor.submit(mytempfunction, task[0]): task[0] for task in tasks} # get_data
+            # get start time
+            start = dt.datetime.now()
+            for i, future in enumerate(cf.as_completed(futures)):
+                # player_name = futures[future]
+                # _ = future.result()
+                # my_sql_task(data=data, player_name=player_name) # moved this to mytempfunction
 
-        # get start time
-        start = dt.datetime.now()
-        for future in cf.as_completed(futures):
-            i += 1
-            player_name = futures[future]
-            data = future.result()
-            # my_sql_task(data=data, player_name=player_name) # moved this to mytempfunction
+                # some logging
+                if i % 100 == 0:
+                    end = dt.datetime.now()
+                    t = end - start
+                    lg.debug(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
+                    print(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
+                    start = dt.datetime.now()
 
-            # some logging
-            if i % 100 == 0:
-                end = dt.datetime.now()
-                t = end - start
-                lg.debug(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
-                print(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
-                start = dt.datetime.now()
+        except Exception as e:
+            traceback.print_exc()
+            print(e)
+            lg.debug(e)
+
 
 
 def run_scraper():
