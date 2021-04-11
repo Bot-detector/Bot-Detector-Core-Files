@@ -29,7 +29,7 @@ def get_prediction(player_name):
     }
 
 
-    return json.dumps(return_dict, sort_keys=False)
+    return jsonify(return_dict)
 
 def sort_predictions(preds):
 
