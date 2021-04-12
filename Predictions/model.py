@@ -185,8 +185,8 @@ def predict_model(player_name=None):
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
-            "prediction": "Stats Too Low",
-            "Predicted confidence": 0,
+            "prediction_label": "Stats Too Low",
+            "prediction_confidence": 0,
             "secondary_predictions": []
         }
 
@@ -201,8 +201,8 @@ def predict_model(player_name=None):
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
-            "prediction": "Stats Too Low",
-            "Predicted confidence": 0,
+            "prediction_label": "Stats Too Low",
+            "prediction_confidence": 0,
             "secondary_predictions": []
         }
 
