@@ -151,6 +151,12 @@ def insert_highscore(player_id, skills, minigames, counter):
 
 
 def insert_report(data):
+
+    try:
+        members = data['on_members_world']
+    except KeyError as k:
+        members = None
+
     param = {
         'reportedID': data['reported'],
         'reportingID': data['reporter'],
@@ -160,7 +166,7 @@ def insert_report(data):
         'z_coord': data['z'],
         'timestamp': data['ts'],
         'manual_detect': data['manual_detect'],
-        'on_members_world': data['on_members_world']
+        'on_members_world': members
     }
     # list of column values
     columns = list_to_string(list(param.keys()))
