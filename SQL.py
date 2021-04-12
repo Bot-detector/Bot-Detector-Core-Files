@@ -159,7 +159,8 @@ def insert_report(data):
         'y_coord': data['y'],
         'z_coord': data['z'],
         'timestamp': data['ts'],
-        'manual_detect': data['manual_detect']
+        'manual_detect': data['manual_detect'],
+        'on_members_world': data['on_members_world']
     }
     # list of column values
     columns = list_to_string(list(param.keys()))
