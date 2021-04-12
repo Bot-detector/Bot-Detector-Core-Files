@@ -187,11 +187,10 @@ def predict_model(player_name=None):
             "player_name": player_name,
             "prediction": "Stats Too Low",
             "Predicted confidence": 0,
-            "gnb_predictions": "",
-            "gnb_proba": ""
+            "secondary_predictions": []
         }
 
-        pd.DataFrame.from_dict(prediction_data)
+        return prediction_data
     try:
         df_preprocess = (df_clean
                          .pipe(pf.start_pipeline)
@@ -204,11 +203,10 @@ def predict_model(player_name=None):
             "player_name": player_name,
             "prediction": "Stats Too Low",
             "Predicted confidence": 0,
-            "gnb_predictions": "",
-            "gnb_proba": ""
+            "secondary_predictions": []
         }
 
-        return pd.DataFrame.from_dict(prediction_data)
+        return prediction_data
 
     df_preprocess = df_preprocess[features].copy()
 

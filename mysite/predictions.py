@@ -15,10 +15,12 @@ def get_prediction(player_name):
     df = model.predict_model(player_name=player_name)
     df['name'] = player_name
 
-    #mask = (df['Predicted confidence'] < 0.75)
-    #df.loc[mask, 'prediction'] = 'Unsure'
+    if isinstance(df, dict):
+        return jsonify(df)
 
     prediction_dict = df.to_dict(orient='records')[0]
+
+    print(prediction_dict)
 
     return_dict = {
         "player_id": int(prediction_dict.pop("id")),
