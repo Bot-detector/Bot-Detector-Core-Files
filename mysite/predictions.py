@@ -72,6 +72,7 @@ def receive_discord_feedback():
 
         if int(discord_link[0].Discord_id) == int(vote_info["discord_id"]):
             vote_info["voter_id"] = discord_link[0].Player_id
+            vote_info["subject_id"] = get_player(vote_info["name"])
             insert_prediction_feedback(vote_info)
         else:
             return "<h1>400</h1><p>You are not permitted to vote from this account.</p>", 400
