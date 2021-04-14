@@ -10,6 +10,7 @@ import sqlalchemy
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
 sql_uri = os.environ.get('sql_uri')
+discord_sql_uri = os.environ.get('discord_sql_uri')
 proxy_http = os.environ.get('proxy_http')
 proxy_https = os.environ.get('proxy_https')
 
@@ -22,13 +23,27 @@ app.config["SQLALCHEMY_DATABASE_URI"] = sql_uri
 # app.config['SQLALCHEMY_MAX_OVERFLOW'] = 2000: 
 app.config['CORS_HEADERS'] = 'Content-Type'
 
+
+
 # create database connection
 db = SQLAlchemy(app)
 db.session = db.create_scoped_session()
-engine = sqlalchemy.create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool)
-Session = sqlalchemy.orm.sessionmaker(bind=engine)
+
+db_engines = {
+   "playerdata": sqlalchemy.create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool),
+   "discord": sqlalchemy.create_engine(discord_sql_uri, poolclass=sqlalchemy.pool.NullPool)
+}
+
+db_sessions = {
+   "playerdata": sqlalchemy.orm.sessionmaker(bind=db_engines['playerdata']),
+   "discord": sqlalchemy.orm.sessionmaker(bind=db_engines['discord'])
+}
+
+
+
 
 # some cors stuf?
+#Allows requests from all origins to all routes.
 CORS(app, resources={r"/.*": {"origins": "*"}})
 
 # create apscheduler, backgroundscheduler

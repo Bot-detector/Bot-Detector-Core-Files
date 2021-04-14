@@ -25,12 +25,14 @@ def get_random_string(length):
     return result_str
 
 
-def execute_sql(sql, param=None, debug=True, has_return=True):
-    Config.engine.dispose()
-    conn = Config.engine.connect()
-    session = Config.Session(bind=conn) 
+def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdata"):
+
+    Config.db_engines[db_name].dispose()
+    conn = Config.db_engines[db_name].connect()
+    Session = Config.db_sessions[db_name]
+    session = Session()
     # engine = Config.db.create_engine(Config.sql_uri, engine_opts={})
-    
+
     sql = text(sql)
     if debug:
         print(f'SQL : {sql}')
@@ -56,6 +58,7 @@ def execute_sql(sql, param=None, debug=True, has_return=True):
         session.close()
         conn.close()
         # session.remove()
+
 
 '''
     Players Table
@@ -174,6 +177,31 @@ def insert_report(data):
 
     sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
     execute_sql(sql_insert, param=param, debug=False, has_return=False)
+
+
+'''
+    PredictionFeedback Table
+'''
+
+def insert_prediction_feedback(vote_info):
+
+    sql_insert = 'insert into PredictionsFeedback (voter_id, prediction, confidence, vote) ' \
+                 'values (:voter_id, :prediction, :confidence, :vote);'
+    execute_sql(sql_insert, param=vote_info, debug=False, has_return=False)
+
+'''
+    Discord User Table
+'''
+
+def get_verified_discord_user(discord_id):
+
+    sql = 'SELECT * from discordVerification WHERE Discord_id = :discord_id'
+
+    param = {
+        "discord_id": discord_id
+    }
+
+    return execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
 
 '''
@@ -361,3 +389,6 @@ def get_region_report_stats():
 
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
+
+
+
