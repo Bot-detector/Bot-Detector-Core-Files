@@ -68,7 +68,10 @@ def receive_discord_feedback():
     discord_link = get_verified_discord_user(vote_info["discord_id"])
 
     if(discord_link):
-        if int(discord_link.Discord_id) == int(vote_info["discord_id"]):
+        print(discord_link)
+
+        if int(discord_link[0].Discord_id) == int(vote_info["discord_id"]):
+            vote_info["voter_id"] = discord_link[0].Player_id
             insert_prediction_feedback(vote_info)
         else:
             return "<h1>400</h1><p>You are not permitted to vote from this account.</p>", 400

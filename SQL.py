@@ -195,7 +195,9 @@ def insert_prediction_feedback(vote_info):
 
 def get_verified_discord_user(discord_id):
 
-    sql = 'SELECT * from discordVerification WHERE Discord_id = :discord_id'
+    sql = 'SELECT * from discordVerification WHERE Discord_id = :discord_id ' \
+          'AND primary_rsn = 1 ' \
+          'AND Verified_status = 1'
 
     param = {
         "discord_id": discord_id
