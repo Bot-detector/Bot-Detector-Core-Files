@@ -205,6 +205,28 @@ def get_verified_discord_user(discord_id):
 
     return execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
+def get_unverified_discord_user(player_id):
+
+    sql = 'SELECT * from discordVerification WHERE Player_id = :player_id ' \
+          'AND Verified_status = 0'
+
+    param = {
+        "player_id": player_id
+    }
+
+    return execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
+
+def set_discord_verification(id):
+
+    sql = "UPDATE discordVerification " \
+          "SET Verified_status = 1 " \
+          "WHERE Entry = :id;"
+
+    param = {
+        "id": id
+    }
+
+    return execute_sql(sql, param=param, debug=False, has_return=False, db_name="discord")
 
 '''
     Tokens Table

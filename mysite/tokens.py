@@ -182,6 +182,34 @@ def get_labels(token):
 
     return jsonify(json.loads(myjson))
 
+@app_token.route('/site/verify_discord_user/<token>', methods=['POST', 'OPTIONS'])
+def verify_discord_user(token):
+    #Preflight
+    if request.method == 'OPTIONS':
+        response = make_response()
+        header = response.headers
+        header['Access-Control-Allow-Origin'] = '*'
+        return response
+
+    if not (verify_token(token, verifcation=None)):
+        return "<h1>401</h1><p>Invalid token</p>", 401
+
+    verify_data = request.get_json()
+
+    player = SQL.get_player(verify_data["player_name"])
+
+    pending_discord = SQL.get_unverified_discord_user(player.id)
+
+    if(pending_discord):
+        for record in pending_discord:
+            print(record)
+
+            if str(record.Code) == str(verify_data["code"]):
+                SQL.set_discord_verification(record.Entry)
+                break
+
+    return 'OK'
+
 
 # CORS Policy: Allow Access to These Methods From Any Origin
 @app_token.after_request
