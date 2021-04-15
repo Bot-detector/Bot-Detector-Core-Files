@@ -139,7 +139,6 @@ def my_sql_task(data, player_name, has_return=False):
         return SQL.get_highscores_data_oneplayer(player_id=player.id)
 
 def mytempfunction(player_name):
-    lg.debug("TEMP FUNCTION TIME FOR " + player_name)
     data = get_data(player_name)
     _,_ = my_sql_task(data=data, player_name=player_name)
     return 1
