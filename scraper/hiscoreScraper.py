@@ -103,7 +103,6 @@ def my_sql_task(data, player_name, has_return=False):
 
     # if hiscore data is none, then player is banned
     if data is None:
-        lg.debug("NO DATA TO BE FOUND,")
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         return None, None
 
@@ -211,3 +210,4 @@ def scrape_one(player_name):
 
 if __name__ == '__main__':
     run_scraper()
+    
