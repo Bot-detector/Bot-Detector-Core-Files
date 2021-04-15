@@ -8,6 +8,8 @@ import time
 import random
 import string
 import logging
+import sys
+
 
 '''
     Functions for SQL Queries
@@ -56,7 +58,7 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
         session.execute(sql, param)
         session.commit()
         session.close()
-        conn.close()
+        conn.connection.close()
         # session.remove()
 
 
@@ -134,18 +136,20 @@ def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0
 '''
 
 
-def insert_highscore(player_id, skills, minigames, counter):
+def insert_highscore(player_id, skills, minigames):
 
     columns = list_to_string(
         ['player_id'] + list(skills.keys()) + list(minigames.keys()))
     values = list_to_string(
         [player_id] + list(skills.values()) + list(minigames.values()))
 
-    print("TASK: " + str(counter) + " Highscores Insertion: " + str(player_id) + " " + values)
-
     # f string is not so secure but we control the skills & minigames dict
     sql_insert = f"insert ignore into playerHiscoreData ({columns}) values ({values});"
-    execute_sql(sql_insert, param=None, debug=False, has_return=False)
+    try:
+        execute_sql(sql_insert, param=None, debug=True, has_return=False)
+    except Exception as e:
+        print(e)
+        pass
 
 
 '''

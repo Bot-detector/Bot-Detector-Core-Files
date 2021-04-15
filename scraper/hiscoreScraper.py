@@ -19,9 +19,6 @@ from scraper import extra_data as ed
 lg.getLogger("requests").setLevel(lg.WARNING)
 lg.getLogger("urllib3").setLevel(lg.WARNING)
 
-counter = 0
-
-
 def make_web_call(URL, user_agent_list, debug=False):
     # Pick a random user agent
     user_agent = random.choice(user_agent_list)
@@ -106,6 +103,7 @@ def my_sql_task(data, player_name, has_return=False):
 
     # if hiscore data is none, then player is banned
     if data is None:
+        lg.debug("NO DATA TO BE FOUND,")
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         return None, None
 
@@ -115,20 +113,33 @@ def my_sql_task(data, player_name, has_return=False):
     # update the player so updated at is recent
     SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
 
-    global counter
-    counter += 1
-    print(str(counter) + " SQL TASK: " + player_name + " ID: " + str(player.id))
+    print(" SQL TASK: " + player_name + " ID: " + str(player.id))
 
-    if sum(list (skills.values()) + list (minigames.values())) <=0:
-        return None, None
+    try:
+        total = -1
+        skills_list = list(map(int, skills.values()))
+        minigames_list = list(map(int, minigames.values()))
+        total = sum(skills_list) + sum(minigames_list)
 
+        if total <=0:
+            return None, None
+
+    except Exception as e:
+        print(e)
+        pass
+    
     # insert in hiscore data
-    SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames, counter=counter)
+    try:
+        SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
+    except Exception as e:
+        print(e)
+        pass
 
     if has_return:
         return SQL.get_highscores_data_oneplayer(player_id=player.id)
 
 def mytempfunction(player_name):
+    lg.debug("TEMP FUNCTION TIME FOR " + player_name)
     data = get_data(player_name)
     _,_ = my_sql_task(data=data, player_name=player_name)
     return 1
