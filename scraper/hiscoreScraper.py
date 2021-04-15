@@ -115,25 +115,18 @@ def my_sql_task(data, player_name, has_return=False):
 
     print(" SQL TASK: " + player_name + " ID: " + str(player.id))
 
-    try:
-        total = -1
-        skills_list = list(map(int, skills.values()))
-        minigames_list = list(map(int, minigames.values()))
-        total = sum(skills_list) + sum(minigames_list)
+    total = -1
+    skills_list = list(map(int, skills.values()))
+    minigames_list = list(map(int, minigames.values()))
+    total = sum(skills_list) + sum(minigames_list)
 
-        if total <=0:
-            return None, None
+    if total <=0:
+        return None, None
 
-    except Exception as e:
-        print(e)
-        pass
-    
     # insert in hiscore data
-    try:
-        SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
-    except Exception as e:
-        print(e)
-        pass
+    
+    SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
+    
 
     if has_return:
         return SQL.get_highscores_data_oneplayer(player_id=player.id)

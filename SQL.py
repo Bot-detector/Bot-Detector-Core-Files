@@ -1,5 +1,3 @@
-
-
 import Config
 from Config import db
 from sqlalchemy import text
@@ -8,8 +6,6 @@ import time
 import random
 import string
 import logging
-import sys
-
 
 '''
     Functions for SQL Queries
@@ -141,13 +137,13 @@ def insert_highscore(player_id, skills, minigames):
 
     keys = []
     keys.append('player_id')
-    keys.append(list(skills.keys()))
-    keys.append(list(minigames.keys()))
+    keys.extend(list(skills.keys()))
+    keys.extend(list(minigames.keys()))
 
     values = []
     values.append(player_id)
-    values.append(list(skills.values()))
-    values.append(list(minigames.values()))
+    values.extend(list(skills.values()))
+    values.extend(list(minigames.values()))
     
     columns = list_to_string(keys)
     values = list_to_string(values)
