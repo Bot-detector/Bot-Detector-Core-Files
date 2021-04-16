@@ -33,7 +33,7 @@ db_engines = {
    "playerdata": sqlalchemy.create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool),
    "discord": sqlalchemy.create_engine(discord_sql_uri, poolclass=sqlalchemy.pool.NullPool)
 }
-
+Session = sqlalchemy.orm.sessionmaker
 db_sessions = {
    "playerdata": sqlalchemy.orm.sessionmaker(bind=db_engines['playerdata']),
    "discord": sqlalchemy.orm.sessionmaker(bind=db_engines['discord'])

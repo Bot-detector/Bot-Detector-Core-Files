@@ -24,12 +24,11 @@ def get_random_string(length):
 
 
 def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdata"):
-
-    Config.db_engines[db_name].dispose()
-    conn = Config.db_engines[db_name].connect()
-    Session = Config.db_sessions[db_name]
+    engine = Config.db_engines[db_name]
+    engine.dispose()
+    conn = engine.connect()
+    Session = Config.Session(bind=conn)
     session = Session()
-    # engine = Config.db.create_engine(Config.sql_uri, engine_opts={})
 
     sql = text(sql)
     if debug:
