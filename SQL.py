@@ -28,7 +28,7 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
     Config.db_engines[db_name].dispose()
     conn = Config.db_engines[db_name].connect()
     Session = Config.db_sessions[db_name]
-    session = Session(bind=conn)
+    session = Session()
     # engine = Config.db.create_engine(Config.sql_uri, engine_opts={})
 
     sql = text(sql)
