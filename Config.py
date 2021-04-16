@@ -20,20 +20,34 @@ app = Flask(__name__)
 # config flask app
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["SQLALCHEMY_DATABASE_URI"] = sql_uri
+# app.config['SQLALCHEMY_MAX_OVERFLOW'] = 2000: 
 app.config['CORS_HEADERS'] = 'Content-Type'
 
+
+
+# create database connection
+db = SQLAlchemy(app)
+db.session = db.create_scoped_session()
+
 db_engines = {
-   "playerdata":  sqlalchemy.create_engine(sql_uri,         poolclass=sqlalchemy.pool.NullPool),
-   "discord":     sqlalchemy.create_engine(discord_sql_uri, poolclass=sqlalchemy.pool.NullPool)
+   "playerdata": sqlalchemy.create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool),
+   "discord": sqlalchemy.create_engine(discord_sql_uri, poolclass=sqlalchemy.pool.NullPool)
+}
+Session = sqlalchemy.orm.sessionmaker
+db_sessions = {
+   "playerdata": sqlalchemy.orm.sessionmaker(bind=db_engines['playerdata']),
+   "discord": sqlalchemy.orm.sessionmaker(bind=db_engines['discord'])
 }
 
-Session = sqlalchemy.orm.sessionmaker
+
+
 
 # some cors stuf?
 #Allows requests from all origins to all routes.
 CORS(app, resources={r"/.*": {"origins": "*"}})
 
 # create apscheduler, backgroundscheduler
+
 executors = {
    # 'default': ThreadPoolExecutor(max_workers=4),
    'default': ProcessPoolExecutor() # processpool
