@@ -210,18 +210,6 @@ def verify_discord_user(token):
 
     return 'OK'
 
-@app_token.route('/site/player_location/<token>/<player_name>', methods=['GET'])
-def get_player_location(token, player_name):
-    
-    if not (verify_token(token, verifcation=None)):
-        return "<h1>404</h1><p>Invalid token</p>", 404
-
-    data = SQL.get_player_location(player_name)
-    # parse data
-    df = pd.DataFrame(data)
-    myjson = df.to_json(orient='records')
-
-    return jsonify(json.loads(myjson))
 
 # CORS Policy: Allow Access to These Methods From Any Origin
 @app_token.after_request

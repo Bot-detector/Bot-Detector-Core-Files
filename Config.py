@@ -18,23 +18,28 @@ proxy_https = os.environ.get('proxy_https')
 app = Flask(__name__)
 
 # config flask app
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# app.config["SQLALCHEMY_DATABASE_URI"] = sql_uri
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = sql_uri
 # app.config['SQLALCHEMY_MAX_OVERFLOW'] = 2000: 
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
+
+# create database connection
+db = SQLAlchemy(app)
+db.session = db.create_scoped_session()
+
 db_engines = {
-   "playerdata":  sqlalchemy.create_engine(url=sql_uri,           poolclass=sqlalchemy.pool.NullPool),
-   "discord":     sqlalchemy.create_engine(url=discord_sql_uri,   poolclass=sqlalchemy.pool.NullPool)
+   "playerdata": sqlalchemy.create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool),
+   "discord": sqlalchemy.create_engine(discord_sql_uri, poolclass=sqlalchemy.pool.NullPool)
 }
-
 Session = sqlalchemy.orm.sessionmaker
-
 db_sessions = {
-   "playerdata":  sqlalchemy.orm.sessionmaker(bind=db_engines['playerdata']),
-   "discord":     sqlalchemy.orm.sessionmaker(bind=db_engines['discord'])
+   "playerdata": sqlalchemy.orm.sessionmaker(bind=db_engines['playerdata']),
+   "discord": sqlalchemy.orm.sessionmaker(bind=db_engines['discord'])
 }
+
+
 
 
 # some cors stuf?
