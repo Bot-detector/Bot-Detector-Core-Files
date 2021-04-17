@@ -17,6 +17,7 @@ from plugin.detect import detect
 from Config import app, sched
 from mysite.predictions import app_predictions
 from Predictions import model
+from discord.discord import discord
 # from highscores import run_hiscore
 
 #import sys
@@ -37,13 +38,14 @@ app.register_blueprint(detect)
 app.register_blueprint(app_token)
 app.register_blueprint(dashboard)
 app.register_blueprint(app_predictions)
+app.register_blueprint(discord)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
     today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
     today18h = today18h + dt.timedelta(hours=18)
 
-    sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
+    sched.add_job(scraper.run_scraper, 'interval', minutes=10, start_date=dt.date.today(), name='run_hiscore', max_instances=20, coalesce=True)
     
     sched.add_job(model.save_model,trigger='interval', days=1, start_date=today18h ,args=[50], replace_existing=True, name='save_model')
     sched.add_job(model.save_model ,args=[50], replace_existing=True, name='save_model') # on startup
@@ -76,7 +78,7 @@ def print_log():
 
 @app.route("/hiscorescraper")
 def hiscorescraper():
-    sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
+    sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=20, coalesce=True)
     for job in sched.get_jobs():
         logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
         print(f'    Job: {job.name}, {job.trigger}, {job.func}')

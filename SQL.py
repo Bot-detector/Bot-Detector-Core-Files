@@ -1,5 +1,4 @@
 import Config
-from Config import db
 from sqlalchemy import text
 from collections import namedtuple
 import time
@@ -424,3 +423,30 @@ def get_region_report_stats():
 
 
 
+def get_player_location(player_name):
+    sql = (
+        '''
+        SELECT distinct
+            pl.name,
+            pl.id,
+            rp.region_id,
+            rin.region_name,
+            rp.x_coord,
+            rp.y_coord,
+            rp.timestamp
+        FROM Reports rp
+        INNER JOIN Players pl ON (rp.reportedID = pl.id)
+        INNER JOIN regionIDNames rin ON (rin.region_ID = rp.region_id)
+        where 1
+            and pl.name = :player_name
+        ORDER BY
+            rp.timestamp DESC
+        LIMIT 100
+        ;
+        '''
+    )
+    param = {
+        'player_name': player_name
+    }
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
+    return data
