@@ -117,7 +117,7 @@ def my_sql_task(data, player_name, has_return=False):
     skills_list = list(map(int, skills.values()))
     minigames_list = list(map(int, minigames.values()))
     total = sum(skills_list) + sum(minigames_list)
-    print(f'player: {player_name}, total: {total}')
+    # print(f'player: {player_name}, total: {total}')
 
     if total <= 0:
         print(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
