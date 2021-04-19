@@ -110,7 +110,7 @@ def sort_predictions(d):
     # remove 0's
     d = {key: value for key, value in d.items() if value > 0}
     # sort dict decending
-    d = [sorted(d.items(), key=lambda x: x[1], reverse=True)]
+    d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
     return d
 
 
