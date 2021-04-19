@@ -82,17 +82,18 @@ def parse_highscores(data):
     for index, row in enumerate(data):
         if index < len(skills):
             # skills row [rank, lvl, xp]
-            skills[skills_keys[index]] = row.split(',')[2]
+            skills[skills_keys[index]] = int(row.split(',')[2])
         else:
             index = index - (len(skills))
             # skills row [rank, Score]
-            minigames[minigames_keys[index]] = row.split(',')[1]
+            minigames[minigames_keys[index]] = int(row.split(',')[1])
     return skills, minigames
     
 def my_sql_task(data, player_name, has_return=False):
     # get player if return is none, the player does not exist
     player = SQL.get_player(player_name)
     
+    # if the player does not exist create the player
     if player is None:
         player = SQL.insert_player(player_name)
 
@@ -104,27 +105,29 @@ def my_sql_task(data, player_name, has_return=False):
     # if hiscore data is none, then player is banned
     if data is None:
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
+        print(f'player: {player_name}, data: {data} is None, return {has_return}')
+        lg.debug(f'player: {player_name}, data: {data} is None, return {has_return}')
         return None, None
 
     # else we parse the hiscore data
     skills, minigames = parse_highscores(data)
 
-    # update the player so updated at is recent
-    SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
-
-    print(" SQL TASK: " + player_name + " ID: " + str(player.id))
-
+    # calculate total
     total = -1
     skills_list = list(map(int, skills.values()))
     minigames_list = list(map(int, minigames.values()))
     total = sum(skills_list) + sum(minigames_list)
+    print(f'player: {player_name}, total: {total}')
 
-    if total <=0:
+    if total <= 0:
+        print(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
+        lg.debug(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
         return None, None
 
     # insert in hiscore data
-    
     SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
+    # update the player so updated at is recent
+    SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
     
 
     if has_return:
@@ -163,9 +166,9 @@ def multi_thread(players):
                     start = dt.datetime.now()
 
         except Exception as e:
-            traceback.print_exc()
-            print(e)
-            lg.debug(e)
+            print(f'Multithreading error: {e}')
+            lg.debug(f'Multithreading error: {e}')
+            lg.debug(traceback.print_exc())
 
 
 
@@ -192,7 +195,7 @@ def run_scraper():
     players = df['name'].to_list()
 
     # define selections size
-    n = 10000
+    n = 1000
     if n > len(players):
         n = len(players)
 

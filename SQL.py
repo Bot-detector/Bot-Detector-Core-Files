@@ -149,11 +149,8 @@ def insert_highscore(player_id, skills, minigames):
 
     # f string is not so secure but we control the skills & minigames dict
     sql_insert = f"insert ignore into playerHiscoreData ({columns}) values ({values});"
-    try:
-        execute_sql(sql_insert, param=None, debug=False, has_return=False)
-    except Exception as e:
-        print(e)
-        pass
+    execute_sql(sql_insert, param=None, debug=False, has_return=False)
+
 
 
 '''
