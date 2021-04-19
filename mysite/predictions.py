@@ -9,26 +9,48 @@ import Config
 from Predictions import model
 from SQL import get_player, insert_prediction_feedback, get_verified_discord_user
 
+def name_check(name):
+    bad_name = False
+    if len(name) > 13:
+        bad_name = True
+    
+    if not (name.replace(' ','').replace('_','').isalnum()):
+        bad_name = True
+
+    return name, bad_name
+
 app_predictions = Blueprint('predictions', __name__, template_folder='templates')
 
 @app_predictions.route('/site/prediction/<player_name>', methods=['POST', 'GET'])
 def get_prediction(player_name):
-    df = model.predict_model(player_name=player_name)
-    df['name'] = player_name
+    player_name, bad_name = name_check(player_name)
+    
+    if not( bad_name):
+        df = model.predict_model(player_name=player_name)
+        df['name'] = player_name
+    else:
+        df = {
+            "player_id": -1,
+            "player_name": player_name,
+            "prediction_label": "Thats not a valid name",
+            "prediction_confidence": 0,
+            "secondary_predictions": []
+        }
 
     if isinstance(df, dict):
         return jsonify(df)
 
+    
     prediction_dict = df.to_dict(orient='records')[0]
-
+    prediction_dict['id'] = int(prediction_dict['id'])
     print(prediction_dict)
 
     return_dict = {
-        "player_id": int(prediction_dict.pop("id")),
-        "player_name": prediction_dict.pop("name"),
-        "prediction_label": prediction_dict.pop("prediction"),
-        "prediction_confidence": prediction_dict.pop("Predicted confidence"),
-        "secondary_predictions": sort_predictions(prediction_dict)
+        "player_id":                prediction_dict.pop("id"),
+        "player_name":              prediction_dict.pop("name"),
+        "prediction_label":         prediction_dict.pop("prediction"),
+        "prediction_confidence":    prediction_dict.pop("Predicted confidence"),
+        "secondary_predictions":    sort_predictions(prediction_dict)
     }
 
 
@@ -84,9 +106,11 @@ def receive_discord_feedback():
 
     return 'OK'
 
-def sort_predictions(preds):
-
-    #removes any 0% prediction values then sorts the dictionary in descending order by value
-    return list(sorted(({k: v for k, v in preds.items() if v > 0}).items(),  key=lambda item: item[1], reverse=True))
+def sort_predictions(d):
+    # remove 0's
+    d = {key: value for key, value in d.items() if value > 0}
+    # sort dict decending
+    d = [sorted(d.items(), key=lambda x: x[1], reverse=True)]
+    return d
 
 

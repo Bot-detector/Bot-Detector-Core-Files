@@ -105,8 +105,8 @@ def my_sql_task(data, player_name, has_return=False):
     # if hiscore data is none, then player is banned
     if data is None:
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
-        print(f'player: {player_name}, data: {data} is None, return {has_return}')
-        lg.debug(f'player: {player_name}, data: {data} is None, return {has_return}')
+        # print(f'player: {player_name}, data: {data} is None, return {has_return}')
+        # lg.debug(f'player: {player_name}, data: {data} is None, return {has_return}')
         return None, None
 
     # else we parse the hiscore data
@@ -120,8 +120,9 @@ def my_sql_task(data, player_name, has_return=False):
     # print(f'player: {player_name}, total: {total}')
 
     if total <= 0:
-        print(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
-        lg.debug(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
+        SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
+        # print(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
+        # lg.debug(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
         return None, None
 
     # insert in hiscore data
