@@ -24,7 +24,7 @@ app_predictions = Blueprint('predictions', __name__, template_folder='templates'
 @app_predictions.route('/site/prediction/<player_name>', methods=['POST', 'GET'])
 def get_prediction(player_name):
     player_name, bad_name = name_check(player_name)
-    
+
     if not( bad_name):
         df = model.predict_model(player_name=player_name)
         df['name'] = player_name
@@ -32,7 +32,7 @@ def get_prediction(player_name):
         df = {
             "player_id": -1,
             "player_name": player_name,
-            "prediction_label": "Thats not a valid name",
+            "prediction_label": "Invalid player name",
             "prediction_confidence": 0,
             "secondary_predictions": []
         }
