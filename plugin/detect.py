@@ -8,21 +8,11 @@ import logging
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
-def name_check(name):
-    bad_name = False
-    if len(name) > 13:
-        bad_name = True
-    
-    if not (name.replace(' ','').replace('_','').isalnum()):
-        bad_name = True
-
-    return name, bad_name
-
 def custom_hiscore(detection):
     # input validation
     bad_name = False
-    detection['reporter'], bad_name = name_check(detection['reporter'])
-    detection['reported'], bad_name = name_check(detection['reported'])
+    detection['reporter'], bad_name = SQL.name_check(detection['reporter'])
+    detection['reported'], bad_name = SQL.name_check(detection['reported'])
 
     if bad_name:
         print(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")

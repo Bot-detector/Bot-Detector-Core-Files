@@ -8,22 +8,14 @@ import numpy as np
 import Config
 from Predictions import model
 from SQL import get_player, insert_prediction_feedback, get_verified_discord_user
+import SQL
 
-def name_check(name):
-    bad_name = False
-    if len(name) > 13:
-        bad_name = True
-    
-    if not (name.replace(' ','').replace('_','').isalnum()):
-        bad_name = True
-
-    return name, bad_name
 
 app_predictions = Blueprint('predictions', __name__, template_folder='templates')
 
 @app_predictions.route('/site/prediction/<player_name>', methods=['POST', 'GET'])
 def get_prediction(player_name):
-    player_name, bad_name = name_check(player_name)
+    player_name, bad_name = SQL.name_check(player_name)
 
     if not( bad_name):
         df = model.predict_model(player_name=player_name)

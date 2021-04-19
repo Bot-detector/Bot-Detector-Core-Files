@@ -10,7 +10,20 @@ import logging
 '''
     Functions for SQL Queries
 '''
+def name_check(name):
+    bad_name = False
+    if len(name) > 13:
+        bad_name = True
+    
+    temp_name = name
+    temp_name = temp_name.replace(' ','')
+    temp_name = temp_name.replace('_','')
+    temp_name = temp_name.replace('-','')
 
+    if not (temp_name.isalnum()):
+        bad_name = True
+
+    return name, bad_name
 
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
