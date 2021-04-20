@@ -9,3 +9,4 @@ discord = Blueprint('discord', __name__, template_folder='templates')
 def get_location():
     pass
     # useless code v2
+    # random changes
