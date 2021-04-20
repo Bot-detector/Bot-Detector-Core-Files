@@ -17,3 +17,6 @@ error.log
 
 Predictions/models/*
 !Predictions/models/.gitkeep
+
+.idea
+.idea/

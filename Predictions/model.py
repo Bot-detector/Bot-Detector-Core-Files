@@ -95,12 +95,15 @@ def train_model(n_pca):
     
 
     # getting labels with more then 5 players
-    lbl_df = pd.DataFrame(df_pca[['label']].value_counts(), columns=['players'])
-    mask = (lbl_df['players'] > 50)
-    lbl_df = lbl_df[mask].copy()
-    lbl_df.reset_index(inplace=True)
-    lbls = lbl_df['label'].tolist()
+    # lbl_df = pd.DataFrame(df_pca[['label']].value_counts(), columns=['players'])
+    # mask = (lbl_df['players'] > 50)
+    # lbl_df = lbl_df[mask].copy()
+    # lbl_df.reset_index(inplace=True)
+    # lbls = lbl_df['label'].tolist()
+
+    lbls= ['Fletching_bot', 'Magic_bot', 'Mining_bot', 'Pvm_bot', 'Real_Player', 'Smithing_bot', 'Wintertodt_bot']
     print('labels: ', len(lbls), lbls)
+    lg.debug('labels: ', len(lbls), lbls)
 
     # creating x, y data, with players that a label
     mask = ~(df_pca['label_id'] == 0) & (df_pca['label'].isin(lbls))

@@ -116,7 +116,7 @@ skills = {
     "Farming": 0,
     "Runecraft": 0,
     "Hunter": 0,
-    "Construction": 0,
+    "Construction": 0
 }
 
 minigames = {

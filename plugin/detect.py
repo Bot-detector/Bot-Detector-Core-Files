@@ -9,6 +9,15 @@ import logging
 detect = Blueprint('detect', __name__, template_folder='templates')
 
 def custom_hiscore(detection):
+    # input validation
+    bad_name = False
+    detection['reporter'], bad_name = SQL.name_check(detection['reporter'])
+    detection['reported'], bad_name = SQL.name_check(detection['reported'])
+
+    if bad_name:
+        print(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
+        logging.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
+        return
 
     # get reporter & reported
     reporter = SQL.get_player(detection['reporter'])
