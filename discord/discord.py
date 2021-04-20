@@ -10,3 +10,4 @@ def get_location():
     pass
     # useless code v2
     # random changes
+    # imade some more random changes
