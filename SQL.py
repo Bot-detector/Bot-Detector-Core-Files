@@ -1,3 +1,4 @@
+from werkzeug.wrappers import CommonRequestDescriptorsMixin
 import Config
 from Config import db
 from sqlalchemy import text
@@ -10,20 +11,23 @@ import logging
 '''
     Functions for SQL Queries
 '''
+
+
 def name_check(name):
     bad_name = False
     if len(name) > 13:
         bad_name = True
-    
+
     temp_name = name
-    temp_name = temp_name.replace(' ','')
-    temp_name = temp_name.replace('_','')
-    temp_name = temp_name.replace('-','')
+    temp_name = temp_name.replace(' ', '')
+    temp_name = temp_name.replace('_', '')
+    temp_name = temp_name.replace('-', '')
 
     if not (temp_name.isalnum()):
         bad_name = True
 
     return name, bad_name
+
 
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
@@ -58,7 +62,7 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
 
         if debug:
             print(f'keys: {rows.keys()}')
-            
+
         session.close()
         conn.close()
         return records
@@ -67,7 +71,7 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
         session.commit()
         session.close()
         conn.close()
-        #conn.connection.close()
+        # conn.connection.close()
         # session.remove()
 
 
@@ -156,14 +160,13 @@ def insert_highscore(player_id, skills, minigames):
     values.append(player_id)
     values.extend(list(skills.values()))
     values.extend(list(minigames.values()))
-    
+
     columns = list_to_string(keys)
     values = list_to_string(values)
 
     # f string is not so secure but we control the skills & minigames dict
     sql_insert = f"insert ignore into playerHiscoreData ({columns}) values ({values});"
     execute_sql(sql_insert, param=None, debug=False, has_return=False)
-
 
 
 '''
@@ -201,15 +204,18 @@ def insert_report(data):
     PredictionFeedback Table
 '''
 
+
 def insert_prediction_feedback(vote_info):
 
     sql_insert = 'insert ignore into PredictionsFeedback (voter_id, prediction, confidence, vote, subject_id) ' \
                  'values (:voter_id, :prediction, :confidence, :vote, :subject_id);'
     execute_sql(sql_insert, param=vote_info, debug=False, has_return=False)
 
+
 '''
     Discord User Table
 '''
+
 
 def get_verified_discord_user(discord_id):
 
@@ -223,6 +229,7 @@ def get_verified_discord_user(discord_id):
 
     return execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
+
 def get_unverified_discord_user(player_id):
 
     sql = 'SELECT * from discordVerification WHERE Player_id = :player_id ' \
@@ -233,6 +240,7 @@ def get_unverified_discord_user(player_id):
     }
 
     return execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
+
 
 def set_discord_verification(id):
 
@@ -245,6 +253,7 @@ def set_discord_verification(id):
     }
 
     return execute_sql(sql, param=param, debug=False, has_return=False, db_name="discord")
+
 
 '''
     Tokens Table
@@ -294,30 +303,36 @@ def get_highscores_data():
                              debug=False, has_return=True)
     return highscores
 
+
 def get_highscores_data_oneplayer(player_id):
     sql_highscores = 'SELECT * FROM hiscoreTableLatest where Player_id = :player_id;'
-    param  ={
-        'player_id':player_id
+    param = {
+        'player_id': player_id
     }
     highscores = execute_sql(sql=sql_highscores, param=param,
                              debug=False, has_return=True)
     return highscores
 
+
 def get_hiscores_of_interst():
-    sql ='SELECT htl.* FROM hiscoreTableLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)'
+    sql = 'SELECT htl.* FROM hiscoreTableLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)'
     highscores = execute_sql(sql=sql, param=None,
                              debug=False, has_return=True)
     return highscores
+
 
 def get_players_to_scrape():
     sql = 'select * from playersToScrape;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
+
 def get_players_of_interest():
     sql = 'select * from playersOfInterest;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
+
+
 '''
     Joined & complex Queries
 '''
@@ -344,6 +359,8 @@ def get_report_stats():
     return data
 
 # TODO: use contributor
+
+
 def get_contributions(contributor):
 
     query = '''
@@ -386,6 +403,8 @@ def get_player_table_stats():
     return data
 
 # TODO: route & visual on website
+
+
 def get_hiscore_table_stats():
     sql = ''' 
         SELECT 
@@ -402,7 +421,7 @@ def get_hiscore_table_stats():
     return data
 
 
-#Number of times an account has been manually reported by our users.
+# Number of times an account has been manually reported by our users.
 def get_times_manually_reported(reportedName):
 
     sql = '''
@@ -433,4 +452,30 @@ def get_region_report_stats():
     return data
 
 
+def get_player_report_locations(players):
 
+    sql = ('''
+        SELECT distinct
+            pl.name,
+            pl.id,
+            rin.region_name,
+            rp.region_id,
+            rp.x_coord,
+            rp.y_coord,
+            rp.timestamp
+        FROM Reports rp
+        INNER JOIN Players pl ON (rp.reportedID = pl.id)
+        INNER JOIN regionIDNames rin ON (rp.region_id = rin.region_ID)
+        where 1
+            and pl.name in :players
+        ORDER BY
+            rp.timestamp DESC
+        LIMIT 100000
+    ''')
+
+    param = {
+        'players': players
+    }
+
+    data = execute_sql(sql, param=param, debug=True, has_return=True)
+    return data
