@@ -1,0 +1,13 @@
+name: Deployment workflow
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Run Update Script
+        run: |
+          cd ~/dev-api/Bot-Detector-Core-Files/
+          ./update.sh
