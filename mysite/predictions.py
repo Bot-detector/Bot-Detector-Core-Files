@@ -25,8 +25,7 @@ def get_prediction(player_name):
             "player_id": -1,
             "player_name": player_name,
             "prediction_label": "Invalid player name",
-            "prediction_confidence": 0,
-            "secondary_predictions": []
+            "prediction_confidence": 0
         }
 
     if isinstance(df, dict):
@@ -42,7 +41,7 @@ def get_prediction(player_name):
         "player_name":              prediction_dict.pop("name"),
         "prediction_label":         prediction_dict.pop("prediction"),
         "prediction_confidence":    prediction_dict.pop("Predicted confidence"),
-        "secondary_predictions":    sort_predictions(prediction_dict)
+        "predictions_breakdown":    prediction_dict
     }
 
 
@@ -99,12 +98,3 @@ def receive_discord_feedback():
         return "<h1>400</h1><p>Use the !link command to link a Runescape account to your discord account first.</p>", 400
 
     return 'OK'
-
-def sort_predictions(d):
-    # remove 0's
-    d = {key: value for key, value in d.items() if value > 0}
-    # sort dict decending
-    d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
-    return d
-
-
