@@ -5,6 +5,7 @@ import datetime as dt
 import os
 import logging
 # custom
+from Config import flask_port
 
 import scraper.hiscoreScraper as scraper
 from mysite.tokens import app_token
@@ -77,5 +78,5 @@ def hiscorescraper():
     return redirect('/log')
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True, use_reloader=False)
-    # serve(app, host='127.0.0.1', port=5000, debug=True)
+    app.run(port=flask_port, debug=True, use_reloader=False)
+    # serve(app, host='127.0.0.1', port=flask_port, debug=True)

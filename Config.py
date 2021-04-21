@@ -13,6 +13,7 @@ sql_uri = os.environ.get('sql_uri')
 discord_sql_uri = os.environ.get('discord_sql_uri')
 proxy_http = os.environ.get('proxy_http')
 proxy_https = os.environ.get('proxy_https')
+flask_port = os.environ.get('flask_port')
 
 # create flask app
 app = Flask(__name__)
