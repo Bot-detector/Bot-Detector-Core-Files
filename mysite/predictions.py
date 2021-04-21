@@ -60,9 +60,11 @@ def receive_plugin_feedback():
 
     vote_info = request.get_json()
 
-    player_id_db = get_player(vote_info["rsn"])
+    print(vote_info)
 
-    if int(player_id_db.id) == int(vote_info["voter_id"]):
+    # Voter ID will be 0 if player is not logged in.
+    # There is a plugin check for this also.
+    if(int(vote_info["voter_id"]) > 0):
         insert_prediction_feedback(vote_info)
 
     return 'OK'
