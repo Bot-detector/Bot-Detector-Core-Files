@@ -49,6 +49,9 @@ if not(dev_mode) and not(app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'tr
 
     sched.start()
 
+else:
+    started = False
+
 
 @app.errorhandler(404)
 def page_not_found(e):
