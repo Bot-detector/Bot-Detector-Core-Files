@@ -33,7 +33,7 @@ app.register_blueprint(dashboard)
 app.register_blueprint(app_predictions)
 app.register_blueprint(discord)
 
-if not dev_mode or app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+if not(dev_mode) and not(app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true'):
     started = True
     today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
     today18h = today18h + dt.timedelta(hours=18)
