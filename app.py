@@ -5,7 +5,7 @@ import datetime as dt
 import os
 import logging
 # custom
-from Config import flask_port
+from Config import flask_port, dev_mode
 
 import scraper.hiscoreScraper as scraper
 from mysite.tokens import app_token
@@ -33,7 +33,7 @@ app.register_blueprint(dashboard)
 app.register_blueprint(app_predictions)
 app.register_blueprint(discord)
 
-if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+if not dev_mode:
     started = True
     today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
     today18h = today18h + dt.timedelta(hours=18)
