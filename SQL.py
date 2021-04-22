@@ -479,3 +479,4 @@ def get_player_report_locations(players):
 
     data = execute_sql(sql, param=param, debug=True, has_return=True)
     return data
+    
