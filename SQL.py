@@ -185,7 +185,7 @@ def insert_report(data):
         'x_coord': data['x'],
         'y_coord': data['y'],
         'z_coord': data['z'],
-        'timestamp': data['ts'],
+        'timestamp': time.gmtime(data['ts']),
         'manual_detect': data['manual_detect'],
         'on_members_world': members
     }
