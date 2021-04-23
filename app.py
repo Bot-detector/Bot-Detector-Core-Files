@@ -3,7 +3,6 @@ from flask import jsonify, render_template_string, redirect
 from waitress import serve
 import datetime as dt
 import os
-import logging
 # custom
 import Config
 from Config import flask_port, dev_mode
@@ -17,15 +16,6 @@ from Config import app, sched
 from mysite.predictions import app_predictions
 from Predictions import model
 from discord.discord import discord
-
-logging.FileHandler(filename="error.log", mode='a')
-logging.basicConfig(filename='error.log', level=logging.DEBUG)
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger('flask_cors').setLevel(logging.WARNING)
-
-# logger = logging.getLogger()
 
 app.register_blueprint(plugin_stats)
 app.register_blueprint(detect)
@@ -89,5 +79,5 @@ def hiscorescraper():
     return redirect('/log')
 
 if __name__ == '__main__':
-    app.run(port=flask_port, debug=True, use_reloader=False)
-    # serve(app, host='127.0.0.1', port=flask_port, debug=True)
+    # app.run(port=flask_port, debug=True, use_reloader=False)
+    serve(app, host='127.0.0.1', port=flask_port, debug=True)
