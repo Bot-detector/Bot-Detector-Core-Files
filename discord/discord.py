@@ -13,6 +13,7 @@ discord = Blueprint('discord', __name__, template_folder='templates')
 
 @discord.route('/discord/locations/<token>', methods=['GET', 'POST'])
 def get_locations(token):
+    print("Hello")
 
     verified = tokens.verify_token(token=token, verifcation='create_token')
 
@@ -27,6 +28,30 @@ def get_locations(token):
 
     players = players['names']
     data = SQL.get_player_report_locations(players)
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
+
+@discord.route('/discord/region/<token>', methods=['GET', 'POST'])
+def get_regions(token):
+
+    verified = tokens.verify_token(token=token, verifcation='create_token')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    regionName = request.get_json()
+
+    print(regionName)
+
+    if regionName is None:
+        return jsonify({'Invalid Data':'Data'})
+
+    regionName = regionName['region']
+    
+    data = SQL.get_region_search(regionName)
+
     df = pd.DataFrame(data)
     output = df.to_dict('records')
 

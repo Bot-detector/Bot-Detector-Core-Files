@@ -479,3 +479,16 @@ def get_player_report_locations(players):
 
     data = execute_sql(sql, param=param, debug=True, has_return=True)
     return data
+    
+def get_region_search(regionName):
+
+    sql = "SELECT * FROM regionIDNames WHERE region_name LIKE :region"
+
+    regionName = "%" + regionName + "%"
+
+    param = {
+        'region': regionName
+    }
+
+    data = execute_sql(sql, param=param, debug=True, has_return=True)
+    return data
