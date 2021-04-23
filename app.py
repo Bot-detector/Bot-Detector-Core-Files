@@ -5,6 +5,7 @@ import datetime as dt
 import os
 import logging
 # custom
+import Config
 from Config import flask_port, dev_mode
 
 import scraper.hiscoreScraper as scraper
@@ -33,9 +34,15 @@ app.register_blueprint(dashboard)
 app.register_blueprint(app_predictions)
 app.register_blueprint(discord)
 
+def print_jobs():
+    Config.debug('   Scheduled Jobs:')
+    for job in sched.get_jobs():
+        Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+
 # prevent flask loading twice
-if not(app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true'):
+if not(app.debug) or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
+    Config.debug(f'devmode: {dev_mode}')
     # prevent scraping & predicting for every player in dev
     if not(dev_mode):
         today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
@@ -45,11 +52,9 @@ if not(app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true'):
         
         sched.add_job(model.save_model,trigger='interval', days=1, start_date=today18h ,args=[50], replace_existing=True, name='save_model')
 
-    sched.add_job(model.train_model ,args=[30], replace_existing=True, name='save_model') # on startup
+    sched.add_job(model.train_model ,args=[30], replace_existing=True, name='train_model') # on startup
     
-    for job in sched.get_jobs():
-        logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
-        print(f'    Job: {job.name}, {job.trigger}, {job.func}')
+    print_jobs()
 
     sched.start()
 
@@ -80,8 +85,7 @@ def print_log():
 def hiscorescraper():
     sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
     for job in sched.get_jobs():
-        logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
-        print(f'    Job: {job.name}, {job.trigger}, {job.func}')
+        Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return redirect('/log')
 
 if __name__ == '__main__':
