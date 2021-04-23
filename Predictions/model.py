@@ -71,7 +71,7 @@ def train_model(n_pca):
     df_clean = (df
         .pipe(pf.start_pipeline)
         .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-        .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
+        .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
         .pipe(pf.filter_relevant_features, ed.skills_list)
     )
     df_preprocess = (df_clean
@@ -101,7 +101,7 @@ def train_model(n_pca):
     # lbl_df.reset_index(inplace=True)
     # lbls = lbl_df['label'].tolist()
 
-    lbls= ['Fletching_bot', 'Magic_bot', 'Mining_bot', 'Pvm_bot', 'Real_Player', 'Smithing_bot', 'Wintertodt_bot']
+    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot']
     print('labels: ', len(lbls), lbls)
     lg.debug('labels: ', len(lbls), lbls)
 
@@ -294,6 +294,6 @@ def multi_thread(data):
             _ = future.result()
 
 if __name__ == '__main__':
-    train_model(n_pca=50)
+    train_model(n_pca=30)
     # save_model()
     # df = predict_model(player_name='extreme4all') # player_name='extreme4all'
