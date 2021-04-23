@@ -89,7 +89,7 @@ def parse_highscores(data):
             minigames[minigames_keys[index]] = int(row.split(',')[1])
 
     # fix total == 0
-    if skills['total'] == 0:
+    if skills['total'] <= 0:
         skills_values = skills.values()
         skills_values = list(map(int, skills_values[1:]))
         skills_values = [item for item in skills_values if item > 0]
