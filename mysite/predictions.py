@@ -25,7 +25,8 @@ def get_prediction(player_name):
             "player_id": -1,
             "player_name": player_name,
             "prediction_label": "Invalid player name",
-            "prediction_confidence": 0
+            "prediction_confidence": 0,
+            "secondary_predictions": []
         }
 
     if isinstance(df, dict):
@@ -41,7 +42,7 @@ def get_prediction(player_name):
         "player_name":              prediction_dict.pop("name"),
         "prediction_label":         prediction_dict.pop("prediction"),
         "prediction_confidence":    prediction_dict.pop("Predicted confidence"),
-        "predictions_breakdown":    prediction_dict
+        "secondary_predictions":    sort_predictions(prediction_dict)
     }
 
 
@@ -59,15 +60,9 @@ def receive_plugin_feedback():
 
     vote_info = request.get_json()
 
-    voter = get_player(vote_info['player_name'])
+    player_id_db = get_player(vote_info["rsn"])
 
-    print(voter)
-
-    # Voter ID will be 0 if player is not logged in.
-    # There is a plugin check for this also.
-    if(int(voter.id) > 0):
-        vote_info["voter_id"] = voter.id
-
+    if int(player_id_db.id) == int(vote_info["voter_id"]):
         insert_prediction_feedback(vote_info)
 
     return 'OK'
@@ -102,3 +97,12 @@ def receive_discord_feedback():
         return "<h1>400</h1><p>Use the !link command to link a Runescape account to your discord account first.</p>", 400
 
     return 'OK'
+
+def sort_predictions(d):
+    # remove 0's
+    d = {key: value for key, value in d.items() if value > 0}
+    # sort dict decending
+    d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
+    return d
+
+
