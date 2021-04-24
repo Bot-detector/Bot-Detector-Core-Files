@@ -6,7 +6,6 @@ import requests
 import random
 import pandas as pd
 import datetime as dt
-import logging as lg
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import concurrent.futures as cf
@@ -16,8 +15,6 @@ import Config
 import SQL
 from scraper import extra_data as ed
 
-lg.getLogger("requests").setLevel(lg.WARNING)
-lg.getLogger("urllib3").setLevel(lg.WARNING)
 
 def make_web_call(URL, user_agent_list, debug=False):
     # Pick a random user agent
@@ -73,11 +70,11 @@ def get_data(player_name):
     return data
 
 def parse_highscores(data):
-    skills = ed.skills
+    skills =    ed.skills
     minigames = ed.minigames
     # get list of keys from dict
-    skills_keys = list(skills.keys())
-    minigames_keys = list(minigames.keys())
+    skills_keys =       list(skills.keys())
+    minigames_keys =    list(minigames.keys())
     # data is huge array
     for index, row in enumerate(data):
         if index < len(skills):
@@ -87,14 +84,13 @@ def parse_highscores(data):
             index = index - (len(skills))
             # skills row [rank, Score]
             minigames[minigames_keys[index]] = int(row.split(',')[1])
-
+    
     # fix total == 0
     if skills['total'] <= 0:
-        skills_values = skills.values()
+        skills_values = list(skills.values())
         skills_values = list(map(int, skills_values[1:]))
         skills_values = [item for item in skills_values if item > 0]
         skills['total'] == sum(skills_values)
-        Config.debug(f'total before <= 0 after total: {skills["total"]}')
         
     return skills, minigames
     
@@ -104,6 +100,7 @@ def my_sql_task(data, player_name, has_return=False):
     
     # if the player does not exist create the player
     if player is None:
+        # Config.debug(f' new player: {player_name}')
         player = SQL.insert_player(player_name)
 
     # player variables
@@ -113,10 +110,11 @@ def my_sql_task(data, player_name, has_return=False):
 
     # if hiscore data is none, then player is banned
     if data is None:
-        Config.debug(f' player:{player_name} data is None')
+        # Config.debug(f' player:{player_name} data is None')
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         return None, None
 
+    
     # else we parse the hiscore data
     skills, minigames = parse_highscores(data)
 
@@ -128,7 +126,7 @@ def my_sql_task(data, player_name, has_return=False):
 
 
     if total <= 0:
-        Config.debug(f' player:{player_name} - {total} <=0 ')
+        # Config.debug(f' player:{player_name} - {total} <= 0 ')
         SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         return None, None
 
@@ -146,6 +144,7 @@ def mytempfunction(player_name):
     _,_ = my_sql_task(data=data, player_name=player_name)
     return 1
 
+
 def multi_thread(players):
     # create a list of tasks to multithread
     tasks = []
@@ -156,15 +155,12 @@ def multi_thread(players):
     with cf.ProcessPoolExecutor() as executor:
         try:
             # submit each task to be executed
-            futures = {executor.submit(mytempfunction, task[0]): task[0] for task in tasks} # get_data
-
+            futures = {executor.submit(mytempfunction, task[0]): task[0] for task in tasks}  # get_data
             # get start time
             start = dt.datetime.now()
             for i, future in enumerate(cf.as_completed(futures)):
-                # player_name = futures[future]
-                # _ = future.result()
-                # my_sql_task(data=data, player_name=player_name) # moved this to mytempfunction
-
+                player_name = futures[future]
+                # Config.debug(f' scraped: {player_name}')
                 # some logging
                 if i % 100 == 0:
                     end = dt.datetime.now()

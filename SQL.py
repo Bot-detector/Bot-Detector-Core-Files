@@ -45,10 +45,8 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
 
     sql = text(sql)
     if debug:
-        print(f'SQL : {sql}')
-        print(f'Param: {param}')
-        logging.debug(f'    SQL : {sql}')
-        logging.debug(f'    Param: {param}')
+        Config.debug(f'    SQL : {sql}')
+        Config.debug(f'    Param: {param}')
 
     if has_return:
         rows = session.execute(sql, param)
@@ -67,8 +65,6 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
         session.commit()
         session.close()
         conn.close()
-        #conn.connection.close()
-        # session.remove()
 
 
 '''
@@ -128,14 +124,26 @@ def insert_player(player_name):
 
 
 def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, debug=False):
-    sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban, confirmed_player=:confirmed_player, label_id=:label_id where id=:player_id;'
+    sql_update = ('''
+        update Players 
+        set 
+            updated_at=:ts, 
+            possible_ban=:possible_ban, 
+            confirmed_ban=:confirmed_ban, 
+            confirmed_player=:confirmed_player, 
+            label_id=:label_id 
+        where 
+            id=:player_id;
+    ''')
+
+    time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
     param = {
-        'ts':  time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime()),
-        'possible_ban': possible_ban,
-        'confirmed_ban': confirmed_ban,
+        'ts':               time_now,
+        'possible_ban':     possible_ban,
+        'confirmed_ban':    confirmed_ban,
         'confirmed_player': confirmed_player,
-        'label_id': label_id,
-        'player_id': player_id
+        'label_id':         label_id,
+        'player_id':        player_id
     }
     execute_sql(sql_update, param=param, debug=debug, has_return=False)
 

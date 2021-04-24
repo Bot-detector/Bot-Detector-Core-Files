@@ -59,6 +59,13 @@ executors = {
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
    sched = BackgroundScheduler(daemon=False, executors=executors)
 
+logging.FileHandler(filename="error.log", mode='a')
+logging.basicConfig(filename='error.log', level=logging.DEBUG)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
+logging.getLogger('flask_cors').setLevel(logging.WARNING)
+
 def debug(str):
     print(str)
     logging.debug(str)

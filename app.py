@@ -18,14 +18,6 @@ from mysite.predictions import app_predictions
 from Predictions import model
 from discord.discord import discord
 
-logging.FileHandler(filename="error.log", mode='a')
-logging.basicConfig(filename='error.log', level=logging.DEBUG)
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger('flask_cors').setLevel(logging.WARNING)
-
-# logger = logging.getLogger()
 
 app.register_blueprint(plugin_stats)
 app.register_blueprint(detect)
