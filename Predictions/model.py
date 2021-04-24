@@ -285,6 +285,7 @@ def save_model(n_pca=50):
         data = df.to_dict('records')
         multi_thread(data)
 
+        loop += 1
         if len(df) < limit:
             end = True
 
@@ -315,7 +316,7 @@ def multi_thread(data):
             _ = future.result()
 
 if __name__ == '__main__':
-    # train_model(n_pca=50)
-    save_model(n_pca=30)
-    df = predict_model(player_name='extreme4all') # player_name='extreme4all'
-    df.head()
+    train_model(n_pca=50)
+    # save_model(n_pca=30)
+    # df = predict_model(player_name='extreme4all') # player_name='extreme4all'
+    # df.head()
