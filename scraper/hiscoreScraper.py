@@ -90,7 +90,7 @@ def parse_highscores(data):
 
     # fix total == 0
     if skills['total'] <= 0:
-        skills_values = skills.values()
+        skills_values = list(skills.values())
         skills_values = list(map(int, skills_values[1:]))
         skills_values = [item for item in skills_values if item > 0]
         skills['total'] == sum(skills_values)
