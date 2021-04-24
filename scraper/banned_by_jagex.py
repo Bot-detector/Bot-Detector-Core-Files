@@ -1,8 +1,6 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# NO_PROFILE = unbanned
-# NOT_A_MEMBER = banned
-# PRIVATE_PROFILE = Unable to figure out, check hiscore if it appears there
+
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import requests
@@ -65,16 +63,24 @@ def check_player(player):
     if not('error' in data):
         return
 
+
+    # NO_PROFILE = unbanned
+    # NOT_A_MEMBER = banned
+    # PRIVATE_PROFILE = Unable to figure out, check hiscore if it appears there
+
     # check if player is banned
     if not(data['error'] == 'NOT_A_MEMBER'):
         return
     Config.debug(f'player: {player_name} is banned')
+
+    if player.prediction == '':
+        pass
     # SQL.update_player(player.id, possible_ban=1, confirmed_ban=1, confirmed_player=0, label_id=0, debug=False)
 
 
 
 def main():
-    players = SQL.get_possible_ban()
+    players = SQL.get_possible_ban_predicted() 
     tasks = []
     for player in players:
         tasks.append(([player]))

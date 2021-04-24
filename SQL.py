@@ -445,3 +445,7 @@ def get_possible_ban():
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
+def get_possible_ban_predicted():
+    sql = 'SELECT * FROM playerPossibleBanPrediction'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
