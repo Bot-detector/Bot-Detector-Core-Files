@@ -55,8 +55,8 @@ def make_web_call(URL, user_agent_list, debug=False):
         response.raise_for_status()
 
     if debug:
-        print(f'Requesting: {URL}')
-        print(f'Response: Status code: {response.status_code}, response length: {len(response.text)}')
+        Config.debug(f'Requesting: {URL}')
+        Config.debug(f'Response: Status code: {response.status_code}, response length: {len(response.text)}')
     return response
 
 def get_data(player_name):
@@ -94,6 +94,7 @@ def parse_highscores(data):
         skills_values = list(map(int, skills_values[1:]))
         skills_values = [item for item in skills_values if item > 0]
         skills['total'] == sum(skills_values)
+        Config.debug(f'total before <= 0 after total: {skills["total"]}')
         
     return skills, minigames
     
@@ -112,6 +113,7 @@ def my_sql_task(data, player_name, has_return=False):
 
     # if hiscore data is none, then player is banned
     if data is None:
+        Config.debug(f' player:{player_name} data is None')
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         return None, None
 
@@ -126,6 +128,7 @@ def my_sql_task(data, player_name, has_return=False):
 
 
     if total <= 0:
+        Config.debug(f' player:{player_name} - {total} <=0 ')
         SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         return None, None
 
@@ -166,35 +169,26 @@ def multi_thread(players):
                 if i % 100 == 0:
                     end = dt.datetime.now()
                     t = end - start
-                    lg.debug(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
-                    print(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
+                    Config.debug(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
                     start = dt.datetime.now()
 
         except Exception as e:
-            print(f'Multithreading error: {e}')
-            lg.debug(f'Multithreading error: {e}')
-            lg.debug(traceback.print_exc())
+            Config.debug(f'Multithreading error: {e}')
+            Config.debug(traceback.print_exc())
 
 
 
 def run_scraper():
-    lg.debug(f'     Starting hiscore scraper: {dt.datetime.now()}')
-    print(f'     Starting hiscore scraper: {dt.datetime.now()}')
-
     # get palyers to scrape
     data = SQL.get_players_to_scrape()
 
     # check if there are any players to scrape
     if len(data) == 0:
-        print('no players to scrape')
+        Config.debug('no players to scrape')
         return []
 
     # array of named tuple to dataframe
     df = pd.DataFrame(data)
-
-    # remove all possible banned
-    # mask = ~(df['possible_ban'] == 1)
-    # df = df[mask]
 
     # create array of players (names)
     players = df['name'].to_list()
@@ -207,6 +201,7 @@ def run_scraper():
     # get a random sample from players with selection size
     players = random.sample(players, n)
 
+    Config.debug(f'     Starting hiscore scraper: {dt.datetime.now()} data: {df.shape}')
     # multi thread scrape players
     multi_thread(players)
 

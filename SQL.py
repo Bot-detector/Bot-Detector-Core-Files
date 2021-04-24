@@ -432,5 +432,8 @@ def get_region_report_stats():
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
-
+def get_possible_ban():
+    sql = 'Select * from Players where possible_ban = 1 and confirmed_ban = 0'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
 
