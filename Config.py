@@ -14,7 +14,7 @@ discord_sql_uri = os.environ.get('discord_sql_uri')
 proxy_http = os.environ.get('proxy_http')
 proxy_https = os.environ.get('proxy_https')
 flask_port = os.environ.get('flask_port')
-dev_mode = False #bool(os.environ.get('dev_mode'))
+dev_mode = bool(os.environ.get('dev_mode'))
 
 # create flask app
 app = Flask(__name__)
