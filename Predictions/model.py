@@ -100,7 +100,7 @@ def train_model(n_pca):
     # lbl_df.reset_index(inplace=True)
     # lbls = lbl_df['label'].tolist()
 
-    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot']
+    lbls = ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot']
     print('labels: ', len(lbls), lbls)
     lg.debug('labels: ', len(lbls), lbls)
 
@@ -266,13 +266,11 @@ def save_model(n_pca=50):
             createtable = f'CREATE TABLE IF NOT EXISTS {table_name} (name varchar(12), prediction text, {" INT, ".join(columns)} INT);'
             indexname = 'ALTER TABLE playerdata.Predictions ADD UNIQUE name (name);'
             fk = 'ALTER TABLE `Predictions` ADD CONSTRAINT `FK_pred_player_id` FOREIGN KEY (`id`) REFERENCES `Players`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;'
-            created = 'ALTER TABLE `Predictions` ADD `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP FIRST;'
 
             SQL.execute_sql(droptable,      param=None, debug=False, has_return=False)
             SQL.execute_sql(createtable,    param=None, debug=False, has_return=False)
             SQL.execute_sql(indexname,      param=None, debug=False, has_return=False)
             SQL.execute_sql(fk,             param=None, debug=False, has_return=False)
-            # SQL.execute_sql(created,        param=None, debug=False, has_return=False)
 
         # because prediction must be first column
         ordered_columns = ['prediction'] + columns
