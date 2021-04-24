@@ -87,6 +87,14 @@ def parse_highscores(data):
             index = index - (len(skills))
             # skills row [rank, Score]
             minigames[minigames_keys[index]] = int(row.split(',')[1])
+
+    # fix total == 0
+    if skills['total'] <= 0:
+        skills_values = skills.values()
+        skills_values = list(map(int, skills_values[1:]))
+        skills_values = [item for item in skills_values if item > 0]
+        skills['total'] == sum(skills_values)
+        
     return skills, minigames
     
 def my_sql_task(data, player_name, has_return=False):
@@ -105,8 +113,6 @@ def my_sql_task(data, player_name, has_return=False):
     # if hiscore data is none, then player is banned
     if data is None:
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
-        # print(f'player: {player_name}, data: {data} is None, return {has_return}')
-        # lg.debug(f'player: {player_name}, data: {data} is None, return {has_return}')
         return None, None
 
     # else we parse the hiscore data
@@ -117,12 +123,10 @@ def my_sql_task(data, player_name, has_return=False):
     skills_list = list(map(int, skills.values()))
     minigames_list = list(map(int, minigames.values()))
     total = sum(skills_list) + sum(minigames_list)
-    # print(f'player: {player_name}, total: {total}')
+
 
     if total <= 0:
         SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
-        # print(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
-        # lg.debug(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
         return None, None
 
     # insert in hiscore data
