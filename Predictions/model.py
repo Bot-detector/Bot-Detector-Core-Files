@@ -10,14 +10,6 @@ from joblib import dump, load
 import time
 import concurrent.futures as cf
 import logging as lg
-# custom imports
-import SQL
-# import highscores
-from scraper import hiscoreScraper as highscores
-from Predictions import prediction_functions as pf
-from Predictions import extra_data as ed
-
-
 from sklearn.ensemble import VotingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
@@ -25,6 +17,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import classification_report
+
+# custom imports
+import SQL
+from scraper import hiscoreScraper as highscores
+from Predictions import prediction_functions as pf
+from Predictions import extra_data as ed
+
 
 def create_model(train_x, train_y, test_x, test_y, lbls):
     neigh = KNeighborsClassifier(n_neighbors=len(lbls), n_jobs=-1)
@@ -238,39 +237,6 @@ def save_model(n_pca=50):
     print(os.listdir())
     lg.debug(os.listdir())
     
-<<<<<<< Updated upstream
-    train_model(n_pca=50)
-    df = predict_model(player_name=None)
-    lg.debug(f'data shape: {df.shape}')
-    # parse data to format int
-    int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction']]
-    df[int_columns] = df[int_columns]*100
-    df[int_columns] = df[int_columns].astype(int)
-    df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
-    print(df.head())
-
-    # create table
-    columns = df.columns.tolist()
-    columns.remove('prediction')
-
-    table_name = 'Predictions'
-    droptable = f'DROP TABLE IF EXISTS {table_name};'
-    createtable = f'CREATE TABLE IF NOT EXISTS {table_name} (name varchar(12), prediction text, {" INT, ".join(columns)} INT);'
-    indexname = 'ALTER TABLE playerdata.Predictions ADD UNIQUE name (name);'
-
-    SQL.execute_sql(droptable,      param=None, debug=False, has_return=False)
-    SQL.execute_sql(createtable,    param=None, debug=False, has_return=False)
-    SQL.execute_sql(indexname,      param=None, debug=False, has_return=False)
-
-    #because prediction must be first column
-    ordered_columns = ['prediction'] + columns
-    df = df[ordered_columns]
-    df.reset_index(inplace=True)
-    
-    # insert rowss
-    data = df.to_dict('records')
-    multi_thread(data)
-=======
     # chunking data
     limit = 10_000
     end = False
@@ -287,12 +253,13 @@ def save_model(n_pca=50):
         df[int_columns] = df[int_columns]*100
         df[int_columns] = df[int_columns].astype(int)
         df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
-        
+
+        columns = df.columns.tolist()
+        columns.remove('prediction')
         # if the first run then drop & create table
         if first_run:
+            print('drop & create table')
             first_run = False
-            columns = df.columns.tolist()
-            columns.remove('prediction')
 
             table_name = 'Predictions'
             droptable = f'DROP TABLE IF EXISTS {table_name};'
@@ -305,7 +272,7 @@ def save_model(n_pca=50):
             SQL.execute_sql(createtable,    param=None, debug=False, has_return=False)
             SQL.execute_sql(indexname,      param=None, debug=False, has_return=False)
             SQL.execute_sql(fk,             param=None, debug=False, has_return=False)
-            SQL.execute_sql(created,        param=None, debug=False, has_return=False)
+            # SQL.execute_sql(created,        param=None, debug=False, has_return=False)
 
         # because prediction must be first column
         ordered_columns = ['prediction'] + columns
@@ -318,16 +285,16 @@ def save_model(n_pca=50):
 
         if len(df) < limit:
             end = True
->>>>>>> Stashed changes
 
 
 def insert_prediction(row):
-        values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
-        sql_insert = f'insert ignore into Predictions values ({values});'
-        SQL.execute_sql(sql_insert,      param=row, debug=False, has_return=False)
+    values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
+    sql_insert = f'insert ignore into Predictions values ({values});'
+    SQL.execute_sql(sql_insert, param=row, debug=True, has_return=False)
 
 
 def multi_thread(data):
+    print('start multithread')
     # create a list of tasks to multithread
     tasks = []
     for row in data:
@@ -345,13 +312,7 @@ def multi_thread(data):
             _ = future.result()
 
 if __name__ == '__main__':
-<<<<<<< Updated upstream
-    train_model(n_pca=30)
-    # save_model()
-    # df = predict_model(player_name='extreme4all') # player_name='extreme4all'
-=======
     # train_model(n_pca=50)
     save_model(n_pca=30)
     df = predict_model(player_name='extreme4all') # player_name='extreme4all'
     df.head()
->>>>>>> Stashed changes
