@@ -7,9 +7,7 @@ import sys
 import pandas as pd
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-
 discord = Blueprint('discord', __name__, template_folder='templates')
-
 
 @discord.route('/discord/locations/<token>', methods=['GET', 'POST'])
 def get_locations(token):
