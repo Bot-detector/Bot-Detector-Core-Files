@@ -76,14 +76,9 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
 '''
 
 
-def get_player_names(ids=None):
-    if ids is None:
-        sql = 'select * from Players;'
-        param = None
-    else:
-        sql = 'select * from Players where id in :ids;'
-        param = {'ids':ids}
-    data = execute_sql(sql, param=param, debug=False, has_return=True)
+def get_player_names():
+    sql = 'select * from Players;'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
 
@@ -293,35 +288,14 @@ def get_player_labels():
 '''
 
 
-def get_highscores_data(start=0, amount=1_000_000):
-    sql_highscores = (
-        '''
-        SELECT 
-            hdl.*, 
-            pl.name 
-        FROM playerHiscoreDataLatest hdl 
-        inner join Players pl on(hdl.Player_id=pl.id)
-        LIMIT :start, :amount
-        ;
-    ''')
-    param = {
-        'start': start,
-        'amount': amount
-    }
-    highscores = execute_sql(sql_highscores, param=param,
+def get_highscores_data():
+    sql_highscores = 'SELECT * FROM hiscoreTableLatest;'
+    highscores = execute_sql(sql_highscores, param=None,
                              debug=False, has_return=True)
     return highscores
 
 def get_highscores_data_oneplayer(player_id):
-    sql_highscores = (
-        '''SELECT 
-            hdl.*, 
-            pl.name 
-        FROM playerHiscoreDataLatest hdl 
-        inner join Players pl on(hdl.Player_id=pl.id)
-        where Player_id = :player_id
-        ;
-    ''')
+    sql_highscores = 'SELECT * FROM hiscoreTableLatest where Player_id = :player_id;'
     param  ={
         'player_id':player_id
     }
@@ -330,7 +304,7 @@ def get_highscores_data_oneplayer(player_id):
     return highscores
 
 def get_hiscores_of_interst():
-    sql ='SELECT htl.*, poi.name FROM playerHiscoreDataLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)'
+    sql ='SELECT htl.* FROM hiscoreTableLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)'
     highscores = execute_sql(sql=sql, param=None,
                              debug=False, has_return=True)
     return highscores
@@ -341,9 +315,7 @@ def get_players_to_scrape():
     return data
 
 def get_players_of_interest():
-
     sql = 'select * from playersOfInterest;'
-
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 '''
