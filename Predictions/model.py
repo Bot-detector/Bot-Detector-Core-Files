@@ -161,6 +161,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
     # if a player name is given, check if we have a record for this player else scrape that player
     if player_name is None:
         print(f'get_hiscores: {start}, {amount}')
+        lg.debug(f'get_hiscores: {start}, {amount}')
         df = pf.get_highscores(ofinterest=False, start=start, amount=amount)
         ids = df['Player_id'].to_list()
         df_players = pf.get_players(with_id=True, ofinterest=False, ids=ids)
@@ -259,6 +260,7 @@ def save_model(n_pca=50):
         # if the first run then drop & create table
         if first_run:
             print('drop & create table')
+            lg.debug('drop & create table')
             first_run = False
 
             table_name = 'Predictions'
@@ -295,6 +297,7 @@ def insert_prediction(row):
 
 def multi_thread(data):
     print('start multithread')
+    lg.debug('start multithread')
     # create a list of tasks to multithread
     tasks = []
     for row in data:
