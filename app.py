@@ -37,7 +37,7 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
     today18h = today18h + dt.timedelta(hours=18)
 
-    sched.add_job(scraper.run_scraper, 'interval', minutes=1, start_date=dt.date.today(), name='run_hiscore', max_instances=15, coalesce=True)
+    sched.add_job(scraper.run_scraper, 'interval', minutes=1, start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
     
     sched.add_job(model.save_model,trigger='interval', days=1, start_date=today18h ,args=[50], replace_existing=True, name='save_model')
     sched.add_job(model.train_model ,args=[50], replace_existing=True, name='save_model') # on startup

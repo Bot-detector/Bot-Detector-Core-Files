@@ -220,7 +220,7 @@ def get_verified_discord_user(discord_id):
 
     sql = 'SELECT * from discordVerification WHERE Discord_id = :discord_id ' \
           'AND primary_rsn = 1 ' \
-          'AND Verified_status = 1'
+          'AND Verified_status = 1;'
 
     param = {
         "discord_id": discord_id
@@ -231,7 +231,7 @@ def get_verified_discord_user(discord_id):
 def get_unverified_discord_user(player_id):
 
     sql = 'SELECT * from discordVerification WHERE Player_id = :player_id ' \
-          'AND Verified_status = 0'
+          'AND Verified_status = 0;'
 
     param = {
         "player_id": player_id
@@ -330,7 +330,7 @@ def get_highscores_data_oneplayer(player_id):
     return highscores
 
 def get_hiscores_of_interst():
-    sql ='SELECT htl.*, poi.name FROM playerHiscoreDataLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)'
+    sql ='SELECT htl.*, poi.name FROM playerHiscoreDataLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id);'
     highscores = execute_sql(sql=sql, param=None,
                              debug=False, has_return=True)
     return highscores
@@ -454,7 +454,7 @@ def get_times_manually_reported(reportedName):
 def get_region_report_stats():
 
     sql = '''
-        SELECT * FROM `reportedRegion` ORDER BY `reportedRegion`.`region_id` ASC
+        SELECT * FROM `reportedRegion` ORDER BY `reportedRegion`.`region_id` ASC;
     '''
 
     data = execute_sql(sql, param=None, debug=False, has_return=True)
