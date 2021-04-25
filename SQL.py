@@ -482,12 +482,46 @@ def get_player_report_locations(players):
     
 def get_region_search(regionName):
 
-    sql = "SELECT * FROM regionIDNames WHERE region_name LIKE :region"
-
-    regionName = "%" + regionName + "%"
+    sql = "SELECT * FROM regionIDNames WHERE region_name LIKE %:region%"
 
     param = {
         'region': regionName
+    }
+
+    data = execute_sql(sql, param=param, debug=True, has_return=True)
+    return data
+
+def get_report_data_heatmap(region_id):
+
+    sql = ('''
+    SELECT DISTINCT
+        rpts2.*,
+        rpts.x_coord,
+        rpts.y_coord,
+        rpts.region_id
+    FROM Reports rpts
+        INNER JOIN (
+            SELECT 
+                max(rp.id) id,
+                pl.name,
+                pl.confirmed_player,
+                pl.possible_ban,
+                pl.confirmed_ban
+            FROM Players pl
+            inner join Reports rp on (pl.id = rp.reportedID)
+            WHERE 1
+                and (pl.confirmed_ban = 1 or pl.possible_ban = 1 or pl.confirmed_ban = 0)
+                and rp.region_id = :region_id
+            GROUP BY
+                pl.name,
+                pl.confirmed_player,
+                pl.confirmed_ban
+        ) rpts2
+    ON (rpts.id = rpts2.id)
+    ''')
+
+    param = {
+        'region_id': region_id
     }
 
     data = execute_sql(sql, param=param, debug=True, has_return=True)

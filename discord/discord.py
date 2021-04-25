@@ -57,4 +57,27 @@ def get_regions(token):
 
     return jsonify(output)
 
-    # some code
+@discord.route('/discord/heatmap/<token>', methods=['GET', 'POST'])
+def get_heatmap_data(token):
+
+    verified = tokens.verify_token(token=token, verifcation='create_token')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    region_id = request.get_json()
+
+    print(region_id)
+
+    if region_id is None:
+        return jsonify({'Invalid Data':'Data'})
+
+    region_id = region_id['region_id']
+    
+    data = SQL.get_report_data_heatmap(region_id)
+
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
+    
