@@ -87,7 +87,7 @@ def check_player(player):
         SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=3, debug=False)
         return data['error']
 
-def main():
+def confirm_possible_ban():
     players = SQL.get_possible_ban_predicted()
     Config.debug(len(players))
     tasks = []
@@ -120,4 +120,4 @@ def main():
                 Config.debug(traceback.print_exc())
 
 if __name__ == '__main__':
-    main()
+    confirm_possible_ban()
