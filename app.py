@@ -82,6 +82,13 @@ def hiscorescraper():
         Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return redirect('/log')
 
+@app.route("/possible_ban")
+def hiscorescraper():
+    sched.add_job(banned_by_jagex.confirm_possible_ban, replace_existing=True, name='confirm_possible_ban')
+    for job in sched.get_jobs():
+        Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+    return redirect('/log')
+
 if __name__ == '__main__':
     app.run(port=flask_port, debug=True, use_reloader=False)
     # serve(app, host='127.0.0.1', port=flask_port, debug=True)
