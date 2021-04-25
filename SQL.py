@@ -528,3 +528,31 @@ def get_report_data_heatmap(region_id):
 
     data = execute_sql(sql, param=param, debug=True, has_return=True)
     return data
+
+
+def get_player_banned_bots(player_name):
+
+    sql = ('''
+    SELECT 
+        pl1.name reporter,
+        pl2.name reported,
+        lbl.label,
+        hdl.*
+    FROM Reports rp
+    INNER JOIN Players pl1 ON (rp.reportingID = pl1.id)
+    INNER JOIN Players pl2 on (rp.reportedID = pl2.id) 
+    INNER JOIN Labels lbl ON (pl2.label_id = lbl.id)
+    INNER JOIN playerHiscoreDataLatest hdl on (pl2.id = hdl.Player_id)
+    where 1=1
+        and lower(pl1.name) = :player_name
+        and pl2.confirmed_ban = 1
+        and pl2.possible_ban = 1
+        ''')
+
+    param = {
+        'player_name': player_name
+    }
+
+    data = execute_sql(sql, param=param, debug=True, has_return=True)
+    return data
+       

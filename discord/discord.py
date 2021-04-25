@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 discord = Blueprint('discord', __name__, template_folder='templates')
 
 
-@discord.route('/discord/locations/<token>', methods=['GET', 'POST'])
+@discord.route('/dev/discord/locations/<token>', methods=['GET', 'POST'])
 def get_locations(token):
     print("Hello")
 
@@ -33,7 +33,7 @@ def get_locations(token):
 
     return jsonify(output)
 
-@discord.route('/discord/region/<token>', methods=['GET', 'POST'])
+@discord.route('/dev/discord/region/<token>', methods=['GET', 'POST'])
 def get_regions(token):
 
     verified = tokens.verify_token(token=token, verifcation='create_token')
@@ -57,7 +57,7 @@ def get_regions(token):
 
     return jsonify(output)
 
-@discord.route('/discord/heatmap/<token>', methods=['GET', 'POST'])
+@discord.route('/dev/discord/heatmap/<token>', methods=['GET', 'POST'])
 def get_heatmap_data(token):
 
     verified = tokens.verify_token(token=token, verifcation='create_token')
@@ -80,4 +80,3 @@ def get_heatmap_data(token):
     output = df.to_dict('records')
 
     return jsonify(output)
-    
