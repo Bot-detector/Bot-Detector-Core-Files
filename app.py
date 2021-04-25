@@ -7,7 +7,7 @@ import os
 import Config
 from Config import flask_port, dev_mode
 
-import scraper.hiscoreScraper as scraper
+from scraper import hiscoreScraper, banned_by_jagex
 from mysite.tokens import app_token
 from mysite.dashboard import dashboard
 from plugin.plugin_stats import plugin_stats
@@ -37,10 +37,12 @@ if not(app.debug) or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     if not(dev_mode):
         today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
         today18h = today18h + dt.timedelta(hours=18)
+        today20h = today18h + dt.timedelta(hours=20)
 
-        sched.add_job(scraper.run_scraper, 'interval', minutes=1, start_date=dt.date.today(), name='run_hiscore', max_instances=15, coalesce=True)
+        sched.add_job(hiscoreScraper.run_scraper, trigger='interval', minutes=1, start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
         
-        sched.add_job(model.save_model,trigger='interval', days=1, start_date=today18h ,args=[50], replace_existing=True, name='save_model')
+        sched.add_job(model.save_model, args=[30],          trigger='interval', days=1, start_date=today18h , replace_existing=True, name='save_model')
+        sched.add_job(banned_by_jagex.confirm_possible_ban, trigger='interval', days=1, start_date=today20h , replace_existing=True, name='confirm_possible_ban')
 
     sched.add_job(model.train_model ,args=[30], replace_existing=True, name='train_model') # on startup
     
@@ -73,7 +75,14 @@ def print_log():
 
 @app.route("/hiscorescraper")
 def hiscorescraper():
-    sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
+    sched.add_job(hiscoreScraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
+    for job in sched.get_jobs():
+        Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+    return redirect('/log')
+
+@app.route("/possible_ban")
+def possible_ban():
+    sched.add_job(banned_by_jagex.confirm_possible_ban, replace_existing=True, name='confirm_possible_ban')
     for job in sched.get_jobs():
         Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return redirect('/log')

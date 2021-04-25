@@ -11,3 +11,4 @@ jobs:
         run: |
           cd ~/dev-api/Bot-Detector-Core-Files/
           ./update.sh
+
