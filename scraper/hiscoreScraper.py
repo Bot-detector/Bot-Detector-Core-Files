@@ -154,6 +154,8 @@ def multi_thread(players):
     for player in players:
         tasks.append(([player]))
 
+    del players # remove from memory
+    
     # multithreaded executor
     with cf.ProcessPoolExecutor() as executor:
         try:
@@ -196,6 +198,7 @@ def run_scraper():
 
     # array of named tuple to dataframe
     df = pd.DataFrame(data)
+    del data # remove from memory
 
     # remove all possible banned
     # mask = ~(df['possible_ban'] == 1)
@@ -203,6 +206,7 @@ def run_scraper():
 
     # create array of players (names)
     players = df['name'].to_list()
+    del df # remove from memory
 
     # define selections size
     n = 1000
