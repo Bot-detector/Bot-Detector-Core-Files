@@ -55,11 +55,12 @@ def post_detect(manual_detect=0):
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
-    
-    detections = df.to_dict('records')
-    del df
 
     Config.debug(msg=f'      Received detections: DF shape: {df.shape}')
+    
+    detections = df.to_dict('records')
+    del df # memory optimalisation
+    
     Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
 
     return jsonify({'OK': 'OK'})
