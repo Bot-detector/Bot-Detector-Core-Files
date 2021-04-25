@@ -7,6 +7,8 @@ import requests
 import random
 import concurrent.futures as cf
 import datetime as dt
+import pandas as pd
+import traceback
 # custom
 import Config
 import SQL
@@ -41,11 +43,7 @@ def make_web_call(URL, user_agent_list, debug=False):
     # Make the request
     response = http.get(URL, headers=headers, proxies=proxies)
 
-    # if response is 404, this means player is banned or name is changed
-    if response.status_code == 404:
-        return None
-    else:
-        response.raise_for_status()
+    response.raise_for_status()
 
     if debug:
         Config.debug(f'Requesting: {URL}')
@@ -53,7 +51,7 @@ def make_web_call(URL, user_agent_list, debug=False):
     return response
 
 def check_player(player):
-    player_name = player.name
+    player_name = player['name']
     # make web call
     url = f'https://apps.runescape.com/runemetrics/profile/profile?user={player_name}'
     data = make_web_call(url, ed.user_agent_list, debug=False)
@@ -61,49 +59,62 @@ def check_player(player):
 
     # if no error, player exists
     if not('error' in data):
-        return
+        return 'Real_Player'
 
+    pb = player["possible_ban"]
+    cb = player["confirmed_ban"]
+    cp = player["confirmed_player"]
+    lbl = player["label_id"]
 
-    # NO_PROFILE = unbanned
-    # NOT_A_MEMBER = banned
-    # PRIVATE_PROFILE = Unable to figure out, check hiscore if it appears there
+    # this we don't know (unbanned?)
+    if data['error'] == 'NO_PROFILE':
+        SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
+        return data['error']
 
-    # check if player is banned
-    if not(data['error'] == 'NOT_A_MEMBER'):
-        return
-    Config.debug(f'player: {player_name} is banned')
+    # this is a bot
+    if data['error'] == 'NOT_A_MEMBER':
+        if player["prediction"] == 'Real_Player':
+            SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
+        else:
+            SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=1, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
+        return data['error']
 
-    if player.prediction == '':
-        pass
-    # SQL.update_player(player.id, possible_ban=1, confirmed_ban=1, confirmed_player=0, label_id=0, debug=False)
-
-
+    # unkown
+    if data['error'] == 'PRIVATE_PROFILE':
+        SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=3, debug=False)
+        return data['error']
 
 def main():
-    players = SQL.get_possible_ban_predicted() 
+    players = SQL.get_possible_ban_predicted()
+    Config.debug(len(players))
     tasks = []
     for player in players:
+        player = dict(player._asdict())
         tasks.append(([player]))
 
+    del players # memory optimalisation
     with cf.ProcessPoolExecutor() as executor:
         # submit each task to be executed
+        # {function: param, ...}
         futures = {executor.submit(check_player, task[0]): task[0] for task in tasks}  # get_data
         # get start time
         start = dt.datetime.now()
         for i, future in enumerate(cf.as_completed(futures)):
-            player_name = futures[future]
-            # Config.debug(f' scraped: {player_name}')
-            # some logging
-            if i % 100 == 0:
-                end = dt.datetime.now()
-                t = end - start
-                Config.debug(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
-                start = dt.datetime.now()
-        
+            try:
+                player= futures[future]
+                result = future.result()
+                Config.debug(f' scraped: {player["name"]} result: {result}')
 
+                # some logging
+                if i % 100 == 0 and not(i == 0):
+                    end = dt.datetime.now()
+                    t = end - start
+                    Config.debug(f'     player Checked: {100}, total: {i}, took: {t}, {dt.datetime.now()}')
+                    start = dt.datetime.now()
 
-
-# players = pd.DataFrame(players)
+            except Exception as e:
+                Config.debug(f'Multithreading error: {e}')
+                Config.debug(traceback.print_exc())
 
 if __name__ == '__main__':
     main()

@@ -123,7 +123,7 @@ def insert_player(player_name):
     return player
 
 
-def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, debug=False):
+def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, label_jagex=0, debug=False):
     sql_update = ('''
         update Players 
         set 
@@ -131,7 +131,8 @@ def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0
             possible_ban=:possible_ban, 
             confirmed_ban=:confirmed_ban, 
             confirmed_player=:confirmed_player, 
-            label_id=:label_id 
+            label_id=:label_id,
+            label_jagex=:label_jagex
         where 
             id=:player_id;
     ''')
@@ -143,7 +144,8 @@ def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0
         'confirmed_ban':    confirmed_ban,
         'confirmed_player': confirmed_player,
         'label_id':         label_id,
-        'player_id':        player_id
+        'player_id':        player_id,
+        'label_jagex':      label_jagex
     }
     execute_sql(sql_update, param=param, debug=debug, has_return=False)
 

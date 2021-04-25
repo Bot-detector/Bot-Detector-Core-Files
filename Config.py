@@ -67,5 +67,5 @@ logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.WARNING)
 
 def debug(str):
-    print(str)
+    print(str, flush=True)
     logging.debug(str)
