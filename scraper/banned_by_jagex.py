@@ -9,6 +9,7 @@ import concurrent.futures as cf
 import datetime as dt
 import pandas as pd
 import traceback
+import random
 # custom
 import Config
 import SQL
@@ -90,6 +91,7 @@ def check_player(player):
 
 def confirm_possible_ban():
     players = SQL.get_possible_ban_predicted()
+    players = random.shuffle(players)
     Config.debug(len(players))
 
     tasks = []

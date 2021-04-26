@@ -43,9 +43,9 @@ def insync_detect(detections, manual_detect):
             Config.debug(e)
 
         if idx % 500 == 0 and idx != 0:
-            Config.debug(msg=f'      Completed {idx}/{len(detections)}')
+            Config.debug(f'      Completed {idx}/{len(detections)}')
 
-    Config.debug(msg=f'      Done: Completed {idx} detections')
+    Config.debug(f'      Done: Completed {idx} detections')
 
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])

@@ -82,7 +82,7 @@ def hiscorescraper():
 
 @app.route("/possible_ban")
 def possible_ban():
-    sched.add_job(banned_by_jagex.confirm_possible_ban, replace_existing=True, name='confirm_possible_ban')
+    sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
     for job in sched.get_jobs():
         Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return redirect('/log')
