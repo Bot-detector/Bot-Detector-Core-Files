@@ -45,8 +45,8 @@ def insync_detect(detections, manual_detect):
         try:
             custom_hiscore(detection)
         except Exception as e:
-            print(e)
-            logging.debug(e)
+            print(e, detection)
+            logging.debug(e, detection)
 
         if idx % 500 == 0 and idx != 0:
             logging.debug(msg=f'      Completed {idx}/{len(detections)}')
