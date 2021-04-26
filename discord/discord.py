@@ -12,7 +12,6 @@ discord = Blueprint('discord', __name__, template_folder='templates')
 
 @discord.route('/discord/locations/<token>', methods=['GET', 'POST'])
 def get_locations(token):
-    print("Hello")
 
     verified = tokens.verify_token(token=token, verifcation='hiscores')
 
@@ -33,21 +32,21 @@ def get_locations(token):
     return jsonify(output)
 
 @discord.route('/discord/region/<token>', methods=['GET', 'POST'])
-def get_regions(token):
+@discord.route('/discord/region/<token>/<regionName>', methods=['GET', 'POST'])
+def get_regions(token, regionName=None):
 
     verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
-
-    regionName = request.get_json()
-
-    print(regionName)
-
+        
     if regionName is None:
-        return jsonify({'Invalid Data':'Data'})
+        regionName = request.get_json()
 
-    regionName = regionName['region']
+        if regionName is None:
+            return jsonify({'Invalid Data':'Data'})
+
+        regionName = regionName['region']
     
     data = SQL.get_region_search(regionName)
 
@@ -57,21 +56,21 @@ def get_regions(token):
     return jsonify(output)
 
 @discord.route('/discord/heatmap/<token>', methods=['GET', 'POST'])
-def get_heatmap_data(token):
+@discord.route('/discord/heatmap/<token>/<region_id>', methods=['GET', 'POST'])
+def get_heatmap_data(token, region_id=None):
 
     verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
-
-    region_id = request.get_json()
-
     print(region_id)
-
     if region_id is None:
-        return jsonify({'Invalid Data':'Data'})
+        region_id = request.get_json()
 
-    region_id = region_id['region_id']
+        if region_id is None:
+            return jsonify({'Invalid Data':'Data'})
+
+        region_id = region_id['region_id']
     
     data = SQL.get_report_data_heatmap(region_id)
 
@@ -81,19 +80,21 @@ def get_heatmap_data(token):
     return jsonify(output)
 
 @discord.route('/discord/player_bans/<token>', methods=['GET', 'POST'])
-def get_player_bans(token):
+@discord.route('/discord/player_bans/<token>/<player_name>', methods=['GET', 'POST'])
+def get_player_bans(token, player_name=None):
 
     verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
 
-    player_name = request.get_json()
-
     if player_name is None:
-        return jsonify({'Invalid Data':'Data'})
+        player_name = request.get_json()
+    
+        if player_name is None:
+            return jsonify({'Invalid Data':'Data'})
 
-    player_name = player_name['player_name']
+        player_name = player_name['player_name']
     
     data = SQL.get_player_banned_bots(player_name)
 
