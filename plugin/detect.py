@@ -31,8 +31,8 @@ def custom_hiscore(detection):
         reported = SQL.insert_player(detection['reported'])
 
     # change in detection
-    detection['reported'] = reported.id
-    detection['reporter'] = reporter.id
+    detection['reported'] = int(reported.id)
+    detection['reporter'] = int(reporter.id)
 
     # insert into reports
     SQL.insert_report(detection)
@@ -45,8 +45,8 @@ def insync_detect(detections, manual_detect):
         try:
             custom_hiscore(detection)
         except Exception as e:
-            print(e, detection)
-            logging.debug(e, detection)
+            print(f'{e} detection: {detection}')
+            logging.debug(f'{e} detection: {detection}')
 
         if idx % 500 == 0 and idx != 0:
             logging.debug(msg=f'      Completed {idx}/{len(detections)}')
