@@ -56,7 +56,7 @@ def post_detect(manual_detect=0):
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
 
-    Config.debug(msg=f'      Received detections: DF shape: {df.shape}')
+    Config.debug(f'      Received detections: DF shape: {df.shape}')
     
     detections = df.to_dict('records')
     del df # memory optimalisation

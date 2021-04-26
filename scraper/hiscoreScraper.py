@@ -13,7 +13,7 @@ import traceback
 # custom
 import Config
 import SQL
-from scraper import extra_data as ed
+import scraper.extra_data as ed
 
 
 def make_web_call(URL, user_agent_list, debug=False):
@@ -84,13 +84,15 @@ def parse_highscores(data):
             index = index - (len(skills))
             # skills row [rank, Score]
             minigames[minigames_keys[index]] = int(row.split(',')[1])
-    
+    del skills_keys, minigames_keys # memory optimalisation
+
     # fix total == 0
     if skills['total'] <= 0:
         skills_values = list(skills.values())
         skills_values = list(map(int, skills_values[1:]))
         skills_values = [item for item in skills_values if item > 0]
         skills['total'] == sum(skills_values)
+        del skills_values # memory optimalisation
         
     return skills, minigames
     
@@ -113,22 +115,23 @@ def my_sql_task(data, player_name, has_return=False):
         # Config.debug(f' player:{player_name} data is None')
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         return None, None
-
     
     # else we parse the hiscore data
     skills, minigames = parse_highscores(data)
+    del data # memory optimalisation
 
     # calculate total
     total = -1
     skills_list = list(map(int, skills.values()))
     minigames_list = list(map(int, minigames.values()))
     total = sum(skills_list) + sum(minigames_list)
-
+    del skills_list, minigames_list # memory optimalisation
 
     if total <= 0:
         # Config.debug(f' player:{player_name} - {total} <= 0 ')
         SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         return None, None
+    del total # memory optimalisation
 
     # insert in hiscore data
     SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
@@ -138,12 +141,15 @@ def my_sql_task(data, player_name, has_return=False):
 
     if has_return:
         return SQL.get_highscores_data_oneplayer(player_id=player.id)
+    
+    del player, cb, cp, lbl, skills, minigames # memory optimalisation?
+    return
 
 def mytempfunction(player_name):
     data = get_data(player_name)
     _,_ = my_sql_task(data=data, player_name=player_name)
+    del data # memory optimalisation?
     return 1
-
 
 def multi_thread(players):
     # create a list of tasks to multithread
@@ -151,15 +157,18 @@ def multi_thread(players):
     for player in players:
         tasks.append(([player]))
 
+    del players # memory optimalisation
+
     # multithreaded executor
     with cf.ProcessPoolExecutor() as executor:
         try:
             # submit each task to be executed
             futures = {executor.submit(mytempfunction, task[0]): task[0] for task in tasks}  # get_data
+            del tasks # memory optimalisation
             # get start time
             start = dt.datetime.now()
             for i, future in enumerate(cf.as_completed(futures)):
-                player_name = futures[future]
+                # player_name = futures[future]
                 # Config.debug(f' scraped: {player_name}')
                 # some logging
                 if i % 100 == 0:
@@ -171,8 +180,8 @@ def multi_thread(players):
         except Exception as e:
             Config.debug(f'Multithreading error: {e}')
             Config.debug(traceback.print_exc())
-
-
+    del future, futures, i, start, end, t # memory optimalisation?
+    return
 
 def run_scraper():
     # get palyers to scrape
@@ -185,9 +194,12 @@ def run_scraper():
 
     # array of named tuple to dataframe
     df = pd.DataFrame(data)
+    del data # memory optimalisation
+    Config.debug(f'     Starting hiscore scraper: {dt.datetime.now()} data: {df.shape}')
 
     # create array of players (names)
     players = df['name'].to_list()
+    del df # memory optimalisation
 
     # define selections size
     n = 1000
@@ -197,15 +209,14 @@ def run_scraper():
     # get a random sample from players with selection size
     players = random.sample(players, n)
 
-    Config.debug(f'     Starting hiscore scraper: {dt.datetime.now()} data: {df.shape}')
     # multi thread scrape players
     multi_thread(players)
-
+    del players # memory optimalisation
+    return
 
 def scrape_one(player_name):
     data = get_data(player_name)
     return my_sql_task(data, player_name, has_return=True)
-
 
 if __name__ == '__main__':
     run_scraper()

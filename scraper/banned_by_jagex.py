@@ -86,20 +86,24 @@ def check_player(player):
     if data['error'] == 'PRIVATE_PROFILE':
         SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=3, debug=False)
         return data['error']
+    return
 
 def confirm_possible_ban():
     players = SQL.get_possible_ban_predicted()
     Config.debug(len(players))
+
     tasks = []
     for player in players:
         player = dict(player._asdict())
         tasks.append(([player]))
 
     del players # memory optimalisation
+
     with cf.ProcessPoolExecutor() as executor:
         # submit each task to be executed
         # {function: param, ...}
         futures = {executor.submit(check_player, task[0]): task[0] for task in tasks}  # get_data
+        del tasks # memory optimalisation
         # get start time
         start = dt.datetime.now()
         for i, future in enumerate(cf.as_completed(futures)):
@@ -118,6 +122,9 @@ def confirm_possible_ban():
             except Exception as e:
                 Config.debug(f'Multithreading error: {e}')
                 Config.debug(traceback.print_exc())
+
+    del futures, future, player, result, start, end, t, i # memory optimalisation?
+    return
 
 if __name__ == '__main__':
     confirm_possible_ban()
