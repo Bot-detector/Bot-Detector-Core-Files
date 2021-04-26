@@ -112,7 +112,7 @@ def confirm_possible_ban():
             try:
                 player= futures[future]
                 result = future.result()
-                Config.debug(f' scraped: {player["name"]} result: {result}')
+                # Config.debug(f' scraped: {player["name"]} result: {result}')
 
                 # some logging
                 if i % 100 == 0 and not(i == 0):
