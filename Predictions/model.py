@@ -232,9 +232,10 @@ def save_model(n_pca=50):
     # print(os.listdir())
     Config.debug(os.listdir())
     
-    train_model(n_pca=50)
+    train_model(n_pca=n_pca)
     df = predict_model(player_name=None)
     Config.debug(f'data shape: {df.shape}')
+
     # parse data to format int
     int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction']]
     df[int_columns] = df[int_columns]*100
@@ -264,13 +265,19 @@ def save_model(n_pca=50):
     
     # insert rowss
     data = df.to_dict('records')
+    del df
+
     multi_thread(data)
+    del data
+
+    return
 
 
 def insert_prediction(row):
-        values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
-        sql_insert = f'insert ignore into Predictions values ({values});'
-        SQL.execute_sql(sql_insert,      param=row, debug=False, has_return=False)
+    values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
+    sql_insert = f'insert ignore into Predictions values ({values});'
+    SQL.execute_sql(sql_insert,      param=row, debug=False, has_return=False)
+    return
 
 
 def multi_thread(data):
@@ -279,16 +286,20 @@ def multi_thread(data):
     for row in data:
         tasks.append(([row]))
 
+    del data # memory optimalization
     # multithreaded executor
     with cf.ProcessPoolExecutor() as executor:
 
         # submit each task to be executed
         futures = {executor.submit(insert_prediction, task[0]): task[0] for task in tasks} # get_data
+        del tasks # memory optimalization
 
         # get start time
         for future in cf.as_completed(futures):
             _ = futures[future]
             _ = future.result()
+    del futures, future # memory optimalization
+    return
 
 if __name__ == '__main__':
     train_model(n_pca=30)
