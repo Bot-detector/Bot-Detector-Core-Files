@@ -58,14 +58,17 @@ def check_player(player):
     data = make_web_call(url, ed.user_agent_list, debug=False)
     data = data.json()
 
-    # if no error, player exists
-    if not('error' in data):
-        return 'Real_Player'
+
 
     pb = player["possible_ban"]
     cb = player["confirmed_ban"]
     cp = player["confirmed_player"]
     lbl = player["label_id"]
+
+    # if no error, player exists
+    if not('error' in data):
+        SQL.update_player(player['id'], possible_ban=0, confirmed_ban=0, confirmed_player=cp, label_id=lbl, label_jagex=5, debug=False)
+        return 'Real_Player'
 
     # this we don't know (unbanned?)
     if data['error'] == 'NO_PROFILE':
