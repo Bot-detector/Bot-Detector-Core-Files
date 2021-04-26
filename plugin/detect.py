@@ -37,11 +37,7 @@ def custom_hiscore(detection):
 def insync_detect(detections, manual_detect):
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
-        try:
-            custom_hiscore(detection)
-        except Exception as e:
-            Config.debug(e)
-
+        custom_hiscore(detection)
         if idx % 500 == 0 and idx != 0:
             Config.debug(f'      Completed {idx}/{len(detections)}')
 

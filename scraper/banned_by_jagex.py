@@ -91,7 +91,7 @@ def check_player(player):
 
 def confirm_possible_ban():
     players = SQL.get_possible_ban_predicted()
-    players = random.shuffle(players)
+    random.shuffle(players)
     Config.debug(len(players))
 
     tasks = []
