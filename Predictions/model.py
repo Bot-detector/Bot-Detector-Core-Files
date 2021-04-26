@@ -12,6 +12,7 @@ import concurrent.futures as cf
 import logging as lg
 # custom imports
 import SQL
+import Config
 # import highscores
 from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
@@ -47,8 +48,7 @@ def create_model(train_x, train_y, test_x, test_y, lbls):
     weights = [s**2 for s in scores]
     estimators = [(m.__class__.__name__, m) for m in models]
 
-    _ = [print(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
-    _ = [lg.debug(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
+    _ = [Config.debug(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
 
     vote = VotingClassifier(
         weights=weights,
@@ -57,7 +57,6 @@ def create_model(train_x, train_y, test_x, test_y, lbls):
         n_jobs=-1
         )
     
-    # vote = vote.fit(train_x, train_y)
     return vote
 
 
@@ -65,7 +64,7 @@ def train_model(n_pca):
     
     df =            pf.get_highscores()
     df_players =    pf.get_players()
-    df_labels =     pf.get_labels() # TODO: only parent labels?
+    df_labels =     pf.get_labels() 
 
     # pandas pipeline
     df_clean = (df
@@ -88,7 +87,7 @@ def train_model(n_pca):
 
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=None)
     dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
-    print(f'pca shape: {df_pca.shape}')
+    Config.debug(f'pca shape: {df_pca.shape}')
 
     df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
     df_pca = df_pca.merge(df_labels,    left_on='label_id', right_index=True, how='left')
@@ -102,8 +101,8 @@ def train_model(n_pca):
     # lbls = lbl_df['label'].tolist()
 
     lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot']
-    print('labels: ', len(lbls), lbls)
-    lg.debug('labels: ', len(lbls), lbls)
+    # print('labels: ', len(lbls), lbls)
+    Config.debug(f'labels: {len(lbls)}, {lbls}')
 
     # creating x, y data, with players that a label
     mask = ~(df_pca['label_id'] == 0) & (df_pca['label'].isin(lbls))
@@ -119,25 +118,21 @@ def train_model(n_pca):
     train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.3, random_state=42, stratify=y)
 
     model_name = 'rfc'
-    # model = RandomForestClassifier(n_estimators=100)
     model = create_model(train_x, train_y, test_x, test_y, lbls)
     model = model.fit(train_x, train_y)
     
     # print model score
     model_score = round(model.score(test_x, test_y)*100,2)
-    print('Score: ',model_score)
-    lg.debug(f'Score: {model_score}')
+    Config.debug(f'Score: {model_score}')
 
     # print more detailed model score
-    print(classification_report(test_y, model.predict(test_x), target_names=lbls))
-    lg.debug(classification_report(test_y, model.predict(test_x), target_names=lbls))
+    Config.debug(classification_report(test_y, model.predict(test_x), target_names=lbls))
 
     # fit & save model on entire dataset
     model = model.fit(x, y)
     dump(value=model, filename=f'Predictions/models/model-{model_name}_{today}_{model_score}.joblib')
 
 
-    
 def predict_model(player_name=None):
     # load scaler, transformer, features, pca, labels & model
     scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
@@ -234,18 +229,18 @@ def predict_model(player_name=None):
 
 
 def save_model(n_pca=50):
-    print(os.listdir())
-    lg.debug(os.listdir())
+    # print(os.listdir())
+    Config.debug(os.listdir())
     
     train_model(n_pca=50)
     df = predict_model(player_name=None)
-    lg.debug(f'data shape: {df.shape}')
+    Config.debug(f'data shape: {df.shape}')
     # parse data to format int
     int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction']]
     df[int_columns] = df[int_columns]*100
     df[int_columns] = df[int_columns].astype(int)
     df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
-    print(df.head())
+    # print(df.head())
 
     # create table
     columns = df.columns.tolist()

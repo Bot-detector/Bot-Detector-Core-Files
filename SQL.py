@@ -1,12 +1,10 @@
 from werkzeug.wrappers import CommonRequestDescriptorsMixin
 import Config
-from Config import db
-from sqlalchemy import text
-from collections import namedtuple
 import time
 import random
 import string
-import logging
+from sqlalchemy import text
+from collections import namedtuple
 
 '''
     Functions for SQL Queries

@@ -3,7 +3,6 @@ from flask import jsonify, render_template_string, redirect
 from waitress import serve
 import datetime as dt
 import os
-import logging
 # custom
 import Config
 from Config import flask_port, dev_mode
@@ -17,7 +16,6 @@ from Config import app, sched
 from mysite.predictions import app_predictions
 from Predictions import model
 from discord.discord import discord
-
 
 app.register_blueprint(plugin_stats)
 app.register_blueprint(detect)
@@ -89,6 +87,10 @@ def possible_ban():
         Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return redirect('/log')
 
+@app.route("/favicon.ico")
+def favicon():
+    return "", 200
+    
 if __name__ == '__main__':
-    app.run(port=flask_port, debug=True, use_reloader=False)
-    # serve(app, host='127.0.0.1', port=flask_port, debug=True)
+    # app.run(port=flask_port, debug=True, use_reloader=False)
+    serve(app, host='127.0.0.1', port=flask_port, debug=True)
