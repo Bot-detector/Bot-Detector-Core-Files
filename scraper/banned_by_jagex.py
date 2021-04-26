@@ -104,7 +104,7 @@ def confirm_possible_ban():
 
     del players # memory optimalisation
 
-    with cf.ProcessPoolExecutor() as executor:
+    with cf.ThreadPoolExecutor() as executor:
         # submit each task to be executed
         # {function: param, ...}
         futures = {executor.submit(check_player, task[0]): task[0] for task in tasks}  # get_data
