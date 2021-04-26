@@ -67,7 +67,7 @@ def check_player(player):
 
     # if no error, player exists
     if not('error' in data):
-        SQL.update_player(player['id'], possible_ban=0, confirmed_ban=0, confirmed_player=cp, label_id=lbl, label_jagex=5, debug=False)
+        SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=5, debug=False)
         return 'Real_Player'
 
     # this we don't know (unbanned?)
