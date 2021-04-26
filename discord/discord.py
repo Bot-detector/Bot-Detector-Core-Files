@@ -80,3 +80,25 @@ def get_heatmap_data(token):
     output = df.to_dict('records')
 
     return jsonify(output)
+
+@discord.route('/dev/discord/player_bans/<token>', methods=['GET', 'POST'])
+def get_player_bans(token):
+
+    verified = tokens.verify_token(token=token, verifcation='create_token')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    player_name = request.get_json()
+
+    if player_name is None:
+        return jsonify({'Invalid Data':'Data'})
+
+    player_name = player_name['player_name']
+    
+    data = SQL.get_player_banned_bots(player_name)
+
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
