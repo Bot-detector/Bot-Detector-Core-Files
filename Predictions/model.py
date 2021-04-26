@@ -100,7 +100,7 @@ def train_model(n_pca):
     # lbl_df.reset_index(inplace=True)
     # lbls = lbl_df['label'].tolist()
 
-    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot']
+    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot','Farming_bot']
     # print('labels: ', len(lbls), lbls)
     Config.debug(f'labels: {len(lbls)}, {lbls}')
 
