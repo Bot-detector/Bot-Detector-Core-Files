@@ -93,42 +93,50 @@ def check_player(player):
     return
 
 def confirm_possible_ban():
-    players = SQL.get_possible_ban_predicted()
-    random.shuffle(players)
-    Config.debug(len(players))
+    for _ in range(10):
+        players = SQL.get_possible_ban_predicted()
+        Config.debug(len(players))
+        
+        # define selections size
+        n = 1000
+        if n > len(players):
+            n = len(players)
 
-    tasks = []
-    for player in players:
-        player = dict(player._asdict())
-        tasks.append(([player]))
+        # get a random sample from players with selection size
+        players = random.sample(players, n)
+        
+        tasks = []
+        for player in players:
+            player = dict(player._asdict())
+            tasks.append(([player]))
 
-    del players # memory optimalisation
+        del players # memory optimalisation
 
-    with cf.ThreadPoolExecutor() as executor:
-        # submit each task to be executed
-        # {function: param, ...}
-        futures = {executor.submit(check_player, task[0]): task[0] for task in tasks}  # get_data
-        del tasks # memory optimalisation
-        # get start time
-        start = dt.datetime.now()
-        for i, future in enumerate(cf.as_completed(futures)):
-            try:
-                player= futures[future]
-                result = future.result()
-                # Config.debug(f' scraped: {player["name"]} result: {result}')
+        with cf.ThreadPoolExecutor() as executor:
+            # submit each task to be executed
+            # {function: param, ...}
+            futures = {executor.submit(check_player, task[0]): task[0] for task in tasks}  # get_data
+            del tasks # memory optimalisation
+            # get start time
+            start = dt.datetime.now()
+            for i, future in enumerate(cf.as_completed(futures)):
+                try:
+                    player= futures[future]
+                    result = future.result()
+                    # Config.debug(f' scraped: {player["name"]} result: {result}')
 
-                # some logging
-                if i % 100 == 0 and not(i == 0):
-                    end = dt.datetime.now()
-                    t = end - start
-                    Config.debug(f'     player Checked: {100}, total: {i}, took: {t}, {dt.datetime.now()}')
-                    start = dt.datetime.now()
+                    # some logging
+                    if i % 100 == 0 and not(i == 0):
+                        end = dt.datetime.now()
+                        t = end - start
+                        Config.debug(f'     player Checked: {100}, total: {i}, took: {t}, {dt.datetime.now()}')
+                        start = dt.datetime.now()
 
-            except Exception as e:
-                Config.debug(f'Multithreading error: {e}')
-                Config.debug(traceback.print_exc())
+                except Exception as e:
+                    Config.debug(f'Multithreading error: {e}')
+                    Config.debug(traceback.print_exc())
 
-    del futures, future, player, result, start, end, t, i # memory optimalisation?
+        del futures, future, player, result, start, end, t, i # memory optimalisation?
     return
 
 if __name__ == '__main__':
