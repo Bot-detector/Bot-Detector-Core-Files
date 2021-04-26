@@ -10,7 +10,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 discord = Blueprint('discord', __name__, template_folder='templates')
 
-
 @discord.route('/dev/discord/locations/<token>', methods=['GET', 'POST'])
 def get_locations(token):
     print("Hello")
@@ -102,3 +101,7 @@ def get_player_bans(token):
     output = df.to_dict('records')
 
     return jsonify(output)
+  
+@discord.route('/discord/locations/<token>/<player_name>', methods=['GET'])
+def get_location():
+    pass

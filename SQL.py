@@ -49,10 +49,8 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
 
     sql = text(sql)
     if debug:
-        print(f'SQL : {sql}')
-        print(f'Param: {param}')
-        logging.debug(f'    SQL : {sql}')
-        logging.debug(f'    Param: {param}')
+        Config.debug(f'    SQL : {sql}')
+        Config.debug(f'    Param: {param}')
 
     if has_return:
         rows = session.execute(sql, param)
@@ -71,9 +69,6 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
         session.commit()
         session.close()
         conn.close()
-        # conn.connection.close()
-        # session.remove()
-
 
 '''
     Players Table
@@ -131,15 +126,29 @@ def insert_player(player_name):
     return player
 
 
-def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, debug=False):
-    sql_update = 'update Players set updated_at=:ts, possible_ban=:possible_ban, confirmed_ban=:confirmed_ban, confirmed_player=:confirmed_player, label_id=:label_id where id=:player_id;'
+def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, label_jagex=0, debug=False):
+    sql_update = ('''
+        update Players 
+        set 
+            updated_at=:ts, 
+            possible_ban=:possible_ban, 
+            confirmed_ban=:confirmed_ban, 
+            confirmed_player=:confirmed_player, 
+            label_id=:label_id,
+            label_jagex=:label_jagex
+        where 
+            id=:player_id;
+    ''')
+
+    time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
     param = {
-        'ts':  time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime()),
-        'possible_ban': possible_ban,
-        'confirmed_ban': confirmed_ban,
+        'ts':               time_now,
+        'possible_ban':     possible_ban,
+        'confirmed_ban':    confirmed_ban,
         'confirmed_player': confirmed_player,
-        'label_id': label_id,
-        'player_id': player_id
+        'label_id':         label_id,
+        'player_id':        player_id,
+        'label_jagex':      label_jagex
     }
     execute_sql(sql_update, param=param, debug=debug, has_return=False)
 
@@ -188,7 +197,7 @@ def insert_report(data):
         'x_coord': data['x'],
         'y_coord': data['y'],
         'z_coord': data['z'],
-        'timestamp': data['ts'],
+        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(data['ts'])),
         'manual_detect': data['manual_detect'],
         'on_members_world': members
     }
@@ -451,6 +460,11 @@ def get_region_report_stats():
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
+def get_possible_ban():
+    sql = 'Select * from Players where possible_ban = 1 and confirmed_ban = 0'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
+
 
 def get_player_report_locations(players):
 
@@ -555,4 +569,8 @@ def get_player_banned_bots(player_name):
 
     data = execute_sql(sql, param=param, debug=True, has_return=True)
     return data
-       
+  
+def get_possible_ban_predicted():
+    sql = 'SELECT * FROM playerPossibleBanPrediction'
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data

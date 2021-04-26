@@ -93,9 +93,9 @@ def clean_dataset(df, skills_list, minigames_list):
 
     df['boss_total'] = df[minigames_list].sum(axis=1)
 
-    mask = (df['total'] > 1_000_000)
+    # mask = (df['total'] > 1_000_000)
 
-    df = df[mask].copy()
+    # df = df[mask].copy()
     return df
 
 def zalcano_feature(df):
@@ -148,8 +148,8 @@ def f_features(df, skills_list, minigames_list):
 
 
     df = wintertodt_feature(df)
-    df = zalcano_feature(df)
-    df = botname(df)
+    # df = zalcano_feature(df)
+    # df = botname(df)
     # df['rangebot_feature'] = (df['ranged'] + df['hitpoints'])/total
 
     df['median_feature'] = df[skills_list].median(axis=1)
@@ -180,10 +180,12 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
     bad_features = bad_features[mask].index
 
     # filter out bad features
-    my_feature_fields = ['zalcano', 
+    my_feature_fields = [ 
                          'wintertodt', 
                          'total',
-                         'zalcano/boss_total'
+                         #'zalcano',
+                         #'zalcano/boss_total'
+                         'boss_total',
                          ] + skills_list
     features = [f for f in features if f not in bad_features or 'feature' in f or '/total' in f]
     _ = [features.append(f) for f in my_feature_fields if f not in features]

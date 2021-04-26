@@ -6,6 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from flask_cors import CORS
 import sqlalchemy
+import logging
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -13,6 +14,8 @@ sql_uri = os.environ.get('sql_uri')
 discord_sql_uri = os.environ.get('discord_sql_uri')
 proxy_http = os.environ.get('proxy_http')
 proxy_https = os.environ.get('proxy_https')
+flask_port = os.environ.get('flask_port')
+dev_mode = bool(os.environ.get('dev_mode'))
 
 # create flask app
 app = Flask(__name__)
@@ -56,3 +59,13 @@ executors = {
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
    sched = BackgroundScheduler(daemon=False, executors=executors)
 
+logging.FileHandler(filename="error.log", mode='a')
+logging.basicConfig(filename='error.log', level=logging.DEBUG)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
+logging.getLogger('flask_cors').setLevel(logging.WARNING)
+
+def debug(str):
+    print(str, flush=True)
+    logging.debug(str)
