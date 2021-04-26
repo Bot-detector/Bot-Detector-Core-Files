@@ -14,7 +14,7 @@ discord = Blueprint('discord', __name__, template_folder='templates')
 def get_locations(token):
     print("Hello")
 
-    verified = tokens.verify_token(token=token, verifcation='create_token')
+    verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
@@ -35,7 +35,7 @@ def get_locations(token):
 @discord.route('/discord/region/<token>', methods=['GET', 'POST'])
 def get_regions(token):
 
-    verified = tokens.verify_token(token=token, verifcation='create_token')
+    verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
@@ -59,7 +59,7 @@ def get_regions(token):
 @discord.route('/discord/heatmap/<token>', methods=['GET', 'POST'])
 def get_heatmap_data(token):
 
-    verified = tokens.verify_token(token=token, verifcation='create_token')
+    verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
@@ -83,7 +83,7 @@ def get_heatmap_data(token):
 @discord.route('/discord/player_bans/<token>', methods=['GET', 'POST'])
 def get_player_bans(token):
 
-    verified = tokens.verify_token(token=token, verifcation='create_token')
+    verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
