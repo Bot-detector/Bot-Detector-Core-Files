@@ -87,6 +87,10 @@ def possible_ban():
         Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return redirect('/log')
 
+@app.route("/favicon.ico")
+def favicon():
+    return "", 200
+    
 if __name__ == '__main__':
     # app.run(port=flask_port, debug=True, use_reloader=False)
     serve(app, host='127.0.0.1', port=flask_port, debug=True)
