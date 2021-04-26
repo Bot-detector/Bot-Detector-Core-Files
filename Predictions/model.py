@@ -86,6 +86,7 @@ def train_model(n_pca):
     
 
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=None)
+    df_pca = df_preprocess
     dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
     print(f'pca shape: {df_pca.shape}')
 
@@ -217,7 +218,8 @@ def predict_model(player_name=None, start=0, amount=100_000):
     df_preprocess = df_preprocess[features].copy()
 
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=int(n_pca), pca=pca)
-
+    df_pca = df_preprocess
+    
     proba =         model.predict_proba(df_pca)
     df_proba_max =  proba.max(axis=1)
     pred =          model.predict(df_pca)
