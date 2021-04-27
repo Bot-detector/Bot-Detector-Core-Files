@@ -73,9 +73,14 @@ def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdat
 '''
 
 
-def get_player_names():
-    sql = 'select * from Players;'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+def get_player_names(ids=None):
+    if ids is None:
+        sql = 'select * from Players;'
+        param = None
+    else:
+        sql = 'select * from Players where id in :ids;'
+        param = {'ids':ids}
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
 
 
@@ -182,12 +187,13 @@ def insert_highscore(player_id, skills, minigames):
 
 
 def insert_report(data):
-
     try:
         members = data['on_members_world']
     except KeyError as k:
         members = None
 
+    gmt = time.gmtime(data['ts'])
+    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
     param = {
         'reportedID': data['reported'],
         'reportingID': data['reporter'],
@@ -195,7 +201,7 @@ def insert_report(data):
         'x_coord': data['x'],
         'y_coord': data['y'],
         'z_coord': data['z'],
-        'timestamp': time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(data['ts'])),
+        'timestamp': human_time,
         'manual_detect': data['manual_detect'],
         'on_members_world': members
     }
@@ -213,7 +219,6 @@ def insert_report(data):
 
 
 def insert_prediction_feedback(vote_info):
-
     sql_insert = 'insert ignore into PredictionsFeedback (voter_id, prediction, confidence, vote, subject_id) ' \
                  'values (:voter_id, :prediction, :confidence, :vote, :subject_id);'
     execute_sql(sql_insert, param=vote_info, debug=False, has_return=False)
@@ -225,10 +230,9 @@ def insert_prediction_feedback(vote_info):
 
 
 def get_verified_discord_user(discord_id):
-
     sql = 'SELECT * from discordVerification WHERE Discord_id = :discord_id ' \
           'AND primary_rsn = 1 ' \
-          'AND Verified_status = 1'
+          'AND Verified_status = 1;'
 
     param = {
         "discord_id": discord_id
@@ -238,9 +242,8 @@ def get_verified_discord_user(discord_id):
 
 
 def get_unverified_discord_user(player_id):
-
     sql = 'SELECT * from discordVerification WHERE Player_id = :player_id ' \
-          'AND Verified_status = 0'
+          'AND Verified_status = 0;'
 
     param = {
         "player_id": player_id
@@ -304,17 +307,38 @@ def get_player_labels():
 '''
 
 
-def get_highscores_data():
-    sql_highscores = 'SELECT * FROM hiscoreTableLatest;'
-    highscores = execute_sql(sql_highscores, param=None,
+def get_highscores_data(start=0, amount=1_000_000):
+    sql_highscores = (
+        '''
+        SELECT 
+            hdl.*, 
+            pl.name 
+        FROM playerHiscoreDataLatest hdl 
+        inner join Players pl on(hdl.Player_id=pl.id)
+        LIMIT :start, :amount
+        ;
+    ''')
+    param = {
+        'start': start,
+        'amount': amount
+    }
+    highscores = execute_sql(sql_highscores, param=param,
                              debug=False, has_return=True)
     return highscores
 
 
 def get_highscores_data_oneplayer(player_id):
-    sql_highscores = 'SELECT * FROM hiscoreTableLatest where Player_id = :player_id;'
-    param = {
-        'player_id': player_id
+    sql_highscores = (
+        '''SELECT 
+            hdl.*, 
+            pl.name 
+        FROM playerHiscoreDataLatest hdl 
+        inner join Players pl on(hdl.Player_id=pl.id)
+        where Player_id = :player_id
+        ;
+    ''')
+    param  ={
+        'player_id':player_id
     }
     highscores = execute_sql(sql=sql_highscores, param=param,
                              debug=False, has_return=True)
@@ -322,7 +346,7 @@ def get_highscores_data_oneplayer(player_id):
 
 
 def get_hiscores_of_interst():
-    sql = 'SELECT htl.* FROM hiscoreTableLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)'
+    sql ='SELECT htl.*, poi.name FROM playerHiscoreDataLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id);'
     highscores = execute_sql(sql=sql, param=None,
                              debug=False, has_return=True)
     return highscores
@@ -335,7 +359,9 @@ def get_players_to_scrape():
 
 
 def get_players_of_interest():
+
     sql = 'select * from playersOfInterest;'
+
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
@@ -452,7 +478,7 @@ def get_times_manually_reported(reportedName):
 def get_region_report_stats():
 
     sql = '''
-        SELECT * FROM `reportedRegion` ORDER BY `reportedRegion`.`region_id` ASC
+        SELECT * FROM `reportedRegion` ORDER BY `reportedRegion`.`region_id` ASC;
     '''
 
     data = execute_sql(sql, param=None, debug=False, has_return=True)

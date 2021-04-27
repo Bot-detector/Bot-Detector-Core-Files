@@ -26,26 +26,28 @@ def logging(f):
         return result
     return wrapper
 
-def get_highscores(ofinterest=True):
+def get_highscores(ofinterest=True, start=0, amount=100_000):
     if ofinterest:
         data = SQL.get_hiscores_of_interst()
     else:
-        data = SQL.get_highscores_data()
+        data = SQL.get_highscores_data(start, amount)
     df_hiscore = pd.DataFrame(data)
 
     print(f'hiscore: {df_hiscore.shape}')
     return df_hiscore
 
-def get_players(players=None, with_id=False, ofinterest=True):
+def get_players(players=None, with_id=False, ofinterest=True, ids=None):
+    # someday i need to rethink this
     if players is None:
         if ofinterest:
             data = SQL.get_players_of_interest()
         else:
-            data = SQL.get_player_names()
+            data = SQL.get_player_names(ids)
         players = pd.DataFrame(data)
 
     df_players = players
     df_players.set_index('name', inplace=True)
+
     if with_id:
         df_players.drop(columns=['created_at','updated_at'], inplace=True)
     else:
@@ -180,10 +182,10 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
     bad_features = bad_features[mask].index
 
     # filter out bad features
-    my_feature_fields = [ 
+    my_feature_fields = [
                          'wintertodt', 
                          'total',
-                         #'zalcano',
+                         #'zalcano', 
                          #'zalcano/boss_total'
                          'boss_total',
                          ] + skills_list

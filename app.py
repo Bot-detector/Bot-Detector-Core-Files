@@ -5,8 +5,6 @@ import datetime as dt
 import os
 # custom
 import Config
-from Config import flask_port, dev_mode
-
 from scraper import hiscoreScraper, banned_by_jagex
 from mysite.tokens import app_token
 from mysite.dashboard import dashboard
@@ -28,44 +26,46 @@ def print_jobs():
     Config.debug('   Scheduled Jobs:')
     for job in sched.get_jobs():
         Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+    return
 
-# prevent flask loading twice
-if not(app.debug) or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    
+if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
-    Config.debug(f'devmode: {dev_mode}')
+    n_pca = 30
+    Config.debug(f'devmode: {Config.dev_mode}')
+
     # prevent scraping & predicting for every player in dev
-    if not(dev_mode):
+    if not(Config.dev_mode):
         today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
         today18h = today18h + dt.timedelta(hours=18)
         today20h = today18h + dt.timedelta(hours=20)
 
         sched.add_job(hiscoreScraper.run_scraper, trigger='interval', minutes=1, start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
         
-        sched.add_job(model.save_model, args=[30],          trigger='interval', days=1, start_date=today18h , replace_existing=True, name='save_model')
+        sched.add_job(model.save_model, args=[n_pca],       trigger='interval', days=1, start_date=today18h , replace_existing=True, name='save_model')
         sched.add_job(banned_by_jagex.confirm_possible_ban, trigger='interval', days=1, start_date=today20h , replace_existing=True, name='confirm_possible_ban')
 
-    sched.add_job(model.train_model ,args=[30], replace_existing=True, name='train_model') # on startup
-    
+    sched.add_job(model.train_model ,args=[n_pca], replace_existing=True, name='save_model') # on startup
+
     print_jobs()
 
     sched.start()
-
+# do we need this?
 else:
     started = False
 
 
 @app.errorhandler(404)
 def page_not_found(e):
-    print(e)
-    app.logger.warning(e)
+    Config.debug(e)
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
 
 
 @app.route("/")
 def hello():
-
     data = {'welcome': 'test', 'job': started}
     return jsonify(data)
+
 
 @app.route("/log")
 def print_log():
@@ -73,24 +73,26 @@ def print_log():
         content = f.read()
         return render_template_string("<pre>{{ content }}</pre>", content=content)
 
+
 @app.route("/hiscorescraper")
 def hiscorescraper():
     sched.add_job(hiscoreScraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
-    for job in sched.get_jobs():
-        Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+    print_jobs()
     return redirect('/log')
+
 
 @app.route("/possible_ban")
 def possible_ban():
     sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
-    for job in sched.get_jobs():
-        Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+    print_jobs()
     return redirect('/log')
+
 
 @app.route("/favicon.ico")
 def favicon():
     return "", 200
-    
+
+
 if __name__ == '__main__':
     # app.run(port=flask_port, debug=True, use_reloader=False)
-    serve(app, host='127.0.0.1', port=flask_port, debug=True)
+    serve(app, host='127.0.0.1', port=Config.flask_port, debug=True)

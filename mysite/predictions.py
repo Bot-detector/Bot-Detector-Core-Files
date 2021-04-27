@@ -61,14 +61,14 @@ def receive_plugin_feedback():
 
     voter = get_player(vote_info['player_name'])
 
-    print(voter)
-
     # Voter ID will be 0 if player is not logged in.
     # There is a plugin check for this also.
     if(int(voter.id) > 0):
         vote_info["voter_id"] = voter.id
 
         insert_prediction_feedback(vote_info)
+    else:
+        Config.debug(f'prediction feedback error: {vote_info}')
 
     return 'OK'
 
