@@ -114,8 +114,6 @@ def my_sql_task(data, player_name, has_return=False):
     if data is None:
         # Config.debug(f' player:{player_name} data is None')
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
-        # print(f'player: {player_name}, data: {data} is None, return {has_return}')
-        # lg.debug(f'player: {player_name}, data: {data} is None, return {has_return}')
         return None, None
     
     # else we parse the hiscore data
@@ -132,8 +130,6 @@ def my_sql_task(data, player_name, has_return=False):
     if total <= 0:
         # Config.debug(f' player:{player_name} - {total} <= 0 ')
         SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
-        # print(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
-        # lg.debug(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
         return None, None
     del total # memory optimalisation
 
