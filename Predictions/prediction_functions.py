@@ -182,10 +182,12 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
     bad_features = bad_features[mask].index
 
     # filter out bad features
-    my_feature_fields = [#'zalcano', 
+    my_feature_fields = [
                          'wintertodt', 
                          'total',
+                         #'zalcano', 
                          #'zalcano/boss_total'
+                         'boss_total',
                          ] + skills_list
     features = [f for f in features if f not in bad_features or 'feature' in f or '/total' in f]
     _ = [features.append(f) for f in my_feature_fields if f not in features]
