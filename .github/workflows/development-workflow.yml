@@ -1,5 +1,4 @@
 name: Dev deployment
-name: Deployment workflow
 on:
   push:
     branches: [ develop ]
