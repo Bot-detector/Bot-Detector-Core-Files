@@ -90,7 +90,7 @@ def train_model(n_pca):
     df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
     df_pca = df_pca.merge(df_labels,    left_on='label_id', right_index=True, how='left')
 
-    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot','Thieving_bot']
+    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot','Thieving_bot','Zulrah_bot']
     Config.debug(f'labels: {len(lbls)}, {lbls}')
 
     # creating x, y data, with players that a label
