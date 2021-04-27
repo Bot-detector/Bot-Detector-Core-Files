@@ -106,5 +106,3 @@ def get_player_bans(token, player_name=None):
 @discord.route('/discord/locations/<token>/<player_name>', methods=['GET'])
 def get_location():
     pass
-    # useless code v2
-    # random changes
