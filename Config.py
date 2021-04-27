@@ -6,6 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from flask_cors import CORS
 import sqlalchemy
+import logging
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
