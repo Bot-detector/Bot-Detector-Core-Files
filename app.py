@@ -3,10 +3,9 @@ from flask import jsonify, render_template_string, redirect
 from waitress import serve
 import datetime as dt
 import os
-import logging
 # custom
 
-import scraper.hiscoreScraper as scraper
+from scraper import hiscoreScraper, banned_by_jagex
 from mysite.tokens import app_token
 from mysite.dashboard import dashboard
 from plugin.plugin_stats import plugin_stats
@@ -15,15 +14,6 @@ from Config import app, sched
 from mysite.predictions import app_predictions
 from Predictions import model
 from discord.discord import discord
-
-logging.FileHandler(filename="error.log", mode='a')
-logging.basicConfig(filename='error.log', level=logging.DEBUG)
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger('flask_cors').setLevel(logging.WARNING)
-
-# logger = logging.getLogger()
 
 app.register_blueprint(plugin_stats)
 app.register_blueprint(detect)
@@ -34,8 +24,17 @@ app.register_blueprint(discord)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
-    today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
-    today18h = today18h + dt.timedelta(hours=18)
+    Config.debug(f'devmode: {dev_mode}')
+    # prevent scraping & predicting for every player in dev
+    if not(dev_mode):
+        today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
+        today18h = today18h + dt.timedelta(hours=18)
+        today20h = today18h + dt.timedelta(hours=20)
+
+        sched.add_job(hiscoreScraper.run_scraper, trigger='interval', minutes=1, start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
+        
+        sched.add_job(model.save_model, args=[30],          trigger='interval', days=1, start_date=today18h , replace_existing=True, name='save_model')
+        sched.add_job(banned_by_jagex.confirm_possible_ban, trigger='interval', days=1, start_date=today20h , replace_existing=True, name='confirm_possible_ban')
 
     sched.add_job(scraper.run_scraper, 'interval', minutes=1, start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
     
@@ -70,12 +69,23 @@ def print_log():
 
 @app.route("/hiscorescraper")
 def hiscorescraper():
-    sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
+    sched.add_job(hiscoreScraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
     for job in sched.get_jobs():
         logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
         print(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return redirect('/log')
 
+@app.route("/possible_ban")
+def possible_ban():
+    sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
+    for job in sched.get_jobs():
+        Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+    return redirect('/log')
+
+@app.route("/favicon.ico")
+def favicon():
+    return "", 200
+    
 if __name__ == '__main__':
-    app.run(port=5000, debug=True, use_reloader=False)
-    # serve(app, host='127.0.0.1', port=5000, debug=True)
+    # app.run(port=flask_port, debug=True, use_reloader=False)
+    serve(app, host='127.0.0.1', port=flask_port, debug=True)

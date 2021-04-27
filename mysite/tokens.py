@@ -40,6 +40,7 @@ def verify_token(token, verifcation):
     if verifcation == 'create_token':
         if not (player_token[0].create_token == 1):
             return False
+
     return True
 
 @app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
@@ -191,7 +192,7 @@ def verify_discord_user(token):
         header['Access-Control-Allow-Origin'] = '*'
         return response
 
-    if not (verify_token(token, verifcation=None)):
+    if not (verify_token(token, verifcation='create_token')):
         return "<h1>401</h1><p>Invalid token</p>", 401
 
     verify_data = request.get_json()

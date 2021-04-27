@@ -1,10 +1,7 @@
 from flask import Blueprint, request
 from flask.json import jsonify
 import SQL, Config
-import concurrent.futures as cf
 import pandas as pd
-import sys
-import logging
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
@@ -15,8 +12,7 @@ def custom_hiscore(detection):
     detection['reported'], bad_name = SQL.name_check(detection['reported'])
 
     if bad_name:
-        print(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
-        logging.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
+        Config.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
         return
 
     # get reporter & reported
@@ -39,14 +35,13 @@ def custom_hiscore(detection):
 
 
 def insync_detect(detections, manual_detect):
-    print("NSYNC")
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
         custom_hiscore(detection)
         if idx % 500 == 0 and idx != 0:
-            logging.debug(msg=f'      Completed {idx}/{len(detections)}')
+            Config.debug(f'      Completed {idx}/{len(detections)}')
 
-    logging.debug(msg=f'      Done: Completed {idx} detections')
+    Config.debug(f'      Done: Completed {idx} detections')
 
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
@@ -56,10 +51,12 @@ def post_detect(manual_detect=0):
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
+
+    Config.debug(f'      Received detections: DF shape: {df.shape}')
     
     detections = df.to_dict('records')
-
-    logging.debug(msg=f'      Received detections: DF shape: {df.shape}')
+    del df # memory optimalisation
+    
     Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
 
     return jsonify({'OK': 'OK'})

@@ -6,7 +6,6 @@ import requests
 import random
 import pandas as pd
 import datetime as dt
-import logging as lg
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import concurrent.futures as cf
@@ -14,10 +13,8 @@ import traceback
 # custom
 import Config
 import SQL
-from scraper import extra_data as ed
+import scraper.extra_data as ed
 
-lg.getLogger("requests").setLevel(lg.WARNING)
-lg.getLogger("urllib3").setLevel(lg.WARNING)
 
 def make_web_call(URL, user_agent_list, debug=False):
     # Pick a random user agent
@@ -55,8 +52,8 @@ def make_web_call(URL, user_agent_list, debug=False):
         response.raise_for_status()
 
     if debug:
-        print(f'Requesting: {URL}')
-        print(f'Response: Status code: {response.status_code}, response length: {len(response.text)}')
+        Config.debug(f'Requesting: {URL}')
+        Config.debug(f'Response: Status code: {response.status_code}, response length: {len(response.text)}')
     return response
 
 def get_data(player_name):
@@ -73,11 +70,11 @@ def get_data(player_name):
     return data
 
 def parse_highscores(data):
-    skills = ed.skills
+    skills =    ed.skills
     minigames = ed.minigames
     # get list of keys from dict
-    skills_keys = list(skills.keys())
-    minigames_keys = list(minigames.keys())
+    skills_keys =       list(skills.keys())
+    minigames_keys =    list(minigames.keys())
     # data is huge array
     for index, row in enumerate(data):
         if index < len(skills):
@@ -87,6 +84,7 @@ def parse_highscores(data):
             index = index - (len(skills))
             # skills row [rank, Score]
             minigames[minigames_keys[index]] = int(row.split(',')[1])
+    del skills_keys, minigames_keys # memory optimalisation
 
     # fix total == 0
     if skills['total'] <= 0:
@@ -94,6 +92,7 @@ def parse_highscores(data):
         skills_values = list(map(int, skills_values[1:]))
         skills_values = [item for item in skills_values if item > 0]
         skills['total'] == sum(skills_values)
+        del skills_values # memory optimalisation
         
     return skills, minigames
     
@@ -103,6 +102,7 @@ def my_sql_task(data, player_name, has_return=False):
     
     # if the player does not exist create the player
     if player is None:
+        # Config.debug(f' new player: {player_name}')
         player = SQL.insert_player(player_name)
 
     # player variables
@@ -112,27 +112,30 @@ def my_sql_task(data, player_name, has_return=False):
 
     # if hiscore data is none, then player is banned
     if data is None:
+        # Config.debug(f' player:{player_name} data is None')
         SQL.update_player(player.id, possible_ban=1, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         # print(f'player: {player_name}, data: {data} is None, return {has_return}')
         # lg.debug(f'player: {player_name}, data: {data} is None, return {has_return}')
         return None, None
-
+    
     # else we parse the hiscore data
     skills, minigames = parse_highscores(data)
+    del data # memory optimalisation
 
     # calculate total
     total = -1
     skills_list = list(map(int, skills.values()))
     minigames_list = list(map(int, minigames.values()))
     total = sum(skills_list) + sum(minigames_list)
-    # print(f'player: {player_name}, total: {total}')
-
+    del skills_list, minigames_list # memory optimalisation
 
     if total <= 0:
+        # Config.debug(f' player:{player_name} - {total} <= 0 ')
         SQL.update_player(player.id, possible_ban=0, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, debug=False)
         # print(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
         # lg.debug(f'player: {player_name}, Total: {total} <= 0, return {has_return}')
         return None, None
+    del total # memory optimalisation
 
     # insert in hiscore data
     SQL.insert_highscore(player_id=player.id, skills=skills, minigames=minigames)
@@ -142,10 +145,14 @@ def my_sql_task(data, player_name, has_return=False):
 
     if has_return:
         return SQL.get_highscores_data_oneplayer(player_id=player.id)
+    
+    del player, cb, cp, lbl, skills, minigames # memory optimalisation?
+    return
 
 def mytempfunction(player_name):
     data = get_data(player_name)
     _,_ = my_sql_task(data=data, player_name=player_name)
+    del data # memory optimalisation?
     return 1
 
 def multi_thread(players):
@@ -154,59 +161,49 @@ def multi_thread(players):
     for player in players:
         tasks.append(([player]))
 
-    del players # remove from memory
-    
+    del players # memory optimalisation
+
     # multithreaded executor
     with cf.ProcessPoolExecutor() as executor:
         try:
             # submit each task to be executed
-            futures = {executor.submit(mytempfunction, task[0]): task[0] for task in tasks} # get_data
-
+            futures = {executor.submit(mytempfunction, task[0]): task[0] for task in tasks}  # get_data
+            del tasks # memory optimalisation
             # get start time
             start = dt.datetime.now()
             for i, future in enumerate(cf.as_completed(futures)):
                 # player_name = futures[future]
-                # _ = future.result()
-                # my_sql_task(data=data, player_name=player_name) # moved this to mytempfunction
-
+                # Config.debug(f' scraped: {player_name}')
                 # some logging
                 if i % 100 == 0:
                     end = dt.datetime.now()
                     t = end - start
-                    lg.debug(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
-                    print(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
+                    Config.debug(f'     hiscores scraped: {100}, took: {t}, {dt.datetime.now()}')
                     start = dt.datetime.now()
 
         except Exception as e:
-            print(f'Multithreading error: {e}')
-            lg.debug(f'Multithreading error: {e}')
-            lg.debug(traceback.print_exc())
-
-
+            Config.debug(f'Multithreading error: {e}')
+            Config.debug(traceback.print_exc())
+    del future, futures, i, start, end, t # memory optimalisation?
+    return
 
 def run_scraper():
-    lg.debug(f'     Starting hiscore scraper: {dt.datetime.now()}')
-    print(f'     Starting hiscore scraper: {dt.datetime.now()}')
-
     # get palyers to scrape
     data = SQL.get_players_to_scrape()
 
     # check if there are any players to scrape
     if len(data) == 0:
-        print('no players to scrape')
+        Config.debug('no players to scrape')
         return []
 
     # array of named tuple to dataframe
     df = pd.DataFrame(data)
-    del data # remove from memory
-
-    # remove all possible banned
-    # mask = ~(df['possible_ban'] == 1)
-    # df = df[mask]
+    del data # memory optimalisation
+    Config.debug(f'     Starting hiscore scraper: {dt.datetime.now()} data: {df.shape}')
 
     # create array of players (names)
     players = df['name'].to_list()
-    del df # remove from memory
+    del df # memory optimalisation
 
     # define selections size
     n = 1000
@@ -218,12 +215,12 @@ def run_scraper():
 
     # multi thread scrape players
     multi_thread(players)
-
+    del players # memory optimalisation
+    return
 
 def scrape_one(player_name):
     data = get_data(player_name)
     return my_sql_task(data, player_name, has_return=True)
-
 
 if __name__ == '__main__':
     run_scraper()
