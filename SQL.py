@@ -187,12 +187,13 @@ def insert_highscore(player_id, skills, minigames):
 
 
 def insert_report(data):
-
     try:
         members = data['on_members_world']
     except KeyError as k:
         members = None
 
+    gmt = time.gmtime(data['ts'])
+    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
     param = {
         'reportedID': data['reported'],
         'reportingID': data['reporter'],
@@ -200,7 +201,7 @@ def insert_report(data):
         'x_coord': data['x'],
         'y_coord': data['y'],
         'z_coord': data['z'],
-        'timestamp': data['ts'], # time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(data['ts'])),
+        'timestamp': human_time,
         'manual_detect': data['manual_detect'],
         'on_members_world': members
     }
@@ -218,7 +219,6 @@ def insert_report(data):
 
 
 def insert_prediction_feedback(vote_info):
-
     sql_insert = 'insert ignore into PredictionsFeedback (voter_id, prediction, confidence, vote, subject_id) ' \
                  'values (:voter_id, :prediction, :confidence, :vote, :subject_id);'
     execute_sql(sql_insert, param=vote_info, debug=False, has_return=False)
@@ -230,7 +230,6 @@ def insert_prediction_feedback(vote_info):
 
 
 def get_verified_discord_user(discord_id):
-
     sql = 'SELECT * from discordVerification WHERE Discord_id = :discord_id ' \
           'AND primary_rsn = 1 ' \
           'AND Verified_status = 1;'
@@ -243,7 +242,6 @@ def get_verified_discord_user(discord_id):
 
 
 def get_unverified_discord_user(player_id):
-
     sql = 'SELECT * from discordVerification WHERE Player_id = :player_id ' \
           'AND Verified_status = 0;'
 
