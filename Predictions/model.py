@@ -178,6 +178,8 @@ def predict_model(player_name=None, start=0, amount=100_000):
                 df_resf = pd.DataFrame(df_resf)
                 df_resf.set_index('name', inplace=True)
                 df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
+                columns = [c for c in df_resf.columns.tolist() if not(c =='id')]
+                df_resf[columns] = df_resf[columns]/100
                 print('from db')
                 lg.debug('from db')
                 return df_resf
