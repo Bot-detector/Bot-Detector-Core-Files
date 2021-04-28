@@ -1,74 +1,36 @@
+# set path to 1 folder up
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from flask import Blueprint, request
 from flask.json import jsonify
-import SQL, Config
 import pandas as pd
-
-detect = Blueprint('detect', __name__, template_folder='templates')
-
-def custom_hiscore(detection):
-    # input validation
-    bad_name = False
-    detection['reporter'], bad_name = SQL.name_check(detection['reporter'])
-    detection['reported'], bad_name = SQL.name_check(detection['reported'])
-
-    if bad_name:
-        Config.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
-        return
-
-    # get reporter & reported
-    reporter = SQL.get_player(detection['reporter'])
-    reported = SQL.get_player(detection['reported'])
-
-    # if reporter or reported is None (=player does not exist), create player
-    if reporter is None:
-        reporter = SQL.insert_player(detection['reporter'])
-
-    if reported is None:
-        reported = SQL.insert_player(detection['reported'])
-
-    # change in detection
-    detection['reported'] = int(reported.id)
-    detection['reporter'] = int(reporter.id)
-
-    # insert into reports
-    SQL.insert_report(detection)
+from flask_restplus import Api, Resource
+# custom imports
+import Config
+from SQL import composite
+import plugin.functions as functions
 
 
-def insync_detect(detections, manual_detect):
-    for idx, detection in enumerate(detections):
-        detection['manual_detect'] = manual_detect
-        custom_hiscore(detection)
-        if idx % 500 == 0 and idx != 0:
-            Config.debug(f'      Completed {idx}/{len(detections)}')
-
-    Config.debug(f'      Done: Completed {idx} detections')
+detect = Blueprint('detect', __name__)
+api = Api(detect)
 
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
-def post_detect(manual_detect=0):
-    detections = request.get_json()
-    manual_detect = 0 if int(manual_detect) == 0 else 1
-    # remove duplicates
-    df = pd.DataFrame(detections)
-    df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
+class Detect(Resource):
+    def post(manual_detect=0):
+        detections = request.get_json()
+        manual_detect = 0 if int(manual_detect) == 0 else 1
 
-    Config.debug(f'      Received detections: DF shape: {df.shape}')
-    
-    detections = df.to_dict('records')
-    del df # memory optimalisation
-    
-    Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
+        # remove duplicates
+        df = pd.DataFrame(detections)
+        df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
 
-    return jsonify({'OK': 'OK'})
+        Config.debug(f'      Received detections: DF shape: {df.shape}')
+        
+        detections = df.to_dict('records')
+        del df # memory optimalisation
+        
+        Config.sched.add_job(functions.insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
 
-
-@detect.route('/plugin/detect/<rsn>', methods=['GET'])
-def get_detects(rsn=""):
-    result = SQL.get_times_manually_reported(rsn)
-
-    try:
-        times_reported = int(result[0][0])
-    except TypeError:
-        times_reported = 0
-
-    return jsonify({'times_reported': times_reported})
+        return jsonify({'OK': 'OK'})

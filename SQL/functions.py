@@ -57,6 +57,22 @@ def get_random_string(length):
     return result_str
 
 
+def name_check(name):
+    bad_name = False
+    if len(name) > 13:
+        bad_name = True
+
+    temp_name = name
+    temp_name = temp_name.replace(' ', '')
+    temp_name = temp_name.replace('_', '')
+    temp_name = temp_name.replace('-', '')
+
+    if not (temp_name.isalnum()):
+        bad_name = True
+
+    return name, bad_name
+
+    
 if __name__ == '__main__':
     sql = 'SELECT * from Players where name = :name'
     param = {'name':'extreme4all'}
