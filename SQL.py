@@ -461,4 +461,8 @@ def get_region_report_stats():
     return data
 
 
-
+def get_prediction_player(player_id):
+    sql = 'select * from Predictions where id = :id'
+    param = {'id':player_id}
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
+    return data

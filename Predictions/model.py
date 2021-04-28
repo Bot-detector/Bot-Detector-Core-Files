@@ -173,7 +173,18 @@ def predict_model(player_name=None, start=0, amount=100_000):
             df = highscores.scrape_one(player_name)
             player = SQL.get_player(player_name)
         else:
-            df = SQL.get_highscores_data_oneplayer(player.id)
+            try:
+                df_resf = SQL.get_prediction_player(player.id)
+                df_resf = pd.DataFrame(df_resf)
+                df_resf.set_index('name', inplace=True)
+                df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
+                print('from db')
+                lg.debug('from db')
+                return df_resf
+            except:
+                df = SQL.get_highscores_data_oneplayer(player.id)
+                print('hiscores')
+                lg.debug('hiscores')
 
         df = pd.DataFrame(df)
         df_players = pf.get_players(players=pd.DataFrame([player]), with_id=True)
@@ -318,7 +329,7 @@ def multi_thread(data):
             _ = future.result()
 
 if __name__ == '__main__':
-    train_model(n_pca=50)
+    # train_model(n_pca=50)
     # save_model(n_pca=30)
-    # df = predict_model(player_name='extreme4all') # player_name='extreme4all'
-    # df.head()
+    df = predict_model(player_name='extreme4all') # player_name='extreme4all'
+    print(df.head())
