@@ -72,10 +72,11 @@ def check_player(player):
 
     # this we don't know (unbanned?)
     if data['error'] == 'NO_PROFILE':
-        if player["prediction"] == 'Real_Player':
-            SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
-        else:
-            SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=1, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
+        SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
+        # if player["prediction"] == 'Real_Player':
+        #     SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
+        # else:
+        #     SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=1, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
         return data['error']
 
     # this is a bot
