@@ -229,7 +229,7 @@ def save_model(n_pca=50):
     Config.debug(os.listdir())
     
     # chunking data
-    limit = 10_000
+    limit = 5_000
     end = False
     first_run = True
     loop = 0
