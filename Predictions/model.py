@@ -92,7 +92,8 @@ def train_model(n_pca):
 
     lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 
         'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 
-        'Herblore_bot','Thieving_bot','Crafting_bot']
+        'Herblore_bot','Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
+        'Hunter_bot','Runecrafting_bot']
     Config.debug(f'labels: {len(lbls)}, {lbls}')
 
     # creating x, y data, with players that a label
