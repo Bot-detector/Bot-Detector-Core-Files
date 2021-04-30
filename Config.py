@@ -56,11 +56,22 @@ executors = {
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
    sched = BackgroundScheduler(daemon=False, executors=executors)
 
+# todo cleanup in refactor
+from flask import request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 limiter = Limiter(
-    app,
-    key_func=get_remote_address,
-    default_limits=["60 per minute", "5 per second"],
+   app,
+   key_func=get_remote_address,
+   default_limits=["60 per minute", "5 per second"],
+   strategy='fixed-window-elastic-expiry'
 )
+
+@limiter.request_filter
+def ip_whitelist():
+   whitelist = [
+      '127.0.0.1',
+      '45.76.255.154'
+   ]
+   return request.remote_addr in whitelist
