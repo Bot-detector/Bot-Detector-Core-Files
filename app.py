@@ -22,6 +22,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.WARNING)
+logging.getLogger("flask-limiter").setLevel(logging.WARNING)
 
 # logger = logging.getLogger()
 
@@ -79,7 +80,7 @@ def hiscorescraper():
 @app.errorhandler(429)
 def ratelimit_handler(e):
     return jsonify(error="ratelimit exceeded %s" % e.description), 429
-    
+
 if __name__ == '__main__':
     app.run(port=5000, debug=True, use_reloader=False)
     # serve(app, host='127.0.0.1', port=5000, debug=True)
