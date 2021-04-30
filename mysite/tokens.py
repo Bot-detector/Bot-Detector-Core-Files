@@ -1,7 +1,7 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Blueprint, request, make_response, after_this_request
+from flask import Blueprint, request, make_response, after_this_request, render_template_string
 from flask.json import jsonify
 
 import pandas as pd
@@ -41,6 +41,15 @@ def verify_token(token, verifcation):
         if not (player_token[0].create_token == 1):
             return False
     return True
+
+@app_token.route("/log/<token>", methods=['GET'])
+def print_log(token):
+    if not (verify_token(token, verifcation='create_token')):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+
+    with open("error.log", "r") as f:
+        content = f.read()
+        return render_template_string("<pre>{{ content }}</pre>", content=content)
 
 @app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
 @app_token.route('/site/highscores/<token>/<ofInterest>', methods=['POST', 'GET'])
