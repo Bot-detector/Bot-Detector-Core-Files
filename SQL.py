@@ -38,7 +38,7 @@ def get_random_string(length):
     return result_str
 
 
-def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdata"):
+def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerdata"):
     engine = Config.db_engines[db_name]
     engine.dispose()
     conn = engine.connect()
@@ -531,6 +531,12 @@ def get_region_search(regionName):
     data = execute_sql(sql, param=param, debug=True, has_return=True)
     return data
 
+def get_prediction_player(player_id):
+    sql = 'select * from Predictions where id = :id'
+    param = {'id':player_id}
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
+    return data
+    
 def get_report_data_heatmap(region_id):
 
     sql = ('''

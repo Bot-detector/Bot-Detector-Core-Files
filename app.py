@@ -1,5 +1,5 @@
 from time import sleep
-from flask import jsonify, render_template_string, redirect
+from flask import jsonify, redirect, make_response
 from waitress import serve
 import datetime as dt
 import os
@@ -73,6 +73,10 @@ def hello():
 def favicon():
     return "", 200
 
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify(error="ratelimit exceeded %s" % e.description), 429
 
 if __name__ == '__main__':
     # app.run(port=flask_port, debug=True, use_reloader=False)
