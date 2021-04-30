@@ -1,5 +1,5 @@
 from time import sleep
-from flask import jsonify, render_template_string, redirect, make_response
+from flask import jsonify, redirect, make_response
 from waitress import serve
 import datetime as dt
 import os
@@ -62,12 +62,6 @@ def hello():
 
     data = {'welcome': 'test', 'job': started}
     return jsonify(data)
-
-@app.route("/log")
-def print_log():
-    with open("error.log", "r") as f:
-        content = f.read()
-        return render_template_string("<pre>{{ content }}</pre>", content=content)
 
 @app.route("/hiscorescraper")
 def hiscorescraper():

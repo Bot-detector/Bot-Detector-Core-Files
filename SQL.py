@@ -36,7 +36,7 @@ def get_random_string(length):
     return result_str
 
 
-def execute_sql(sql, param=None, debug=True, has_return=True, db_name="playerdata"):
+def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerdata"):
     engine = Config.db_engines[db_name]
     engine.dispose()
     conn = engine.connect()
