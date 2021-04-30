@@ -10,7 +10,7 @@ import json
 import SQL
 import Config
 from Predictions import model
-from scraper import banned_by_jagex
+from scraper import banned_by_jagex, hiscoreScraper
 
 app_token = Blueprint('app_token', __name__, template_folder='templates')
 
@@ -53,13 +53,6 @@ def print_log(token):
         content = f.read()
         return render_template_string("<pre>{{ content }}</pre>", content=content)
 
-@app_token.route("/possible_ban/<token>")
-def possible_ban(token):
-    if not (verify_token(token, verifcation='hiscore')):
-        return "<h1>404</h1><p>Invalid token</p>", 404
-        
-    Config.sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
-    return redirect('/log')
 
 @app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
 @app_token.route('/site/highscores/<token>/<ofInterest>', methods=['POST', 'GET'])
@@ -134,15 +127,34 @@ def create_user_token(token, player_name, hiscore=0, ban=0):
     # return created token
     return jsonify({'Token': token})
 
-@app_token.route('/site/predictions/<token>', methods=['POST', 'GET'])
+
+'''
+    These routes schedule jos
+'''
+@app_token.route("/site/possible_ban/<token>")
+def possible_ban(token):
+    if not (verify_token(token, verifcation='create_token')):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+        
+    Config.sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
+    return jsonify({'OK': 'OK'})
+
+@app_token.route('/site/save_model/<token>')
 def create_predictions(token):
     if not (verify_token(token, verifcation='create_token')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
-    n_pca = 50
+    n_pca = 30
     Config.sched.add_job(model.save_model ,args=[n_pca], replace_existing=True, name='save_model')
     return jsonify({'OK': 'OK'})
 
+@app_token.route("/site/hiscorescraper/<token>")
+def hiscorescraper(token):
+    if not (verify_token(token, verifcation='create_token')):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+
+    Config.sched.add_job(hiscoreScraper.run_scraper, name='run_hiscore',max_instances=10, coalesce=True)
+    return jsonify({'OK': 'OK'})
 '''
     These routes are accessible if you have a token
 '''
