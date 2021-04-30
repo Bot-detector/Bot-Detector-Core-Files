@@ -1,7 +1,7 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Blueprint, request, make_response, after_this_request
+from flask import Blueprint, request, make_response, after_this_request, render_template_string, redirect
 from flask.json import jsonify
 
 import pandas as pd
@@ -10,6 +10,7 @@ import json
 import SQL
 import Config
 from Predictions import model
+from scraper import banned_by_jagex
 
 app_token = Blueprint('app_token', __name__, template_folder='templates')
 
@@ -51,6 +52,14 @@ def print_log(token):
     with open("error.log", "r") as f:
         content = f.read()
         return render_template_string("<pre>{{ content }}</pre>", content=content)
+
+@app_token.route("/possible_ban/<token>")
+def possible_ban(token):
+    if not (verify_token(token, verifcation='hiscore')):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+        
+    Config.sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
+    return redirect('/log')
 
 @app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
 @app_token.route('/site/highscores/<token>/<ofInterest>', methods=['POST', 'GET'])

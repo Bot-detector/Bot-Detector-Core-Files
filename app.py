@@ -73,14 +73,6 @@ def hiscorescraper():
     print_jobs()
     return redirect('/log')
 
-
-@app.route("/possible_ban")
-def possible_ban():
-    sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
-    print_jobs()
-    return redirect('/log')
-
-
 @app.route("/favicon.ico")
 def favicon():
     return "", 200
