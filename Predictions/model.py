@@ -21,6 +21,7 @@ import SQL, Config
 from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
+from Config import debug as lg
 
 
 def create_model(train_x, train_y, test_x, test_y, lbls):

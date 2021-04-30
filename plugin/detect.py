@@ -74,7 +74,7 @@ def post_detect(manual_detect=0):
     detections = df.to_dict('records')
 
     print(f'      Received detections: DF shape: {df.shape}')
-    Config.debug(msg=f'      Received detections: DF shape: {df.shape}')
+    Config.debug(f'      Received detections: DF shape: {df.shape}')
     Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
 
     return jsonify({'OK': 'OK'})
