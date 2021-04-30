@@ -1,27 +1,13 @@
-name: Deployment workflow
+name: Dev deployment
 on:
   push:
     branches: [ develop ]
 
 jobs:
-  checkout:
-    runs-on: self-hosted
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install Dependencies
-      run: |
-        sudo systemctl stop devapi.service
-        rm -rf error.log
-        python3 -m pip install --upgrade pip
-        (test -d env && rm -rf env && python3 -m venv env || python3 -m venv env)
-        source ./env/bin/activate
-        pip3 install flake8 pytest
-        if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
   deploy:
     runs-on: self-hosted
-    needs: [checkout]
     steps:
-      - name: setup_env_vars
+      - name: Run Update Script
         run: |
           cd ~/dev-api/Bot-Detector-Core-Files/
           ./update.sh
