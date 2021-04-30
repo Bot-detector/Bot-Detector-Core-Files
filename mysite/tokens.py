@@ -43,6 +43,15 @@ def verify_token(token, verifcation):
 
     return True
 
+@app_token.route("/log/<token>", methods=['GET'])
+def print_log(token):
+    if not (verify_token(token, verifcation='create_token')):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+
+    with open("error.log", "r") as f:
+        content = f.read()
+        return render_template_string("<pre>{{ content }}</pre>", content=content)
+
 @app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
 @app_token.route('/site/highscores/<token>/<ofInterest>', methods=['POST', 'GET'])
 def get_highscores(token, ofInterest=None):
