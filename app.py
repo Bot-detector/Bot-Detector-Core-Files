@@ -67,13 +67,6 @@ def hello():
     return jsonify(data)
 
 
-@app.route("/log")
-def print_log():
-    with open("error.log", "r") as f:
-        content = f.read()
-        return render_template_string("<pre>{{ content }}</pre>", content=content)
-
-
 @app.route("/hiscorescraper")
 def hiscorescraper():
     sched.add_job(hiscoreScraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
