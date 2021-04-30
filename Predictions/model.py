@@ -21,7 +21,6 @@ import SQL, Config
 from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
-from Config import debug as lg
 
 
 def create_model(train_x, train_y, test_x, test_y, lbls):
@@ -149,7 +148,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
         model = load(model)
 
     except KeyError as e:
-        lg.debug(f'Error loading: {e}')
+        Config.debug(f'Error loading: {e}')
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
@@ -185,12 +184,12 @@ def predict_model(player_name=None, start=0, amount=100_000):
                 columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction'])]
                 df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
                 print('from db')
-                lg.debug('from db')
+                Config.debug('from db')
                 return df_resf
             except Exception as e:
                 df = SQL.get_highscores_data_oneplayer(player.id)
                 print('hiscores')
-                lg.debug('hiscores')
+                Config.debug('hiscores')
 
         df = pd.DataFrame(df)
         df_players = pf.get_players(players=pd.DataFrame([player]), with_id=True)
@@ -205,7 +204,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
         )
         del df # free up memory
     except KeyError as k:
-        lg.debug(f'Error cleaning: {k}')
+        Config.debug(f'Error cleaning: {k}')
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
@@ -224,7 +223,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
         del df_clean # free up memory
 
     except ValueError as v:
-        lg.debug(f'Error normalizing: {v}')
+        Config.debug(f'Error normalizing: {v}')
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
