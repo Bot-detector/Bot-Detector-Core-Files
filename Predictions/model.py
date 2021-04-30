@@ -1,25 +1,23 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import time
 import pandas as pd
 import numpy as np
-from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
 from joblib import dump, load
-import time
 import concurrent.futures as cf
-import logging as lg
+
 from sklearn.ensemble import VotingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import SGDClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
 # custom imports
-import SQL
+import SQL, Config
 from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
@@ -46,8 +44,7 @@ def create_model(train_x, train_y, test_x, test_y, lbls):
     weights = [s**2 for s in scores]
     estimators = [(m.__class__.__name__, m) for m in models]
 
-    _ = [print(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
-    _ = [lg.debug(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
+    _ = [Config.debug(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
 
     vote = VotingClassifier(
         weights=weights,
@@ -56,7 +53,6 @@ def create_model(train_x, train_y, test_x, test_y, lbls):
         n_jobs=-1
         )
     
-    # vote = vote.fit(train_x, train_y)
     return vote
 
 
@@ -64,7 +60,7 @@ def train_model(n_pca):
     
     df =            pf.get_highscores()
     df_players =    pf.get_players()
-    df_labels =     pf.get_labels() # TODO: only parent labels?
+    df_labels =     pf.get_labels() 
 
     # pandas pipeline
     df_clean = (df
@@ -86,24 +82,19 @@ def train_model(n_pca):
     
 
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=None)
-    df_pca = df_preprocess
     dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
-    print(f'pca shape: {df_pca.shape}')
+
+    df_pca = df_preprocess # no pca
+    Config.debug(f'pca shape: {df_pca.shape}')
 
     df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
     df_pca = df_pca.merge(df_labels,    left_on='label_id', right_index=True, how='left')
-    
 
-    # getting labels with more then 5 players
-    # lbl_df = pd.DataFrame(df_pca[['label']].value_counts(), columns=['players'])
-    # mask = (lbl_df['players'] > 50)
-    # lbl_df = lbl_df[mask].copy()
-    # lbl_df.reset_index(inplace=True)
-    # lbls = lbl_df['label'].tolist()
-
-    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot']
-    print('labels: ', len(lbls), lbls)
-    lg.debug('labels: ', len(lbls), lbls)
+    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 
+        'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 
+        'Herblore_bot','Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
+        'Hunter_bot','Runecrafting_bot']
+    Config.debug(f'labels: {len(lbls)}, {lbls}')
 
     # creating x, y data, with players that a label
     mask = ~(df_pca['label_id'] == 0) & (df_pca['label'].isin(lbls))
@@ -118,24 +109,21 @@ def train_model(n_pca):
     # train test split but make sure to have all the labels form y
     train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.3, random_state=42, stratify=y)
 
-    model_name = 'rfc'
-    # model = RandomForestClassifier(n_estimators=100)
+    model_name = 'vote'
     model = create_model(train_x, train_y, test_x, test_y, lbls)
     model = model.fit(train_x, train_y)
     
     # print model score
     model_score = round(model.score(test_x, test_y)*100,2)
-    print('Score: ',model_score)
-    lg.debug(f'Score: {model_score}')
+    Config.debug(f'Score: {model_score}')
 
     # print more detailed model score
-    print(classification_report(test_y, model.predict(test_x), target_names=lbls))
-    lg.debug(classification_report(test_y, model.predict(test_x), target_names=lbls))
+    Config.debug(classification_report(test_y, model.predict(test_x), target_names=lbls))
 
     # fit & save model on entire dataset
     model = model.fit(x, y)
     dump(value=model, filename=f'Predictions/models/model-{model_name}_{today}_{model_score}.joblib')
-
+    return
 
     
 def predict_model(player_name=None, start=0, amount=100_000):
@@ -174,10 +162,11 @@ def predict_model(player_name=None, start=0, amount=100_000):
     # if no player name is given, take all players
     # if a player name is given, check if we have a record for this player else scrape that player
     if player_name is None:
-        print(f'get_hiscores: {start}, {amount}')
-        lg.debug(f'get_hiscores: {start}, {amount}')
+        Config.debug(f'get_hiscores: {start}, {amount}')
+
         df = pf.get_highscores(ofinterest=False, start=start, amount=amount)
         ids = df['Player_id'].to_list()
+
         df_players = pf.get_players(with_id=True, ofinterest=False, ids=ids)
     else:
         player = SQL.get_player(player_name)
@@ -266,32 +255,37 @@ def predict_model(player_name=None, start=0, amount=100_000):
 
 
 def save_model(n_pca=50):
-    print(os.listdir())
-    lg.debug(os.listdir())
+    Config.debug(os.listdir())
     
     # chunking data
-    limit = 10_000
+    limit = 5_000
     end = False
     first_run = True
     loop = 0
+
     train_model(n_pca)
+
+    # get predictions in chunks
     while not(end):
-        # get predictions in chunks
         start = loop * limit
         df = predict_model(player_name=None, start=start, amount=limit)
-        lg.debug(f'data shape: {df.shape}')
-        # parse data to format int
+        Config.debug(f'data shape: {df.shape}')
+
+        # parse predictions to int
         int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction']]
         df[int_columns] = df[int_columns]*100
         df[int_columns] = df[int_columns].astype(int)
+
+        # replace spaces in column names to _
         df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
 
+        # remove predictioin because this is text
         columns = df.columns.tolist()
         columns.remove('prediction')
+
         # if the first run then drop & create table
         if first_run:
-            print('drop & create table')
-            lg.debug('drop & create table')
+            Config.debug('drop & create table')
             first_run = False
 
             table_name = 'Predictions'
@@ -299,52 +293,63 @@ def save_model(n_pca=50):
             createtable = f'CREATE TABLE IF NOT EXISTS {table_name} (name varchar(12), prediction text, {" INT, ".join(columns)} INT);'
             indexname = 'ALTER TABLE playerdata.Predictions ADD UNIQUE name (name);'
             fk = 'ALTER TABLE `Predictions` ADD CONSTRAINT `FK_pred_player_id` FOREIGN KEY (`id`) REFERENCES `Players`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;'
-            created = 'ALTER TABLE `Predictions` ADD `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP FIRST;'
 
             SQL.execute_sql(droptable,      param=None, debug=False, has_return=False)
             SQL.execute_sql(createtable,    param=None, debug=False, has_return=False)
             SQL.execute_sql(indexname,      param=None, debug=False, has_return=False)
             SQL.execute_sql(fk,             param=None, debug=False, has_return=False)
-            # SQL.execute_sql(created,        param=None, debug=False, has_return=False)
 
-        # because prediction must be first column
+        # add prediction back as first field
         ordered_columns = ['prediction'] + columns
         df = df[ordered_columns]
         df.reset_index(inplace=True)
         
         # insert rows into table
         data = df.to_dict('records')
+        length = len(df)
+        del df
+
         multi_thread(data)
+        del data
 
         loop += 1
-        if len(df) < limit:
+
+        if length < limit:
             end = True
+
+    return
 
 
 def insert_prediction(row):
     values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
     sql_insert = f'insert ignore into Predictions values ({values});'
     SQL.execute_sql(sql_insert, param=row, debug=False, has_return=False)
+    return
 
 
 def multi_thread(data):
-    print('start multithread')
-    lg.debug('start multithread')
+    Config.debug('start multithread')
     # create a list of tasks to multithread
     tasks = []
     for row in data:
         tasks.append(([row]))
 
+    del data # memory optimalization
+
     # multithreaded executor
     with cf.ProcessPoolExecutor() as executor:
-
         # submit each task to be executed
-        futures = {executor.submit(insert_prediction, task[0]): task[0] for task in tasks} # get_data
+        futures = {executor.submit(insert_prediction, task[0]): task[0] for task in tasks}
+
+        del tasks # memory optimalization
 
         # get start time
         for future in cf.as_completed(futures):
             _ = futures[future]
             _ = future.result()
+
+    del futures, future # memory optimalization
+    return
 
 if __name__ == '__main__':
     # train_model(n_pca=50)
