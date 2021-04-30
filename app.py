@@ -1,5 +1,5 @@
 from time import sleep
-from flask import jsonify, render_template_string, redirect
+from flask import jsonify, render_template_string, redirect, make_response
 from waitress import serve
 import datetime as dt
 import os
@@ -76,6 +76,10 @@ def hiscorescraper():
         print(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return redirect('/log')
 
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify(error="ratelimit exceeded %s" % e.description), 429
+    
 if __name__ == '__main__':
     app.run(port=5000, debug=True, use_reloader=False)
     # serve(app, host='127.0.0.1', port=5000, debug=True)

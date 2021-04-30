@@ -20,3 +20,4 @@ Predictions/models/*
 
 .idea
 .idea/
+test.py
