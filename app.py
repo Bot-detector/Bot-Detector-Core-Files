@@ -67,11 +67,13 @@ def hello():
     return jsonify(data)
 
 
+
 @app.route("/hiscorescraper")
 def hiscorescraper():
     sched.add_job(hiscoreScraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
     print_jobs()
     return redirect('/log')
+
 
 @app.route("/favicon.ico")
 def favicon():
