@@ -140,23 +140,36 @@ def train_model(n_pca):
     
 def predict_model(player_name=None, start=0, amount=100_000):
     # load scaler, transformer, features, pca, labels & model
-    scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
-    scaler = load(scaler)
+    try:
+        scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
+        scaler = load(scaler)
 
-    transformer, _ = pf.best_file_path(startwith='normalizer', dir='Predictions/models')
-    transformer = load(transformer)
+        transformer, _ = pf.best_file_path(startwith='normalizer', dir='Predictions/models')
+        transformer = load(transformer)
 
-    features, _ = pf.best_file_path(startwith='features', dir='Predictions/models')
-    features = load(features)
+        features, _ = pf.best_file_path(startwith='features', dir='Predictions/models')
+        features = load(features)
 
-    pca, n_pca = pf.best_file_path(startwith='pca', dir='Predictions/models')
-    pca = load(pca)
+        pca, n_pca = pf.best_file_path(startwith='pca', dir='Predictions/models')
+        pca = load(pca)
 
-    labels, _ = pf.best_file_path(startwith='labels', dir='Predictions/models')
-    labels = load(labels)
+        labels, _ = pf.best_file_path(startwith='labels', dir='Predictions/models')
+        labels = load(labels)
 
-    model, _ = pf.best_file_path(startwith='model', dir='Predictions/models')
-    model = load(model)
+        model, _ = pf.best_file_path(startwith='model', dir='Predictions/models')
+        model = load(model)
+
+    except KeyError as e:
+        lg.debug(f'Error loading: {e}')
+        prediction_data = {
+            "player_id": -1,
+            "player_name": player_name,
+            "prediction_label": "Error: The machine is learning",
+            "prediction_confidence": 0,
+            "secondary_predictions": []
+        }
+
+        return prediction_data
 
     # if no player name is given, take all players
     # if a player name is given, check if we have a record for this player else scrape that player
@@ -202,7 +215,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
         )
         del df # free up memory
     except KeyError as k:
-
+        lg.debug(f'Error cleaning: {k}')
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
@@ -210,8 +223,8 @@ def predict_model(player_name=None, start=0, amount=100_000):
             "prediction_confidence": 0,
             "secondary_predictions": []
         }
-
         return prediction_data
+
     try:
         df_preprocess = (df_clean
             .pipe(pf.start_pipeline)
@@ -219,7 +232,9 @@ def predict_model(player_name=None, start=0, amount=100_000):
             .pipe(pf.f_normalize, transformer=transformer)
         )
         del df_clean # free up memory
+
     except ValueError as v:
+        lg.debug(f'Error normalizing: {v}')
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
