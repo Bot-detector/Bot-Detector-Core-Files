@@ -15,6 +15,10 @@ app_predictions = Blueprint('predictions', __name__, template_folder='templates'
 
 @app_predictions.route('/site/prediction/<player_name>', methods=['POST', 'GET'])
 def get_prediction(player_name):
+
+    Config.debug("PREDICTION REQUEST\n")
+    Config.debug(request.headers)
+
     player_name, bad_name = SQL.name_check(player_name)
 
     if not( bad_name):

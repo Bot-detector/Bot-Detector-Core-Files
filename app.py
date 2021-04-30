@@ -63,6 +63,7 @@ def page_not_found(e):
 
 @app.route("/")
 def hello():
+
     data = {'welcome': 'test', 'job': started}
     return jsonify(data)
 
@@ -82,4 +83,4 @@ def favicon():
 
 if __name__ == '__main__':
     # app.run(port=flask_port, debug=True, use_reloader=False)
-    serve(app, host='127.0.0.1', port=Config.flask_port, debug=True)
+    serve(app, host='0.0.0.0', port=Config.flask_port)
