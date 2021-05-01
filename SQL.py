@@ -577,7 +577,7 @@ def get_report_data_heatmap(region_id):
 def get_player_banned_bots(player_name):
 
     sql = ('''
-    SELECT 
+    SELECT DISTINCT
         pl1.name reporter,
         pl2.name reported,
         lbl.label,
