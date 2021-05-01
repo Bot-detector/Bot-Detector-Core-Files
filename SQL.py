@@ -391,13 +391,12 @@ def get_report_stats():
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
-# TODO: use contributor
+# TODO: please clean, add count in query
 
-
-def get_contributions(contributor):
-
+def get_contributions(contributor): 
+    
     query = '''
-        SELECT
+        SELECT DISTINCT
             rptr.name reporter_name,
             rptd.name reported_name,
             rptd.confirmed_ban,
