@@ -1,11 +1,13 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import SQL
 from flask.json import jsonify
 from flask import Blueprint, request
 import mysite.tokens as tokens
-import os
-import sys
+import Config
 import pandas as pd
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 discord = Blueprint('discord', __name__, template_folder='templates')
@@ -97,6 +99,24 @@ def get_player_bans(token, player_name=None):
         player_name = player_name['player_name']
     
     data = SQL.get_player_banned_bots(player_name)
+
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
+
+@discord.route('/discord/player_verification_status/<token>/<player_name>', methods=['GET', 'POST'])
+def get_player_verification(token, player_name=None):
+
+    verified = tokens.verify_token(token=token, verifcation='create_token')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    if player_name is None:
+        return jsonify({'Invalid Name':'Invalid Name'})
+    
+    data = SQL.get_discord_verification_status(player_name)
 
     df = pd.DataFrame(data)
     output = df.to_dict('records')
