@@ -104,7 +104,7 @@ def get_player_bans(token, player_name=None):
     return jsonify(output)
 
 @discord.route('/discord/player_verification_status/<token>/<player_name>', methods=['GET', 'POST'])
-def get_player_verification(token):
+def get_player_verification(token, player_name=None):
 
     verified = tokens.verify_token(token=token, verifcation='create_token')
 

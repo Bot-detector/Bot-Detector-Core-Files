@@ -397,7 +397,7 @@ def get_report_stats():
 def get_contributions(contributor):
 
     query = '''
-        SELECT 
+        SELECT
             rptr.name reporter_name,
             rptd.name reported_name,
             rptd.confirmed_ban,
@@ -613,6 +613,6 @@ def get_discord_verification_status(player_name):
         'player_name': player_name
     }
 
-    data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="testzone")
+    data = execute_sql(sql, param=None, debug=False, has_return=True, db_name="testzone")
 
     return data
