@@ -613,6 +613,6 @@ def get_discord_verification_status(player_name):
         'player_name': player_name
     }
 
-    data = execute_sql(sql, param=None, debug=False, has_return=True, db_name="testzone")
+    data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
     return data

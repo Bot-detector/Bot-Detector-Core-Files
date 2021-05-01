@@ -1,11 +1,13 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import SQL
 from flask.json import jsonify
 from flask import Blueprint, request
 import mysite.tokens as tokens
-import os
-import sys
+import Config
 import pandas as pd
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 discord = Blueprint('discord', __name__, template_folder='templates')
@@ -111,12 +113,8 @@ def get_player_verification(token, player_name=None):
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
 
-    player_name = request.get_json()
-
     if player_name is None:
-        return jsonify({'Invalid Data':'Data'})
-
-    player_name = player_name['player_name']
+        return jsonify({'Invalid Name':'Invalid Name'})
     
     data = SQL.get_discord_verification_status(player_name)
 
