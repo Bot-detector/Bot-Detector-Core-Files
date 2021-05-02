@@ -604,17 +604,6 @@ def get_possible_ban_predicted():
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
-def get_discord_verification_status(player_name):
-
-    sql = 'SELECT Verified_status FROM verified_players WHERE name = :player_name'
-    
-    param = {
-        'player_name': player_name
-    }
-
-    data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
-
-    return data
 
 def get_verification_info(player_name):
 
