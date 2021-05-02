@@ -122,7 +122,30 @@ def get_player_verification(token, player_name=None):
     output = df.to_dict('records')
 
     return jsonify(output)
+
   
+@discord.route('/discord/player_rsn_discord_account_status/<token>/<player_name>', methods=['GET', 'POST'])
+def get_verification_status_information(token, player_name=None):
+
+    verified = tokens.verify_token(token=token, verifcation='create_token')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    if player_name is None:
+        return jsonify({'Invalid Name':'Invalid Name'})
+    
+    data = SQL.get_verification_info(player_name)
+
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
+
+
 @discord.route('/discord/locations/<token>/<player_name>', methods=['GET'])
 def get_location():
     pass
+
+
+
