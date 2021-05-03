@@ -16,6 +16,7 @@ def custom_hiscore(detection, version):
     #     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
     #     detection['ts'] = gmt
 
+
     # input validation
     bad_name = False
     detection['reporter'], bad_name = SQL.name_check(detection['reporter'])
