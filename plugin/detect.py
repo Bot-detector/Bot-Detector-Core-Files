@@ -58,6 +58,7 @@ def insync_detect(detections, manual_detect, version):
         if len(detection) > 1000 and total_creates/len(detections) > .75:
             print(f'    Malicious: sender: {detection["reporter"]}')
             Config.debug(f'    Malicious: sender: {detection["reporter"]}')
+
             break
 
         if idx % 500 == 0 and idx != 0:
@@ -78,13 +79,16 @@ def post_detect(version=None, manual_detect=0):
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         print('to many reports')
         Config.debug('to many reports')
+
         return jsonify({'NOK': 'NOK'}), 400
     
     detections = df.to_dict('records')
 
     print(f'      Received detections: DF shape: {df.shape}')
+
     Config.debug(f'      Received detections: DF shape: {df.shape}')
     Config.sched.add_job(insync_detect ,args=[detections, manual_detect, version], replace_existing=False, name='detect')
+
 
     return jsonify({'OK': 'OK'})
 

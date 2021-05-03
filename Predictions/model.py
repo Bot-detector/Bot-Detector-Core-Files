@@ -157,6 +157,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
             "secondary_predictions": []
         }
 
+
         return prediction_data
 
     # if no player name is given, take all players
@@ -185,10 +186,12 @@ def predict_model(player_name=None, start=0, amount=100_000):
                 df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
                 print('from db')
                 Config.debug('from db')
+
                 return df_resf
             except Exception as e:
                 df = SQL.get_highscores_data_oneplayer(player.id)
                 print('hiscores')
+
                 Config.debug('hiscores')
 
         df = pd.DataFrame(df)
@@ -205,6 +208,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
         del df # free up memory
     except KeyError as k:
         Config.debug(f'Error cleaning: {k}')
+
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
@@ -223,7 +227,9 @@ def predict_model(player_name=None, start=0, amount=100_000):
         del df_clean # free up memory
 
     except ValueError as v:
+
         Config.debug(f'Error normalizing: {v}')
+
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
