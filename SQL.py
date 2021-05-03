@@ -641,14 +641,15 @@ def get_verification_player_id(player_name):
 
     return data
 
-def verificationInsert(discord_id, player_id, code):
+def verificationInsert(discord_id, player_id, code, token):
 
-    sql = "INSERT INTO discordVerification (Discord_id, Player_id, Code) VALUES (:discord_id, :player_id, :code)"
+    sql = "INSERT INTO discordVerification (Discord_id, Player_id, Code, token_used) VALUES (:discord_id, :player_id, :code, :token)"
     
     param = {
         'player_id': player_id ,
         'discord_id' : discord_id ,
-        'code' : code
+        'code' : code,
+        'token' : token
     }
 
     data = execute_sql(sql, param=param, debug=False, has_return=False, db_name="discord")

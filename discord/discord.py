@@ -177,6 +177,6 @@ def post_verified_insert_information(token, discord_id=None, player_id=None, cod
     if code is None:
         return jsonify({'Invalid Code':'Invalid Code'})
     
-    data = SQL.verificationInsert(discord_id, player_id, code)
+    data = SQL.verificationInsert(discord_id, player_id, code, token)
 
     return jsonify({'Value':f'{discord_id} {player_id} {code} Submitted'})
