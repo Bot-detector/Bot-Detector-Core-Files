@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import SQL
 from flask.json import jsonify
-from flask import Blueprint, request
+from flask import Blueprint, request, make_response
 import mysite.tokens as tokens
 import Config
 import pandas as pd
@@ -160,7 +160,7 @@ def get_verified_player_list_information(token, player_name=None):
 
     return jsonify(output)
 
-@discord.route('/discord/verify/insert_player_dpc/<token>/<discord_id>/<player_id>/<code>', methods=['GET', 'POST', 'OPTIONS'])
+@discord.route('/discord/verify/insert_player_dpc/<token>/<discord_id>/<player_id>/<code>', methods=['POST', 'OPTIONS'])
 def post_verified_insert_information(token, discord_id=None, player_id=None, code=None):
 
     #Preflight
@@ -169,7 +169,6 @@ def post_verified_insert_information(token, discord_id=None, player_id=None, cod
         header = response.headers
         header['Access-Control-Allow-Origin'] = '*'
         return response
-
 
     verified = tokens.verify_token(token=token, verifcation='verify_players')
 
