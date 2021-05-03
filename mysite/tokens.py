@@ -226,7 +226,7 @@ def verify_discord_user(token):
         header['Access-Control-Allow-Origin'] = '*'
         return response
 
-    if not (verify_token(token, verifcation='create_token')):
+    if not (verify_token(token, verifcation='verify_players')):
         return "<h1>401</h1><p>Invalid token</p>", 401
 
     verify_data = request.get_json()
@@ -240,7 +240,7 @@ def verify_discord_user(token):
             print(record)
 
             if str(record.Code) == str(verify_data["code"]):
-                SQL.set_discord_verification(record.Entry)
+                SQL.set_discord_verification(id=record.Entry, token=token)
                 break
 
     return 'OK'
