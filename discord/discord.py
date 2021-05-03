@@ -12,7 +12,7 @@ import pandas as pd
 
 discord = Blueprint('discord', __name__, template_folder='templates')
 
-@discord.route('/discord/locations/<token>', methods=['GET', 'POST'])
+@discord.route('/discord/locations/<token>', methods=['GET'])
 def get_locations(token):
 
     verified = tokens.verify_token(token=token, verifcation='hiscores')
@@ -33,8 +33,8 @@ def get_locations(token):
 
     return jsonify(output)
 
-@discord.route('/discord/region/<token>', methods=['GET', 'POST'])
-@discord.route('/discord/region/<token>/<regionName>', methods=['GET', 'POST'])
+@discord.route('/discord/region/<token>', methods=['GET'])
+@discord.route('/discord/region/<token>/<regionName>', methods=['GET'])
 def get_regions(token, regionName=None):
 
     verified = tokens.verify_token(token=token, verifcation='hiscores')
@@ -57,15 +57,14 @@ def get_regions(token, regionName=None):
 
     return jsonify(output)
 
-@discord.route('/discord/heatmap/<token>', methods=['GET', 'POST'])
-@discord.route('/discord/heatmap/<token>/<region_id>', methods=['GET', 'POST'])
+@discord.route('/discord/heatmap/<token>', methods=['GET'])
+@discord.route('/discord/heatmap/<token>/<region_id>', methods=['GET'])
 def get_heatmap_data(token, region_id=None):
 
     verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
-    print(region_id)
     if region_id is None:
         region_id = request.get_json()
 
@@ -81,8 +80,8 @@ def get_heatmap_data(token, region_id=None):
 
     return jsonify(output)
 
-@discord.route('/discord/player_bans/<token>', methods=['GET', 'POST'])
-@discord.route('/discord/player_bans/<token>/<player_name>', methods=['GET', 'POST'])
+@discord.route('/discord/player_bans/<token>', methods=['GET'])
+@discord.route('/discord/player_bans/<token>/<player_name>', methods=['GET'])
 def get_player_bans(token, player_name=None):
 
     verified = tokens.verify_token(token=token, verifcation='hiscores')
@@ -106,7 +105,7 @@ def get_player_bans(token, player_name=None):
     return jsonify(output)
   
 
-@discord.route('/discord/verify/player_rsn_discord_account_status/<token>/<player_name>', methods=['GET', 'POST'])
+@discord.route('/discord/verify/player_rsn_discord_account_status/<token>/<player_name>', methods=['GET'])
 def get_verification_status_information(token, player_name=None):
 
     verified = tokens.verify_token(token=token, verifcation='verify_players')
@@ -124,7 +123,7 @@ def get_verification_status_information(token, player_name=None):
 
     return jsonify(output)
 
-@discord.route('/discord/verify/playerid/<token>/<player_name>', methods=['GET', 'POST'])
+@discord.route('/discord/verify/playerid/<token>/<player_name>', methods=['GET'])
 def get_verification_playerid_information(token, player_name=None):
 
     verified = tokens.verify_token(token=token, verifcation='verify_players')
@@ -142,7 +141,7 @@ def get_verification_playerid_information(token, player_name=None):
 
     return jsonify(output)
 
-@discord.route('/discord/verify/verified_player_info/<token>/<player_name>', methods=['GET', 'POST'])
+@discord.route('/discord/verify/verified_player_info/<token>/<player_name>', methods=['GET'])
 def get_verified_player_list_information(token, player_name=None):
 
     verified = tokens.verify_token(token=token, verifcation='verify_players')
@@ -160,7 +159,7 @@ def get_verified_player_list_information(token, player_name=None):
 
     return jsonify(output)
 
-@discord.route('/discord/verify/insert_player_dpc/<token>/<discord_id>/<player_id>/<code>', methods=['GET','POST', 'OPTIONS'])
+@discord.route('/discord/verify/insert_player_dpc/<token>/<discord_id>/<player_id>/<code>', methods=['POST', 'OPTIONS'])
 def post_verified_insert_information(token, discord_id=None, player_id=None, code=None):
 
     #Preflight
