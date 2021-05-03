@@ -15,6 +15,7 @@ def custom_hiscore(detection, version):
         gmt = time.gmtime(detection['ts'])
         human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
         detection['ts'] = gmt
+
     # input validation
     bad_name = False
     detection['reporter'], bad_name = SQL.name_check(detection['reporter'])
@@ -76,6 +77,10 @@ def post_detect(version=None, manual_detect=0):
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
+    # hacky, support two versions
+    if version is None:
+        Config.debug(df.dtypes)
+        df['ts'] = pd.Timestamp(df['ts']).timestamp()
 
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
