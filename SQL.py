@@ -643,7 +643,7 @@ def get_verification_player_id(player_name):
 
 def verificationInsert(discord_id, player_id, code):
 
-    sql = "INSERT INTO discordVerification (Discord_id, Player_id, Code) VALUES :discord_id :player_id :code"
+    sql = "INSERT INTO discordVerification (Discord_id, Player_id, Code) VALUES (:discord_id, :player_id, :code)"
     
     param = {
         'player_id': player_id ,
