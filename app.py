@@ -40,8 +40,8 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
 
     sched.add_job(scraper.run_scraper, 'interval', minutes=1, start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
     
-    sched.add_job(model.save_model,trigger='interval', days=1, start_date=today18h ,args=[50], replace_existing=True, name='save_model')
-    sched.add_job(model.train_model ,args=[50], replace_existing=True, name='save_model') # on startup
+    # sched.add_job(model.save_model,trigger='interval', days=1, start_date=today18h ,args=[50], replace_existing=True, name='save_model')
+    sched.add_job(model.train_model ,args=[50], replace_existing=True, name='train_model') # on startup
     
     for job in sched.get_jobs():
         logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
