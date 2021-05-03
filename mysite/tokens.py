@@ -218,7 +218,8 @@ def get_labels(token):
     return jsonify(json.loads(myjson))
 
 @app_token.route('/site/discord_user/<token>', methods=['POST', 'OPTIONS'])
-def verify_discord_user(token):
+@app_token.route('/<version>/site/discord_user/<token>', methods=['POST', 'OPTIONS'])
+def verify_discord_user(token, version=None):
     #Preflight
     if request.method == 'OPTIONS':
         response = make_response()
