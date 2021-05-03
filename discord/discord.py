@@ -160,7 +160,7 @@ def get_verified_player_list_information(token, player_name=None):
 
     return jsonify(output)
 
-@discord.route('/discord/verify/insert_player_dpc/<token>/<discord_id>/<player_id>/<code>', methods=['POST', 'OPTIONS'])
+@discord.route('/discord/verify/insert_player_dpc/<token>/<discord_id>/<player_id>/<code>', methods=['GET','POST', 'OPTIONS'])
 def post_verified_insert_information(token, discord_id=None, player_id=None, code=None):
 
     #Preflight
