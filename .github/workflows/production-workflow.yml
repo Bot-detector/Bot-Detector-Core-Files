@@ -27,6 +27,7 @@ jobs:
           echo "${{ secrets.HTTP_PROXY }}" >> .env
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
+          echo dev_mode=0 >> .env
           
       - name: Start Flask API
         run: |

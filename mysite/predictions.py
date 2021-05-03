@@ -17,8 +17,8 @@ app_predictions = Blueprint('predictions', __name__, template_folder='templates'
 @app_predictions.route('/<version>/site/prediction/<player_name>', methods=['POST', 'GET'])
 def get_prediction(player_name, version=None):
 
-    Config.debug("PREDICTION REQUEST\n")
-    Config.debug(request.headers)
+    # Config.debug("PREDICTION REQUEST\n")
+    # Config.debug(request.headers)
 
     player_name, bad_name = SQL.name_check(player_name)
 
@@ -45,9 +45,12 @@ def get_prediction(player_name, version=None):
         "player_name":              prediction_dict.pop("name"),
         "prediction_label":         prediction_dict.pop("prediction"),
         "prediction_confidence":    prediction_dict.pop("Predicted confidence"),
-        "predictions_breakdown":    sort_predictions(prediction_dict) if version is None else prediction_dict
+        #"predictions_breakdown":    prediction_dict
     }
-
+    if version is None:
+        return_dict['secondary_predictions'] = sort_predictions(prediction_dict)
+    else:
+        return_dict['predictions_breakdown'] = prediction_dict
 
     return jsonify(return_dict)
 
