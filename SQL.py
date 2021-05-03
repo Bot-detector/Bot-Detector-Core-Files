@@ -256,7 +256,7 @@ def set_discord_verification(id, token):
 
     sql = "UPDATE discordVerification " \
           "SET Verified_status = 1 " \
-          "SET token_used = :token" \
+          "SET token_used = :token " \
           "WHERE Entry = :id;"
 
     param = {
