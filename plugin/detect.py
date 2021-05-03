@@ -13,6 +13,7 @@ def custom_hiscore(detection, version):
     # hacky, support two versions
     if version is None:
         detection['ts'] = pd.to_datetime(detection['ts'], unit='s', origin='unix')
+
         
     # input validation
     bad_name = False
