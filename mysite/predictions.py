@@ -14,7 +14,12 @@ import SQL
 app_predictions = Blueprint('predictions', __name__, template_folder='templates')
 
 @app_predictions.route('/site/prediction/<player_name>', methods=['POST', 'GET'])
-def get_prediction(player_name):
+@app_predictions.route('/<version>/site/prediction/<player_name>', methods=['POST', 'GET'])
+def get_prediction(player_name, version=None):
+
+    Config.debug("PREDICTION REQUEST\n")
+    Config.debug(request.headers)
+
     player_name, bad_name = SQL.name_check(player_name)
 
     if not( bad_name):
@@ -25,8 +30,7 @@ def get_prediction(player_name):
             "player_id": -1,
             "player_name": player_name,
             "prediction_label": "Invalid player name",
-            "prediction_confidence": 0,
-            "secondary_predictions": []
+            "prediction_confidence": 0
         }
 
     if isinstance(df, dict):
@@ -35,21 +39,21 @@ def get_prediction(player_name):
     
     prediction_dict = df.to_dict(orient='records')[0]
     prediction_dict['id'] = int(prediction_dict['id'])
-    print(prediction_dict)
 
     return_dict = {
         "player_id":                prediction_dict.pop("id"),
         "player_name":              prediction_dict.pop("name"),
         "prediction_label":         prediction_dict.pop("prediction"),
         "prediction_confidence":    prediction_dict.pop("Predicted confidence"),
-        "secondary_predictions":    sort_predictions(prediction_dict)
+        "predictions_breakdown":    sort_predictions(prediction_dict) if version is None else prediction_dict
     }
 
 
     return jsonify(return_dict)
 
 @app_predictions.route('/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
-def receive_plugin_feedback():
+@app_predictions.route('/<version>/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
+def receive_plugin_feedback(version):
 
     #Preflight
     if request.method == 'OPTIONS':
@@ -60,12 +64,18 @@ def receive_plugin_feedback():
 
     vote_info = request.get_json()
 
-    player_id_db = get_player(vote_info["rsn"])
+    voter = get_player(vote_info['player_name'])
 
-    if int(player_id_db.id) == int(vote_info["voter_id"]):
+    # Voter ID will be 0 if player is not logged in.
+    # There is a plugin check for this also.
+    if(int(voter.id) > 0):
+        vote_info["voter_id"] = voter.id
+
         insert_prediction_feedback(vote_info)
+    else:
+        Config.debug(f'prediction feedback error: {vote_info}')
 
-    return 'OK'
+    return jsonify({'OK':'OK'})
 
 
 @app_predictions.route('/discord/predictionfeedback/', methods=['POST', 'OPTIONS'])
@@ -98,11 +108,10 @@ def receive_discord_feedback():
 
     return 'OK'
 
+# delete this beast later
 def sort_predictions(d):
     # remove 0's
     d = {key: value for key, value in d.items() if value > 0}
     # sort dict decending
     d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
     return d
-
-

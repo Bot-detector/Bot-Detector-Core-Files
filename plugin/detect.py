@@ -1,22 +1,26 @@
+import datetime
+import time
+
+import Config
+import pandas as pd
+import SQL
 from flask import Blueprint, request
 from flask.json import jsonify
-import SQL, Config
-import concurrent.futures as cf
-import pandas as pd
-import sys
-import logging
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
-def custom_hiscore(detection):
+def custom_hiscore(detection, version):
+    # hacky, support two versions
+    if version is None:
+        detection['ts'] = time.mktime(datetime.datetime.strptime(detection['ts'], "%d/%m/%Y").timetuple())
+        
     # input validation
     bad_name = False
     detection['reporter'], bad_name = SQL.name_check(detection['reporter'])
     detection['reported'], bad_name = SQL.name_check(detection['reported'])
 
     if bad_name:
-        print(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
-        logging.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
+        Config.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
         return
 
     # get reporter & reported
@@ -43,27 +47,29 @@ def custom_hiscore(detection):
     return create
 
 
-def insync_detect(detections, manual_detect):
+def insync_detect(detections, manual_detect, version):
     print("NSYNC")
     total_creates = 0
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
 
-        total_creates += custom_hiscore(detection)
-        print(total_creates, len(detections))
+        total_creates += custom_hiscore(detection, version)
+
         if len(detection) > 1000 and total_creates/len(detections) > .75:
             print(f'    Malicious: sender: {detection["reporter"]}')
-            logging.debug(f'    Malicious: sender: {detection["reporter"]}')
+            Config.debug(f'    Malicious: sender: {detection["reporter"]}')
+
             break
 
         if idx % 500 == 0 and idx != 0:
-            logging.debug(msg=f'      Completed {idx}/{len(detections)}')
+            Config.debug(f'      Completed {idx}/{len(detections)}')
 
-    logging.debug(msg=f'      Done: Completed {idx} detections')
+    Config.debug(f'      Done: Completed {idx} detections')
 
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
-def post_detect(manual_detect=0):
+@detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
+def post_detect(version=None, manual_detect=0):
     detections = request.get_json()
     manual_detect = 0 if int(manual_detect) == 0 else 1
     # remove duplicates
@@ -72,14 +78,17 @@ def post_detect(manual_detect=0):
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         print('to many reports')
-        logging.debug('to many reports')
+        Config.debug('to many reports')
+
         return jsonify({'NOK': 'NOK'}), 400
     
     detections = df.to_dict('records')
 
     print(f'      Received detections: DF shape: {df.shape}')
-    logging.debug(msg=f'      Received detections: DF shape: {df.shape}')
-    Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
+
+    Config.debug(f'      Received detections: DF shape: {df.shape}')
+    Config.sched.add_job(insync_detect ,args=[detections, manual_detect, version], replace_existing=False, name='detect')
+
 
     return jsonify({'OK': 'OK'})
 

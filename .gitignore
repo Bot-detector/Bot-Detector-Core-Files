@@ -8,12 +8,13 @@ __pycache__/
 .venv/
 venv
 venv/
+env/
+env
 
 .env
 flaskwebapp.log
 
 error.log
-
 
 Predictions/models/*
 !Predictions/models/.gitkeep
@@ -21,4 +22,6 @@ Predictions/models/*
 .idea
 .idea/
 test.py
+
 vcs.xml
+

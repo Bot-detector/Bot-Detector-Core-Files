@@ -1,7 +1,8 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Blueprint, request, make_response, after_this_request, render_template_string
+
+from flask import Blueprint, request, make_response, after_this_request, render_template_string, redirect
 from flask.json import jsonify
 
 import pandas as pd
@@ -10,6 +11,7 @@ import json
 import SQL
 import Config
 from Predictions import model
+from scraper import banned_by_jagex, hiscoreScraper
 
 app_token = Blueprint('app_token', __name__, template_folder='templates')
 
@@ -29,17 +31,22 @@ def verify_token(token, verifcation):
     if not (player_token):
         return False
 
-    if verifcation == 'hiscores':
+    if verifcation == "hiscores":
         if not (player_token[0].request_highscores == 1):
             return False
 
-    if verifcation == 'ban':
+    if verifcation == "ban":
         if not (player_token[0].verify_ban == 1):
             return False
 
-    if verifcation == 'create_token':
+    if verifcation == "create_token":
         if not (player_token[0].create_token == 1):
             return False
+
+    if verifcation == "verify_players":
+        if not (player_token[0].verify_players == 1):
+            return False
+
     return True
 
 @app_token.route("/log/<token>", methods=['GET'])
@@ -50,6 +57,8 @@ def print_log(token):
     with open("error.log", "r") as f:
         content = f.read()
         return render_template_string("<pre>{{ content }}</pre>", content=content)
+
+
 
 @app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
 @app_token.route('/site/highscores/<token>/<ofInterest>', methods=['POST', 'GET'])
@@ -124,15 +133,34 @@ def create_user_token(token, player_name, hiscore=0, ban=0):
     # return created token
     return jsonify({'Token': token})
 
-@app_token.route('/site/predictions/<token>', methods=['POST', 'GET'])
+
+'''
+    These routes schedule jos
+'''
+@app_token.route("/site/possible_ban/<token>")
+def possible_ban(token):
+    if not (verify_token(token, verifcation='create_token')):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+        
+    Config.sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
+    return jsonify({'OK': 'OK'})
+
+@app_token.route('/site/save_model/<token>')
 def create_predictions(token):
     if not (verify_token(token, verifcation='create_token')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
-    n_pca = 50
+    n_pca = 30
     Config.sched.add_job(model.save_model ,args=[n_pca], replace_existing=True, name='save_model')
     return jsonify({'OK': 'OK'})
 
+@app_token.route("/site/hiscorescraper/<token>")
+def hiscorescraper(token):
+    if not (verify_token(token, verifcation='create_token')):
+        return "<h1>404</h1><p>Invalid token</p>", 404
+
+    Config.sched.add_job(hiscoreScraper.run_scraper, name='run_hiscore',max_instances=10, coalesce=True)
+    return jsonify({'OK': 'OK'})
 '''
     These routes are accessible if you have a token
 '''
@@ -192,7 +220,8 @@ def get_labels(token):
     return jsonify(json.loads(myjson))
 
 @app_token.route('/site/discord_user/<token>', methods=['POST', 'OPTIONS'])
-def verify_discord_user(token):
+@app_token.route('/<version>/site/discord_user/<token>', methods=['POST', 'OPTIONS'])
+def verify_discord_user(token, version=None):
     #Preflight
     if request.method == 'OPTIONS':
         response = make_response()
@@ -200,7 +229,7 @@ def verify_discord_user(token):
         header['Access-Control-Allow-Origin'] = '*'
         return response
 
-    if not (verify_token(token, verifcation=None)):
+    if not (verify_token(token, verifcation='verify_players')):
         return "<h1>401</h1><p>Invalid token</p>", 401
 
     verify_data = request.get_json()
@@ -214,7 +243,7 @@ def verify_discord_user(token):
             print(record)
 
             if str(record.Code) == str(verify_data["code"]):
-                SQL.set_discord_verification(record.Entry)
+                SQL.set_discord_verification(id=record.Entry, token=token)
                 break
 
     return 'OK'
