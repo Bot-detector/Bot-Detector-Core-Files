@@ -651,6 +651,6 @@ def verificationInsert(discord_id, player_id, code):
         'code' : code
     }
 
-    data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
+    data = execute_sql(sql, param=param, debug=False, has_return=False, db_name="discord")
 
     return data

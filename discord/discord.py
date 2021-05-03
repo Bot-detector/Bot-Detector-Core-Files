@@ -143,7 +143,7 @@ def get_verification_playerid_information(token, player_name=None):
     return jsonify(output)
 
 @discord.route('/discord/verify/verified_player_info/<token>/<player_name>', methods=['GET', 'POST'])
-def get_verified_playerid_information(token, player_name=None):
+def get_verified_player_list_information(token, player_name=None):
 
     verified = tokens.verify_token(token=token, verifcation='verify_players')
 
@@ -161,7 +161,7 @@ def get_verified_playerid_information(token, player_name=None):
     return jsonify(output)
 
 @discord.route('/discord/verify/insert_player_dpc/<token>/<discord_id>/<player_id>/<code>', methods=['GET', 'POST'])
-def get_verified_playerid_information(token, discord_id=None, player_id=None, code=None):
+def post_verified_insert_information(token, discord_id=None, player_id=None, code=None):
 
     verified = tokens.verify_token(token=token, verifcation='verify_players')
 
