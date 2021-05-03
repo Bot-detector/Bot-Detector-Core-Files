@@ -186,14 +186,17 @@ def insert_highscore(player_id, skills, minigames):
 '''
 
 
-def insert_report(data):
+def insert_report(data, version):
     try:
         members = data['on_members_world']
     except KeyError as k:
         members = None
 
-    gmt = time.gmtime(data['ts'])
-    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+    if version is None:
+        human_time = data['ts']
+    else:
+        gmt = time.gmtime(data['ts'])
+        human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
     param = {
         'reportedID': data['reported'],
         'reportingID': data['reporter'],

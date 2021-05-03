@@ -11,10 +11,10 @@ detect = Blueprint('detect', __name__, template_folder='templates')
 
 def custom_hiscore(detection, version):
     # hacky, support two versions
-    if version is None:
-        gmt = time.gmtime(detection['ts'])
-        human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
-        detection['ts'] = gmt
+    # if version is None:
+    #     gmt = time.gmtime(detection['ts'])
+    #     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+    #     detection['ts'] = gmt
 
     # input validation
     bad_name = False
@@ -45,7 +45,7 @@ def custom_hiscore(detection, version):
     detection['reporter'] = int(reporter.id)
 
     # insert into reports
-    SQL.insert_report(detection)
+    SQL.insert_report(detection, version)
     return create
 
 
