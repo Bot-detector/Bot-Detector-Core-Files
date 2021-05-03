@@ -236,7 +236,7 @@ def verify_discord_user(token):
             print(record)
 
             if str(record.Code) == str(verify_data["code"]):
-                SQL.set_discord_verification(record.Entry)
+                SQL.set_discord_verification(id=record.Entry, token=token)
                 break
 
     return 'OK'
