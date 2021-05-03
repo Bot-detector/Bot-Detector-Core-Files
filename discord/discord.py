@@ -142,5 +142,41 @@ def get_verification_playerid_information(token, player_name=None):
 
     return jsonify(output)
 
+@discord.route('/discord/verify/verified_player_info/<token>/<player_name>', methods=['GET', 'POST'])
+def get_verified_playerid_information(token, player_name=None):
 
+    verified = tokens.verify_token(token=token, verifcation='verify_players')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    if player_name is None:
+        return jsonify({'Invalid Name':'Invalid Name'})
     
+    data = SQL.get_verified_info(player_name)
+
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
+
+@discord.route('/discord/verify/insert_player_dpc/<token>/<discord_id>/<player_id>/<code>', methods=['GET', 'POST'])
+def get_verified_playerid_information(token, discord_id=None, player_id=None, code=None):
+
+    verified = tokens.verify_token(token=token, verifcation='verify_players')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    if discord_id is None:
+        return jsonify({'Invalid Discord':'Invalid Discord ID'})
+
+    if player_id is None:
+        return jsonify({'Invalid Player ID':'Invalid Player ID'})
+
+    if code is None:
+        return jsonify({'Invalid Code':'Invalid Code'})
+    
+    data = SQL.verificationInsert(discord_id, player_id, code)
+
+    return jsonify({'Value':f'{discord_id} {player_id} {code} Submitted'})
