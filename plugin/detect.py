@@ -12,7 +12,7 @@ detect = Blueprint('detect', __name__, template_folder='templates')
 def custom_hiscore(detection, version):
     # hacky, support two versions
     if version is None:
-        detection['ts'] = time.mktime(datetime.datetime.strptime(detection['ts'], "%Y-%m-%d %H:%M:%S").timetuple())
+        detection['ts'] = pd.to_datetime(detection['ts'], unit='s', origin='unix')
         
     # input validation
     bad_name = False
