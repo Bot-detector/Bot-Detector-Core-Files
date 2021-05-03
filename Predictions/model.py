@@ -183,7 +183,6 @@ def predict_model(player_name=None, start=0, amount=100_000):
 
                 columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction'])]
                 df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
-                print('from db')
                 Config.debug('from db')
                 return df_resf
             except Exception as e:
