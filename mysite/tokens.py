@@ -42,6 +42,10 @@ def verify_token(token, verifcation):
         if not (player_token[0].create_token == 1):
             return False
 
+    if verifcation == 'verify_players':
+        if not (player_token[0].verify_players == 1):
+            return False
+
     return True
 
 @app_token.route("/log/<token>", methods=['GET'])
