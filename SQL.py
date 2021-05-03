@@ -252,14 +252,16 @@ def get_unverified_discord_user(player_id):
     return execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
 
-def set_discord_verification(id):
+def set_discord_verification(id, token):
 
     sql = "UPDATE discordVerification " \
           "SET Verified_status = 1 " \
+          "SET token_used = :token" \
           "WHERE Entry = :id;"
 
     param = {
-        "id": id
+        "id": id,
+        "token" : token
     }
 
     return execute_sql(sql, param=param, debug=False, has_return=False, db_name="discord")
