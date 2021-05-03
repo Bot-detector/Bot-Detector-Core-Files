@@ -12,6 +12,7 @@ detect = Blueprint('detect', __name__, template_folder='templates')
 def custom_hiscore(detection, version):
 
 
+
         
     # input validation
     bad_name = False
