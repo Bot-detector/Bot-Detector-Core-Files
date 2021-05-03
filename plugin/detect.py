@@ -14,6 +14,7 @@ def custom_hiscore(detection, version):
     if version is None:
         detection['ts'] = pd.Timestamp(detection['ts']).timestamp()
 
+
         
     # input validation
     bad_name = False
