@@ -12,7 +12,8 @@ detect = Blueprint('detect', __name__, template_folder='templates')
 def custom_hiscore(detection, version):
     # hacky, support two versions
     if version is None:
-        detection['ts'] = pd.to_datetime(detection['ts'], unit='s', origin='unix')
+        detection['ts'] = pd.Timestamp(detection['ts']).timestamp()
+
 
         
     # input validation
