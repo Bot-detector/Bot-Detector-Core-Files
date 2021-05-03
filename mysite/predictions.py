@@ -45,9 +45,12 @@ def get_prediction(player_name, version=None):
         "player_name":              prediction_dict.pop("name"),
         "prediction_label":         prediction_dict.pop("prediction"),
         "prediction_confidence":    prediction_dict.pop("Predicted confidence"),
-        "predictions_breakdown":    sort_predictions(prediction_dict) if version is None else prediction_dict
+        #"predictions_breakdown":    prediction_dict
     }
-
+    if version is None:
+        return_dict['secondary_predictions'] = sort_predictions(prediction_dict)
+    else:
+        return_dict['predictions_breakdown'] = prediction_dict
 
     return jsonify(return_dict)
 
