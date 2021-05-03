@@ -10,9 +10,7 @@ from flask.json import jsonify
 detect = Blueprint('detect', __name__, template_folder='templates')
 
 def custom_hiscore(detection, version):
-    # hacky, support two versions
-    if version is None:
-        detection['ts'] = pd.Timestamp(detection['ts']).timestamp()
+
 
         
     # input validation
@@ -76,6 +74,10 @@ def post_detect(version=None, manual_detect=0):
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
+    # hacky, support two versions
+    if version is None:
+        Config.debug(df.dtypes)
+        df['ts'] = pd.Timestamp(df['ts']).timestamp()
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         print('to many reports')
