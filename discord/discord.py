@@ -106,7 +106,7 @@ def get_player_bans(token, player_name=None):
     return jsonify(output)
   
 
-@discord.route('/discord/player_rsn_discord_account_status/<token>/<player_name>', methods=['GET', 'POST'])
+@discord.route('/discord/verify/player_rsn_discord_account_status/<token>/<player_name>', methods=['GET', 'POST'])
 def get_verification_status_information(token, player_name=None):
 
     verified = tokens.verify_token(token=token, verifcation='verify_players')
@@ -123,3 +123,24 @@ def get_verification_status_information(token, player_name=None):
     output = df.to_dict('records')
 
     return jsonify(output)
+
+@discord.route('/discord/verify/playerid/<token>/<player_name>', methods=['GET', 'POST'])
+def get_verification_playerid_information(token, player_name=None):
+
+    verified = tokens.verify_token(token=token, verifcation='verify_players')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    if player_name is None:
+        return jsonify({'Invalid Name':'Invalid Name'})
+    
+    data = SQL.get_verification_player_id(player_name)
+
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
+
+
+    
