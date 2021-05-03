@@ -222,7 +222,7 @@ def verify_discord_user(token):
         header['Access-Control-Allow-Origin'] = '*'
         return response
 
-    if not (verify_token(token, verifcation='create_token')):
+    if not (verify_token(token, verifcation='verify_players')):
         return "<h1>401</h1><p>Invalid token</p>", 401
 
     verify_data = request.get_json()
