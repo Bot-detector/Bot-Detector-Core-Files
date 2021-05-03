@@ -147,7 +147,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
         model, _ = pf.best_file_path(startwith='model', dir='Predictions/models')
         model = load(model)
 
-    except KeyError as e:
+    except Exception as e:
         Config.debug(f'Error loading: {e}')
         prediction_data = {
             "player_id": -1,
