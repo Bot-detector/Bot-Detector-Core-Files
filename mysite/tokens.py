@@ -216,9 +216,11 @@ def get_labels(token):
     myjson = df.to_json(orient='records')
 
     return jsonify(json.loads(myjson))
+    
 
 @app_token.route('/site/discord_user/<token>', methods=['POST', 'OPTIONS'])
-def verify_discord_user(token):
+@app_token.route('/<version>/site/discord_user/<token>', methods=['POST', 'OPTIONS'])
+def verify_discord_user(token, version=None):
     #Preflight
     if request.method == 'OPTIONS':
         response = make_response()
@@ -227,23 +229,28 @@ def verify_discord_user(token):
         return response
 
     if not (verify_token(token, verifcation='verify_players')):
-        return "<h1>401</h1><p>Invalid token</p>", 401
+        return jsonify({"error": "Invalid token."}), 401
 
     verify_data = request.get_json()
 
     player = SQL.get_player(verify_data["player_name"])
 
+    if(player is None):
+        return jsonify({"error": "Could not find player."}), 400
+
     pending_discord = SQL.get_unverified_discord_user(player.id)
 
     if(pending_discord):
         for record in pending_discord:
-            print(record)
 
             if str(record.Code) == str(verify_data["code"]):
                 SQL.set_discord_verification(id=record.Entry, token=token)
                 break
 
-    return 'OK'
+    else:
+        return jsonify({"error": "No pending links for this user."}), 400
+
+    return jsonify({"success": "User was successfully verified."}), 200
 
 
 # CORS Policy: Allow Access to These Methods From Any Origin
