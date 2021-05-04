@@ -15,6 +15,7 @@ from mysite.predictions import app_predictions
 from Predictions import model
 from discord.discord import discord
 
+
 app.register_blueprint(plugin_stats)
 app.register_blueprint(detect)
 app.register_blueprint(app_token)
@@ -49,7 +50,6 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     sched.add_job(model.train_model, args=[n_pca], replace_existing=True, name='train_model')  # on startup
 
     print_jobs()
-
     sched.start()
 # do we need this?
 else:
@@ -61,17 +61,25 @@ def page_not_found(e):
     Config.debug(e)
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
 
-
+  
 @app.route("/")
 def hello():
     data = {'welcome': 'test', 'job': started}
     return jsonify(data)
 
-
+  
 @app.route("/favicon.ico")
 def favicon():
     return "", 200
 
+
+@app.route("/hiscorescraper")
+def hiscorescraper():
+    sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
+    for job in sched.get_jobs():
+        logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
+        print(f'    Job: {job.name}, {job.trigger}, {job.func}')
+    return redirect('/log')
 
 @app.errorhandler(429)
 def ratelimit_handler(e):

@@ -14,10 +14,11 @@ import SQL
 app_predictions = Blueprint('predictions', __name__, template_folder='templates')
 
 @app_predictions.route('/site/prediction/<player_name>', methods=['POST', 'GET'])
-def get_prediction(player_name):
+@app_predictions.route('/<version>/site/prediction/<player_name>', methods=['POST', 'GET'])
+def get_prediction(player_name, version=None):
 
-    Config.debug("PREDICTION REQUEST\n")
-    Config.debug(request.headers)
+    # Config.debug("PREDICTION REQUEST\n")
+    # Config.debug(request.headers)
 
     player_name, bad_name = SQL.name_check(player_name)
 
@@ -38,21 +39,24 @@ def get_prediction(player_name):
     
     prediction_dict = df.to_dict(orient='records')[0]
     prediction_dict['id'] = int(prediction_dict['id'])
-    print(prediction_dict)
 
     return_dict = {
         "player_id":                prediction_dict.pop("id"),
         "player_name":              prediction_dict.pop("name"),
         "prediction_label":         prediction_dict.pop("prediction"),
         "prediction_confidence":    prediction_dict.pop("Predicted confidence"),
-        "predictions_breakdown":    prediction_dict
+        #"predictions_breakdown":    prediction_dict
     }
-
+    if version is None:
+        return_dict['secondary_predictions'] = sort_predictions(prediction_dict)
+    else:
+        return_dict['predictions_breakdown'] = prediction_dict
 
     return jsonify(return_dict)
 
 @app_predictions.route('/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
-def receive_plugin_feedback():
+@app_predictions.route('/<version>/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
+def receive_plugin_feedback(version):
 
     #Preflight
     if request.method == 'OPTIONS':
@@ -74,7 +78,7 @@ def receive_plugin_feedback():
     else:
         Config.debug(f'prediction feedback error: {vote_info}')
 
-    return 'OK'
+    return jsonify({'OK':'OK'})
 
 
 @app_predictions.route('/discord/predictionfeedback/', methods=['POST', 'OPTIONS'])
@@ -106,3 +110,11 @@ def receive_discord_feedback():
         return "<h1>400</h1><p>Use the !link command to link a Runescape account to your discord account first.</p>", 400
 
     return 'OK'
+
+# delete this beast later
+def sort_predictions(d):
+    # remove 0's
+    d = {key: value for key, value in d.items() if value > 0}
+    # sort dict decending
+    d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
+    return d

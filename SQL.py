@@ -186,14 +186,17 @@ def insert_highscore(player_id, skills, minigames):
 '''
 
 
-def insert_report(data):
+def insert_report(data, version):
     try:
         members = data['on_members_world']
     except KeyError as k:
         members = None
 
-    gmt = time.gmtime(data['ts'])
-    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+    if version is None:
+        human_time = data['ts']
+    else:
+        gmt = time.gmtime(data['ts'])
+        human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
     param = {
         'reportedID': data['reported'],
         'reportingID': data['reporter'],
@@ -532,6 +535,7 @@ def get_region_search(regionName):
     data = execute_sql(sql, param=param, debug=True, has_return=True)
     return data
 
+  
 def get_prediction_player(player_id):
     sql = 'select * from Predictions where id = :id'
     param = {'id':player_id}
@@ -653,7 +657,12 @@ def verificationInsert(discord_id, player_id, code, token):
         'code' : code,
         'token' : token
     }
-
     data = execute_sql(sql, param=param, debug=False, has_return=False, db_name="discord")
+    return data
 
+  
+def get_prediction_player(player_id):
+    sql = 'select * from Predictions where id = :id'
+    param = {'id':player_id}
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data

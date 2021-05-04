@@ -84,7 +84,10 @@ def ip_whitelist():
       '127.0.0.1',
       '45.76.255.154'
    ]
+
    return request.remote_addr in whitelist
+
 def debug(str):
     print(str, flush=True)
     logging.debug(str)
+

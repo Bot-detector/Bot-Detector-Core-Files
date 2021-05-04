@@ -1,11 +1,22 @@
+import datetime
+import time
+
+import Config
+import pandas as pd
+import SQL
 from flask import Blueprint, request
 from flask.json import jsonify
-import SQL, Config
-import pandas as pd
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
-def custom_hiscore(detection):
+def custom_hiscore(detection, version):
+    # hacky, support two versions
+    # if version is None:
+    #     gmt = time.gmtime(detection['ts'])
+    #     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+    #     detection['ts'] = gmt
+
+
     # input validation
     bad_name = False
     detection['reporter'], bad_name = SQL.name_check(detection['reporter'])
@@ -35,21 +46,22 @@ def custom_hiscore(detection):
     detection['reporter'] = int(reporter.id)
 
     # insert into reports
-    SQL.insert_report(detection)
+    SQL.insert_report(detection, version)
     return create
 
 
-def insync_detect(detections, manual_detect):
+def insync_detect(detections, manual_detect, version):
     print("NSYNC")
     total_creates = 0
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
 
-        total_creates += custom_hiscore(detection)
+        total_creates += custom_hiscore(detection, version)
 
         if len(detection) > 1000 and total_creates/len(detections) > .75:
             print(f'    Malicious: sender: {detection["reporter"]}')
             Config.debug(f'    Malicious: sender: {detection["reporter"]}')
+
             break
 
         if idx % 500 == 0 and idx != 0:
@@ -59,23 +71,32 @@ def insync_detect(detections, manual_detect):
 
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
-def post_detect(manual_detect=0):
+@detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
+def post_detect(version=None, manual_detect=0):
     detections = request.get_json()
     manual_detect = 0 if int(manual_detect) == 0 else 1
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
+    # hacky, support two versions
+    # if version is None:
+    #     Config.debug(df.dtypes)
+    #     df['ts'] = pd.Timestamp(df['ts']).timestamp()
+
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         print('to many reports')
         Config.debug('to many reports')
+
         return jsonify({'NOK': 'NOK'}), 400
     
     detections = df.to_dict('records')
 
     print(f'      Received detections: DF shape: {df.shape}')
+
     Config.debug(f'      Received detections: DF shape: {df.shape}')
-    Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
+    Config.sched.add_job(insync_detect ,args=[detections, manual_detect, version], replace_existing=False, name='detect')
+
 
     return jsonify({'OK': 'OK'})
 

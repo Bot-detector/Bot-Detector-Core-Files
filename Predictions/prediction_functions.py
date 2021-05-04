@@ -5,7 +5,7 @@ import datetime as dt
 import numpy as np
 import time
 from joblib import dump, load
-import logging as lg
+import Config
 
 from sklearn.preprocessing import RobustScaler, Normalizer
 from sklearn.decomposition import PCA
@@ -19,10 +19,10 @@ def logging(f):
         end = dt.datetime.now()
         try:
             print(f'{f.__name__} took: {end - start} shape= {result.shape}')
-            lg.debug(f'{f.__name__} took: {end - start} shape= {result.shape}')
+            Config.debug(f'{f.__name__} took: {end - start} shape= {result.shape}')
         except:
             print(f'{f.__name__} took: {end - start}')
-            lg.debug(f'{f.__name__} took: {end - start}')
+            Config.debug(f'{f.__name__} took: {end - start}')
         return result
     return wrapper
 
