@@ -37,7 +37,8 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     Config.debug(f'devmode: {Config.dev_mode}')
 
     # prevent scraping & predicting for every player in dev
-    if not(Config.dev_mode):
+    if not(int(Config.dev_mode)):
+        Config.debug('Live version')
         today18h = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
         today18h = today18h + dt.timedelta(hours=18)
         today20h = today18h + dt.timedelta(hours=20)
