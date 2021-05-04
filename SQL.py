@@ -258,8 +258,8 @@ def get_unverified_discord_user(player_id):
 def set_discord_verification(id, token):
 
     sql = "UPDATE discordVerification " \
-          "SET Verified_status = 1 " \
-          "SET token_used = :token " \
+          "SET Verified_status = 1, " \
+          "token_used = :token " \
           "WHERE Entry = :id;"
 
     param = {
