@@ -67,7 +67,7 @@ def train_model(n_pca):
         .pipe(pf.start_pipeline)
         .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
         .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
-        #.pipe(pf.filter_relevant_features, ed.skills_list)
+        .pipe(pf.filter_relevant_features, ed.skills_list)
     )
     df_preprocess = (df_clean
         .pipe(pf.start_pipeline)
@@ -206,7 +206,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
             .pipe(pf.start_pipeline)
             .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
             .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
-            #.pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
+            .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
             # after feature creation in testing
         )
         del df # free up memory
