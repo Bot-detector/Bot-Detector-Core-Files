@@ -90,10 +90,15 @@ def train_model(n_pca):
     df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
     df_pca = df_pca.merge(df_labels,    left_on='label_id', right_index=True, how='left')
 
-    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 
-        'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 
-        'Herblore_bot','Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
-        'Hunter_bot','Runecrafting_bot']
+    lbls= lbls= [
+        'Real_Player', 'Smithing_bot', 'Mining_bot', 
+        'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 
+        'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot',
+        'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
+        'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
+        'Cooking_bot','LMS_bots','Zalcano_bot','FarmBird_bot'
+    
+    ]
     Config.debug(f'labels: {len(lbls)}, {lbls}')
 
     # creating x, y data, with players that a label
@@ -358,7 +363,7 @@ def multi_thread(data):
     return
 
 if __name__ == '__main__':
-    # train_model(n_pca=50)
+    train_model(n_pca=50)
     # save_model(n_pca=30)
     df = predict_model(player_name='extreme4all') # player_name='extreme4all'
     print(df.head())
