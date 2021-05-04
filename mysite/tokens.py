@@ -218,7 +218,7 @@ def get_labels(token):
     myjson = df.to_json(orient='records')
 
     return jsonify(json.loads(myjson))
-    
+
 
 @app_token.route('/site/discord_user/<token>', methods=['POST', 'OPTIONS'])
 @app_token.route('/<version>/site/discord_user/<token>', methods=['POST', 'OPTIONS'])

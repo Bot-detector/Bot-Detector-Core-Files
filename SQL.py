@@ -519,7 +519,7 @@ def get_player_report_locations(players):
         'players': players
     }
 
-    data = execute_sql(sql, param=param, debug=True, has_return=True)
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
     
 def get_region_search(regionName):
@@ -532,7 +532,7 @@ def get_region_search(regionName):
         'region': regionName
     }
 
-    data = execute_sql(sql, param=param, debug=True, has_return=True)
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
 
   
@@ -575,7 +575,7 @@ def get_report_data_heatmap(region_id):
         'region_id': region_id
     }
 
-    data = execute_sql(sql, param=param, debug=True, has_return=True)
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
 
 
@@ -602,7 +602,7 @@ def get_player_banned_bots(player_name):
         'player_name': player_name
     }
 
-    data = execute_sql(sql, param=param, debug=True, has_return=True)
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
   
 def get_possible_ban_predicted():
@@ -629,6 +629,18 @@ def get_verified_info(player_name):
     
     param = {
         'player_name': player_name
+    }
+
+    data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
+
+    return data
+
+def get_discord_linked_accounts(discord_id):
+
+    sql = 'SELECT * FROM verified_players WHERE Discord_id = :discord_id and Verified_status = 1'
+    
+    param = {
+        'discord_id': discord_id
     }
 
     data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
