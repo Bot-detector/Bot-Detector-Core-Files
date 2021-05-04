@@ -56,7 +56,7 @@ def get_prediction(player_name, version=None):
 
 @app_predictions.route('/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
 @app_predictions.route('/<version>/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
-def receive_plugin_feedback(version):
+def receive_plugin_feedback(version=None):
 
     #Preflight
     if request.method == 'OPTIONS':
