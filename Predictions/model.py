@@ -216,7 +216,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
-            "prediction_label": "Stats Too Low",
+            "prediction_label": "Not In Our Database",
             "prediction_confidence": 0,
             "secondary_predictions": []
         }
@@ -237,7 +237,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
-            "prediction_label": "Stats Too Low",
+            "prediction_label": "Not In Our Database",
             "prediction_confidence": 0,
             "secondary_predictions": []
         }
