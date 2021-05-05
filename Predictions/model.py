@@ -67,7 +67,7 @@ def train_model(n_pca):
         .pipe(pf.start_pipeline)
         .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
         .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
-        .pipe(pf.filter_relevant_features, ed.skills_list)
+        # .pipe(pf.filter_relevant_features, ed.skills_list)
     )
     df_preprocess = (df_clean
         .pipe(pf.start_pipeline)
@@ -84,7 +84,7 @@ def train_model(n_pca):
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=None)
     dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
 
-    df_pca = df_preprocess # no pca
+    # df_pca = df_preprocess # no pca
     Config.debug(f'pca shape: {df_pca.shape}')
 
     df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
@@ -96,7 +96,7 @@ def train_model(n_pca):
         'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot',
         'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
         'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
-        'Cooking_bot','LMS_bots','FarmBird_bot'
+        'Cooking_bot','FarmBird_bot'
     ]
     Config.debug(f'labels: {len(lbls)}, {lbls}')
 
@@ -206,7 +206,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
             .pipe(pf.start_pipeline)
             .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
             .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
-            .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
+            # .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
             # after feature creation in testing
         )
         del df # free up memory
@@ -246,7 +246,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
     df_preprocess = df_preprocess[features].copy()
 
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=int(n_pca), pca=pca)
-    df_pca = df_preprocess
+    # df_pca = df_preprocess
     
     proba =         model.predict_proba(df_pca)
     df_proba_max =  proba.max(axis=1)
@@ -364,5 +364,5 @@ def multi_thread(data):
 if __name__ == '__main__':
     train_model(n_pca=50)
     # save_model(n_pca=30)
-    df = predict_model(player_name='extreme4all') # player_name='extreme4all'
+    df = predict_model(player_name='mallorage') # player_name='extreme4all'
     print(df.head())
