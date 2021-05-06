@@ -280,7 +280,8 @@ def get_token(token):
     param = {
         'token': token
     }
-    return execute_sql(sql, param=param, debug=False, has_return=True)
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
+    return data[0]
 
 
 def create_token(player_name, highscores, verify_ban):
