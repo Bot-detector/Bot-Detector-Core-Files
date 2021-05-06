@@ -32,19 +32,19 @@ def verify_token(token, verifcation):
         return False
 
     if verifcation == "hiscores":
-        if not (player_token[0].request_highscores == 1):
+        if not (player_token.request_highscores == 1):
             return False
 
     if verifcation == "ban":
-        if not (player_token[0].verify_ban == 1):
+        if not (player_token.verify_ban == 1):
             return False
 
     if verifcation == "create_token":
-        if not (player_token[0].create_token == 1):
+        if not (player_token.create_token == 1):
             return False
 
     if verifcation == "verify_players":
-        if not (player_token[0].verify_players == 1):
+        if not (player_token.verify_players == 1):
             return False
 
     return True
@@ -57,7 +57,6 @@ def print_log(token):
     with open("error.log", "r") as f:
         content = f.read()
         return render_template_string("<pre>{{ content }}</pre>", content=content)
-
 
 
 @app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
