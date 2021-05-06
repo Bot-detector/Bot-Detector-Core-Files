@@ -182,7 +182,28 @@ def post_verified_insert_information(token, discord_id=None, player_id=None, cod
 
     if code is None:
         return jsonify({'Invalid Code':'Invalid Code'})
+
+    token_id = SQL.get_token(token).id
     
-    data = SQL.verificationInsert(discord_id, player_id, code, token)
+    data = SQL.verificationInsert(discord_id, player_id, code, token_id)
 
     return jsonify({'Value':f'{discord_id} {player_id} {code} Submitted'})
+
+
+@discord.route('/discord/get_linked_accounts/<token>/<discord_id>', methods=['GET'])
+def get_discord_linked_accounts(token, discord_id=None):
+
+    verified = tokens.verify_token(token=token, verifcation='verify_players')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    if discord_id is None:
+        return jsonify({'Invalid Name':'Invalid Name'})
+    
+    data = SQL.get_discord_linked_accounts(discord_id)
+
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)

@@ -18,10 +18,8 @@ def logging(f):
         result = f(df, *args, **kwargs)
         end = dt.datetime.now()
         try:
-            print(f'{f.__name__} took: {end - start} shape= {result.shape}')
             Config.debug(f'{f.__name__} took: {end - start} shape= {result.shape}')
         except:
-            print(f'{f.__name__} took: {end - start}')
             Config.debug(f'{f.__name__} took: {end - start}')
         return result
     return wrapper

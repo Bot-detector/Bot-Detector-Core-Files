@@ -15,6 +15,7 @@ from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from sklearn.calibration import CalibratedClassifierCV
 
 # custom imports
 import SQL, Config
@@ -90,10 +91,15 @@ def train_model(n_pca):
     df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
     df_pca = df_pca.merge(df_labels,    left_on='label_id', right_index=True, how='left')
 
-    lbls= ['Real_Player', 'Smithing_bot', 'Mining_bot', 'Magic_bot', 
-        'PVM_Ranged_bot', 'Wintertodt_bot', 'Fletching_bot', 'PVM_Melee_bot', 
-        'Herblore_bot','Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
-        'Hunter_bot','Runecrafting_bot']
+    lbls = [
+        'Real_Player', 'Smithing_bot', 'Mining_bot', 
+        'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 
+        'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot',
+        'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
+        'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
+        'Cooking_bot', 'FarmBird_bot', 'mort_myre_fungus_bot'
+    ]
+
     Config.debug(f'labels: {len(lbls)}, {lbls}')
 
     # creating x, y data, with players that a label
@@ -112,7 +118,13 @@ def train_model(n_pca):
     model_name = 'vote'
     model = create_model(train_x, train_y, test_x, test_y, lbls)
     model = model.fit(train_x, train_y)
-    
+
+    # works on colab not on my pc: ValueError: Invalid prediction method: _predict_proba 
+    # # https://scikit-learn.org/stable/modules/generated/sklearn.calibration.CalibratedClassifierCV.html#sklearn.calibration.CalibratedClassifierCV
+    # does not work in current version, issue created https://github.com/scikit-learn/scikit-learn/issues/20053
+    # model = CalibratedClassifierCV(base_estimator=model, cv='prefit')
+    # model = model.fit(test_x, test_y) # docu says to calibrate on test?
+
     # print model score
     model_score = round(model.score(test_x, test_y)*100,2)
     Config.debug(f'Score: {model_score}')
@@ -206,13 +218,13 @@ def predict_model(player_name=None, start=0, amount=100_000):
             # after feature creation in testing
         )
         del df # free up memory
-    except KeyError as k:
+    except Exception as k:
         Config.debug(f'Error cleaning: {k}')
 
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
-            "prediction_label": "Stats Too Low",
+            "prediction_label": "Not In Our Database",
             "prediction_confidence": 0,
             "secondary_predictions": []
         }
@@ -225,15 +237,13 @@ def predict_model(player_name=None, start=0, amount=100_000):
             .pipe(pf.f_normalize, transformer=transformer)
         )
         del df_clean # free up memory
-
-    except ValueError as v:
-
+    except Exception as v:
         Config.debug(f'Error normalizing: {v}')
 
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
-            "prediction_label": "Stats Too Low",
+            "prediction_label": "Not In Our Database",
             "prediction_confidence": 0,
             "secondary_predictions": []
         }
@@ -358,7 +368,7 @@ def multi_thread(data):
     return
 
 if __name__ == '__main__':
-    # train_model(n_pca=50)
+    train_model(n_pca=50)
     # save_model(n_pca=30)
     df = predict_model(player_name='extreme4all') # player_name='extreme4all'
     print(df.head())
