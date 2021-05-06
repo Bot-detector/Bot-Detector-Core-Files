@@ -121,6 +121,7 @@ def train_model(n_pca):
 
     # works on colab not on my pc: ValueError: Invalid prediction method: _predict_proba 
     # # https://scikit-learn.org/stable/modules/generated/sklearn.calibration.CalibratedClassifierCV.html#sklearn.calibration.CalibratedClassifierCV
+    # does not work in current version, issue created https://github.com/scikit-learn/scikit-learn/issues/20053
     # model = CalibratedClassifierCV(base_estimator=model, cv='prefit')
     # model = model.fit(test_x, test_y) # docu says to calibrate on test?
 
@@ -217,7 +218,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
             # after feature creation in testing
         )
         del df # free up memory
-    except KeyError as k:
+    except Exception as k:
         Config.debug(f'Error cleaning: {k}')
 
         prediction_data = {
@@ -236,9 +237,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
             .pipe(pf.f_normalize, transformer=transformer)
         )
         del df_clean # free up memory
-
-    except ValueError as v:
-
+    except Exception as v:
         Config.debug(f'Error normalizing: {v}')
 
         prediction_data = {
@@ -253,7 +252,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
     df_preprocess = df_preprocess[features].copy()
 
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=int(n_pca), pca=pca)
-    # df_pca = df_preprocess
+    df_pca = df_preprocess
     
     proba =         model.predict_proba(df_pca)
     df_proba_max =  proba.max(axis=1)
@@ -371,5 +370,5 @@ def multi_thread(data):
 if __name__ == '__main__':
     train_model(n_pca=50)
     # save_model(n_pca=30)
-    df = predict_model(player_name='mallorage') # player_name='extreme4all'
+    df = predict_model(player_name='extreme4all') # player_name='extreme4all'
     print(df.head())
