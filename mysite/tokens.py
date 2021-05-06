@@ -242,11 +242,13 @@ def verify_discord_user(token, version=None):
 
     pending_discord = SQL.get_unverified_discord_user(player.id)
 
+    token_id = SQL.get_token(token).id
+
     if(pending_discord):
         for record in pending_discord:
 
             if str(record.Code) == str(verify_data["code"]):
-                SQL.set_discord_verification(id=record.Entry, token=token)
+                SQL.set_discord_verification(id=record.Entry, token=token_id)
                 break
 
     else:
