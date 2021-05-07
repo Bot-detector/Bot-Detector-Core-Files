@@ -97,7 +97,8 @@ def train_model(n_pca):
         'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot',
         'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
         'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
-        'Cooking_bot', 'FarmBird_bot', 'mort_myre_fungus_bot'
+        'Cooking_bot', 'FarmBird_bot', 'mort_myre_fungus_bot',
+        'Fishing_bot'
     ]
 
     Config.debug(f'labels: {len(lbls)}, {lbls}')
@@ -158,7 +159,6 @@ def predict_model(player_name=None, start=0, amount=100_000):
 
         model, _ = pf.best_file_path(startwith='model', dir='Predictions/models')
         model = load(model)
-
     except Exception as e:
         Config.debug(f'Error loading: {e}')
         prediction_data = {
