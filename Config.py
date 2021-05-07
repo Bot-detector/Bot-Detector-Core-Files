@@ -17,8 +17,9 @@ proxy_https = os.environ.get('proxy_https')
 flask_port = os.environ.get('flask_port')
 
 # TODO: BUG
+# it does not like the bool()
 try:
-    dev_mode = bool(os.environ.get('dev_mode'))
+    dev_mode = os.environ.get('dev_mode')
 except:
     dev_mode=1
 
