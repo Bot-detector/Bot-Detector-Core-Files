@@ -254,6 +254,11 @@ def get_unverified_discord_user(player_id):
 
     return execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
+def get_all_verified_ids():
+    sql = 'SELECT DISTINCT Discord_id FROM verified_players;'
+
+    return execute_sql(sql, param=None, debug=False, has_return=True, db_name="discord")
+
 
 def set_discord_verification(id, token):
 

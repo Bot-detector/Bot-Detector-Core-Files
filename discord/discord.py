@@ -207,3 +207,18 @@ def get_discord_linked_accounts(token, discord_id=None):
     output = df.to_dict('records')
 
     return jsonify(output)
+
+@discord.route('/discord/get_all_linked_ids/<token>', methods=['GET'])
+def get_all_linked_ids(token):
+
+    verified = tokens.verify_token(token=token, verifcation='verify_players')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+    
+    data = SQL.get_all_verified_ids()
+
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
