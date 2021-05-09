@@ -27,7 +27,7 @@ def custom_hiscore(detection, version):
         return
 
     if  not (0 <= int(detection['region_id']) <= 15522):
-        return
+        return 0
 
     # get reporter & reported
     reporter = SQL.get_player(detection['reporter'])
