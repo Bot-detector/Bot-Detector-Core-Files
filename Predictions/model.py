@@ -25,36 +25,38 @@ from Predictions import extra_data as ed
 
 
 def create_model(train_x, train_y, test_x, test_y, lbls):
-    neigh = KNeighborsClassifier(n_neighbors=len(lbls), n_jobs=-1)
-    neigh = neigh.fit(train_x, train_y)
+    # neigh = KNeighborsClassifier(n_neighbors=len(lbls), n_jobs=-1)
+    # neigh = neigh.fit(train_x, train_y)
 
-    mlpc = MLPClassifier(max_iter=10000, random_state=7)
-    mlpc = mlpc.fit(train_x, train_y)
+    # mlpc = MLPClassifier(max_iter=10000, random_state=7)
+    # mlpc = mlpc.fit(train_x, train_y)
 
+    # rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
+    # rfc = rfc.fit(train_x, train_y)
+
+    # etc = ExtraTreesClassifier(n_estimators=100, random_state=7, n_jobs=-1)
+    # etc = etc.fit(train_x, train_y)
+
+    # sgdc = SGDClassifier(max_iter=1000, tol=1e-3, loss='modified_huber')
+    # sgdc = sgdc.fit(train_x, train_y)
+
+    # models = [neigh, mlpc, rfc, etc, sgdc]
+    # scores = [round(m.score(test_x, test_y)*100,2) for m in models]
+    # weights = [s**2 for s in scores]
+    # estimators = [(m.__class__.__name__, m) for m in models]
+
+    # _ = [Config.debug(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
+
+    # vote = VotingClassifier(
+    #     weights=weights,
+    #     estimators=estimators, 
+    #     voting='soft',
+    #     n_jobs=-1
+    #     )
+    # return vote
     rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
     rfc = rfc.fit(train_x, train_y)
-
-    etc = ExtraTreesClassifier(n_estimators=100, random_state=7, n_jobs=-1)
-    etc = etc.fit(train_x, train_y)
-
-    sgdc = SGDClassifier(max_iter=1000, tol=1e-3, loss='modified_huber')
-    sgdc = sgdc.fit(train_x, train_y)
-
-    models = [neigh, mlpc, rfc, etc, sgdc]
-    scores = [round(m.score(test_x, test_y)*100,2) for m in models]
-    weights = [s**2 for s in scores]
-    estimators = [(m.__class__.__name__, m) for m in models]
-
-    _ = [Config.debug(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
-
-    vote = VotingClassifier(
-        weights=weights,
-        estimators=estimators, 
-        voting='soft',
-        n_jobs=-1
-        )
-    
-    return vote
+    return rfc
 
 
 def train_model(n_pca):
@@ -68,7 +70,7 @@ def train_model(n_pca):
         .pipe(pf.start_pipeline)
         .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
         .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
-        .pipe(pf.filter_relevant_features, ed.skills_list)
+        # .pipe(pf.filter_relevant_features, ed.skills_list)
     )
     df_preprocess = (df_clean
         .pipe(pf.start_pipeline)
@@ -214,7 +216,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
             .pipe(pf.start_pipeline)
             .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
             .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
-            .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
+            # .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
             # after feature creation in testing
         )
         del df # free up memory
