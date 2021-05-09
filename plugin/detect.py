@@ -26,7 +26,7 @@ def custom_hiscore(detection, version):
         Config.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
         return
 
-    if  not (0 <= detection['region_id'] <= 15522):
+    if  not (0 <= int(detection['region_id']) <= 15522):
         return
 
     # get reporter & reported
