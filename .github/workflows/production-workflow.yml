@@ -5,7 +5,7 @@ on:
 
 jobs:
   checkout:
-    runs-on: self-hosted
+    runs-on: [self-hosted, node1, node2, node3]
     steps:
     - uses: actions/checkout@v2
     - name: Install Dependencies
