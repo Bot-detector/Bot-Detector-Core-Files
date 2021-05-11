@@ -59,6 +59,9 @@ def get_contributions(version=None, contributor=""):
             "manual": manual_dict,
             "total": total_dict
         }
+        
+        if version == '1.3' or None:
+            return total_dict
 
         return return_dict
 
