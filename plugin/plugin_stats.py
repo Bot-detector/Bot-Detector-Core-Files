@@ -45,7 +45,6 @@ def get_contributions(version=None, contributor=""):
             "bans": manual_bans,
             "possible_bans": manual_possible_bans,
             "incorrect_reports": manual_real_player,
-            "accuracy": (manual_bans / (manual_bans + manual_real_player))
         }
 
         total_dict = {
@@ -60,7 +59,7 @@ def get_contributions(version=None, contributor=""):
             "total": total_dict
         }
         
-        if version == '1.3' or None:
+        if version in ['1.3','1.3.1'] or None:
             return total_dict
 
         return return_dict
