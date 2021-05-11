@@ -17,8 +17,11 @@ def get_contributions(version=None, contributor=""):
         except Exception as e:
             print(e)
 
+        passive_reports = len(passive_contributions)
         passive_bans = 0
         passive_possible_bans = 0
+
+        manual_reports = len(manual_contributions)
         manual_bans = 0
         manual_possible_bans = 0
         manual_real_player = 0
@@ -32,21 +35,29 @@ def get_contributions(version=None, contributor=""):
             manual_possible_bans += m.possible_ban
 
         passive_dict = {
-            "reports": len(passive_contributions),
+            "reports": passive_reports,
             "bans": passive_bans,
             "possible_bans": passive_possible_bans
         }
 
         manual_dict = {
-            "reports": len(manual_contributions),
+            "reports": manual_reports,
             "bans": manual_bans,
             "possible_bans": manual_possible_bans,
-            "incorrect_reports": manual_real_player
+            "incorrect_reports": manual_real_player,
+            "accuracy": (manual_bans / (manual_bans + manual_real_player))
+        }
+
+        total_dict = {
+            "reports": passive_reports + manual_reports,
+            "bans": passive_bans + manual_bans,
+            "possible_bans": passive_possible_bans + manual_possible_bans
         }
 
         return_dict = {
             "passive": passive_dict,
-            "manual": manual_dict
+            "manual": manual_dict,
+            "total": total_dict
         }
 
         return return_dict
