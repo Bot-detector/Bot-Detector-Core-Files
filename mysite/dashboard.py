@@ -1,6 +1,7 @@
 from flask import Blueprint, request
 from flask.json import jsonify
-from SQL import get_number_confirmed_bans, get_number_tracked_players, get_report_stats, get_region_report_stats
+import pandas as pd
+import SQL
 
 dashboard = Blueprint('dashboard', __name__, template_folder='templates')
 
@@ -11,7 +12,7 @@ dashboard = Blueprint('dashboard', __name__, template_folder='templates')
 
 @dashboard.route('/site/dashboard/gettotaltrackedplayers', methods=['GET'])
 def get_total_tracked_players():
-    num_of_players = get_number_tracked_players()
+    num_of_players = SQL.get_number_tracked_players()
     return_dict = {
         "players": num_of_players[0]
     }
@@ -21,7 +22,7 @@ def get_total_tracked_players():
 
 @dashboard.route('/site/dashboard/getreportsstats', methods=['GET'])
 def get_total_reports():
-    report_stats = get_report_stats()[0]
+    report_stats = SQL.get_report_stats()[0]
 
     return_dict = {
         "bans": int(report_stats[0]),
@@ -30,18 +31,25 @@ def get_total_reports():
         "accuracy": float(report_stats[3])
     }
 
-    return return_dict
+    return jsonify(return_dict)
 
 @dashboard.route('/site/dashboard/getregionstats', methods=['GET'])
 def get_region_reports():
-    region_stats = get_region_report_stats()
+    region_stats = SQL.get_region_report_stats()
 
     print(region_stats)
     print(type(region_stats))
 
-    return 'OK'
+    return jsonify({'success': 'good job'})
 
+@dashboard.route('/labels/get_player_labels', methods=['GET'])
+def get_player_labels():
+    labels = SQL.get_player_labels()
 
+    df = pd.DataFrame(labels)
+    output = df.to_dict('records')
+
+    return jsonify(output)
 
 # CORS Policy: Allow Access to These Methods From Any Origin
 @dashboard.after_request
