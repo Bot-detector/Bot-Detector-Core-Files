@@ -129,23 +129,10 @@ def insert_player(player_name):
     return player
 
 
-def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0, label_id=0, label_jagex=0, debug=False):
-    sql_update = ('''
-        update Players 
-        set 
-            updated_at=:ts, 
-            possible_ban=:possible_ban, 
-            confirmed_ban=:confirmed_ban, 
-            confirmed_player=:confirmed_player, 
-            label_id=:label_id,
-            label_jagex=:label_jagex
-        where 
-            id=:player_id;
-    ''')
-
+def update_player(player_id, possible_ban=None, confirmed_ban=None, confirmed_player=None, label_id=None, label_jagex=None, debug=False):
     time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
     param = {
-        'ts':               time_now,
+        'updated_at':       time_now,
         'possible_ban':     possible_ban,
         'confirmed_ban':    confirmed_ban,
         'confirmed_player': confirmed_player,
@@ -153,6 +140,22 @@ def update_player(player_id, possible_ban=0, confirmed_ban=0, confirmed_player=0
         'player_id':        player_id,
         'label_jagex':      label_jagex
     }
+    
+    values = []
+    for column in list(param.keys()):
+        if column != 'player_id' and param[column] != None:
+            values.append(f'{column}=:{column}')
+
+    values = list_to_string(values)
+
+    sql_update = (f'''
+        update Players 
+        set
+            {values}
+        where 
+            id=:player_id;
+        ''')
+    
     execute_sql(sql_update, param=param, debug=debug, has_return=False)
 
 
@@ -404,25 +407,31 @@ def get_report_stats():
 
 # TODO: please clean, add count in query
 
-def get_contributions(contributor): 
+def get_contributions(contributor, manual_report=None):
     
     query = '''
         SELECT DISTINCT
             rptr.name reporter_name,
             rptd.name reported_name,
             rptd.confirmed_ban,
-            rptd.possible_ban
+            rptd.possible_ban,
+            rptd.confirmed_player
         from Reports rpts
         inner join Players rptr on(rpts.reportingID = rptr.id)
         inner join Players rptd on(rpts.reportedID = rptd.id)
         WHERE 1=1
-        	and rptr.name = :contributor
-        ;
+            and rptr.name = :contributor
     '''
 
     params = {
         "contributor": contributor
     }
+
+    if (manual_report):
+        query += " and rpts.manual_detect = :manual_report"
+        params["manual_report"] = manual_report
+
+    query += ";"
 
     data = execute_sql(query, param=params, debug=False, has_return=True)
 
