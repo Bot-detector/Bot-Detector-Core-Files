@@ -4,11 +4,11 @@ on:
     branches: [ main ]
 
 jobs:
-  checkout:
-    runs-on: [self-hosted, node1, node2, node3]
+  checkout-0:
+    runs-on: main-node
     steps:
     - uses: actions/checkout@v2
-    - name: Install Dependencies
+    - name: Install Dependencies 0
       run: |
         sudo systemctl stop flaskapi.service
         rm -rf error.log
@@ -17,11 +17,11 @@ jobs:
         source ./env/bin/activate
         pip3 install flake8 pytest
         if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
-  deploy:
-    runs-on: self-hosted
-    needs: [checkout]
+  deploy-0:
+    runs-on: main-node
+    needs: [checkout-0]
     steps:
-      - name: setup_env_Vars
+      - name: setup_env_Vars 0
         run: |
           echo "${{ secrets.DB_URI }}" > .env
           echo "${{ secrets.HTTP_PROXY }}" >> .env
@@ -30,6 +30,98 @@ jobs:
           echo "${{ secrets.FLASK_PORT }}" >> .env
           echo dev_mode=0 >> .env
           
-      - name: Start Flask API
+      - name: Start Flask API 0
+        run: |
+          sudo systemctl start flaskapi.service
+          
+  checkout-1:
+    runs-on: node1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Dependencies 1
+      run: |
+        sudo systemctl stop flaskapi.service
+        rm -rf error.log
+        python3 -m pip install --upgrade pip
+        (test -d env && rm -rf env || python3 -m venv env)
+        source ./env/bin/activate
+        pip3 install flake8 pytest
+        if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
+        
+  deploy-1:
+    runs-on: node1
+    needs: [checkout-1]
+    steps:
+      - name: setup_env_Vars 1
+        run: |
+          echo "${{ secrets.DB_URI }}" > .env
+          echo "${{ secrets.HTTP_PROXY }}" >> .env
+          echo "${{ secrets.HTTPS_PROXY }}" >> .env
+          echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
+          echo "${{ secrets.FLASK_PORT }}" >> .env
+          echo dev_mode=0 >> .env
+          
+      - name: Start Flask API 1
+        run: |
+          sudo systemctl start flaskapi.service
+          
+  checkout-2:
+    runs-on: node2
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Dependencies 2
+      run: |
+        sudo systemctl stop flaskapi.service
+        rm -rf error.log
+        python3 -m pip install --upgrade pip
+        (test -d env && rm -rf env || python3 -m venv env)
+        source ./env/bin/activate
+        pip3 install flake8 pytest
+        if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
+        
+  deploy-2:
+    runs-on: node2
+    needs: [checkout-2]
+    steps:
+      - name: setup_env_Vars 2
+        run: |
+          echo "${{ secrets.DB_URI }}" > .env
+          echo "${{ secrets.HTTP_PROXY }}" >> .env
+          echo "${{ secrets.HTTPS_PROXY }}" >> .env
+          echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
+          echo "${{ secrets.FLASK_PORT }}" >> .env
+          echo dev_mode=0 >> .env
+          
+      - name: Start Flask API 2
+        run: |
+          sudo systemctl start flaskapi.service
+          
+  checkout-3:
+    runs-on: node3
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Dependencies 3
+      run: |
+        sudo systemctl stop flaskapi.service
+        rm -rf error.log
+        python3 -m pip install --upgrade pip
+        (test -d env && rm -rf env || python3 -m venv env)
+        source ./env/bin/activate
+        pip3 install flake8 pytest
+        if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
+  deploy-3:
+    runs-on: node3
+    needs: [checkout-3]
+    steps:
+      - name: setup_env_Vars 3
+        run: |
+          echo "${{ secrets.DB_URI }}" > .env
+          echo "${{ secrets.HTTP_PROXY }}" >> .env
+          echo "${{ secrets.HTTPS_PROXY }}" >> .env
+          echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
+          echo "${{ secrets.FLASK_PORT }}" >> .env
+          echo dev_mode=0 >> .env
+          
+      - name: Start Flask API 3
         run: |
           sudo systemctl start flaskapi.service
