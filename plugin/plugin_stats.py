@@ -11,51 +11,13 @@ def get_contributions_by_id(version=None, contributor_id=""):
 
     passive_contributions = SQL.get_contributions(contributor_id, manual_report=0)
     manual_contributions = SQL.get_contributions(contributor_id, manual_report=1)
-
-    passive_reports = len(passive_contributions)
-    passive_bans = 0
-    passive_possible_bans = 0
-    manual_reports = len(manual_contributions)
-    manual_bans = 0
-    manual_possible_bans = 0
-    manual_real_player = 0
-
-    for p in passive_contributions:
-        passive_bans += p.confirmed_ban
-        passive_possible_bans += p.possible_ban
-
-    for m in manual_contributions:
-        manual_bans += m.confirmed_ban
-        manual_possible_bans += m.possible_ban
-
-    passive_dict = {
-        "reports": passive_reports,
-        "bans": passive_bans,
-        "possible_bans": passive_possible_bans
-    }
-
-    manual_dict = {
-        "reports": manual_reports,
-        "bans": manual_bans,
-        "possible_bans": manual_possible_bans,
-        "incorrect_reports": manual_real_player,
-    }
-
-    total_dict = {
-        "reports": passive_reports + manual_reports,
-        "bans": passive_bans + manual_bans,
-        "possible_bans": passive_possible_bans + manual_possible_bans
-    }
     
-    return_dict = {
-        "passive": passive_dict,
-        "manual": manual_dict,
-        "total": total_dict
-    }
+    processed_contributions = process_contributions(passive_contributions, manual_contributions)
     
     if version in ['1.3','1.3.1'] or None:
-        return total_dict
-    return return_dict
+        return processed_contributions['total']
+    return processed_contributions
+
 
 @plugin_stats.route('/stats/contributions/<contributor>', methods=['GET'])
 @plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
@@ -69,6 +31,14 @@ def get_contributions(version=None, contributor=""):
     passive_contributions = SQL.get_contributions(contributor_id, manual_report=0)
     manual_contributions = SQL.get_contributions(contributor_id, manual_report=1)
 
+    processed_contributions = process_contributions(passive_contributions, manual_contributions)
+    
+    if version in ['1.3','1.3.1'] or None:
+        return processed_contributions['total']
+    return processed_contributions
+
+
+def process_contributions(passive_contributions, manual_contributions):
     passive_reports = len(passive_contributions)
     passive_bans = 0
     passive_possible_bans = 0
@@ -90,25 +60,26 @@ def get_contributions(version=None, contributor=""):
         "bans": passive_bans,
         "possible_bans": passive_possible_bans
     }
+
     manual_dict = {
         "reports": manual_reports,
         "bans": manual_bans,
         "possible_bans": manual_possible_bans,
         "incorrect_reports": manual_real_player,
     }
+
     total_dict = {
         "reports": passive_reports + manual_reports,
         "bans": passive_bans + manual_bans,
         "possible_bans": passive_possible_bans + manual_possible_bans
     }
+    
     return_dict = {
         "passive": passive_dict,
         "manual": manual_dict,
         "total": total_dict
     }
-    
-    if version in ['1.3','1.3.1'] or None:
-        return total_dict
+
     return return_dict
 
 @plugin_stats.route('/stats/getcontributorid/<contributor>', methods=['GET'])
