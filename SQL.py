@@ -418,7 +418,7 @@ def get_contributions(contributor_id, manual_report=None):
         from Reports rpts
         inner join Players rptd on(rpts.reportedID = rptd.id)
         WHERE 1=1
-            and rpts.id = :contributor_id
+            and rpts.reportingID = :contributor_id
     '''
 
     params = {
