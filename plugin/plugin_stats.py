@@ -11,7 +11,7 @@ def get_contributions(version=None, contributor=""):
         return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
         if(isinstance(contributor, int)):
-            contributor_id = int(contributor)
+            contributor_id = contributor
         else:
             contributor_id = SQL.get_player(contributor).id
 
