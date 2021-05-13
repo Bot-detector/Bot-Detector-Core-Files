@@ -73,6 +73,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.WARNING)
 
+'''
 # todo cleanup in refactor
 from flask import request
 from flask_limiter import Limiter
@@ -85,6 +86,7 @@ limiter = Limiter(
    strategy='fixed-window-elastic-expiry'
 )
 
+
 @limiter.request_filter
 def ip_whitelist():
    whitelist = [
@@ -93,6 +95,7 @@ def ip_whitelist():
    ]
 
    return request.remote_addr in whitelist
+'''
 
 def debug(str):
     print(str, flush=True)
