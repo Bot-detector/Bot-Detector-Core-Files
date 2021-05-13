@@ -10,12 +10,13 @@ def get_contributions(version=None, contributor=""):
     if(contributor==""):
         return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
-    else:
-        try:
-            passive_contributions = SQL.get_contributions(contributor, manual_report=0)
-            manual_contributions = SQL.get_contributions(contributor, manual_report=1)
-        except Exception as e:
-            print(e)
+        if(isinstance(contributor, int)):
+            contributor_id = contributor
+        else:
+            contributor_id = SQL.get_player(contributor).id
+
+        passive_contributions = SQL.get_contributions(contributor_id, manual_report=0)
+        manual_contributions = SQL.get_contributions(contributor_id, manual_report=1)
 
         passive_reports = len(passive_contributions)
         passive_bans = 0

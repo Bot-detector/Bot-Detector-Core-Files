@@ -407,24 +407,22 @@ def get_report_stats():
 
 # TODO: please clean, add count in query
 
-def get_contributions(contributor, manual_report=None):
+def get_contributions(contributor_id, manual_report=None):
     
     query = '''
         SELECT DISTINCT
-            rptr.name reporter_name,
             rptd.name reported_name,
             rptd.confirmed_ban,
             rptd.possible_ban,
             rptd.confirmed_player
         from Reports rpts
-        inner join Players rptr on(rpts.reportingID = rptr.id)
         inner join Players rptd on(rpts.reportedID = rptd.id)
         WHERE 1=1
-            and rptr.name = :contributor
+            and rpts.id = :contributor_id
     '''
 
     params = {
-        "contributor": contributor
+        "contributor_id": contributor_id
     }
 
     if (manual_report):
