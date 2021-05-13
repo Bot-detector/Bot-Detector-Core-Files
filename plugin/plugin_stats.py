@@ -3,17 +3,17 @@ import SQL
 
 plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 
-@plugin_stats.route('/stats/contributions/<contributor>', methods=['GET'])
-@plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
-def get_contributions(version=None, contributor=""):
+@plugin_stats.route('/stats/contributions/<contributor_id>', methods=['GET'])
+@plugin_stats.route('/<version>/stats/contributions/<contributor_id>', methods=['GET'])
+def get_contributions(version=None, contributor_id=""):
 
-    if(contributor==""):
+    if(contributor_id==""):
         return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
     else:
         try:
-            passive_contributions = SQL.get_contributions(contributor, manual_report=0)
-            manual_contributions = SQL.get_contributions(contributor, manual_report=1)
+            passive_contributions = SQL.get_contributions(contributor_id, manual_report=0)
+            manual_contributions = SQL.get_contributions(contributor_id, manual_report=1)
         except Exception as e:
             print(e)
 
