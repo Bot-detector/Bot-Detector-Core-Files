@@ -427,7 +427,7 @@ def get_contributions(contributor, manual_report=None):
         "contributor": contributor
     }
 
-    if (manual_report):
+    if (manual_report is not None):
         query += " and rpts.manual_detect = :manual_report"
         params["manual_report"] = manual_report
 
