@@ -6,6 +6,8 @@ import requests
 import random
 import pandas as pd
 import datetime as dt
+from random import randint
+from time import sleep
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import concurrent.futures as cf
@@ -186,6 +188,8 @@ def multi_thread(players):
 def run_scraper():
     # get palyers to scrape
     data = SQL.get_players_to_scrape()
+
+    sleep(randint(10,30))
 
     # check if there are any players to scrape
     if len(data) == 0:
