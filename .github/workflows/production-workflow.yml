@@ -59,7 +59,7 @@ jobs:
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
-          echo dev_mode=0 >> .env
+          echo dev_mode=1 >> .env
           
       - name: Start Flask API 1
         run: |
@@ -90,7 +90,7 @@ jobs:
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
-          echo dev_mode=0 >> .env
+          echo dev_mode=1 >> .env
           
       - name: Start Flask API 2
         run: |
@@ -120,7 +120,7 @@ jobs:
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
-          echo dev_mode=0 >> .env
+          echo dev_mode=1 >> .env
           
       - name: Start Flask API 3
         run: |
