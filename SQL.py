@@ -407,31 +407,29 @@ def get_report_stats():
 
 # TODO: please clean, add count in query
 
-def get_contributions(contributor, manual_report=None):
+def get_contributions(contributor):
     
     query = '''
-        SELECT DISTINCT
-            rptr.name reporter_name,
-            rptd.name reported_name,
-            rptd.confirmed_ban,
-            rptd.possible_ban,
-            rptd.confirmed_player
-        from Reports rpts
-        inner join Players rptr on(rpts.reportingID = rptr.id)
-        inner join Players rptd on(rpts.reportedID = rptd.id)
+        SELECT
+            rs.detect,
+            rs.reported as num_reports,
+            pl.confirmed_ban as confirmed_ban,
+            pl.possible_ban as possible_ban,
+            pl.confirmed_player as confirmed_player
+        FROM
+            (SELECT
+                r.reportedID as reported,
+                r.manual_detect as detect
+        FROM Reports as r
+        JOIN Players as pl on pl.id = r.reportingID
         WHERE 1=1
-            and rptr.name = :contributor
+            AND pl.name = :contributor) rs
+        JOIN Players as pl on (pl.id = rs.reported);
     '''
 
     params = {
         "contributor": contributor
     }
-
-    if (manual_report is not None):
-        query += " and rpts.manual_detect = :manual_report"
-        params["manual_report"] = manual_report
-
-    query += ";"
 
     data = execute_sql(query, param=params, debug=False, has_return=True)
 
@@ -550,6 +548,13 @@ def get_region_search(regionName):
     data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
 
+def get_all_regions():
+
+    sql = "SELECT * FROM regionIDNames;"
+
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
+
   
 def get_prediction_player(player_id):
     sql = 'select * from Predictions where id = :id'
@@ -560,7 +565,7 @@ def get_prediction_player(player_id):
 def get_report_data_heatmap(region_id):
 
     sql = ('''
-    SELECT DISTINCT
+            SELECT DISTINCT
         rpts2.*,
         rpts.x_coord,
         rpts.y_coord,

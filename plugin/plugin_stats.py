@@ -1,4 +1,6 @@
 from flask import Blueprint, request
+import pandas as pd
+from flask.json import jsonify
 import SQL
 
 plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
@@ -11,58 +13,47 @@ def get_contributions(version=None, contributor=""):
         return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
     else:
-        try:
-            passive_contributions = SQL.get_contributions(contributor, manual_report=0)
-            manual_contributions = SQL.get_contributions(contributor, manual_report=1)
-        except Exception as e:
-            print(e)
+        contributions = SQL.get_contributions(contributor)
 
-        passive_reports = len(passive_contributions)
-        passive_bans = 0
-        passive_possible_bans = 0
+        df = pd.DataFrame(contributions)
+        df = df.drop_duplicates(inplace=False)
 
-        manual_reports = len(manual_contributions)
-        manual_bans = 0
-        manual_possible_bans = 0
-        manual_real_player = 0
-
-        for p in passive_contributions:
-            passive_bans += p.confirmed_ban
-            passive_possible_bans += p.possible_ban
-
-        for m in manual_contributions:
-            manual_bans += m.confirmed_ban
-            manual_possible_bans += m.possible_ban
+        df_detect_manual = df.loc[df['detect'] == 1]
+        df_detect_passive = df.loc[df['detect'] == 0]
 
         passive_dict = {
-            "reports": passive_reports,
-            "bans": passive_bans,
-            "possible_bans": passive_possible_bans
+            "reports": len(df_detect_passive.index),
+            "bans": int(df_detect_passive['confirmed_ban'].sum()),
+            "possible_bans": int(df_detect_passive['possible_ban'].sum())
         }
 
         manual_dict = {
-            "reports": manual_reports,
-            "bans": manual_bans,
-            "possible_bans": manual_possible_bans,
-            "incorrect_reports": manual_real_player,
+            "reports": len(df_detect_manual.index),
+            "bans": int(df_detect_manual['confirmed_ban'].sum()),
+            "possible_bans": int(df_detect_manual['possible_ban'].sum()),
+            "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
         }
 
         total_dict = {
-            "reports": passive_reports + manual_reports,
-            "bans": passive_bans + manual_bans,
-            "possible_bans": passive_possible_bans + manual_possible_bans
+            "reports": passive_dict['reports'] + manual_dict['reports'],
+            "bans": passive_dict['bans'] + manual_dict['bans'],
+            "possible_bans": passive_dict['possible_bans'] + manual_dict['possible_bans']
         }
+
+        if version in ['1.3','1.3.1'] or None:
+            return jsonify(total_dict)
 
         return_dict = {
             "passive": passive_dict,
             "manual": manual_dict,
             "total": total_dict
         }
-        
-        if version in ['1.3','1.3.1'] or None:
-            return total_dict
 
-        return return_dict
+        try:
+            return jsonify(return_dict)
+        except Exception as e:
+            print(e)
+
 
 @plugin_stats.route('/stats/getcontributorid/<contributor>', methods=['GET'])
 def get_contributor_id(contributor=""):
