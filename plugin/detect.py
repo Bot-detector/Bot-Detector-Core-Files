@@ -102,15 +102,3 @@ def post_detect(version=None, manual_detect=0):
 
 
     return jsonify({'OK': 'OK'})
-
-
-@detect.route('/plugin/detect/<rsn>', methods=['GET'])
-def get_detects(rsn=""):
-    result = SQL.get_times_manually_reported(rsn)
-
-    try:
-        times_reported = int(result[0][0])
-    except TypeError:
-        times_reported = 0
-
-    return jsonify({'times_reported': times_reported})
