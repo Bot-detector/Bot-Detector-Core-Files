@@ -415,7 +415,7 @@ def get_report_stats():
 
 # TODO: please clean, add count in query
 
-def get_contributions(contributor):
+def get_contributions(contributors):
     
     query = '''
         SELECT
@@ -431,12 +431,12 @@ def get_contributions(contributor):
         FROM Reports as r
         JOIN Players as pl on pl.id = r.reportingID
         WHERE 1=1
-            AND pl.name = :contributor) rs
+            AND pl.name IN :contributors ) rs
         JOIN Players as pl on (pl.id = rs.reported);
     '''
 
     params = {
-        "contributor": contributor
+        "contributors": contributors
     }
 
     data = execute_sql(query, param=params, debug=False, has_return=True)
