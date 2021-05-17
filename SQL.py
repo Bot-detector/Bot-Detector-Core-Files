@@ -548,6 +548,13 @@ def get_region_search(regionName):
     data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
 
+def get_all_regions():
+
+    sql = "SELECT * FROM regionIDNames;"
+
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
+
   
 def get_prediction_player(player_id):
     sql = 'select * from Predictions where id = :id'
@@ -558,7 +565,7 @@ def get_prediction_player(player_id):
 def get_report_data_heatmap(region_id):
 
     sql = ('''
-    SELECT DISTINCT
+            SELECT DISTINCT
         rpts2.*,
         rpts.x_coord,
         rpts.y_coord,
