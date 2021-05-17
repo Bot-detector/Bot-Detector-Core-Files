@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 from flask import Flask
+from flask.config import Config
 from flask_sqlalchemy import SQLAlchemy
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
@@ -19,7 +20,9 @@ flask_port = os.environ.get('flask_port')
 # it does not like the bool()
 try:
     dev_mode = os.environ.get('dev_mode')
-except:
+except Exception as e:
+    print(e)
+    logging.debug(e)
     dev_mode=1
 
 # create flask app
