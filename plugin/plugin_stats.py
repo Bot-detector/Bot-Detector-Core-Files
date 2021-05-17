@@ -6,7 +6,7 @@ import json
 
 plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 
-@plugin_stats.route('/stats/contributions/', methods=['GET', 'POST', 'OPTIONS'])
+@plugin_stats.route('/stats/contributions/', methods=['POST', 'OPTIONS'])
 @plugin_stats.route('/stats/contributions/<contributor>', methods=['GET'])
 @plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
 def get_contributions(version=None, contributor=None):
@@ -17,15 +17,14 @@ def get_contributions(version=None, contributor=None):
         header['Access-Control-Allow-Origin'] = '*'
         return response
 
-    contrib_data = json.loads(request.get_json())
-
     if contributor is not None:
-        contributors = tuple(contributor)
-    elif contrib_data is not None:
-        contributors = tuple([c["name"] for c in contrib_data ])
+        contributors = [contributor]
     else:
-        return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
-
+        contrib_data = json.loads(request.get_json())
+        if contrib_data is not None:
+            contributors = tuple([c["name"] for c in contrib_data ])
+        else:
+            return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
     contributions = SQL.get_contributions(contributors)
     
