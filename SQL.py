@@ -407,29 +407,29 @@ def get_report_stats():
 
 # TODO: please clean, add count in query
 
-def get_contributions(contributor_id, manual_report=None):
+def get_contributions(contributor):
     
     query = '''
-        SELECT DISTINCT
-            rptd.name reported_name,
-            rptd.confirmed_ban,
-            rptd.possible_ban,
-            rptd.confirmed_player
-        from Reports rpts
-        inner join Players rptd on(rpts.reportedID = rptd.id)
+        SELECT
+            rs.detect,
+            rs.reported as num_reports,
+            pl.confirmed_ban as confirmed_ban,
+            pl.possible_ban as possible_ban,
+            pl.confirmed_player as confirmed_player
+        FROM
+            (SELECT
+                r.reportedID as reported,
+                r.manual_detect as detect
+        FROM Reports as r
+        JOIN Players as pl on pl.id = r.reportingID
         WHERE 1=1
-            and rpts.reportingID = :contributor_id
+            AND pl.name = :contributor) rs
+        JOIN Players as pl on (pl.id = rs.reported);
     '''
 
     params = {
-        "contributor_id": contributor_id
+        "contributor": contributor
     }
-
-    if (manual_report is not None):
-        query += " and rpts.manual_detect = :manual_report"
-        params["manual_report"] = manual_report
-
-    query += ";"
 
     data = execute_sql(query, param=params, debug=False, has_return=True)
 
