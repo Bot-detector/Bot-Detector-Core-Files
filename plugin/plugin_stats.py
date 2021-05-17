@@ -14,7 +14,7 @@ def get_contributions(version=None, contributor=""):
 
     else:
         contributions = SQL.get_contributions(contributor)
-
+        
         df = pd.DataFrame(contributions)
         df = df.drop_duplicates(inplace=False)
 
