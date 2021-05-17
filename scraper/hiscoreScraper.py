@@ -1,5 +1,7 @@
 
 import os, sys
+
+from urllib3.packages.six import add_move
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import requests
@@ -184,8 +186,14 @@ def multi_thread(players):
     return
 
 def run_scraper():
-    # get palyers to scrape
-    data = SQL.get_players_to_scrape()
+    # get players to scrape
+    batch_size = 1000
+    max_players = SQL.get_max_players_to_scrape()[0].max_players
+
+    batch_size = batch_size if max_players > batch_size else max_players
+    start = random.randint(0,max_players-batch_size)
+    data = SQL.get_players_to_scrape(start=start, amount=batch_size)
+    # most of the code below can be removed, batching is now done in query
 
     # check if there are any players to scrape
     if len(data) == 0:

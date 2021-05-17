@@ -366,11 +366,19 @@ def get_hiscores_of_interst():
     return highscores
 
 
-def get_players_to_scrape():
-    sql = 'select * from playersToScrape;'
+def get_players_to_scrape(start=None, amount=None):
+    sql = 'select * from playersToScrape'
+    if not (start is None and amount is None):
+        sql = f'{sql} limit {start},{amount}'
+    sql = f'{sql};'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
+
+def get_max_players_to_scrape():   
+    sql = 'select COUNT(*) as max_players from playersToScrape;'
+    data = execute_sql(sql, param=None, debug=True, has_return=True)
+    return data
 
 def get_players_of_interest():
 
