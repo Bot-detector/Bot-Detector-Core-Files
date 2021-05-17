@@ -49,10 +49,8 @@ def get_contributions(version=None, contributor=""):
             "total": total_dict
         }
 
-        try:
-            return jsonify(return_dict)
-        except Exception as e:
-            print(e)
+        return jsonify(return_dict)
+
 
 
 @plugin_stats.route('/stats/getcontributorid/<contributor>', methods=['GET'])
