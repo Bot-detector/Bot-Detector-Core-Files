@@ -6,16 +6,11 @@ import json
 
 plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 
-@plugin_stats.route('/stats/contributions/', methods=['POST', 'OPTIONS'])
+
+@plugin_stats.route('/stats/contributions/', methods=['GET'])
 @plugin_stats.route('/stats/contributions/<contributor>', methods=['GET'])
 @plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
 def get_contributions(version=None, contributor=None):
-
-    if request.method == 'OPTIONS':
-        response = make_response()
-        header = response.headers
-        header['Access-Control-Allow-Origin'] = '*'
-        return response
 
     if contributor is not None:
         contributors = [contributor]

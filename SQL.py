@@ -479,27 +479,6 @@ def get_hiscore_table_stats():
     return data
 
 
-# Number of times an account has been manually reported by our users.
-def get_times_manually_reported(reportedName):
-
-    sql = '''
-          SELECT 
-            SUM(manual_detect) manual_reports
-        from Reports rpts
-        inner join Players rptd on(rpts.reportedID = rptd.id)
-        WHERE manual_detect = 1
-        	and rptd.name = :reportedName
-        ;
-    '''
-
-    param = {
-        'reportedName': reportedName
-    }
-
-    data = execute_sql(sql, param=param, debug=False, has_return=True)
-    return data
-
-
 def get_region_report_stats():
 
     sql = '''
@@ -508,12 +487,6 @@ def get_region_report_stats():
 
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
-
-def get_possible_ban():
-    sql = 'Select * from Players where possible_ban = 1 and confirmed_ban = 0'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
-    return data
-
 
 def get_player_report_locations(players):
 
@@ -573,30 +546,11 @@ def get_prediction_player(player_id):
 def get_report_data_heatmap(region_id):
 
     sql = ('''
-            SELECT DISTINCT
-        rpts2.*,
-        rpts.x_coord,
-        rpts.y_coord,
-        rpts.region_id
-    FROM Reports rpts
-        INNER JOIN (
-            SELECT 
-                max(rp.id) id,
-                pl.name,
-                pl.confirmed_player,
-                pl.possible_ban,
-                pl.confirmed_ban
-            FROM Players pl
-            inner join Reports rp on (pl.id = rp.reportedID)
-            WHERE 1
-                and (pl.confirmed_ban = 1 or pl.possible_ban = 1 or pl.confirmed_ban = 0)
-                and rp.region_id = :region_id
-            GROUP BY
-                pl.name,
-                pl.confirmed_player,
-                pl.confirmed_ban
-        ) rpts2
-    ON (rpts.id = rpts2.id)
+        SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban
+            FROM Reports rpts
+            INNER JOIN Players plys ON rpts.reportedID = plys.id 
+            	WHERE confirmed_ban = 1
+                AND region_id = :region_id
     ''')
 
     param = {
