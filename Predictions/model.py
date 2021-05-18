@@ -185,10 +185,10 @@ def predict_model(player_name=None, start=0, amount=100_000):
         df_players = pf.get_players(with_id=True, ofinterest=False, ids=ids)
     else:
         player = SQL.get_player(player_name)
-
         if player is None:
             df = highscores.scrape_one(player_name)
             player = SQL.get_player(player_name)
+
         else:
             try:
                 df_resf = SQL.get_prediction_player(player.id)
@@ -198,14 +198,11 @@ def predict_model(player_name=None, start=0, amount=100_000):
 
                 columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction'])]
                 df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
-                print('from db')
                 Config.debug('from db')
 
                 return df_resf
             except Exception as e:
-                df = SQL.get_highscores_data_oneplayer(player.id)
-                print('hiscores')
-
+                df = highscores.scrape_one(player_name)
                 Config.debug('hiscores')
 
         df = pd.DataFrame(df)
@@ -373,7 +370,7 @@ def multi_thread(data):
     return
 
 if __name__ == '__main__':
-    train_model(n_pca=50)
+    # train_model(n_pca=50)
     # save_model(n_pca=30)
-    df = predict_model(player_name='extreme4all') # player_name='extreme4all'
+    df = predict_model(player_name='gunserepet') # player_name='extreme4all'
     print(df.head())
