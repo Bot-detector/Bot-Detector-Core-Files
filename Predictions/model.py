@@ -219,6 +219,8 @@ def predict_model(player_name=None, start=0, amount=100_000):
         del df # free up memory
     except Exception as k:
         Config.debug(f'Error cleaning: {k}')
+        Config.debug(f' {player_name}')
+        Config.debug(f' {df}')
 
         prediction_data = {
             "player_id": -1,
