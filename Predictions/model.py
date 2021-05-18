@@ -316,7 +316,7 @@ def save_model(n_pca=50):
             fk = 'ALTER TABLE `Predictions` ADD CONSTRAINT `FK_pred_player_id` FOREIGN KEY (`id`) REFERENCES `Players`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;'
 
             SQL.execute_sql(droptable,      param=None, debug=False, has_return=False)
-            SQL.execute_sql(createtable,    param=None, debug=True, has_return=False)
+            SQL.execute_sql(createtable,    param=None, debug=False, has_return=False)
             SQL.execute_sql(indexname,      param=None, debug=False, has_return=False)
             SQL.execute_sql(fk,             param=None, debug=False, has_return=False)
 
@@ -344,7 +344,7 @@ def save_model(n_pca=50):
 def insert_prediction(row):
     values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
     sql_insert = f'insert ignore into Predictions values ({values});'
-    SQL.execute_sql(sql_insert, param=row, debug=True, has_return=False)
+    SQL.execute_sql(sql_insert, param=row, debug=False, has_return=False)
     return
 
 
