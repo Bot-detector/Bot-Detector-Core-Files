@@ -373,7 +373,7 @@ def multi_thread(data):
     return
 
 if __name__ == '__main__':
-    # train_model(n_pca=50)
-    save_model(n_pca=30)
+    train_model(n_pca=50)
+    # save_model(n_pca=30)
     df = predict_model(player_name='extreme4all') # player_name='extreme4all'
     print(df.head())

@@ -6,6 +6,7 @@ import json
 
 plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 
+
 @plugin_stats.route('/stats/contributions/', methods=['GET'])
 @plugin_stats.route('/stats/contributions/<contributor>', methods=['GET'])
 @plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
