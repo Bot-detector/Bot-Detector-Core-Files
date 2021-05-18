@@ -291,9 +291,9 @@ def save_model(n_pca=50):
 
         # parse predictions to int
         int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction']]
-        df[int_columns] = df[int_columns]*100
-        
-        df[int_columns] = df[int_columns].astype(float)
+        df[int_columns] = df[int_columns].astype(float)*100
+        df[int_columns] = df[int_columns].round(2)
+        df['id'] = df['id'].astype(int)
         Config.debug(df[int_columns].head())
 
         # replace spaces in column names to _
@@ -321,7 +321,7 @@ def save_model(n_pca=50):
             SQL.execute_sql(fk,             param=None, debug=False, has_return=False)
 
         # add prediction back as first field
-        ordered_columns = ['prediction'] + columns
+        ordered_columns = ['prediction','id'] + columns
         df = df[ordered_columns]
         df.reset_index(inplace=True)
         
