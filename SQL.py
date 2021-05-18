@@ -479,27 +479,6 @@ def get_hiscore_table_stats():
     return data
 
 
-# Number of times an account has been manually reported by our users.
-def get_times_manually_reported(reportedName):
-
-    sql = '''
-          SELECT 
-            SUM(manual_detect) manual_reports
-        from Reports rpts
-        inner join Players rptd on(rpts.reportedID = rptd.id)
-        WHERE manual_detect = 1
-        	and rptd.name = :reportedName
-        ;
-    '''
-
-    param = {
-        'reportedName': reportedName
-    }
-
-    data = execute_sql(sql, param=param, debug=False, has_return=True)
-    return data
-
-
 def get_region_report_stats():
 
     sql = '''
@@ -508,12 +487,6 @@ def get_region_report_stats():
 
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
-
-def get_possible_ban():
-    sql = 'Select * from Players where possible_ban = 1 and confirmed_ban = 0'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
-    return data
-
 
 def get_player_report_locations(players):
 
