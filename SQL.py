@@ -415,7 +415,7 @@ def get_report_stats():
 
 # TODO: please clean, add count in query
 
-def get_contributions(contributor):
+def get_contributions(contributors):
     
     query = '''
         SELECT
@@ -431,12 +431,12 @@ def get_contributions(contributor):
         FROM Reports as r
         JOIN Players as pl on pl.id = r.reportingID
         WHERE 1=1
-            AND pl.name = :contributor) rs
+            AND pl.name IN :contributors ) rs
         JOIN Players as pl on (pl.id = rs.reported);
     '''
 
     params = {
-        "contributor": contributor
+        "contributors": contributors
     }
 
     data = execute_sql(query, param=params, debug=False, has_return=True)
@@ -546,30 +546,12 @@ def get_prediction_player(player_id):
 def get_report_data_heatmap(region_id):
 
     sql = ('''
-            SELECT DISTINCT
-        rpts2.*,
-        rpts.x_coord,
-        rpts.y_coord,
-        rpts.region_id
-    FROM Reports rpts
-        INNER JOIN (
-            SELECT 
-                max(rp.id) id,
-                pl.name,
-                pl.confirmed_player,
-                pl.possible_ban,
-                pl.confirmed_ban
-            FROM Players pl
-            inner join Reports rp on (pl.id = rp.reportedID)
-            WHERE 1
-                and (pl.confirmed_ban = 1 or pl.possible_ban = 1 or pl.confirmed_ban = 0)
-                and rp.region_id = :region_id
-            GROUP BY
-                pl.name,
-                pl.confirmed_player,
-                pl.confirmed_ban
-        ) rpts2
-    ON (rpts.id = rpts2.id)
+        SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban
+            FROM Reports rpts
+            INNER JOIN Players plys ON rpts.reportedID = plys.id 
+            	WHERE confirmed_ban = 1
+                AND region_id = :region_id
+        GROUP BY region_id, x_coord, y_coord, z_coord
     ''')
 
     param = {
