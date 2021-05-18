@@ -578,7 +578,6 @@ def get_report_data_heatmap(region_id):
             INNER JOIN Players plys ON rpts.reportedID = plys.id 
             	WHERE confirmed_ban = 1
                 AND region_id = :region_id
-        GROUP BY region_id, x_coord, y_coord, z_coord
     ''')
 
     param = {

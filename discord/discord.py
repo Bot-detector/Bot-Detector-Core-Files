@@ -91,7 +91,7 @@ def get_heatmap_data(token, region_id=None):
     data = SQL.get_report_data_heatmap(region_id)
 
     df = pd.DataFrame(data)
-    df = df.astype({"confirmed_bans": int})
+    df = df.astype({"confirmed_ban": int})
     output = df.to_dict('records')
 
     return jsonify(output)
