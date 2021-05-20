@@ -12,10 +12,16 @@ plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 @plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
 def get_contributions(version=None, contributor=None):
 
+    
+
     if contributor is not None:
         contributors = [contributor]
     else:
-        contrib_data = json.loads(request.get_json())
+        if isinstance(request.json, str):
+            contrib_data = json.loads(request.json)
+        else:
+            contrib_data = request.json
+
         if contrib_data is not None:
             contributors = tuple([c["name"] for c in contrib_data ])
         else:
