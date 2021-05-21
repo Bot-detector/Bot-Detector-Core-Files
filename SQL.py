@@ -217,8 +217,8 @@ def insert_report(data, version):
         'equip_cape_id': data['equipment']['CAPE'] or None,
         'equip_hands_id': data['equipment']['HANDS'] or None,
         'equip_weapon_id': data['equipment']['WEAPON'] or None,
-        'equip_shield_id': data['equipment']['SHIELD'] or None,
-        'equip_ge_value': data['equipment_ge'] or None
+        'equip_shield_id': data['equipment']['SHIELD'] or None #,
+        #'equip_ge_value': data['equipment_ge'] or None        ^Remove this too once column is set to BIGINT
 
     }
     # list of column values
