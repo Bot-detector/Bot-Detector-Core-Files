@@ -190,16 +190,13 @@ def insert_highscore(player_id, skills, minigames):
 
 
 def insert_report(data, version):
-    try:
-        members = data['on_members_world']
-    except KeyError as k:
-        members = None
 
     if version is None:
         human_time = data['ts']
     else:
         gmt = time.gmtime(data['ts'])
         human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+        
     param = {
         'reportedID': data['reported'],
         'reportingID': data['reporter'],
@@ -209,7 +206,19 @@ def insert_report(data, version):
         'z_coord': data['z'],
         'timestamp': human_time,
         'manual_detect': data['manual_detect'],
-        'on_members_world': members
+        'on_members_world': data['on_members_world'] or None,
+        'on_pvp_word': data['on_pvp_world'] or None,
+        'world_number': data['world_number'] or None,
+        'equip_head_id': data['equipment']['HEAD'] or None,
+        'equip_amulet_id': data['equipment']['AMULET'] or None,
+        'equip_torso_id': data['equipment']['TORSO'] or None,
+        'equip_legs_id': data['equipment']['LEGS'] or None,
+        'equip_boots_id': data['equipment']['BOOTS'] or None,
+        'equip_cape_id': data['equipment']['CAPE'] or None,
+        'equip_hands_id': data['equipment']['HANDS'] or None,
+        'equip_weapon_id': data['equipment']['WEAPON'] or None,
+        'equip_ge_value': data['equipment_ge'] or None
+
     }
     # list of column values
     columns = list_to_string(list(param.keys()))
