@@ -203,6 +203,15 @@ def predict_model(player_name=None, start=0, amount=100_000):
                 return df_resf
             except Exception as e:
                 df = highscores.scrape_one(player_name)
+                if df == (None, None):
+                    prediction_data = {
+                            "player_id": -1,
+                            "player_name": player_name,
+                            "prediction_label": "Player not on highscores",
+                            "prediction_confidence": 0,
+                            "secondary_predictions": []
+                    }
+                    return prediction_data
                 Config.debug('hiscores')
 
         df = pd.DataFrame(df)
@@ -374,5 +383,5 @@ def multi_thread(data):
 if __name__ == '__main__':
     # train_model(n_pca=50)
     # save_model(n_pca=30)
-    df = predict_model(player_name='gunserepet') # player_name='extreme4all'
+    df = predict_model(player_name='DiscountYuma') # player_name='extreme4all'
     print(df.head())
