@@ -195,35 +195,24 @@ def insert_report(data):
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
     param = {
-        'reportedID': data.get('reported'),
-        'reportingID': data.get('reporter'),
-        'region_id': data.get('region_id'),
-        'x_coord': data.get('x'),
-        'y_coord': data.get('y'),
-        'z_coord': data.get('z'),
+        'reportedID': data['reported'],
+        'reportingID': data['reporter'],
+        'region_id': data['region_id'],
+        'x_coord': data['x'],
+        'y_coord': data['y'],
+        'z_coord': data['z'],
         'timestamp': human_time,
-        'manual_detect': data.get('manual_detect'),
-        'on_members_world': data.get('on_members_world'),
-        'on_pvp_world': data.get('on_pvp_world'),
-        'world_number': data.get('world_number'),
-        'equip_head_id': data.get('equipment').get('HEAD'),
-        'equip_amulet_id': data.get('equipment').get('AMULET'),
-        'equip_torso_id': data.get('equipment').get('TORSO'),
-        'equip_legs_id': data.get('equipment').get('LEGS'),
-        'equip_boots_id': data.get('equipment').get('BOOTS'),
-        'equip_cape_id': data.get('equipment').get('CAPE'),
-        'equip_hands_id': data.get('equipment').get('HANDS'),
-        'equip_weapon_id': data.get('equipment').get('WEAPON'),
-        'equip_shield_id': data.get('equipment').get('SHIELD') ,
-        'equip_ge_value': data.get('equipment_ge')
-
+        'manual_detect': data['manual_detect'],
+        'on_members_world': data['on_members_world']
     }
+    
     # list of column values
     columns = list_to_string(list(param.keys()))
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
     sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
     execute_sql(sql_insert, param=param, debug=False, has_return=False)
+
 
 
 '''
