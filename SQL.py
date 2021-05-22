@@ -197,8 +197,6 @@ def insert_report(data, version):
         gmt = time.gmtime(data['ts'])
         human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
-    print(data['equipment']['AMULET'] or None)
-
     param = {
         'reportedID': data.get('reported'),
         'reportingID': data.get('reporter'),
