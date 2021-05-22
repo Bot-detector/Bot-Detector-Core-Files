@@ -189,13 +189,10 @@ def insert_highscore(player_id, skills, minigames):
 '''
 
 
-def insert_report(data, version):
-
-    if version is None:
-        human_time = data['ts']
-    else:
-        gmt = time.gmtime(data['ts'])
-        human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+def insert_report(data):
+    
+    gmt = time.gmtime(data['ts'])
+    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
     param = {
         'reportedID': data.get('reported'),

@@ -92,10 +92,18 @@ def get_heatmap_data(token, region_id=None):
 
 
     df = pd.DataFrame(data)
-    #TODO df.drop(columns=['z_coord', 'region_id'])
-    #Filter out entries before May 4th, 2021
+
+    #Filter out heatmap data from before the bulk of our v1.3 fixes
+    #df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d')
+    #df = df.loc[(df['timestamp'] >= '2021-04-30')]
+
+    #Remove unnecessary columns
+    df.drop(columns=['z_coord', 'region_id', 'timestamp'])
+
+    #Group by tiles
     df = df.groupby(["x_coord", "y_coord"], as_index=False).sum(["confirmed_ban"])
     df = df.astype({"confirmed_ban": int})
+
     output = df.to_dict('records')
 
     return jsonify(output)
