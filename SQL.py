@@ -197,28 +197,30 @@ def insert_report(data, version):
         gmt = time.gmtime(data['ts'])
         human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
+    print(data['equipment']['AMULET'] or None)
+
     param = {
-        'reportedID': data['reported'],
-        'reportingID': data['reporter'],
-        'region_id': data['region_id'],
-        'x_coord': data['x'],
-        'y_coord': data['y'],
-        'z_coord': data['z'],
+        'reportedID': data.get('reported'),
+        'reportingID': data.get('reporter'),
+        'region_id': data.get('region_id'),
+        'x_coord': data.get('x'),
+        'y_coord': data.get('y'),
+        'z_coord': data.get('z'),
         'timestamp': human_time,
-        'manual_detect': data['manual_detect'],
-        'on_members_world': data['on_members_world'] or None,
-        'on_pvp_word': data['on_pvp_world'] or None,
-        'world_number': data['world_number'] or None,
-        'equip_head_id': data['equipment']['HEAD'] or None,
-        'equip_amulet_id': data['equipment']['AMULET'] or None,
-        'equip_torso_id': data['equipment']['TORSO'] or None,
-        'equip_legs_id': data['equipment']['LEGS'] or None,
-        'equip_boots_id': data['equipment']['BOOTS'] or None,
-        'equip_cape_id': data['equipment']['CAPE'] or None,
-        'equip_hands_id': data['equipment']['HANDS'] or None,
-        'equip_weapon_id': data['equipment']['WEAPON'] or None,
-        'equip_shield_id': data['equipment']['SHIELD'] or None #,
-        #'equip_ge_value': data['equipment_ge'] or None        ^Remove this too once column is set to BIGINT
+        'manual_detect': data.get('manual_detect'),
+        'on_members_world': data.get('on_members_world'),
+        'on_pvp_world': data.get('on_pvp_world'),
+        'world_number': data.get('world_number'),
+        'equip_head_id': data.get('equipment').get('HEAD'),
+        'equip_amulet_id': data.get('equipment').get('AMULET'),
+        'equip_torso_id': data.get('equipment').get('TORSO'),
+        'equip_legs_id': data.get('equipment').get('LEGS'),
+        'equip_boots_id': data.get('equipment').get('BOOTS'),
+        'equip_cape_id': data.get('equipment').get('CAPE'),
+        'equip_hands_id': data.get('equipment').get('HANDS'),
+        'equip_weapon_id': data.get('equipment').get('WEAPON'),
+        'equip_shield_id': data.get('equipment').get('SHIELD') ,
+        'equip_ge_value': data.get('equipment_ge')
 
     }
     # list of column values
@@ -556,7 +558,7 @@ def get_prediction_player(player_id):
 def get_report_data_heatmap(region_id):
 
     sql = ('''
-        SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban
+        SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban, timestamp
             FROM Reports rpts
             INNER JOIN Players plys ON rpts.reportedID = plys.id 
             	WHERE confirmed_ban = 1
