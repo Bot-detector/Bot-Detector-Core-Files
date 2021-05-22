@@ -9,7 +9,7 @@ from flask.json import jsonify
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
-def custom_hiscore(detection, version):
+def custom_hiscore(detection):
     # hacky, support two versions
     # if version is None:
     #     gmt = time.gmtime(detection['ts'])
@@ -52,17 +52,17 @@ def custom_hiscore(detection, version):
     detection['reporter'] = int(reporter.id)
 
     # insert into reports
-    SQL.insert_report(detection, version)
+    SQL.insert_report(detection)
     return create
 
 
-def insync_detect(detections, manual_detect, version):
+def insync_detect(detections, manual_detect):
     print("NSYNC")
     total_creates = 0
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
 
-        total_creates += custom_hiscore(detection, version)
+        total_creates += custom_hiscore(detection)
 
         if len(detection) > 1000 and total_creates/len(detections) > .75:
             print(f'    Malicious: sender: {detection["reporter"]}')
