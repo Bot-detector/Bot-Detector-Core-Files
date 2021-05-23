@@ -553,7 +553,7 @@ def get_prediction_player(player_id):
 def get_report_data_heatmap(region_id):
 
     sql = ('''
-        SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban, timestamp
+        SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban, confirmed_player, timestamp
             FROM Reports rpts
             INNER JOIN Players plys ON rpts.reportedID = plys.id 
             	WHERE confirmed_ban = 1
