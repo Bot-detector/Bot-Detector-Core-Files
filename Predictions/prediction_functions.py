@@ -171,6 +171,8 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
     # all features
     features =  df.columns
 
+    features = [f for f in features if '/total' in f or '/boss_total' in f]
+    return df[features].copy()
     # take median of all columns
     bad_features = pd.DataFrame(df.median(), columns=['median'])
     
@@ -220,12 +222,13 @@ def f_normalize(df, transformer=None):
 
 def f_pca(df, n_components=2, pca=None):
     if pca is None:
-        pca = PCA(n_components = n_components) 
+        pca = PCA(n_components = n_components)
         pca = pca.fit(df)
 
     # Apply dimensionality reduction to X.
     X_principal = pca.transform(df)
     # rename columns and put in dataframe
+    n_components = pca.n_components_
     columns = [f'P{c}' for c in range(n_components)]
     df = pd.DataFrame(X_principal, columns=columns, index=df.index) 
     df.dropna(inplace=True)
