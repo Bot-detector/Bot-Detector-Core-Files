@@ -23,9 +23,37 @@ from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
 
-import traceback
 
 def create_model(train_x, train_y, test_x, test_y, lbls):
+    # neigh = KNeighborsClassifier(n_neighbors=len(lbls), n_jobs=-1)
+    # neigh = neigh.fit(train_x, train_y)
+
+    # mlpc = MLPClassifier(max_iter=10000, random_state=7)
+    # mlpc = mlpc.fit(train_x, train_y)
+
+    # rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
+    # rfc = rfc.fit(train_x, train_y)
+
+    # etc = ExtraTreesClassifier(n_estimators=100, random_state=7, n_jobs=-1)
+    # etc = etc.fit(train_x, train_y)
+
+    # sgdc = SGDClassifier(max_iter=1000, tol=1e-3, loss='modified_huber')
+    # sgdc = sgdc.fit(train_x, train_y)
+
+    # models = [neigh, mlpc, rfc, etc, sgdc]
+    # scores = [round(m.score(test_x, test_y)*100,2) for m in models]
+    # weights = [s**2 for s in scores]
+    # estimators = [(m.__class__.__name__, m) for m in models]
+
+    # _ = [Config.debug(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
+
+    # vote = VotingClassifier(
+    #     weights=weights,
+    #     estimators=estimators, 
+    #     voting='soft',
+    #     n_jobs=-1
+    #     )
+    # return vote
     rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
     rfc = rfc.fit(train_x, train_y)
     return rfc
@@ -51,7 +79,7 @@ def train_model(n_pca):
     )
 
 
-    today = int(time.time())  # time.strftime('%Y-%m-%d', time.gmtime()) 
+    today = time.strftime('%Y-%m-%d', time.gmtime())
     columns = df_preprocess.columns.tolist()
     dump(value=columns, filename=f'Predictions/models/features_{today}_100.joblib')
     
@@ -117,11 +145,11 @@ def train_model(n_pca):
 def predict_model(player_name=None, start=0, amount=100_000):
     # load scaler, transformer, features, pca, labels & model
     try:
-        # scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
-        # scaler = load(scaler)
+        scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
+        scaler = load(scaler)
 
-        # transformer, _ = pf.best_file_path(startwith='normalizer', dir='Predictions/models')
-        # transformer = load(transformer)
+        transformer, _ = pf.best_file_path(startwith='normalizer', dir='Predictions/models')
+        transformer = load(transformer)
 
         features, _ = pf.best_file_path(startwith='features', dir='Predictions/models')
         features = load(features)
@@ -136,7 +164,6 @@ def predict_model(player_name=None, start=0, amount=100_000):
         model = load(model)
     except Exception as e:
         Config.debug(f'Error loading: {e}')
-        Config.debug(traceback.print_exc())
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
@@ -179,13 +206,12 @@ def predict_model(player_name=None, start=0, amount=100_000):
                 df = highscores.scrape_one(player_name)
                 if df == (None, None):
                     prediction_data = {
-                        "player_id": -1,
-                        "player_name": player_name,
-                        "prediction_label": "Player not on highscores",
-                        "prediction_confidence": 0,
-                        "secondary_predictions": []
+                            "player_id": -1,
+                            "player_name": player_name,
+                            "prediction_label": "Player not on highscores",
+                            "prediction_confidence": 0,
+                            "secondary_predictions": []
                     }
-                    Config.debug(f'no scrape: {prediction_data}')
                     return prediction_data
                 Config.debug('hiscores')
 
