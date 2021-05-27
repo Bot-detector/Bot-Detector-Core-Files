@@ -72,15 +72,7 @@ def hello():
 @app.route("/favicon.ico")
 def favicon():
     return "", 200
-
-
-@app.route("/hiscorescraper")
-def hiscorescraper():
-    sched.add_job(scraper.run_scraper, name='run_hiscore', max_instances=10, coalesce=True)
-    for job in sched.get_jobs():
-        logging.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
-        print(f'    Job: {job.name}, {job.trigger}, {job.func}')
-    return redirect('/log')
+    
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
