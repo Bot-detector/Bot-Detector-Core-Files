@@ -593,14 +593,21 @@ def get_report_data_heatmap(region_id):
 def get_leaderboard_stats(get_bans=False, get_manual=False):
 
     sql = ('''
-        SELECT
-            reportingID,
-            confirmed_ban,
-            confirmed_player
-        FROM playerdata.Reports as rpts
-        INNER JOIN playerdata.Players pl ON rpts.reportedID = pl.id
-        WHERE 1=1
-    ''')
+        SELECT DISTINCT
+            pl1.name reporter,
+            pl2.name reported,
+            lbl.label,
+            hdl.*
+        FROM playerdata.Reports rp
+        INNER JOIN playerdata.Players pl1 ON (rp.reportingID = pl1.id)
+        INNER JOIN playerdata.Players pl2 on (rp.reportedID = pl2.id) 
+        INNER JOIN playerdata.Labels lbl ON (pl2.label_id = lbl.id)
+        INNER JOIN playerdata.playerHiscoreDataLatest hdl on (pl2.id = hdl.Player_id)
+        where 1=1
+            and lower(pl1.name) = :player_name
+            and (pl2.confirmed_ban = 1
+            OR pl2.possible_ban = 1)
+        ''')
 
     if get_bans:
         sql += "AND pl.confirmed_ban = 1"
