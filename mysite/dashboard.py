@@ -62,7 +62,8 @@ def leaderboard(board=None):
 
     df = pd.DataFrame(board_data)
 
-    df = df.groupby(['reporter']).count().reset_index().sort_values(by='reported', ascending=False).head(25)
+	# Post processing: rename, group by reporter and count, sort, and limit results
+    df = df.rename(columns={"reported": "count"}).groupby(['reporter']).count().reset_index().sort_values(by='count', ascending=False).head(25)
 
     output = df.to_dict('records')
 
