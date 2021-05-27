@@ -608,16 +608,6 @@ def get_leaderboard_stats(bans=False, manual=False, limit=25):
     if manual:
         sql += " AND rp.manual_detect = 1"
 
-#     sql += ('''
-#         GROUP BY reporter
-#         ORDER BY count DESC
-#         LIMIT :limit
-#     ''')
-#
-#     param = {
-#         'limit': limit
-#     }
-
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
     
