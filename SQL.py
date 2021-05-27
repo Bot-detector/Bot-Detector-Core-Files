@@ -189,27 +189,34 @@ def insert_highscore(player_id, skills, minigames):
 '''
 
 
-def insert_report(data, version):
-    try:
-        members = data['on_members_world']
-    except KeyError as k:
-        members = None
+def insert_report(data):
+    
+    gmt = time.gmtime(data['ts'])
+    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
-    if version is None:
-        human_time = data['ts']
-    else:
-        gmt = time.gmtime(data['ts'])
-        human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
     param = {
-        'reportedID': data['reported'],
-        'reportingID': data['reporter'],
-        'region_id': data['region_id'],
-        'x_coord': data['x'],
-        'y_coord': data['y'],
-        'z_coord': data['z'],
+        'reportedID': data.get('reported'),
+        'reportingID': data.get('reporter'),
+        'region_id': data.get('region_id'),
+        'x_coord': data.get('x'),
+        'y_coord': data.get('y'),
+        'z_coord': data.get('z'),
         'timestamp': human_time,
-        'manual_detect': data['manual_detect'],
-        'on_members_world': members
+        'manual_detect': data.get('manual_detect'),
+        'on_members_world': data.get('on_members_world'),
+        'on_pvp_world': data.get('on_pvp_world'),
+        'world_number': data.get('world_number'),
+        'equip_head_id': data.get('equipment').get('HEAD'),
+        'equip_amulet_id': data.get('equipment').get('AMULET'),
+        'equip_torso_id': data.get('equipment').get('TORSO'),
+        'equip_legs_id': data.get('equipment').get('LEGS'),
+        'equip_boots_id': data.get('equipment').get('BOOTS'),
+        'equip_cape_id': data.get('equipment').get('CAPE'),
+        'equip_hands_id': data.get('equipment').get('HANDS'),
+        'equip_weapon_id': data.get('equipment').get('WEAPON'),
+        'equip_shield_id': data.get('equipment').get('SHIELD') ,
+        'equip_ge_value': data.get('equipment_ge')
+
     }
     # list of column values
     columns = list_to_string(list(param.keys()))
@@ -366,11 +373,19 @@ def get_hiscores_of_interst():
     return highscores
 
 
-def get_players_to_scrape():
-    sql = 'select * from playersToScrape;'
+def get_players_to_scrape(start=None, amount=None):
+    sql = 'select * from playersToScrape'
+    if not (start is None and amount is None):
+        sql = f'{sql} limit {start},{amount}'
+    sql = f'{sql};'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 
+
+def get_max_players_to_scrape():   
+    sql = 'select COUNT(*) as max_players from playersToScrape;'
+    data = execute_sql(sql, param=None, debug=True, has_return=True)
+    return data
 
 def get_players_of_interest():
 
@@ -407,33 +422,54 @@ def get_report_stats():
 
 # TODO: please clean, add count in query
 
-def get_contributions(contributor_id, manual_report=None):
+def get_contributions(contributors):
     
     query = '''
-        SELECT DISTINCT
-            rptd.name reported_name,
-            rptd.confirmed_ban,
-            rptd.possible_ban,
-            rptd.confirmed_player
-        from Reports rpts
-        inner join Players rptd on(rpts.reportedID = rptd.id)
+        SELECT
+            rs.detect,
+            rs.reported as num_reports,
+            pl.confirmed_ban as confirmed_ban,
+            pl.possible_ban as possible_ban,
+            pl.confirmed_player as confirmed_player
+        FROM
+            (SELECT
+                r.reportedID as reported,
+                r.manual_detect as detect
+        FROM Reports as r
+        JOIN Players as pl on pl.id = r.reportingID
         WHERE 1=1
-            and rpts.reportingID = :contributor_id
+            AND pl.name IN :contributors ) rs
+        JOIN Players as pl on (pl.id = rs.reported);
     '''
 
     params = {
-        "contributor_id": contributor_id
+        "contributors": contributors
     }
-
-    if (manual_report is not None):
-        query += " and rpts.manual_detect = :manual_report"
-        params["manual_report"] = manual_report
-
-    query += ";"
 
     data = execute_sql(query, param=params, debug=False, has_return=True)
 
     return data
+
+def manual_flags_leaderboards():
+
+    query = '''
+            SELECT
+                pl.confirmed_ban as confirmed_ban,
+                pl.possible_ban as possible_ban,
+                pl.confirmed_player as confirmed_player
+            FROM
+                (SELECT
+                    r.reportedID as reported,
+                    r.manual_detect as detect
+            FROM Reports as r
+            JOIN Players as pl on pl.id = r.reportingID
+            WHERE 1=1
+                AND pl.name IN ("Seltzer Bro")
+                AND r.manual_detect = 1
+            ) rs
+
+            JOIN Players as pl on (pl.id = rs.reported)
+        '''
 
 
 # TODO: route & visual on website
@@ -471,27 +507,6 @@ def get_hiscore_table_stats():
     return data
 
 
-# Number of times an account has been manually reported by our users.
-def get_times_manually_reported(reportedName):
-
-    sql = '''
-          SELECT 
-            SUM(manual_detect) manual_reports
-        from Reports rpts
-        inner join Players rptd on(rpts.reportedID = rptd.id)
-        WHERE manual_detect = 1
-        	and rptd.name = :reportedName
-        ;
-    '''
-
-    param = {
-        'reportedName': reportedName
-    }
-
-    data = execute_sql(sql, param=param, debug=False, has_return=True)
-    return data
-
-
 def get_region_report_stats():
 
     sql = '''
@@ -500,12 +515,6 @@ def get_region_report_stats():
 
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
-
-def get_possible_ban():
-    sql = 'Select * from Players where possible_ban = 1 and confirmed_ban = 0'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
-    return data
-
 
 def get_player_report_locations(players):
 
@@ -517,7 +526,8 @@ def get_player_report_locations(players):
             rp.region_id,
             rp.x_coord,
             rp.y_coord,
-            rp.timestamp
+            rp.timestamp,
+            rp.world_number
         FROM Reports rp
         INNER JOIN Players pl ON (rp.reportedID = pl.id)
         INNER JOIN regionIDNames rin ON (rp.region_id = rin.region_ID)
@@ -548,6 +558,13 @@ def get_region_search(regionName):
     data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
 
+def get_all_regions():
+
+    sql = "SELECT * FROM regionIDNames;"
+
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    return data
+
   
 def get_prediction_player(player_id):
     sql = 'select * from Predictions where id = :id'
@@ -558,30 +575,11 @@ def get_prediction_player(player_id):
 def get_report_data_heatmap(region_id):
 
     sql = ('''
-    SELECT DISTINCT
-        rpts2.*,
-        rpts.x_coord,
-        rpts.y_coord,
-        rpts.region_id
-    FROM Reports rpts
-        INNER JOIN (
-            SELECT 
-                max(rp.id) id,
-                pl.name,
-                pl.confirmed_player,
-                pl.possible_ban,
-                pl.confirmed_ban
-            FROM Players pl
-            inner join Reports rp on (pl.id = rp.reportedID)
-            WHERE 1
-                and (pl.confirmed_ban = 1 or pl.possible_ban = 1 or pl.confirmed_ban = 0)
-                and rp.region_id = :region_id
-            GROUP BY
-                pl.name,
-                pl.confirmed_player,
-                pl.confirmed_ban
-        ) rpts2
-    ON (rpts.id = rpts2.id)
+        SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban, timestamp
+            FROM Reports rpts
+            INNER JOIN Players plys ON rpts.reportedID = plys.id 
+            	WHERE confirmed_ban = 1
+                AND region_id = :region_id
     ''')
 
     param = {
@@ -592,31 +590,33 @@ def get_report_data_heatmap(region_id):
     return data
 
 
-def get_player_banned_bots(player_name):
+def get_leaderboard_stats(get_bans=False, get_manual=False):
 
     sql = ('''
-    SELECT DISTINCT
-        pl1.name reporter,
-        pl2.name reported,
-        lbl.label,
-        hdl.*
-    FROM Reports rp
-    INNER JOIN Players pl1 ON (rp.reportingID = pl1.id)
-    INNER JOIN Players pl2 on (rp.reportedID = pl2.id) 
-    INNER JOIN Labels lbl ON (pl2.label_id = lbl.id)
-    INNER JOIN playerHiscoreDataLatest hdl on (pl2.id = hdl.Player_id)
-    where 1=1
-        and lower(pl1.name) = :player_name
-        and pl2.confirmed_ban = 1
-        and pl2.possible_ban = 1
+        SELECT DISTINCT
+            pl1.name reporter,
+            pl2.name reported,
+            lbl.label,
+            hdl.*
+        FROM playerdata.Reports rp
+        INNER JOIN playerdata.Players pl1 ON (rp.reportingID = pl1.id)
+        INNER JOIN playerdata.Players pl2 on (rp.reportedID = pl2.id) 
+        INNER JOIN playerdata.Labels lbl ON (pl2.label_id = lbl.id)
+        INNER JOIN playerdata.playerHiscoreDataLatest hdl on (pl2.id = hdl.Player_id)
+        where 1=1
+            and lower(pl1.name) = :player_name
+            and pl2.confirmed_ban = 1
         ''')
 
-    param = {
-        'player_name': player_name
-    }
+    if get_bans:
+        sql += "AND pl.confirmed_ban = 1"
 
-    data = execute_sql(sql, param=param, debug=False, has_return=True)
+    if get_manual:
+        sql += "AND rpts.manual_detect = 1"
+
+    data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
+    
   
 def get_possible_ban_predicted():
     sql = 'SELECT * FROM playerPossibleBanPrediction'

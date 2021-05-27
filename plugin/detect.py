@@ -9,7 +9,7 @@ from flask.json import jsonify
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
-def custom_hiscore(detection, version):
+def custom_hiscore(detection):
     # hacky, support two versions
     # if version is None:
     #     gmt = time.gmtime(detection['ts'])
@@ -24,7 +24,10 @@ def custom_hiscore(detection, version):
 
     if bad_name:
         Config.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
-        return
+        return 0
+
+    if  not (0 <= int(detection['region_id']) <= 15522):
+        return 0
 
     if  not (0 <= int(detection['region_id']) <= 15522):
         return 0
@@ -49,17 +52,17 @@ def custom_hiscore(detection, version):
     detection['reporter'] = int(reporter.id)
 
     # insert into reports
-    SQL.insert_report(detection, version)
+    SQL.insert_report(detection)
     return create
 
 
-def insync_detect(detections, manual_detect, version):
+def insync_detect(detections, manual_detect):
     print("NSYNC")
     total_creates = 0
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
 
-        total_creates += custom_hiscore(detection, version)
+        total_creates += custom_hiscore(detection)
 
         if len(detection) > 1000 and total_creates/len(detections) > .75:
             print(f'    Malicious: sender: {detection["reporter"]}')
@@ -98,19 +101,7 @@ def post_detect(version=None, manual_detect=0):
     print(f'      Received detections: DF shape: {df.shape}')
 
     Config.debug(f'      Received detections: DF shape: {df.shape}')
-    Config.sched.add_job(insync_detect ,args=[detections, manual_detect, version], replace_existing=False, name='detect')
+    Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
 
 
     return jsonify({'OK': 'OK'})
-
-
-@detect.route('/plugin/detect/<rsn>', methods=['GET'])
-def get_detects(rsn=""):
-    result = SQL.get_times_manually_reported(rsn)
-
-    try:
-        times_reported = int(result[0][0])
-    except TypeError:
-        times_reported = 0
-
-    return jsonify({'times_reported': times_reported})

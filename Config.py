@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 from flask import Flask
+from flask.config import Config
 from flask_sqlalchemy import SQLAlchemy
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
@@ -19,7 +20,9 @@ flask_port = os.environ.get('flask_port')
 # it does not like the bool()
 try:
     dev_mode = os.environ.get('dev_mode')
-except:
+except Exception as e:
+    print(e)
+    logging.debug(e)
     dev_mode=1
 
 # create flask app
@@ -71,6 +74,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.WARNING)
 
+'''
 # todo cleanup in refactor
 from flask import request
 from flask_limiter import Limiter
@@ -83,6 +87,7 @@ limiter = Limiter(
    strategy='fixed-window-elastic-expiry'
 )
 
+
 @limiter.request_filter
 def ip_whitelist():
    whitelist = [
@@ -91,6 +96,7 @@ def ip_whitelist():
    ]
 
    return request.remote_addr in whitelist
+'''
 
 def debug(str):
     print(str, flush=True)

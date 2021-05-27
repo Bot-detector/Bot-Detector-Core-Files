@@ -14,6 +14,7 @@ from Config import app, sched
 from mysite.predictions import app_predictions
 from Predictions import model
 from discord.discord import discord
+from scraper.scraper import app_scraper
 
 
 app.register_blueprint(plugin_stats)
@@ -22,7 +23,7 @@ app.register_blueprint(app_token)
 app.register_blueprint(dashboard)
 app.register_blueprint(app_predictions)
 app.register_blueprint(discord)
-
+app.register_blueprint(app_scraper)
 
 def print_jobs():
     Config.debug('   Scheduled Jobs:')
@@ -45,7 +46,8 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         # sched.add_job(model.save_model, args=[n_pca], trigger='interval', days=1, start_date=today18h, replace_existing=True, name='save_model')
         sched.add_job(banned_by_jagex.confirm_possible_ban, trigger='interval', days=1, start_date=dt.date.today(), replace_existing=True, name='confirm_possible_ban')
 
-    sched.add_job(hiscoreScraper.run_scraper, trigger='interval', minutes=1,start_date=dt.date.today(), name='run_hiscore', max_instances=30, coalesce=True)
+        sched.add_job(hiscoreScraper.run_scraper, trigger='interval', minutes=1,start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
+        
     sched.add_job(model.train_model, args=[n_pca], replace_existing=True, name='train_model')  # on startup
 
     print_jobs()

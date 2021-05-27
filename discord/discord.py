@@ -57,6 +57,21 @@ def get_regions(token, regionName=None):
 
     return jsonify(output)
 
+@discord.route('/discord/get_regions/<token>', methods=['GET'])
+def get_all_regions(token):
+
+    verified = tokens.verify_token(token=token, verifcation='hiscores')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+    
+    data = SQL.get_all_regions()
+
+    df = pd.DataFrame(data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
+
 @discord.route('/discord/heatmap/<token>', methods=['GET'])
 @discord.route('/discord/heatmap/<token>/<region_id>', methods=['GET'])
 def get_heatmap_data(token, region_id=None):
@@ -75,7 +90,20 @@ def get_heatmap_data(token, region_id=None):
     
     data = SQL.get_report_data_heatmap(region_id)
 
+
     df = pd.DataFrame(data)
+
+    #Filter out heatmap data from before the bulk of our v1.3 fixes
+    df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d')
+    df = df.loc[(df['timestamp'] >= '2021-05-06')]
+
+    #Remove unnecessary columns
+    df = df.drop(columns=['z_coord', 'region_id', 'timestamp'])
+
+    #Group by tiles
+    df = df.groupby(["x_coord", "y_coord"], as_index=False).sum()
+    df = df.astype({"confirmed_ban": int})
+
     output = df.to_dict('records')
 
     return jsonify(output)
