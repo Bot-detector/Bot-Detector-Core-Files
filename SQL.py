@@ -583,8 +583,7 @@ def get_player_banned_bots(player_name):
         INNER JOIN playerdata.playerHiscoreDataLatest hdl on (pl2.id = hdl.Player_id)
         where 1=1
             and lower(pl1.name) = :player_name
-            and (pl2.confirmed_ban = 1
-            OR pl2.possible_ban = 1)
+            and pl2.confirmed_ban = 1
         ''')
 
     param = {
