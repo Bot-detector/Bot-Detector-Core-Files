@@ -51,22 +51,20 @@ def get_player_labels():
 
     return jsonify(output)
 
-@dashboard.route('/leaderboard/<board>', methods=['GET'])
+@dashboard.route('/leaderboard', methods=['GET'])
 def leaderboard(board=None):
-    
-    if board == "manual":
-        board_data = SQL.get_leaderboard_stats(get_bans=False, get_manual=True)
+    params = request.args.to_dict()
 
+    # Any query param will be treated as True
+    params = dict.fromkeys(params, True)
 
-    elif board == "bans":
-        board_data = SQL.get_leaderboard_stats(get_bans=True, get_manual=False)
-        
-
-    elif board == "reports":
-        board_data = SQL.get_leaderboard_stats(get_bans=False, get_manual=False)
-
+    board_data = SQL.get_leaderboard_stats(**params)
 
     df = pd.DataFrame(board_data)
+
+	# Post processing: rename, group by reporter and count, sort, and limit results
+    df = df.rename(columns={"reported": "count"}).groupby(['reporter']).count().reset_index().sort_values(by='count', ascending=False).head(25)
+
     output = df.to_dict('records')
 
     return jsonify(output)
