@@ -1,6 +1,9 @@
 import os, sys
+
+from discord_webhook.webhook import DiscordEmbed
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from discord_webhook import DiscordWebhook
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import requests
@@ -14,6 +17,8 @@ import random
 import Config
 import SQL
 import scraper.extra_data as ed
+
+players_banned = []
 
 def make_web_call(URL, user_agent_list, debug=False):
     # Pick a random user agent
@@ -85,6 +90,9 @@ def check_player(player):
             SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
         else:
             SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=1, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
+            
+        players_banned.append(player['name'])
+        
         return data['error']
 
     # unkown
@@ -132,6 +140,20 @@ def confirm_possible_ban():
                         t = end - start
                         Config.debug(f'     player Checked: {100}, total: {i}, took: {t}, {dt.datetime.now()}')
                         start = dt.datetime.now()
+
+                        if len(players_banned) > 0:
+
+                            #webhook = DiscordWebhook(url='')
+                            #embed = DiscordEmbed(title="All Ye Bots Lose All Hope", color="000000")
+                            #embed.set_timestamp()
+                            #embed.add_embed_field(name="Newly Departed", value=f"{', '.join(players_banned)}")
+                            #embed.set_thumbnail(url="https://oldschool.runescape.wiki/images/3/31/Wilderness_%26_PvP_Improvements_newspost.png?c0569")
+                            #webhook.add_embed(embed=embed)
+                            #response = webhook.execute()
+                            players_banned.clear()
+
+                        else:
+                            print("nothing here")
 
                 except Exception as e:
                     Config.debug(f'Multithreading error: {e}')

@@ -22,7 +22,14 @@ def get_prediction(player_name, version=None):
 
     player_name, bad_name = SQL.name_check(player_name)
 
-    if not( bad_name):
+    if player_name == "Mod Ash":
+        df = {
+            "player_id": 957580,
+            "player_name": player_name,
+            "prediction_label": "Big Daddy",
+            "prediction_confidence": 1
+        }
+    elif not( bad_name):
         df = model.predict_model(player_name=player_name)
         df['name'] = player_name
     else:

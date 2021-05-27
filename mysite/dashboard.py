@@ -51,6 +51,27 @@ def get_player_labels():
 
     return jsonify(output)
 
+@dashboard.route('/leaderboard/<board>', methods=['GET'])
+def leaderboard(board=None):
+    
+    if board == "manual":
+        board_data = SQL.get_leaderboard_stats(get_bans=False, get_manual=True)
+
+
+    elif board == "bans":
+        board_data = SQL.get_leaderboard_stats(get_bans=True, get_manual=False)
+        
+
+    elif board == "reports":
+        board_data = SQL.get_leaderboard_stats(get_bans=False, get_manual=False)
+
+
+    df = pd.DataFrame(board_data)
+    output = df.to_dict('records')
+
+    return jsonify(output)
+
+
 # CORS Policy: Allow Access to These Methods From Any Origin
 @dashboard.after_request
 def after_request(response):
