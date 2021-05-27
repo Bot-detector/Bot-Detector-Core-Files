@@ -578,7 +578,7 @@ def get_report_data_heatmap(region_id):
         SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban, timestamp
             FROM Reports rpts
             INNER JOIN Players plys ON rpts.reportedID = plys.id 
-            	WHERE confirmed_ban = 1
+                WHERE confirmed_ban = 1
                 AND region_id = :region_id
     ''')
 
@@ -590,29 +590,33 @@ def get_report_data_heatmap(region_id):
     return data
 
 
-def get_leaderboard_stats(get_bans=False, get_manual=False):
+def get_leaderboard_stats(bans=False, manual=False, limit=25):
 
     sql = ('''
-        SELECT DISTINCT
+        SELECT
             pl1.name reporter,
-            pl2.name reported,
-            lbl.label,
-            hdl.*
-        FROM playerdata.Reports rp
-        INNER JOIN playerdata.Players pl1 ON (rp.reportingID = pl1.id)
-        INNER JOIN playerdata.Players pl2 on (rp.reportedID = pl2.id) 
-        INNER JOIN playerdata.Labels lbl ON (pl2.label_id = lbl.id)
-        INNER JOIN playerdata.playerHiscoreDataLatest hdl on (pl2.id = hdl.Player_id)
-        where 1=1
-            and lower(pl1.name) = :player_name
-            and pl2.confirmed_ban = 1
+            pl2.name reported
+        FROM Reports rp
+        INNER JOIN Players pl1 ON (rp.reportingID = pl1.id)
+        INNER JOIN Players pl2 on (rp.reportedID = pl2.id)
+        where 1=1 AND pl1.name != 'AnonymousUser'
         ''')
 
-    if get_bans:
-        sql += "AND pl.confirmed_ban = 1"
+    if bans:
+        sql += " AND pl2.confirmed_ban = 1"
 
-    if get_manual:
-        sql += "AND rpts.manual_detect = 1"
+    if manual:
+        sql += " AND rp.manual_detect = 1"
+
+#     sql += ('''
+#         GROUP BY reporter
+#         ORDER BY count DESC
+#         LIMIT :limit
+#     ''')
+#
+#     param = {
+#         'limit': limit
+#     }
 
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
