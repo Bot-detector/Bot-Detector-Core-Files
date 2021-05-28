@@ -74,6 +74,8 @@ def receive_plugin_feedback(version=None):
 
     vote_info = request.get_json()
 
+    print(vote_info)
+
     voter = get_player(vote_info['player_name'])
 
     # Voter ID will be 0 if player is not logged in.
