@@ -232,8 +232,8 @@ def insert_report(data):
 
 
 def insert_prediction_feedback(vote_info):
-    sql_insert = 'insert ignore into PredictionsFeedback (voter_id, prediction, confidence, vote, subject_id) ' \
-                 'values (:voter_id, :prediction, :confidence, :vote, :subject_id);'
+    sql_insert = 'insert ignore into PredictionsFeedback (voter_id, prediction, confidence, vote, subject_id, feedback_text) ' \
+                 'values (:voter_id, :prediction, :confidence, :vote, :subject_id, :feedbackText);'
     execute_sql(sql_insert, param=vote_info, debug=False, has_return=False)
 
 
