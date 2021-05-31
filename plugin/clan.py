@@ -1,6 +1,8 @@
+import json
+
 import pandas as pd
 import SQL
-from flask import Blueprint, json, request, jsonify
+from flask import Blueprint, json, jsonify, request
 
 clan = Blueprint('clan', __name__, template_folder='templates')
 
@@ -25,18 +27,13 @@ def get_clan_rank(version, token):
     # parse KC of players
 
     # return players with their new rank
-    r = [
-        {
-            'player': 'extreme4all',
-            'rank': 'OWNER'
-        },
-        {
-            'player': 'cyborger',
-            'rank': 'OWNER'
-        },
-        {
-            'player': 'ferrariic',
-            'rank': 'CLAN_RANK_1'
-        }
-    ]
-    return jsonify(r)
+
+    # sample code
+    mask = (df['rank'] == 'CLAN_RANK_1')
+    df = df[mask]
+    df['rank'] = 'CLAN_RANK_2'
+
+    # format data
+    myjson = df.to_json(orient='records')
+
+    return jsonify(json.loads(myjson))
