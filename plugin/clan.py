@@ -25,8 +25,18 @@ def get_clan_rank(version, token):
     # parse KC of players
 
     # return players with their new rank
-    r = {
-        'player':'masterchief',
-        'rank':1
-    }
+    r = [
+        {
+            'player': 'extreme4all',
+            'rank': 'OWNER'
+        },
+        {
+            'player': 'cyborger',
+            'rank': 'OWNER'
+        },
+        {
+            'player': 'ferrariic',
+            'rank': 'CLAN_RANK_1'
+        }
+    ]
     return jsonify(r)
