@@ -429,7 +429,7 @@ def get_contributions(contributors):
     query = '''
         SELECT
             rs.detect,
-            rs.reported as num_reports,
+            rs.reported as reported_ids,
             pl.confirmed_ban as confirmed_ban,
             pl.possible_ban as possible_ban,
             pl.confirmed_player as confirmed_player

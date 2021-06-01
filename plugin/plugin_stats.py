@@ -12,8 +12,6 @@ plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 @plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
 def get_contributions(version=None, contributor=None):
 
-    
-
     if contributor is not None:
         contributors = [contributor]
     else:
@@ -30,7 +28,7 @@ def get_contributions(version=None, contributor=None):
     contributions = SQL.get_contributions(contributors)
     
     df = pd.DataFrame(contributions)
-    df = df.drop_duplicates(inplace=False)
+    df = df.drop_duplicates(inplace=False, subset=["reported_ids"], keep="last")
 
     try:
         df_detect_manual = df.loc[df['detect'] == 1]
