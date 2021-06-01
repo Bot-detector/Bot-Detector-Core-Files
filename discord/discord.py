@@ -3,7 +3,6 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import SQL
-import 
 from flask.json import jsonify
 from flask import Blueprint, request, make_response
 import mysite.tokens as tokens
