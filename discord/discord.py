@@ -95,7 +95,7 @@ def get_heatmap_data(token, region_id=None):
 
     #Filter out heatmap data from before the bulk of our v1.3 fixes
     df['timestamp'] = pd.to_datetime(df['timestamp'], format='%Y-%m-%d')
-    df = df.loc[(df['timestamp'] >= '2021-05-06')]
+    df = df.loc[(df['timestamp'] >= '2021-05-16')]
 
     #Remove unnecessary columns
     df = df.drop(columns=['z_coord', 'region_id', 'timestamp'])
