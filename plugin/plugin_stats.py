@@ -28,7 +28,8 @@ def get_contributions(version=None, contributor=None):
     contributions = SQL.get_contributions(contributors)
     
     df = pd.DataFrame(contributions)
-    df = df.drop_duplicates(inplace=False, subset=["reported_ids"], keep="last")
+    print(df)
+    df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
 
     try:
         df_detect_manual = df.loc[df['detect'] == 1]
