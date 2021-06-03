@@ -1,12 +1,14 @@
 import os
 import sys
+
+from flask.helpers import send_file
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import SQL
 from flask.json import jsonify
 from flask import Blueprint, request, make_response
 import mysite.tokens as tokens
-import Config
+import json
 import pandas as pd
 
 
@@ -20,7 +22,6 @@ def get_locations(token):
     if not (verified):
         return jsonify({'Invalid Data':'Data'})
 
-    # json = {'names':('ferrariic','extreme4all','seltzerbro')}
     players = request.get_json()
 
     if players is None:
@@ -109,28 +110,56 @@ def get_heatmap_data(token, region_id=None):
     return jsonify(output)
 
 @discord.route('/discord/player_bans/<token>', methods=['GET'])
-@discord.route('/discord/player_bans/<token>/<player_name>', methods=['GET'])
-def get_player_bans(token, player_name=None):
+@discord.route('/discord/player_bans/<token>/<discord_id>', methods=['GET'])
+def get_player_bans(token, discord_id=None):
 
     verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):
-        return jsonify({'Invalid Data':'Data'})
+        return jsonify({'error':'Invalid data'}), 401
 
-    if player_name is None:
-        player_name = request.get_json()
+    if discord_id is None:
+        req_data = json.loads(request.get_json())
     
-        if player_name is None:
-            return jsonify({'Invalid Data':'Data'})
+        if req_data is None:
+            return jsonify({'error':'No data'}), 400
 
-        player_name = player_name['player_name']
-    
-    data = SQL.get_player_banned_bots(player_name)
+        discord_id = req_data['discord_id']
 
-    df = pd.DataFrame(data)
-    output = df.to_dict('records')
+    linked_accounts = SQL.get_discord_linked_accounts(discord_id=discord_id)
 
-    return jsonify(output)
+    if len(linked_accounts) == 0:
+        return jsonify({"error": "User has no OSRS accounts linked to their Discord ID."}), 500
+
+    sheets = []
+    names = []
+
+    for account in linked_accounts:
+        data = SQL.get_player_banned_bots(account.name)
+        df = pd.DataFrame(data)
+
+        sheets.append(df)
+        names.append(account.name)
+
+    if len(sheets) > 0:
+        totalSheet = pd.concat(sheets)
+        totalSheet = totalSheet.drop_duplicates(subset="Player_id", keep="last")
+
+        file_name = f"{req_data['display_name']}_bans.xlsx"
+        writer = pd.ExcelWriter(file_name, engine="xlsxwriter")
+
+        totalSheet.to_excel(writer, sheet_name="Total")
+
+        for idx, name in enumerate(names):
+            sheets[idx].to_excel(writer, sheet_name=names[idx])
+
+        writer.save()
+
+        return send_file(file_name)
+
+
+    else:
+        return jsonify({"error": "No ban data available for the linked account(s)."}), 500
   
 
 @discord.route('/discord/verify/player_rsn_discord_account_status/<token>/<player_name>', methods=['GET'])
