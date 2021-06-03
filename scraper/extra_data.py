@@ -168,7 +168,7 @@ minigames = {
     "the_gauntlet": 0,
     "the_corrupted_gauntlet": 0,
     "theatre_of_blood": 0,
-    "theatre_of_blood_hard_mode": 0,
+    "theatre_of_blood_hard": 0,
     "thermonuclear_smoke_devil": 0,
     "tzkal_zuk": 0,
     "tztok_jad": 0,
