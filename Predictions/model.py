@@ -18,7 +18,7 @@ from sklearn.metrics import classification_report
 from sklearn.calibration import CalibratedClassifierCV
 
 # custom imports
-import SQL, Config
+import SQL, Config, SQL_folder
 from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
@@ -337,8 +337,11 @@ def save_model(n_pca=50):
         data = df.to_dict('records')
         length = len(df)
         del df
-
-        multi_thread(data)
+        row = data[0]
+        values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
+        sql_insert = f'insert ignore into Predictions values ({values});'
+        SQL.execute_sql(sql_insert, param=data, debug=False, has_return=False)
+        # multi_thread(data)
         del data
 
         loop += 1
@@ -382,6 +385,6 @@ def multi_thread(data):
 
 if __name__ == '__main__':
     # train_model(n_pca=50)
-    # save_model(n_pca=30)
+    save_model(n_pca=30)
     df = predict_model(player_name='DiscountYuma') # player_name='extreme4all'
     print(df.head())

@@ -67,6 +67,7 @@ def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerda
         session.commit()
         session.close()
         conn.close()
+        return
 
 '''
     Players Table
