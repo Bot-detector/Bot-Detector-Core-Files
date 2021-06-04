@@ -330,5 +330,5 @@ def save_model(n_pca='mle'):
 if __name__ == '__main__':
     train_model()
     # save_model
-    df = predict_model(player_name='extreme4all') # player_name='extreme4all'
+    df = predict_model(player_name='2h face ask') # player_name='extreme4all'
     print(df.head())
