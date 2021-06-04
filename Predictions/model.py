@@ -24,43 +24,13 @@ from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
 
 
-def create_model(train_x, train_y, test_x, test_y, lbls):
-    # neigh = KNeighborsClassifier(n_neighbors=len(lbls), n_jobs=-1)
-    # neigh = neigh.fit(train_x, train_y)
-
-    # mlpc = MLPClassifier(max_iter=10000, random_state=7)
-    # mlpc = mlpc.fit(train_x, train_y)
-
-    # rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
-    # rfc = rfc.fit(train_x, train_y)
-
-    # etc = ExtraTreesClassifier(n_estimators=100, random_state=7, n_jobs=-1)
-    # etc = etc.fit(train_x, train_y)
-
-    # sgdc = SGDClassifier(max_iter=1000, tol=1e-3, loss='modified_huber')
-    # sgdc = sgdc.fit(train_x, train_y)
-
-    # models = [neigh, mlpc, rfc, etc, sgdc]
-    # scores = [round(m.score(test_x, test_y)*100,2) for m in models]
-    # weights = [s**2 for s in scores]
-    # estimators = [(m.__class__.__name__, m) for m in models]
-
-    # _ = [Config.debug(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
-
-    # vote = VotingClassifier(
-    #     weights=weights,
-    #     estimators=estimators, 
-    #     voting='soft',
-    #     n_jobs=-1
-    #     )
-    # return vote
+def create_model():
     rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
-    rfc = rfc.fit(train_x, train_y)
     return rfc
 
 
-def train_model(n_pca):
-    
+def train_model(n_pca='mle', use_pca=True):
+    # get data
     df =            pf.get_highscores()
     df_players =    pf.get_players()
     df_labels =     pf.get_labels() 
@@ -72,6 +42,8 @@ def train_model(n_pca):
         .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
         # .pipe(pf.filter_relevant_features, ed.skills_list)
     )
+
+    # preprocess
     df_preprocess = (df_clean
         .pipe(pf.start_pipeline)
         .pipe(pf.f_standardize)
@@ -80,14 +52,18 @@ def train_model(n_pca):
 
 
     today = time.strftime('%Y-%m-%d', time.gmtime())
+
+
     columns = df_preprocess.columns.tolist()
     dump(value=columns, filename=f'Predictions/models/features_{today}_100.joblib')
     
 
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=None)
-    dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
+    # dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
 
-    df_pca = df_preprocess # no pca
+    if not use_pca:
+        df_pca = df_preprocess
+    
     Config.debug(f'pca shape: {df_pca.shape}')
 
     df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
@@ -118,15 +94,9 @@ def train_model(n_pca):
     # train test split but make sure to have all the labels form y
     train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.3, random_state=42, stratify=y)
 
-    model_name = 'vote'
-    model = create_model(train_x, train_y, test_x, test_y, lbls)
+    model_name = 'rfc'
+    model = create_model()
     model = model.fit(train_x, train_y)
-
-    # works on colab not on my pc: ValueError: Invalid prediction method: _predict_proba 
-    # # https://scikit-learn.org/stable/modules/generated/sklearn.calibration.CalibratedClassifierCV.html#sklearn.calibration.CalibratedClassifierCV
-    # does not work in current version, issue created https://github.com/scikit-learn/scikit-learn/issues/20053
-    # model = CalibratedClassifierCV(base_estimator=model, cv='prefit')
-    # model = model.fit(test_x, test_y) # docu says to calibrate on test?
 
     # print model score
     model_score = round(model.score(test_x, test_y)*100,2)
@@ -138,10 +108,11 @@ def train_model(n_pca):
     # fit & save model on entire dataset
     model = model.fit(x, y)
     dump(value=model, filename=f'Predictions/models/model-{model_name}_{today}_{model_score}.joblib')
+
     return
 
     
-def predict_model(player_name=None, start=0, amount=100_000):
+def predict_model(player_name=None, start=0, amount=100_000, use_pca=True):
     # load scaler, transformer, features, pca, labels & model
     try:
         scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
@@ -170,8 +141,6 @@ def predict_model(player_name=None, start=0, amount=100_000):
             "prediction_confidence": 0,
             "secondary_predictions": []
         }
-
-
         return prediction_data
 
     # if no player name is given, take all players
@@ -261,8 +230,10 @@ def predict_model(player_name=None, start=0, amount=100_000):
 
     df_preprocess = df_preprocess[features].copy()
 
-    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=int(n_pca), pca=pca)
-    df_pca = df_preprocess
+    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=pca)
+
+    if not use_pca:
+        df_pca = df_preprocess
     
     proba =         model.predict_proba(df_pca)
     df_proba_max =  proba.max(axis=1)
@@ -280,7 +251,7 @@ def predict_model(player_name=None, start=0, amount=100_000):
     return df_resf
 
 
-def save_model(n_pca=50):
+def save_model(n_pca='mle'):
     Config.debug(os.listdir())
     
     # chunking data
@@ -336,13 +307,16 @@ def save_model(n_pca=50):
         # insert rows into table
         data = df.to_dict('records')
         length = len(df)
+
         del df
+
         row = data[0]
         values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
         sql_insert = f'insert ignore into Predictions values ({values});'
         SQL.execute_sql(sql_insert, param=data, debug=False, has_return=False)
         # multi_thread(data)
-        del data
+
+        del data, row
 
         loop += 1
 
@@ -352,39 +326,9 @@ def save_model(n_pca=50):
     return
 
 
-def insert_prediction(row):
-    values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
-    sql_insert = f'insert ignore into Predictions values ({values});'
-    SQL.execute_sql(sql_insert, param=row, debug=False, has_return=False)
-    return
-
-
-def multi_thread(data):
-    Config.debug('start multithread')
-    # create a list of tasks to multithread
-    tasks = []
-    for row in data:
-        tasks.append(([row]))
-
-    del data # memory optimalization
-
-    # multithreaded executor
-    with cf.ProcessPoolExecutor() as executor:
-        # submit each task to be executed
-        futures = {executor.submit(insert_prediction, task[0]): task[0] for task in tasks}
-
-        del tasks # memory optimalization
-
-        # get start time
-        for future in cf.as_completed(futures):
-            _ = futures[future]
-            _ = future.result()
-
-    del futures, future # memory optimalization
-    return
 
 if __name__ == '__main__':
-    # train_model(n_pca=50)
-    save_model(n_pca=30)
-    df = predict_model(player_name='DiscountYuma') # player_name='extreme4all'
+    train_model()
+    # save_model
+    df = predict_model(player_name='extreme4all') # player_name='extreme4all'
     print(df.head())

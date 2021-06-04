@@ -218,13 +218,20 @@ def f_normalize(df, transformer=None):
     X_normalized = transformer.transform(df)
     return pd.DataFrame(X_normalized, columns=df.columns, index=df.index)
 
-def f_pca(df, n_components=2, pca=None):
+
+def f_pca(df, n_components='mle', pca=None):
     if pca is None:
-        pca = PCA(n_components = n_components) 
+        n_components = int(n_components) if n_components != 'mle' else n_components
+        pca = PCA(n_components=n_components, random_state=7) 
         pca = pca.fit(df)
 
+        today = time.strftime('%Y-%m-%d')
+        n_components = pca.n_components_
+        dump(value=pca, filename=f'Predictions/models/pca_{today}_{n_components}.joblib')
+        
     # Apply dimensionality reduction to X.
     X_principal = pca.transform(df)
+
     # rename columns and put in dataframe
     columns = [f'P{c}' for c in range(n_components)]
     df = pd.DataFrame(X_principal, columns=columns, index=df.index) 
