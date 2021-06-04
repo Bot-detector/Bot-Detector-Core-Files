@@ -229,6 +229,7 @@ def f_pca(df, n_components='mle', pca=None):
         n_components = pca.n_components_
         dump(value=pca, filename=f'Predictions/models/pca_{today}_{n_components}.joblib')
         
+    n_components = int(n_components)
     # Apply dimensionality reduction to X.
     X_principal = pca.transform(df)
 
