@@ -122,7 +122,7 @@ def get_player_bans(token, discord_id=None):
         req_data = json.loads(request.get_json())
     
         if req_data is None:
-            return jsonify({'error':'No data'}), 400
+            return jsonify({'error':'No data provided.'}), 400
 
         discord_id = req_data['discord_id']
 
@@ -159,7 +159,7 @@ def get_player_bans(token, discord_id=None):
 
 
     else:
-        return jsonify({"error": "No ban data available for the linked account(s)."}), 500
+        return jsonify({"error": "No ban data available for the linked account(s). Possibly the server timed out."}), 500
   
 
 @discord.route('/discord/verify/player_rsn_discord_account_status/<token>/<player_name>', methods=['GET'])
