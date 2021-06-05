@@ -199,7 +199,7 @@ def f_standardize(df, scaler=None):
         scaler = RobustScaler()
         scaler = scaler.fit(df)
 
-        today = time.strftime('%Y-%m-%d')
+        today = int(time.time())
         dump(value=scaler, filename=f'Predictions/models/scaler_{today}_100.joblib')
     
     X_scaled = scaler.transform(df) 
@@ -212,7 +212,7 @@ def f_normalize(df, transformer=None):
         transformer = Normalizer()
         transformer = transformer.fit(df)
 
-        today = time.strftime('%Y-%m-%d')
+        today = int(time.time())
         dump(value=transformer, filename=f'Predictions/models/normalizer_{today}_100.joblib')
 
     X_normalized = transformer.transform(df)
@@ -220,16 +220,15 @@ def f_normalize(df, transformer=None):
 
 
 def f_pca(df, n_components='mle', pca=None):
+    n_components = int(n_components) if n_components != 'mle' else n_components
     if pca is None:
-        n_components = int(n_components) if n_components != 'mle' else n_components
         pca = PCA(n_components=n_components, random_state=7) 
         pca = pca.fit(df)
 
-        today = time.strftime('%Y-%m-%d')
+        today = int(time.time())
         n_components = pca.n_components_
         dump(value=pca, filename=f'Predictions/models/pca_{today}_{n_components}.joblib')
         
-    n_components = int(n_components)
     # Apply dimensionality reduction to X.
     X_principal = pca.transform(df)
 

@@ -51,8 +51,7 @@ def train_model(n_pca='mle', use_pca=True):
     )
 
 
-    today = time.strftime('%Y-%m-%d', time.gmtime())
-
+    today = int(time.time()) # time.strftime('%Y-%m-%d', time.gmtime())
 
     columns = df_preprocess.columns.tolist()
     dump(value=columns, filename=f'Predictions/models/features_{today}_100.joblib')
@@ -87,6 +86,9 @@ def train_model(n_pca='mle', use_pca=True):
     df_labeled.drop(columns=['confirmed_ban','confirmed_player','possible_ban','label_id'], inplace=True)
     x, y = df_labeled.iloc[:,:-1], df_labeled.iloc[:,-1]
 
+    Config.debug(f'x shape:{x.shape}')
+    Config.debug(f'y shape:{y.shape}')
+
     # save labels
     lbls = np.sort(y.unique())
     dump(value=lbls, filename=f'Predictions/models/labels_{today}_100.joblib')
@@ -112,7 +114,7 @@ def train_model(n_pca='mle', use_pca=True):
     return
 
     
-def predict_model(player_name=None, start=0, amount=100_000, use_pca=True):
+def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug=False):
     # load scaler, transformer, features, pca, labels & model
     try:
         scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
@@ -154,10 +156,10 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True):
         df_players = pf.get_players(with_id=True, ofinterest=False, ids=ids)
     else:
         player = SQL.get_player(player_name)
-        if player is None:
+
+        if player is None or debug:
             df = highscores.scrape_one(player_name)
             player = SQL.get_player(player_name)
-
         else:
             try:
                 df_resf = SQL.get_prediction_player(player.id)
@@ -251,7 +253,7 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True):
     return df_resf
 
 
-def save_model(n_pca='mle'):
+def save_model(n_pca='mle', use_pca=True):
     Config.debug(os.listdir())
     
     # chunking data
@@ -260,7 +262,7 @@ def save_model(n_pca='mle'):
     first_run = True
     loop = 0
 
-    train_model(n_pca)
+    train_model(n_pca, use_pca)
 
     # get predictions in chunks
     while not(end):
@@ -328,7 +330,21 @@ def save_model(n_pca='mle'):
 
 
 if __name__ == '__main__':
-    train_model()
+    use_pca = True
+    debug = True
+    n_pca = 2
+    
+    players = [
+        'extreme4all',  # Real
+        'w0000025',     # herb bot
+        'Draglich2748', # fletching bot
+        'cayde_006',    # smithing bot
+        'mobile007'     # magic bot
+    ]
+    
+    train_model(use_pca=use_pca, n_pca=n_pca)
     # save_model
-    df = predict_model(player_name=['Soupport','2h face ask']) # player_name='extreme4all'
-    print(df.head())
+
+    for player in players:
+        df = predict_model(player_name=player, use_pca=use_pca, debug=debug) # player_name='extreme4all'
+        print(df.head())

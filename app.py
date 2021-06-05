@@ -36,7 +36,7 @@ def print_jobs():
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
-    n_pca = 50
+    n_pca = 5
     Config.debug(f'devmode: {Config.dev_mode}')
 
     # prevent scraping & predicting for every player in dev
