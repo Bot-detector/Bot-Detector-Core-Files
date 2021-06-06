@@ -103,5 +103,5 @@ def debug(str):
     logging.debug(str)
 
 # for machine learning
-n_pca='mle'
+n_pca=2
 use_pca=False

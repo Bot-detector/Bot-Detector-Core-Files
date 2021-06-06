@@ -57,6 +57,7 @@ def process(df, scaler=None, transformer=None):
 
 
 def train_model(n_pca='mle', use_pca=True):
+    Config.debug(f'Train Model config: n_pca: {n_pca}, use_pca: {use_pca}')
     # get data
     df =            pf.get_highscores()
     df_players =    pf.get_players()
@@ -218,10 +219,14 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
 
     df_preprocess = df_preprocess[features].copy()
 
-    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=pca)
-
-    if not use_pca:
+    Config.debug(f'Predict Model config: n_pca: {n_pca}, use_pca: {use_pca}')
+    
+    if use_pca:
+        df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=pca)
+    else:
         df_pca = df_preprocess
+
+    Config.debug(f'pca shape: {df_pca.shape}')
     
     proba =         model.predict_proba(df_pca)
     df_proba_max =  proba.max(axis=1)
@@ -241,7 +246,7 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
 
 def save_model(n_pca='mle', use_pca=True):
     Config.debug(os.listdir())
-    
+    Config.debug(f'Save Model config: n_pca {n_pca}, use_pca {use_pca}')
     # chunking data
     limit = 5_000
     end = False
@@ -332,8 +337,8 @@ if __name__ == '__main__':
         'TheNeruAss'    #error
     ]
     
-    train_model(use_pca=use_pca, n_pca=n_pca)
-    # save_model
+    # train_model(use_pca=use_pca, n_pca=n_pca)
+    save_model(use_pca=use_pca, n_pca=n_pca)
 
     for player in players:
         df = predict_model(player_name=player, use_pca=use_pca, debug=debug) # player_name='extreme4all'
