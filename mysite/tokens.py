@@ -149,8 +149,7 @@ def create_predictions(token):
     if not (verify_token(token, verifcation='create_token')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
-    n_pca = 5
-    Config.sched.add_job(model.save_model ,args=[n_pca], replace_existing=True, name='save_model')
+    Config.sched.add_job(model.save_model ,args=[Config.n_pca, Config.use_pca], replace_existing=True, name='save_model')
     return jsonify({'OK': 'OK'})
 
 @app_token.route("/site/hiscorescraper/<token>")

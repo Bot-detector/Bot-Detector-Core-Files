@@ -28,6 +28,33 @@ def create_model():
     rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
     return rfc
 
+def process(df, scaler=None, transformer=None):
+    # cleaning
+    try:
+        df_clean = (df
+            .pipe(pf.start_pipeline)
+            .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
+            .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
+            .pipe(pf.filter_relevant_features, ed.skills_list)
+        )
+    except Exception as e:
+        Config.debug(f'Error cleaning: {e}')
+        return None, None
+
+    # preprocess
+    try:
+        
+        df_preprocess = (df_clean
+            .pipe(pf.start_pipeline)
+            .pipe(pf.f_standardize, scaler)
+            .pipe(pf.f_normalize, transformer)
+        )
+    except Exception as e:
+        Config.debug(f'Error normalizing: {e}')
+        return None, None
+
+    return df_clean, df_preprocess
+
 
 def train_model(n_pca='mle', use_pca=True):
     # get data
@@ -35,21 +62,8 @@ def train_model(n_pca='mle', use_pca=True):
     df_players =    pf.get_players()
     df_labels =     pf.get_labels() 
 
-    # pandas pipeline
-    df_clean = (df
-        .pipe(pf.start_pipeline)
-        .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-        .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
-        # .pipe(pf.filter_relevant_features, ed.skills_list)
-    )
 
-    # preprocess
-    df_preprocess = (df_clean
-        .pipe(pf.start_pipeline)
-        .pipe(pf.f_standardize)
-        .pipe(pf.f_normalize)
-    )
-
+    df_clean, df_preprocess = process(df)
 
     today = int(time.time()) # time.strftime('%Y-%m-%d', time.gmtime())
 
@@ -188,39 +202,11 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
         df = pd.DataFrame(df)
         df_players = pf.get_players(players=pd.DataFrame([player]), with_id=True)
 
-    try:
-        df_clean = (df
-            .pipe(pf.start_pipeline)
-            .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-            .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
-            # .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
-            # after feature creation in testing
-        )
-        del df # free up memory
-    except Exception as k:
-        Config.debug(f'Error cleaning: {k}')
+    df_clean, df_preprocess = process(df, scaler, transformer)
+
+    if df_clean is None:
         Config.debug(f' {player_name}')
         Config.debug(f' {df}')
-
-        prediction_data = {
-            "player_id": -1,
-            "player_name": player_name,
-            "prediction_label": "Not In Our Database",
-            "prediction_confidence": 0,
-            "secondary_predictions": []
-        }
-        return prediction_data
-
-    try:
-        df_preprocess = (df_clean
-            .pipe(pf.start_pipeline)
-            .pipe(pf.f_standardize, scaler=scaler)
-            .pipe(pf.f_normalize, transformer=transformer)
-        )
-        del df_clean # free up memory
-    except Exception as v:
-        Config.debug(f'Error normalizing: {v}')
-
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
@@ -330,16 +316,19 @@ def save_model(n_pca='mle', use_pca=True):
 
 
 if __name__ == '__main__':
-    use_pca = True
+    use_pca = False
     debug = True
     n_pca = 2
     
     players = [
         'extreme4all',  # Real
+        'blue fog',     # Real
+        'wook1ee',      # Real
+        'Joe kurt',     # Real
         'w0000025',     # herb bot
         'Draglich2748', # fletching bot
         'cayde_006',    # smithing bot
-        'mobile007'     # magic bot
+        '77slender148'  # runecraft bot
     ]
     
     train_model(use_pca=use_pca, n_pca=n_pca)

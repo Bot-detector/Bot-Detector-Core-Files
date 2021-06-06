@@ -170,6 +170,9 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
         
     # all features
     features =  df.columns
+    
+    features = [f for f in features if '/total' in f or '/boss_total' in f or '_feature' in f]
+    return df[features].copy()
 
     # take median of all columns
     bad_features = pd.DataFrame(df.median(), columns=['median'])

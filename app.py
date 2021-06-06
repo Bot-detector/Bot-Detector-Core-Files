@@ -36,7 +36,6 @@ def print_jobs():
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
-    n_pca = 5
     Config.debug(f'devmode: {Config.dev_mode}')
 
     # prevent scraping & predicting for every player in dev
@@ -50,7 +49,7 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
 
         sched.add_job(hiscoreScraper.run_scraper, trigger='interval', minutes=1,start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
         
-    sched.add_job(model.train_model, args=[n_pca], replace_existing=True, name='train_model')  # on startup
+    sched.add_job(model.train_model, args=[Config.n_pca, Config.use_pca], replace_existing=True, name='train_model')  # on startup
 
     print_jobs()
     sched.start()
