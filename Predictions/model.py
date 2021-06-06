@@ -328,7 +328,8 @@ if __name__ == '__main__':
         'w0000025',     # herb bot
         'Draglich2748', # fletching bot
         'cayde_006',    # smithing bot
-        '77slender148'  # runecraft bot
+        '77slender148',  # runecraft bot
+        'TheNeruAss'    #error
     ]
     
     train_model(use_pca=use_pca, n_pca=n_pca)
