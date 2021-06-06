@@ -715,3 +715,22 @@ def get_prediction_player(player_id):
     param = {'id':player_id}
     data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
+
+def get_player_kc(players):
+    sql = ('''
+        SELECT
+            pl2.name,
+            count(DISTINCT rp.reportedID) kc
+        FROM Reports rp
+        INNER JOIN Players pl ON (rp.reportedID = pl.id)
+        INNER JOIN Players pl2 ON (rp.reportingID = pl2.id)
+        where 1=1
+            and pl2.name in :players
+            and pl.confirmed_ban = 1
+        GROUP BY
+            pl2.name
+        '''
+    )
+    param = {'players': players}
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
+    return data

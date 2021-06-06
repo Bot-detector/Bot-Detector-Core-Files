@@ -11,24 +11,28 @@ clan = Blueprint('clan', __name__, template_folder='templates')
 def get_clan_rank(version, token):
     '''
         receive a dictionary of
-        [{
-            'player':'',
-            'rank':''
-        }, ...
+        [
+            {
+                'player':'',
+                'rank':''
+            }, ...
         ]
         return the same dictionary with the players that have incorrect rank (the returned rank is the correct rank)
     '''
     user_ranks = request.get_json()
     df = pd.DataFrame(user_ranks)
 
-    #TODO
+
+    
     # get KC of players
+    players = df['player'].to_list()
+    df_kc = SQL.get_player_kc(players)
 
-    # parse KC of players
+    df = pd.merge(df,df_kc, left_on='player', right_on='name')
 
-    # return players with their new rank
+    #TODO: parse rank
+    
 
-    # sample code
     mask = (df['rank'] == 'CLAN_RANK_1')
     df = df[mask]
     df['rank'] = 'CLAN_RANK_2'
