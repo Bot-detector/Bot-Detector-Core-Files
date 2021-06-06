@@ -258,7 +258,7 @@ def save_model(n_pca='mle', use_pca=True):
     # get predictions in chunks
     while not(end):
         start = loop * limit
-        df = predict_model(player_name=None, start=start, amount=limit)
+        df = predict_model(player_name=None, start=start, amount=limit, use_pca=use_pca)
         Config.debug(f'data shape: {df.shape}')
 
         # parse predictions to int
