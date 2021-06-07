@@ -21,27 +21,32 @@ def get_clan_rank(version, token):
     user_ranks = request.get_json()
     df = pd.DataFrame(user_ranks)
 
-
-    # get KC of players
     players = df['player'].to_list()
 
-    df_kc = SQL.get_player_kc(players)
-    df_kc = pd.DataFrame(df_kc)
-
-    df = pd.merge(df,df_kc, left_on='player', right_on='name')
+    kc_data = []
 
     for player in players:
         other_names_data = SQL.get_other_linked_accounts(player)
-        other_names = [r.name for r in other_names_data]
+        if len(other_names_data) > 1:
+            other_names = [r.name for r in other_names_data]
+        else:
+            other_names = [player]
 
-        if len(other_names) > 1:
+        combined_kc_data = SQL.get_contributions(other_names)
+        df_combined = pd.DataFrame(combined_kc_data)
+        df_combined = df_combined.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
 
-            combined_kc_data = SQL.get_contributions(other_names)
-            df_kc = pd.DataFrame(combined_kc_data)
-            df_kc = df_kc.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
-            total_bans = df_kc["confirmed_ban"].sum()
-            
-            df.loc[(df.name == player), "kc"] = total_bans
+        if not df_combined.empty:
+            total_bans = df_combined["confirmed_ban"].sum()
+        else:
+            total_bans = 0
+
+        kc_data.append([player, total_bans])
+
+   
+    df_kc = pd.DataFrame(kc_data, columns=["name", "kc"]) 
+
+    df = pd.merge(df,df_kc, left_on='player', right_on='name')
 
 
     mask = (df['rank'] == 'CLAN_RANK_1')
