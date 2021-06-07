@@ -684,6 +684,35 @@ def get_discord_linked_accounts(discord_id):
 
     return data
 
+
+#Find other OSRS accounts the same user has linked to their Discord ID.
+def get_other_linked_accounts(player_name):
+
+    sql = '''
+            SELECT
+                name
+            FROM verified_players
+            WHERE 1 = 1
+                AND Verified_status = 1
+                AND Discord_id IN (
+                    SELECT
+                        Discord_id
+                    FROM verified_players
+                    WHERE 1 = 1
+                        AND Verified_status = 1
+                        AND name = :player_name
+                )
+          '''
+
+    param = {
+        'player_name': player_name
+    }
+
+    data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
+
+    return data
+
+
 def get_verification_player_id(player_name):
 
     sql = 'SELECT id FROM Players WHERE name = :player_name'
@@ -695,6 +724,7 @@ def get_verification_player_id(player_name):
     data = execute_sql(sql, param=param, debug=False, has_return=True)
 
     return data
+
 
 def verificationInsert(discord_id, player_id, code, token):
 
