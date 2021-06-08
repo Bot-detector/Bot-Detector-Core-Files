@@ -82,18 +82,15 @@ def clean_dataset(df, skills_list, minigames_list):
 
     # set unique index
     df.set_index(['name'], inplace=True)
-
-    # total is sum of all skills
-    df[skills_list] = df[skills_list].replace(-1, 0)
-    df['total'] = df[skills_list].sum(axis=1)
-    
-
+ 
     # replace -1 values
-    df[skills_list] = df[skills_list].replace(0, 1)
+    df[skills_list] = df[skills_list].replace(-1, 0)
     df[minigames_list] = df[minigames_list].replace(-1, 0)
 
+    # calculate totals
+    df['total'] = df[skills_list].sum(axis=1)
     df['boss_total'] = df[minigames_list].sum(axis=1)
-
+    
     return df
 
 def zalcano_feature(df):
@@ -125,10 +122,23 @@ def wintertodt_feature(df):
     return df
 
 def botname(df):
-    mask = (df.index.astype(str).str[0:2].str.isdigit())
-    df['botname_feature'] = 0
-    df.loc[mask,'botname_feature'] = 1
+    L = '[A-Za-z]'
+    C = '[_-]'
+    S = '[ ]'
+    N = '[0-9]'
+    name_transform = [
+        (L, 'L'), 
+        (C, 'C'), 
+        (S, 'S'), 
+        (N, 'N')
+    ]
 
+    df['botname'] = df.index
+    for token_regex, token in name_transform:
+        df['botname'] = df['botname'].str.replace(token_regex, token)
+    
+    df['botname'] = df['botname'].astype("category").cat.add_categories([0])
+    df['botname_feature'] = df['botname'].cat.codes
     return df
 
 @logging
@@ -145,7 +155,7 @@ def f_features(df, skills_list, minigames_list):
          df[f'{boss}/boss_total'] = df[boss] / boss_total
 
 
-    df = wintertodt_feature(df)
+    # df = wintertodt_feature(df)
     # df = zalcano_feature(df)
     # df = botname(df)
     # df['rangebot_feature'] = (df['ranged'] + df['hitpoints'])/total
@@ -154,7 +164,6 @@ def f_features(df, skills_list, minigames_list):
     df['mean_feature'] = df[skills_list].mean(axis=1)
     df['std_feature'] = df[skills_list].std(axis=1)
 
-    # df['bot_name_feature'] = botname(df)
     # replace infinities & nan
     df = df.replace([np.inf, -np.inf], 0) 
     df.fillna(0, inplace=True)
@@ -169,7 +178,7 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
     # all features
     features =  df.columns
     
-    features = [f for f in features if '/total' in f or '/boss_total' in f or '_feature' in f]
+    # features = [f for f in features if '/total' in f or '/boss_total' in f or '_feature' in f]
     return df[features].copy()
 
 

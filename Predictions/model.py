@@ -39,6 +39,7 @@ def process(df, scaler=None, transformer=None):
             .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
             .pipe(pf.filter_relevant_features, ed.skills_list)
         )
+        # Config.debug(df_clean)
     except Exception as e:
         Config.debug(f'Error cleaning: {e}')
         return None, None
@@ -86,7 +87,7 @@ def train_model(n_pca='mle', use_pca=True):
 
     lbls = [
         'Real_Player', 'Smithing_bot', 'Mining_bot', 
-        'Magic_bot', 'PVM_Ranged_bot', 
+        'Magic_bot', 'PVM_Ranged_bot', # 'Firemaking_bot',
         'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot',
         'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
         'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
@@ -173,7 +174,7 @@ def get_prediction_from_db(player):
         df_resf.set_index('name', inplace=True)
         df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
 
-        t = pd.Timestamp('now') + pd.Timedelta(-6, unit='H')
+        t = pd.Timestamp('now') + pd.Timedelta(-24, unit='H')
 
         if pd.to_datetime(df_resf['created'].values[0]) < t:
             Config.debug(f'old prediction: {df_resf["created"].values}')
@@ -285,7 +286,7 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
     df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('', '_probability'), how='inner')
 
     if old_prediction:
-        Config.debug(f'old prediction, inserting {player.name}')
+        Config.debug(f'old prediction, inserting {player.name}, prediction: {df_resf["prediction"].to_list()}, confidence:{df_resf["Predicted confidence"].to_list()}')
         insert_into_db(df_resf.copy())
 
     return df_resf
@@ -386,7 +387,7 @@ if __name__ == '__main__':
         'Joe kurt',     # Real
         'Draglich2748', # fletching bot
         'cayde_006',    # smithing bot
-        'aurrraus',     # smithing
+        'aurrraus',     # smithing bot
     ]
     
     train_model(use_pca=use_pca, n_pca=n_pca)
