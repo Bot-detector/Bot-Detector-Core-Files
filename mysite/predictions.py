@@ -32,8 +32,7 @@ def get_prediction(player_name, version=None, debug=None):
             "prediction_confidence": 1
         }
     elif not( bad_name):
-        
-        df = model.predict_model(player_name=player_name, use_pca=Config.use_pca, debug=debug)
+        df = model.predict_model(player_name=player_name, use_pca=Config.use_pca)
         df['name'] = player_name
     else:
         df = {
