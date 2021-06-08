@@ -1,4 +1,6 @@
 import os, sys
+
+from sqlalchemy.sql.expression import column
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
@@ -22,7 +24,7 @@ import SQL, Config, SQL_folder
 from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
-
+import traceback
 
 def create_model():
     rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
@@ -128,9 +130,7 @@ def train_model(n_pca='mle', use_pca=True):
 
     return
 
-    
-def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug=False):
-    # load scaler, transformer, features, pca, labels & model
+def load_models():
     try:
         scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
         scaler = load(scaler)
@@ -149,8 +149,55 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
 
         model, _ = pf.best_file_path(startwith='model', dir='Predictions/models')
         model = load(model)
+        
+        return [scaler, transformer, features, pca, n_pca, labels, model]
     except Exception as e:
         Config.debug(f'Error loading: {e}')
+        return None
+
+
+def get_batched_players(start, amount):
+    Config.debug(f'get_hiscores: {start}, {amount}')
+
+    df = pf.get_highscores(ofinterest=False, start=start, amount=amount)
+    ids = df['Player_id'].to_list()
+
+    df_players = pf.get_players(with_id=True, ofinterest=False, ids=ids)
+    return df, df_players
+
+
+def get_prediction_from_db(player):
+    Config.debug(player)
+    try:
+        df_resf = SQL.get_prediction_player(player.id)
+        df_resf = pd.DataFrame(df_resf)
+        df_resf.set_index('name', inplace=True)
+        df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
+
+        t = pd.Timestamp('now') + pd.Timedelta(-6, unit='H')
+
+        if pd.to_datetime(df_resf['created'].values[0]) < t:
+            Config.debug(f'old prediction: {df_resf["created"].values}')
+            return None
+
+        columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction', 'created'])]
+        df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
+        Config.debug('from db')
+
+        return df_resf
+    except Exception as e:
+        Config.debug(f'error in get_prediction_from_db: {e}')
+        Config.debug(traceback.print_exc())
+        # prediction is not in the database
+        return None
+
+
+def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug=False):
+    old_prediction = False
+    # load scaler, transformer, features, pca, labels & model
+    models = load_models()
+
+    if models is None:
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
@@ -160,48 +207,42 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
         }
         return prediction_data
 
+    scaler, transformer, features, pca, n_pca, labels, model = models
+
     # if no player name is given, take all players
     # if a player name is given, check if we have a record for this player else scrape that player
     if player_name is None:
-        Config.debug(f'get_hiscores: {start}, {amount}')
-
-        df = pf.get_highscores(ofinterest=False, start=start, amount=amount)
-        ids = df['Player_id'].to_list()
-
-        df_players = pf.get_players(with_id=True, ofinterest=False, ids=ids)
+        df, df_players = get_batched_players(start, amount)
     else:
         player = SQL.get_player(player_name)
 
         if player is None or debug:
             df = highscores.scrape_one(player_name)
             player = SQL.get_player(player_name)
+            Config.debug('hiscores')
         else:
-            try:
-                df_resf = SQL.get_prediction_player(player.id)
-                df_resf = pd.DataFrame(df_resf)
-                df_resf.set_index('name', inplace=True)
-                df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
-
-                columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction'])]
-                df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
-                Config.debug('from db')
-
+            df_resf = get_prediction_from_db(player)
+            if df_resf is not None:
                 return df_resf
-            except Exception as e:
-                df = highscores.scrape_one(player_name)
-                if df == (None, None):
-                    prediction_data = {
-                            "player_id": -1,
-                            "player_name": player_name,
-                            "prediction_label": "Player not on highscores",
-                            "prediction_confidence": 0,
-                            "secondary_predictions": []
-                    }
-                    return prediction_data
-                Config.debug('hiscores')
 
+            # player has no stored or old prediction
+            old_prediction = True
+            df = highscores.scrape_one(player_name)
+            Config.debug('hiscores')
+            # player is not on the hiscores
+            if df == (None, None):
+                prediction_data = {
+                    "player_id": -1,
+                    "player_name": player_name,
+                    "prediction_label": "Player not on highscores",
+                    "prediction_confidence": 0,
+                    "secondary_predictions": []
+                }
+                return prediction_data
+            
         df = pd.DataFrame(df)
         df_players = pf.get_players(players=pd.DataFrame([player]), with_id=True)
+        
 
     df_clean, df_preprocess = process(df, scaler, transformer)
 
@@ -236,14 +277,60 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
     df_gnb_predictions =    pd.DataFrame(pred,          index=df_pca.index, columns=['prediction'])
     df_gnb_proba =          pd.DataFrame(proba,         index=df_pca.index, columns=labels).round(4)
 
-    df_resf = df_players[['id']]
+    df_resf = df_players[['id']].copy()
+    df_resf['created'] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
 
     df_resf = df_resf.merge(df_gnb_predictions, left_index=True, right_index=True, suffixes=('', '_prediction'),how='inner')
     df_resf = df_resf.merge(df_gnb_proba_max,   left_index=True, right_index=True, how='inner')
     df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('', '_probability'), how='inner')
+
+    if old_prediction:
+        Config.debug(f'old prediction, inserting {player.name}')
+        insert_into_db(df_resf.copy())
+
+    print(df_resf.columns)
     return df_resf
 
+def prepare_data_for_db(df):
+    # parse predictions to int
+    int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction', 'created']]
+    df[int_columns] = df[int_columns].astype(float)*100
+    df[int_columns] = df[int_columns].round(2)
+    df['id'] = df['id'].astype(int)
+    Config.debug(df[int_columns].head())
 
+    # replace spaces in column names to _
+    df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
+
+    # remove predictioin because this is text
+    columns = df.columns.tolist()
+    columns.remove('prediction')
+    columns.remove('id')
+    columns.remove('created')
+    return df, columns
+
+def insert_prepared_data(df, columns):
+    # add prediction back as first field
+    ordered_columns = ['prediction','id', 'created'] + columns
+    df = df[ordered_columns]
+    df.reset_index(inplace=True) # first column will be name
+    
+    # row to dict
+    data = df.to_dict('records')
+    length = len(df)
+
+    # insert many
+    row = data[0]
+    values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
+    sql_insert = f'insert ignore into Predictions values ({values});'
+    SQL.execute_sql(sql_insert, param=data, debug=False, has_return=False)
+    return length
+
+def insert_into_db(df):
+    df, columns = prepare_data_for_db(df)
+    length = insert_prepared_data(df, columns)
+    return
+    
 def save_model(n_pca='mle', use_pca=True):
     Config.debug(os.listdir())
     Config.debug(f'Save Model config: n_pca {n_pca}, use_pca {use_pca}')
@@ -261,20 +348,7 @@ def save_model(n_pca='mle', use_pca=True):
         df = predict_model(player_name=None, start=start, amount=limit, use_pca=use_pca)
         Config.debug(f'data shape: {df.shape}')
 
-        # parse predictions to int
-        int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction']]
-        df[int_columns] = df[int_columns].astype(float)*100
-        df[int_columns] = df[int_columns].round(2)
-        df['id'] = df['id'].astype(int)
-        Config.debug(df[int_columns].head())
-
-        # replace spaces in column names to _
-        df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
-
-        # remove predictioin because this is text
-        columns = df.columns.tolist()
-        columns.remove('prediction')
-        columns.remove('id')
+        df, columns = prepare_data_for_db(df)
 
         # if the first run then drop & create table
         if first_run:
@@ -283,7 +357,7 @@ def save_model(n_pca='mle', use_pca=True):
 
             table_name = 'Predictions'
             droptable = f'DROP TABLE IF EXISTS {table_name};'
-            createtable = f'CREATE TABLE IF NOT EXISTS {table_name} (name varchar(12), prediction varchar(50), id INT, {" DECIMAL(5,2), ".join(columns)} DECIMAL(5,2));'
+            createtable = f'CREATE TABLE IF NOT EXISTS {table_name} (name varchar(12), prediction varchar(50), id INT, created TIMESTAMP, {" DECIMAL(5,2), ".join(columns)} DECIMAL(5,2));'
             indexname = 'ALTER TABLE playerdata.Predictions ADD UNIQUE name (name);'
             fk = 'ALTER TABLE `Predictions` ADD CONSTRAINT `FK_pred_player_id` FOREIGN KEY (`id`) REFERENCES `Players`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;'
 
@@ -292,30 +366,12 @@ def save_model(n_pca='mle', use_pca=True):
             SQL.execute_sql(indexname,      param=None, debug=False, has_return=False)
             SQL.execute_sql(fk,             param=None, debug=False, has_return=False)
 
-        # add prediction back as first field
-        ordered_columns = ['prediction','id'] + columns
-        df = df[ordered_columns]
-        df.reset_index(inplace=True)
-        
-        # insert rows into table
-        data = df.to_dict('records')
-        length = len(df)
-
-        del df
-
-        row = data[0]
-        values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
-        sql_insert = f'insert ignore into Predictions values ({values});'
-        SQL.execute_sql(sql_insert, param=data, debug=False, has_return=False)
-        # multi_thread(data)
-
-        del data, row
+        length = insert_prepared_data(df, columns)
 
         loop += 1
 
         if length < limit:
             end = True
-
     return
 
 
@@ -337,8 +393,8 @@ if __name__ == '__main__':
         'TheNeruAss'    #error
     ]
     
-    # train_model(use_pca=use_pca, n_pca=n_pca)
-    save_model(use_pca=use_pca, n_pca=n_pca)
+    train_model(use_pca=use_pca, n_pca=n_pca)
+    # save_model(use_pca=use_pca, n_pca=n_pca)
 
     for player in players:
         df = predict_model(player_name=player, use_pca=use_pca, debug=debug) # player_name='extreme4all'
