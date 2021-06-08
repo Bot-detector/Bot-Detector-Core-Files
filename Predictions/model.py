@@ -168,7 +168,6 @@ def get_batched_players(start, amount):
 
 
 def get_prediction_from_db(player):
-    Config.debug(player)
     try:
         df_resf = SQL.get_prediction_player(player.id)
         df_resf = pd.DataFrame(df_resf)
