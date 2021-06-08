@@ -15,8 +15,10 @@ app_predictions = Blueprint('predictions', __name__, template_folder='templates'
 
 @app_predictions.route('/site/prediction/<player_name>', methods=['POST', 'GET'])
 @app_predictions.route('/<version>/site/prediction/<player_name>', methods=['POST', 'GET'])
-def get_prediction(player_name, version=None):
-
+@app_predictions.route('/<version>/site/prediction/<player_name>/<debug>', methods=['POST', 'GET'])
+def get_prediction(player_name, version=None, debug=None):
+    debug = True if debug is not None else False
+    Config.debug(f'Precition route debug: {debug}')
     # Config.debug("PREDICTION REQUEST\n")
     # Config.debug(request.headers)
 
@@ -30,7 +32,8 @@ def get_prediction(player_name, version=None):
             "prediction_confidence": 1
         }
     elif not( bad_name):
-        df = model.predict_model(player_name=player_name, use_pca=Config.use_pca)
+        
+        df = model.predict_model(player_name=player_name, use_pca=Config.use_pca, debug=debug)
         df['name'] = player_name
     else:
         df = {
@@ -46,6 +49,7 @@ def get_prediction(player_name, version=None):
     
     prediction_dict = df.to_dict(orient='records')[0]
     prediction_dict['id'] = int(prediction_dict['id'])
+    prediction_dict.pop("created")
 
     return_dict = {
         "player_id":                prediction_dict.pop("id"),
