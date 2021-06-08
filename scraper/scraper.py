@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pandas as pd
 import SQL
+import Config
 from flask import Blueprint, jsonify, request
 from mysite.tokens import verify_token
 
@@ -30,5 +31,5 @@ def post_hiscores_to_db(token):
     if not (verify_token(token, verifcation='ban')):
         return "<h1>404</h1><p>Invalid token</p>", 404
     data = request.get_json()
-    print(data)
+    Config.debug(data)
     return jsonify({'OK':'OK'})
