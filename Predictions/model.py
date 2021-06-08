@@ -172,7 +172,7 @@ def get_prediction_from_db(player):
         df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
 
         t = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-        if df_resf['created'].to_list()[0] < t:
+        if df_resf['created'].to_list()[0] < pd.Timestamp(t):
             Config.debug('old prediction')
             return None
 
