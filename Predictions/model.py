@@ -285,7 +285,7 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
     df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('', '_probability'), how='inner')
 
     if old_prediction:
-        Config.debug(f'old prediction, inserting {player.name}, Total: {df_clean["total"]}')
+        Config.debug(f'old prediction, inserting {player.name}')
         insert_into_db(df_resf.copy())
 
     return df_resf
