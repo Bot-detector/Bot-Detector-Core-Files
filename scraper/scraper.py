@@ -31,4 +31,4 @@ def post_hiscores_to_db(token):
         return "<h1>404</h1><p>Invalid token</p>", 404
     data = request.get_json()
     print(data)
-    pass
+    return jsonify({'OK':'OK'})
