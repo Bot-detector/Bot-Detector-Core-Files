@@ -45,7 +45,6 @@ def process(df, scaler=None, transformer=None):
 
     # preprocess
     try:
-        
         df_preprocess = (df_clean
             .pipe(pf.start_pipeline)
             .pipe(pf.f_standardize, scaler)
@@ -219,6 +218,7 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
         if player is None or debug:
             df = highscores.scrape_one(player_name)
             player = SQL.get_player(player_name)
+            old_prediction = True
             Config.debug('hiscores')
         else:
             df_resf = get_prediction_from_db(player)
@@ -285,10 +285,9 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
     df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('', '_probability'), how='inner')
 
     if old_prediction:
-        Config.debug(f'old prediction, inserting {player.name}')
+        Config.debug(f'old prediction, inserting {player.name}, Total: {df_clean["total"]}')
         insert_into_db(df_resf.copy())
 
-    print(df_resf.columns)
     return df_resf
 
 def prepare_data_for_db(df):
@@ -297,7 +296,6 @@ def prepare_data_for_db(df):
     df[int_columns] = df[int_columns].astype(float)*100
     df[int_columns] = df[int_columns].round(2)
     df['id'] = df['id'].astype(int)
-    Config.debug(df[int_columns].head())
 
     # replace spaces in column names to _
     df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
@@ -391,7 +389,7 @@ if __name__ == '__main__':
         'aurrraus',     # smithing
     ]
     
-    # train_model(use_pca=use_pca, n_pca=n_pca)
+    train_model(use_pca=use_pca, n_pca=n_pca)
     # save_model(use_pca=use_pca, n_pca=n_pca)
 
     for player in players:

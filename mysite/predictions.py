@@ -22,7 +22,7 @@ def get_prediction(player_name, version=None, token=None):
         debug = True if tokens.verify_token(token, verifcation=None) else False
     else:
         debug = False
-    Config.debug(f'Precition route debug: {debug}')
+    Config.debug(f'Prediction route debug: {debug}')
     # Config.debug("PREDICTION REQUEST\n")
     # Config.debug(request.headers)
 
