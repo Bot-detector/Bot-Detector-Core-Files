@@ -10,14 +10,15 @@ from Predictions import model
 from SQL import get_player, insert_prediction_feedback, get_verified_discord_user
 import SQL
 
+from mysite import tokens
 
 app_predictions = Blueprint('predictions', __name__, template_folder='templates')
 
 @app_predictions.route('/site/prediction/<player_name>', methods=['POST', 'GET'])
 @app_predictions.route('/<version>/site/prediction/<player_name>', methods=['POST', 'GET'])
-@app_predictions.route('/<version>/site/prediction/<player_name>/<debug>', methods=['POST', 'GET'])
-def get_prediction(player_name, version=None, debug=None):
-    debug = True if debug is not None else False
+@app_predictions.route('/<version>/site/prediction/<player_name>/<token>', methods=['POST', 'GET'])
+def get_prediction(player_name, version=None, token=None):
+    debug = True if tokens.verify_token(token, verifcation=None) else False
     Config.debug(f'Precition route debug: {debug}')
     # Config.debug("PREDICTION REQUEST\n")
     # Config.debug(request.headers)
@@ -32,7 +33,7 @@ def get_prediction(player_name, version=None, debug=None):
             "prediction_confidence": 1
         }
     elif not( bad_name):
-        df = model.predict_model(player_name=player_name, use_pca=Config.use_pca)
+        df = model.predict_model(player_name=player_name, use_pca=Config.use_pca, debug=debug)
         df['name'] = player_name
     else:
         df = {

@@ -386,14 +386,12 @@ if __name__ == '__main__':
         'blue fog',     # Real
         'wook1ee',      # Real
         'Joe kurt',     # Real
-        'w0000025',     # herb bot
         'Draglich2748', # fletching bot
         'cayde_006',    # smithing bot
-        '77slender148',  # runecraft bot
-        'TheNeruAss'    #error
+        'aurrraus',     # smithing
     ]
     
-    train_model(use_pca=use_pca, n_pca=n_pca)
+    # train_model(use_pca=use_pca, n_pca=n_pca)
     # save_model(use_pca=use_pca, n_pca=n_pca)
 
     for player in players:
