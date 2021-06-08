@@ -24,7 +24,7 @@ import SQL, Config, SQL_folder
 from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
-
+import traceback
 
 def create_model():
     rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
@@ -154,6 +154,8 @@ def load_models():
     except Exception as e:
         Config.debug(f'Error loading: {e}')
         return None
+
+
 def get_batched_players(start, amount):
     Config.debug(f'get_hiscores: {start}, {amount}')
 
@@ -163,6 +165,7 @@ def get_batched_players(start, amount):
     df_players = pf.get_players(with_id=True, ofinterest=False, ids=ids)
     return df, df_players
 
+
 def get_prediction_from_db(player):
     Config.debug(player)
     try:
@@ -171,20 +174,23 @@ def get_prediction_from_db(player):
         df_resf.set_index('name', inplace=True)
         df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
 
-        t = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-        if df_resf['created'].to_list()[0] < pd.Timestamp(t):
-            Config.debug('old prediction')
+        t = pd.Timestamp('now') + pd.Timedelta(-6, unit='H')
+
+        if pd.to_datetime(df_resf['created'].values[0]) < t:
+            Config.debug(f'old prediction: {df_resf["created"].values}')
             return None
 
-        columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction'])]
+        columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction', 'created'])]
         df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
         Config.debug('from db')
 
         return df_resf
     except Exception as e:
-        Config.debug(e)
+        Config.debug(f'error in get_prediction_from_db: {e}')
+        Config.debug(traceback.print_exc())
         # prediction is not in the database
         return None
+
 
 def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug=False):
     old_prediction = False
