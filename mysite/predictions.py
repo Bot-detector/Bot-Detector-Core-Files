@@ -18,7 +18,10 @@ app_predictions = Blueprint('predictions', __name__, template_folder='templates'
 @app_predictions.route('/<version>/site/prediction/<player_name>', methods=['POST', 'GET'])
 @app_predictions.route('/<version>/site/prediction/<player_name>/<token>', methods=['POST', 'GET'])
 def get_prediction(player_name, version=None, token=None):
-    debug = True if tokens.verify_token(token, verifcation=None) else False
+    if not (token is None):
+        debug = True if tokens.verify_token(token, verifcation=None) else False
+    else:
+        debug = False
     Config.debug(f'Precition route debug: {debug}')
     # Config.debug("PREDICTION REQUEST\n")
     # Config.debug(request.headers)
