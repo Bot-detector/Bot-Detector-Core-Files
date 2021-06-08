@@ -81,21 +81,19 @@ def clean_dataset(df, skills_list, minigames_list):
     df.drop(columns=['id','timestamp','ts_date','Player_id'], inplace=True)
 
     # set unique index
-    df.set_index(['name'],inplace=True)
+    df.set_index(['name'], inplace=True)
 
     # total is sum of all skills
+    df[skills_list] = df[skills_list].replace(-1, 0)
     df['total'] = df[skills_list].sum(axis=1)
     
 
     # replace -1 values
-    df[skills_list] = df[skills_list].replace(-1, 1)
+    df[skills_list] = df[skills_list].replace(0, 1)
     df[minigames_list] = df[minigames_list].replace(-1, 0)
 
     df['boss_total'] = df[minigames_list].sum(axis=1)
 
-    # mask = (df['total'] > 1_000_000)
-
-    # df = df[mask].copy()
     return df
 
 def zalcano_feature(df):
@@ -174,26 +172,6 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
     features = [f for f in features if '/total' in f or '/boss_total' in f or '_feature' in f]
     return df[features].copy()
 
-    # take median of all columns
-    bad_features = pd.DataFrame(df.median(), columns=['median'])
-    
-    # if a row has no data it returns -1
-    # if the median of the dataset is below 0 then that feature is mostly empty
-    mask = (bad_features['median'] < 1)
-    bad_features = bad_features[mask].index
-
-    # filter out bad features
-    my_feature_fields = [
-                         'wintertodt', 
-                         'total',
-                         #'zalcano', 
-                         #'zalcano/boss_total'
-                         'boss_total',
-                         ] + skills_list
-    features = [f for f in features if f not in bad_features or 'feature' in f or '/total' in f]
-    _ = [features.append(f) for f in my_feature_fields if f not in features]
-
-    return df[features].copy()
 
 @logging
 def f_standardize(df, scaler=None):
