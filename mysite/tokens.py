@@ -51,7 +51,7 @@ def verify_token(token, verifcation):
 
 @app_token.route("/log/<token>", methods=['GET'])
 def print_log(token):
-    if not (verify_token(token, verifcation='create_token')):
+    if not (verify_token(token, verifcation='ban')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     with open("error.log", "r") as f:

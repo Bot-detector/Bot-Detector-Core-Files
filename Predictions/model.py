@@ -30,6 +30,7 @@ def create_model():
     rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
     return rfc
 
+
 def process(df, scaler=None, transformer=None):
     # cleaning
     try:
@@ -45,7 +46,6 @@ def process(df, scaler=None, transformer=None):
 
     # preprocess
     try:
-        
         df_preprocess = (df_clean
             .pipe(pf.start_pipeline)
             .pipe(pf.f_standardize, scaler)
@@ -130,6 +130,7 @@ def train_model(n_pca='mle', use_pca=True):
 
     return
 
+
 def load_models():
     try:
         scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
@@ -167,14 +168,13 @@ def get_batched_players(start, amount):
 
 
 def get_prediction_from_db(player):
-    Config.debug(player)
     try:
         df_resf = SQL.get_prediction_player(player.id)
         df_resf = pd.DataFrame(df_resf)
         df_resf.set_index('name', inplace=True)
         df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
 
-        t = pd.Timestamp('now') + pd.Timedelta(-6, unit='H')
+        t = pd.Timestamp('now') + pd.Timedelta(-24, unit='H')
 
         if pd.to_datetime(df_resf['created'].values[0]) < t:
             Config.debug(f'old prediction: {df_resf["created"].values}')
@@ -219,6 +219,7 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
         if player is None or debug:
             df = highscores.scrape_one(player_name)
             player = SQL.get_player(player_name)
+            old_prediction = True
             Config.debug('hiscores')
         else:
             df_resf = get_prediction_from_db(player)
@@ -285,11 +286,11 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
     df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('', '_probability'), how='inner')
 
     if old_prediction:
-        Config.debug(f'old prediction, inserting {player.name}')
+        Config.debug(f'old prediction, inserting {player.name}, prediction: {df_resf["prediction"].to_list()}, confidence:{df_resf["Predicted confidence"].to_list()}')
         insert_into_db(df_resf.copy())
 
-    print(df_resf.columns)
     return df_resf
+
 
 def prepare_data_for_db(df):
     # parse predictions to int
@@ -297,7 +298,6 @@ def prepare_data_for_db(df):
     df[int_columns] = df[int_columns].astype(float)*100
     df[int_columns] = df[int_columns].round(2)
     df['id'] = df['id'].astype(int)
-    Config.debug(df[int_columns].head())
 
     # replace spaces in column names to _
     df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
@@ -382,15 +382,7 @@ if __name__ == '__main__':
     n_pca = 2
     
     players = [
-        'extreme4all',  # Real
-        'blue fog',     # Real
-        'wook1ee',      # Real
-        'Joe kurt',     # Real
-        'w0000025',     # herb bot
-        'Draglich2748', # fletching bot
-        'cayde_006',    # smithing bot
-        '77slender148',  # runecraft bot
-        'TheNeruAss'    #error
+        'memahao'
     ]
     
     train_model(use_pca=use_pca, n_pca=n_pca)
