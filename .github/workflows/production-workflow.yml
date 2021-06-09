@@ -28,6 +28,7 @@ jobs:
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
+          echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
           echo dev_mode=0 >> .env
           
       - name: Start Flask API 0
@@ -59,6 +60,7 @@ jobs:
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
+          echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
           echo dev_mode=0 >> .env
           
       - name: Start Flask API 1
@@ -90,6 +92,7 @@ jobs:
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
+          echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
           echo dev_mode=0 >> .env
           
       - name: Start Flask API 2
@@ -120,6 +123,7 @@ jobs:
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
+          echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
           echo dev_mode=0 >> .env
           
       - name: Start Flask API 3
