@@ -1,5 +1,5 @@
 from time import sleep
-from flask import jsonify, redirect, make_response
+from flask import config, jsonify, redirect, make_response
 from waitress import serve
 import datetime as dt
 import os
@@ -16,7 +16,7 @@ from Predictions import model
 from discord.discord import discord
 from scraper.scraper import app_scraper
 from plugin.clan import clan
-
+import gc
 
 app.register_blueprint(plugin_stats)
 app.register_blueprint(detect)
@@ -32,7 +32,9 @@ def print_jobs():
     for job in sched.get_jobs():
         Config.debug(f'    Job: {job.name}, {job.trigger}, {job.func}')
     return
-
+def gb_collector():
+    Config.debug(f"Garbage Collector stats: {gc.get_stats()}")
+    return
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     started = True
@@ -50,6 +52,7 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         sched.add_job(hiscoreScraper.run_scraper, trigger='interval', minutes=1,start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
         
     sched.add_job(model.train_model, args=[Config.n_pca, Config.use_pca], replace_existing=True, name='train_model')  # on startup
+    sched.add_job(gb_collector, trigger='interval',hours=1, start_date=dt.date.today())
 
     print_jobs()
     sched.start()
