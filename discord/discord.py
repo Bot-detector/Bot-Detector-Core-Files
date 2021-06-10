@@ -312,7 +312,7 @@ def get_latest_sighting(token):
                 "equip_shield_id"
             ]]
 
-    
+
     output = df.to_dict('records')
     output = output[0]
 

@@ -141,26 +141,31 @@ def confirm_possible_ban():
                         Config.debug(f'     player Checked: {100}, total: {i}, took: {t}, {dt.datetime.now()}')
                         start = dt.datetime.now()
 
-                        if len(players_banned) > 0:
-
-                            #webhook = DiscordWebhook(url='')
-                            #embed = DiscordEmbed(title="All Ye Bots Lose All Hope", color="000000")
-                            #embed.set_timestamp()
-                            #embed.add_embed_field(name="Newly Departed", value=f"{', '.join(players_banned)}")
-                            #embed.set_thumbnail(url="https://oldschool.runescape.wiki/images/3/31/Wilderness_%26_PvP_Improvements_newspost.png?c0569")
-                            #webhook.add_embed(embed=embed)
-                            #response = webhook.execute()
-                            players_banned.clear()
-
-                        else:
-                            print("nothing here")
-
                 except Exception as e:
                     Config.debug(f'Multithreading error: {e}')
                     Config.debug(traceback.print_exc())
 
+            if len(players_banned) > 0:
+                fill_graveyard_plots()
+
+            else:
+                print("nothing here")
+
         del futures, future, player, result, start, end, t, i # memory optimalisation?
     return
+
+
+#Sends an embed to the #bot-graveyard channel on our Discord server
+def fill_graveyard_plots():
+    webhook = DiscordWebhook(url=Config.graveyard_webhook_url)
+    embed = DiscordEmbed(title="All Ye Bots Lose All Hope", color="000000")
+    embed.set_timestamp()
+    embed.add_embed_field(name="Newly Departed", value=f"{', '.join(players_banned)}")
+    embed.set_thumbnail(url="https://i.imgur.com/pwtJVPj.gif")
+    webhook.add_embed(embed=embed)
+    webhook.execute()
+    players_banned.clear()
+
 
 if __name__ == '__main__':
     confirm_possible_ban()

@@ -657,7 +657,7 @@ def get_leaderboard_stats(bans=False, manual=False, limit=25):
     
   
 def get_possible_ban_predicted():
-    sql = 'SELECT * FROM playerPossibleBanPrediction'
+    sql = 'SELECT * FROM playerPossibleBanPrediction WHERE confirmed_ban = 0'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 

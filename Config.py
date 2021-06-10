@@ -8,7 +8,6 @@ from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from flask_cors import CORS
 import sqlalchemy
 import logging
-import gc
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -17,6 +16,8 @@ discord_sql_uri = os.environ.get('discord_sql_uri')
 proxy_http = os.environ.get('proxy_http')
 proxy_https = os.environ.get('proxy_https')
 flask_port = os.environ.get('flask_port')
+graveyard_webhook_url = os.environ.get('graveyard_webhook')
+
 # TODO: BUG
 # it does not like the bool()
 try:
@@ -106,4 +107,3 @@ def debug(str):
 # for machine learning
 n_pca=2
 use_pca=False
-gc.enable()

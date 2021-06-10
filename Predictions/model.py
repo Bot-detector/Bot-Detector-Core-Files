@@ -92,7 +92,7 @@ def train_model(n_pca='mle', use_pca=True):
         'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
         'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
         'Cooking_bot', 'mort_myre_fungus_bot',
-        'Woodcutting_bot'
+        'Woodcutting_bot', 'Firemaking_bot','Fishing_Cooking_bot'
     ]
 
     Config.debug(f'labels: {len(lbls)}, {lbls}')
