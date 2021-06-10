@@ -93,7 +93,7 @@ def parse_highscores(data):
         skills_values = list(skills.values())
         skills_values = list(map(int, skills_values[1:]))
         skills_values = [item for item in skills_values if item > 0]
-        skills['total'] == sum(skills_values)
+        skills['total'] = sum(skills_values)
         del skills_values # memory optimalisation
         
     return skills, minigames

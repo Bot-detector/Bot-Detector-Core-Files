@@ -1,4 +1,6 @@
 import os, sys
+
+from sqlalchemy.sql.expression import column
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
@@ -18,76 +20,66 @@ from sklearn.metrics import classification_report
 from sklearn.calibration import CalibratedClassifierCV
 
 # custom imports
-import SQL, Config
+import SQL, Config, SQL_folder
 from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed
+import traceback
 
-
-def create_model(train_x, train_y, test_x, test_y, lbls):
-    # neigh = KNeighborsClassifier(n_neighbors=len(lbls), n_jobs=-1)
-    # neigh = neigh.fit(train_x, train_y)
-
-    # mlpc = MLPClassifier(max_iter=10000, random_state=7)
-    # mlpc = mlpc.fit(train_x, train_y)
-
-    # rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
-    # rfc = rfc.fit(train_x, train_y)
-
-    # etc = ExtraTreesClassifier(n_estimators=100, random_state=7, n_jobs=-1)
-    # etc = etc.fit(train_x, train_y)
-
-    # sgdc = SGDClassifier(max_iter=1000, tol=1e-3, loss='modified_huber')
-    # sgdc = sgdc.fit(train_x, train_y)
-
-    # models = [neigh, mlpc, rfc, etc, sgdc]
-    # scores = [round(m.score(test_x, test_y)*100,2) for m in models]
-    # weights = [s**2 for s in scores]
-    # estimators = [(m.__class__.__name__, m) for m in models]
-
-    # _ = [Config.debug(f'Model: {m.__class__.__name__} Score: {s}') for m, s in zip(models,scores)]
-
-    # vote = VotingClassifier(
-    #     weights=weights,
-    #     estimators=estimators, 
-    #     voting='soft',
-    #     n_jobs=-1
-    #     )
-    # return vote
+def create_model():
     rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
-    rfc = rfc.fit(train_x, train_y)
     return rfc
 
 
-def train_model(n_pca):
-    
+def process(df, scaler=None, transformer=None):
+    # cleaning
+    try:
+        df_clean = (df
+            .pipe(pf.start_pipeline)
+            .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
+            .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
+            .pipe(pf.filter_relevant_features, ed.skills_list)
+        )
+    except Exception as e:
+        Config.debug(f'Error cleaning: {e}')
+        return None, None
+
+    # preprocess
+    try:
+        df_preprocess = (df_clean
+            .pipe(pf.start_pipeline)
+            .pipe(pf.f_standardize, scaler)
+            .pipe(pf.f_normalize, transformer)
+        )
+    except Exception as e:
+        Config.debug(f'Error normalizing: {e}')
+        return None, None
+
+    return df_clean, df_preprocess
+
+
+def train_model(n_pca='mle', use_pca=True):
+    Config.debug(f'Train Model config: n_pca: {n_pca}, use_pca: {use_pca}')
+    # get data
     df =            pf.get_highscores()
     df_players =    pf.get_players()
     df_labels =     pf.get_labels() 
 
-    # pandas pipeline
-    df_clean = (df
-        .pipe(pf.start_pipeline)
-        .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-        .pipe(pf.f_features,    ed.skills_list, ed.minigames_list)
-        # .pipe(pf.filter_relevant_features, ed.skills_list)
-    )
-    df_preprocess = (df_clean
-        .pipe(pf.start_pipeline)
-        .pipe(pf.f_standardize)
-        .pipe(pf.f_normalize)
-    )
 
+    df_clean, df_preprocess = process(df)
 
-    today = time.strftime('%Y-%m-%d', time.gmtime())
+    today = int(time.time()) # time.strftime('%Y-%m-%d', time.gmtime())
+
     columns = df_preprocess.columns.tolist()
     dump(value=columns, filename=f'Predictions/models/features_{today}_100.joblib')
     
 
     df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=None)
-    dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
+    # dump(value=pca_model, filename=f'Predictions/models/pca_{today}_{n_pca}.joblib')
 
-    df_pca = df_preprocess # no pca
+    if not use_pca:
+        df_pca = df_preprocess
+    
     Config.debug(f'pca shape: {df_pca.shape}')
 
     df_pca = df_pca.merge(df_players,   left_index=True,    right_index=True, how='inner')
@@ -95,11 +87,11 @@ def train_model(n_pca):
 
     lbls = [
         'Real_Player', 'Smithing_bot', 'Mining_bot', 
-        'Magic_bot', 'PVM_Ranged_bot', 'Wintertodt_bot', 
+        'Magic_bot', 'PVM_Ranged_bot', 
         'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot',
         'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
         'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
-        'Cooking_bot', 'FarmBird_bot', 'mort_myre_fungus_bot',
+        'Cooking_bot', 'mort_myre_fungus_bot',
         'Woodcutting_bot'
     ]
 
@@ -111,6 +103,9 @@ def train_model(n_pca):
     df_labeled.drop(columns=['confirmed_ban','confirmed_player','possible_ban','label_id'], inplace=True)
     x, y = df_labeled.iloc[:,:-1], df_labeled.iloc[:,-1]
 
+    Config.debug(f'x shape:{x.shape}')
+    Config.debug(f'y shape:{y.shape}')
+
     # save labels
     lbls = np.sort(y.unique())
     dump(value=lbls, filename=f'Predictions/models/labels_{today}_100.joblib')
@@ -118,15 +113,9 @@ def train_model(n_pca):
     # train test split but make sure to have all the labels form y
     train_x, test_x, train_y, test_y = train_test_split(x, y, test_size=0.3, random_state=42, stratify=y)
 
-    model_name = 'vote'
-    model = create_model(train_x, train_y, test_x, test_y, lbls)
+    model_name = 'rfc'
+    model = create_model()
     model = model.fit(train_x, train_y)
-
-    # works on colab not on my pc: ValueError: Invalid prediction method: _predict_proba 
-    # # https://scikit-learn.org/stable/modules/generated/sklearn.calibration.CalibratedClassifierCV.html#sklearn.calibration.CalibratedClassifierCV
-    # does not work in current version, issue created https://github.com/scikit-learn/scikit-learn/issues/20053
-    # model = CalibratedClassifierCV(base_estimator=model, cv='prefit')
-    # model = model.fit(test_x, test_y) # docu says to calibrate on test?
 
     # print model score
     model_score = round(model.score(test_x, test_y)*100,2)
@@ -138,11 +127,11 @@ def train_model(n_pca):
     # fit & save model on entire dataset
     model = model.fit(x, y)
     dump(value=model, filename=f'Predictions/models/model-{model_name}_{today}_{model_score}.joblib')
+
     return
 
-    
-def predict_model(player_name=None, start=0, amount=100_000):
-    # load scaler, transformer, features, pca, labels & model
+
+def load_models():
     try:
         scaler, _ = pf.best_file_path(startwith='scaler', dir='Predictions/models')
         scaler = load(scaler)
@@ -161,8 +150,54 @@ def predict_model(player_name=None, start=0, amount=100_000):
 
         model, _ = pf.best_file_path(startwith='model', dir='Predictions/models')
         model = load(model)
+        
+        return [scaler, transformer, features, pca, n_pca, labels, model]
     except Exception as e:
         Config.debug(f'Error loading: {e}')
+        return None
+
+
+def get_batched_players(start, amount):
+    Config.debug(f'get_hiscores: {start}, {amount}')
+
+    df = pf.get_highscores(ofinterest=False, start=start, amount=amount)
+    ids = df['Player_id'].to_list()
+
+    df_players = pf.get_players(with_id=True, ofinterest=False, ids=ids)
+    return df, df_players
+
+
+def get_prediction_from_db(player):
+    try:
+        df_resf = SQL.get_prediction_player(player.id)
+        df_resf = pd.DataFrame(df_resf)
+        df_resf.set_index('name', inplace=True)
+        df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
+
+        t = pd.Timestamp('now') + pd.Timedelta(-24, unit='H')
+
+        if pd.to_datetime(df_resf['created'].values[0]) < t:
+            Config.debug(f'old prediction: {df_resf["created"].values}')
+            return None
+
+        columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction', 'created'])]
+        df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
+        Config.debug('from db')
+
+        return df_resf
+    except Exception as e:
+        Config.debug(f'error in get_prediction_from_db: {e}')
+        Config.debug(traceback.print_exc())
+        # prediction is not in the database
+        return None
+
+
+def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug=False):
+    old_prediction = False
+    # load scaler, transformer, features, pca, labels & model
+    models = load_models()
+
+    if models is None:
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
@@ -170,86 +205,51 @@ def predict_model(player_name=None, start=0, amount=100_000):
             "prediction_confidence": 0,
             "secondary_predictions": []
         }
-
-
         return prediction_data
+
+    scaler, transformer, features, pca, n_pca, labels, model = models
 
     # if no player name is given, take all players
     # if a player name is given, check if we have a record for this player else scrape that player
     if player_name is None:
-        Config.debug(f'get_hiscores: {start}, {amount}')
-
-        df = pf.get_highscores(ofinterest=False, start=start, amount=amount)
-        ids = df['Player_id'].to_list()
-
-        df_players = pf.get_players(with_id=True, ofinterest=False, ids=ids)
+        df, df_players = get_batched_players(start, amount)
     else:
         player = SQL.get_player(player_name)
-        if player is None:
+
+        if player is None or debug:
             df = highscores.scrape_one(player_name)
             player = SQL.get_player(player_name)
-
+            old_prediction = True
+            Config.debug('hiscores')
         else:
-            try:
-                df_resf = SQL.get_prediction_player(player.id)
-                df_resf = pd.DataFrame(df_resf)
-                df_resf.set_index('name', inplace=True)
-                df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
-
-                columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction'])]
-                df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
-                Config.debug('from db')
-
+            df_resf = get_prediction_from_db(player)
+            if df_resf is not None:
                 return df_resf
-            except Exception as e:
-                df = highscores.scrape_one(player_name)
-                if df == (None, None):
-                    prediction_data = {
-                            "player_id": -1,
-                            "player_name": player_name,
-                            "prediction_label": "Player not on highscores",
-                            "prediction_confidence": 0,
-                            "secondary_predictions": []
-                    }
-                    return prediction_data
-                Config.debug('hiscores')
 
+            # player has no stored or old prediction
+            old_prediction = True
+            df = highscores.scrape_one(player_name)
+            Config.debug('hiscores')
+            # player is not on the hiscores
+            if df == (None, None):
+                prediction_data = {
+                    "player_id": -1,
+                    "player_name": player_name,
+                    "prediction_label": "Player not on highscores",
+                    "prediction_confidence": 0,
+                    "secondary_predictions": []
+                }
+                return prediction_data
+            
         df = pd.DataFrame(df)
         df_players = pf.get_players(players=pd.DataFrame([player]), with_id=True)
+        
 
-    try:
-        df_clean = (df
-            .pipe(pf.start_pipeline)
-            .pipe(pf.clean_dataset, ed.skills_list, ed.minigames_list)
-            .pipe(pf.f_features, ed.skills_list, ed.minigames_list)
-            # .pipe(pf.filter_relevant_features, ed.skills_list, myfeatures=features)
-            # after feature creation in testing
-        )
-        del df # free up memory
-    except Exception as k:
-        Config.debug(f'Error cleaning: {k}')
+    df_clean, df_preprocess = process(df, scaler, transformer)
+
+    if df_clean is None:
         Config.debug(f' {player_name}')
         Config.debug(f' {df}')
-
-        prediction_data = {
-            "player_id": -1,
-            "player_name": player_name,
-            "prediction_label": "Not In Our Database",
-            "prediction_confidence": 0,
-            "secondary_predictions": []
-        }
-        return prediction_data
-
-    try:
-        df_preprocess = (df_clean
-            .pipe(pf.start_pipeline)
-            .pipe(pf.f_standardize, scaler=scaler)
-            .pipe(pf.f_normalize, transformer=transformer)
-        )
-        del df_clean # free up memory
-    except Exception as v:
-        Config.debug(f'Error normalizing: {v}')
-
         prediction_data = {
             "player_id": -1,
             "player_name": player_name,
@@ -261,8 +261,14 @@ def predict_model(player_name=None, start=0, amount=100_000):
 
     df_preprocess = df_preprocess[features].copy()
 
-    df_pca, pca_model = pf.f_pca(df_preprocess, n_components=int(n_pca), pca=pca)
-    df_pca = df_preprocess
+    Config.debug(f'Predict Model config: n_pca: {n_pca}, use_pca: {use_pca}')
+    
+    if use_pca:
+        df_pca, pca_model = pf.f_pca(df_preprocess, n_components=n_pca, pca=pca)
+    else:
+        df_pca = df_preprocess
+
+    Config.debug(f'pca shape: {df_pca.shape}')
     
     proba =         model.predict_proba(df_pca)
     df_proba_max =  proba.max(axis=1)
@@ -272,45 +278,77 @@ def predict_model(player_name=None, start=0, amount=100_000):
     df_gnb_predictions =    pd.DataFrame(pred,          index=df_pca.index, columns=['prediction'])
     df_gnb_proba =          pd.DataFrame(proba,         index=df_pca.index, columns=labels).round(4)
 
-    df_resf = df_players[['id']]
+    df_resf = df_players[['id']].copy()
+    df_resf['created'] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
 
     df_resf = df_resf.merge(df_gnb_predictions, left_index=True, right_index=True, suffixes=('', '_prediction'),how='inner')
     df_resf = df_resf.merge(df_gnb_proba_max,   left_index=True, right_index=True, how='inner')
     df_resf = df_resf.merge(df_gnb_proba,       left_index=True, right_index=True, suffixes=('', '_probability'), how='inner')
+
+    if old_prediction:
+        Config.debug(f'old prediction, inserting {player.name}, prediction: {df_resf["prediction"].to_list()}, confidence:{df_resf["Predicted confidence"].to_list()}')
+        insert_into_db(df_resf.copy())
+
     return df_resf
 
 
-def save_model(n_pca=50):
-    Config.debug(os.listdir())
+def prepare_data_for_db(df):
+    # parse predictions to int
+    int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction', 'created']]
+    df[int_columns] = df[int_columns].astype(float)*100
+    df[int_columns] = df[int_columns].round(2)
+    df['id'] = df['id'].astype(int)
+
+    # replace spaces in column names to _
+    df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
+
+    # remove predictioin because this is text
+    columns = df.columns.tolist()
+    columns.remove('prediction')
+    columns.remove('id')
+    columns.remove('created')
+    return df, columns
+
+def insert_prepared_data(df, columns):
+    # add prediction back as first field
+    ordered_columns = ['prediction','id', 'created'] + columns
+    df = df[ordered_columns]
+    df.reset_index(inplace=True) # first column will be name
     
+    # row to dict
+    data = df.to_dict('records')
+    length = len(df)
+
+    # insert many
+    row = data[0]
+    values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
+    sql_insert = f'insert ignore into Predictions values ({values});'
+    SQL.execute_sql(sql_insert, param=data, debug=False, has_return=False)
+    return length
+
+def insert_into_db(df):
+    df, columns = prepare_data_for_db(df)
+    length = insert_prepared_data(df, columns)
+    return
+    
+def save_model(n_pca='mle', use_pca=True):
+    Config.debug(os.listdir())
+    Config.debug(f'Save Model config: n_pca {n_pca}, use_pca {use_pca}')
     # chunking data
     limit = 5_000
     end = False
     first_run = True
     loop = 0
 
-    train_model(n_pca)
+    train_model(n_pca, use_pca)
 
     # get predictions in chunks
     while not(end):
         start = loop * limit
-        df = predict_model(player_name=None, start=start, amount=limit)
+        df = predict_model(player_name=None, start=start, amount=limit, use_pca=use_pca)
         Config.debug(f'data shape: {df.shape}')
 
-        # parse predictions to int
-        int_columns = [c for c in df.columns.tolist() if c not in ['id','prediction']]
-        df[int_columns] = df[int_columns].astype(float)*100
-        df[int_columns] = df[int_columns].round(2)
-        df['id'] = df['id'].astype(int)
-        Config.debug(df[int_columns].head())
-
-        # replace spaces in column names to _
-        df.columns = [c.replace(' ','_') for c in df.columns.tolist()]
-
-        # remove predictioin because this is text
-        columns = df.columns.tolist()
-        columns.remove('prediction')
-        columns.remove('id')
+        df, columns = prepare_data_for_db(df)
 
         # if the first run then drop & create table
         if first_run:
@@ -319,7 +357,7 @@ def save_model(n_pca=50):
 
             table_name = 'Predictions'
             droptable = f'DROP TABLE IF EXISTS {table_name};'
-            createtable = f'CREATE TABLE IF NOT EXISTS {table_name} (name varchar(12), prediction varchar(50), id INT, {" DECIMAL(5,2), ".join(columns)} DECIMAL(5,2));'
+            createtable = f'CREATE TABLE IF NOT EXISTS {table_name} (name varchar(12), prediction varchar(50), id INT, created TIMESTAMP, {" DECIMAL(5,2), ".join(columns)} DECIMAL(5,2));'
             indexname = 'ALTER TABLE playerdata.Predictions ADD UNIQUE name (name);'
             fk = 'ALTER TABLE `Predictions` ADD CONSTRAINT `FK_pred_player_id` FOREIGN KEY (`id`) REFERENCES `Players`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;'
 
@@ -328,60 +366,28 @@ def save_model(n_pca=50):
             SQL.execute_sql(indexname,      param=None, debug=False, has_return=False)
             SQL.execute_sql(fk,             param=None, debug=False, has_return=False)
 
-        # add prediction back as first field
-        ordered_columns = ['prediction','id'] + columns
-        df = df[ordered_columns]
-        df.reset_index(inplace=True)
-        
-        # insert rows into table
-        data = df.to_dict('records')
-        length = len(df)
-        del df
-
-        multi_thread(data)
-        del data
+        length = insert_prepared_data(df, columns)
 
         loop += 1
 
         if length < limit:
             end = True
-
     return
 
 
-def insert_prediction(row):
-    values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
-    sql_insert = f'insert ignore into Predictions values ({values});'
-    SQL.execute_sql(sql_insert, param=row, debug=False, has_return=False)
-    return
-
-
-def multi_thread(data):
-    Config.debug('start multithread')
-    # create a list of tasks to multithread
-    tasks = []
-    for row in data:
-        tasks.append(([row]))
-
-    del data # memory optimalization
-
-    # multithreaded executor
-    with cf.ProcessPoolExecutor() as executor:
-        # submit each task to be executed
-        futures = {executor.submit(insert_prediction, task[0]): task[0] for task in tasks}
-
-        del tasks # memory optimalization
-
-        # get start time
-        for future in cf.as_completed(futures):
-            _ = futures[future]
-            _ = future.result()
-
-    del futures, future # memory optimalization
-    return
 
 if __name__ == '__main__':
-    # train_model(n_pca=50)
-    # save_model(n_pca=30)
-    df = predict_model(player_name='DiscountYuma') # player_name='extreme4all'
-    print(df.head())
+    use_pca = False
+    debug = True
+    n_pca = 2
+    
+    players = [
+        'memahao'
+    ]
+    
+    train_model(use_pca=use_pca, n_pca=n_pca)
+    # save_model(use_pca=use_pca, n_pca=n_pca)
+
+    for player in players:
+        df = predict_model(player_name=player, use_pca=use_pca, debug=debug) # player_name='extreme4all'
+        print(df.head())

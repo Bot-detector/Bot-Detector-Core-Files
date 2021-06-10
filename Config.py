@@ -8,6 +8,7 @@ from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from flask_cors import CORS
 import sqlalchemy
 import logging
+import gc
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -102,3 +103,7 @@ def debug(str):
     print(str, flush=True)
     logging.debug(str)
 
+# for machine learning
+n_pca=2
+use_pca=False
+gc.enable()

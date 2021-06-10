@@ -143,7 +143,7 @@ def get_player_bans(token, discord_id=None):
 
     if len(sheets) > 0:
         totalSheet = pd.concat(sheets)
-        totalSheet = totalSheet.drop_duplicates(subset="Player_id", keep="last")
+        totalSheet = totalSheet.drop_duplicates(inplace=False, subset=["Player_id"], keep="last")
 
         file_name = f"{req_data['display_name']}_bans.xlsx"
         writer = pd.ExcelWriter(file_name, engine="xlsxwriter")

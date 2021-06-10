@@ -81,21 +81,19 @@ def clean_dataset(df, skills_list, minigames_list):
     df.drop(columns=['id','timestamp','ts_date','Player_id'], inplace=True)
 
     # set unique index
-    df.set_index(['name'],inplace=True)
+    df.set_index(['name'], inplace=True)
 
     # total is sum of all skills
+    df[skills_list] = df[skills_list].replace(-1, 0)
     df['total'] = df[skills_list].sum(axis=1)
     
 
     # replace -1 values
-    df[skills_list] = df[skills_list].replace(-1, 1)
+    df[skills_list] = df[skills_list].replace(0, 1)
     df[minigames_list] = df[minigames_list].replace(-1, 0)
 
     df['boss_total'] = df[minigames_list].sum(axis=1)
 
-    # mask = (df['total'] > 1_000_000)
-
-    # df = df[mask].copy()
     return df
 
 def zalcano_feature(df):
@@ -170,27 +168,10 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
         
     # all features
     features =  df.columns
-
-    # take median of all columns
-    bad_features = pd.DataFrame(df.median(), columns=['median'])
     
-    # if a row has no data it returns -1
-    # if the median of the dataset is below 0 then that feature is mostly empty
-    mask = (bad_features['median'] < 1)
-    bad_features = bad_features[mask].index
-
-    # filter out bad features
-    my_feature_fields = [
-                         'wintertodt', 
-                         'total',
-                         #'zalcano', 
-                         #'zalcano/boss_total'
-                         'boss_total',
-                         ] + skills_list
-    features = [f for f in features if f not in bad_features or 'feature' in f or '/total' in f]
-    _ = [features.append(f) for f in my_feature_fields if f not in features]
-
+    features = [f for f in features if '/total' in f or '/boss_total' in f or '_feature' in f]
     return df[features].copy()
+
 
 @logging
 def f_standardize(df, scaler=None):
@@ -199,7 +180,7 @@ def f_standardize(df, scaler=None):
         scaler = RobustScaler()
         scaler = scaler.fit(df)
 
-        today = time.strftime('%Y-%m-%d')
+        today = int(time.time())
         dump(value=scaler, filename=f'Predictions/models/scaler_{today}_100.joblib')
     
     X_scaled = scaler.transform(df) 
@@ -212,19 +193,26 @@ def f_normalize(df, transformer=None):
         transformer = Normalizer()
         transformer = transformer.fit(df)
 
-        today = time.strftime('%Y-%m-%d')
+        today = int(time.time())
         dump(value=transformer, filename=f'Predictions/models/normalizer_{today}_100.joblib')
 
     X_normalized = transformer.transform(df)
     return pd.DataFrame(X_normalized, columns=df.columns, index=df.index)
 
-def f_pca(df, n_components=2, pca=None):
+
+def f_pca(df, n_components='mle', pca=None):
+    n_components = int(n_components) if n_components != 'mle' else n_components
     if pca is None:
-        pca = PCA(n_components = n_components) 
+        pca = PCA(n_components=n_components, random_state=7) 
         pca = pca.fit(df)
 
+        today = int(time.time())
+        n_components = pca.n_components_
+        dump(value=pca, filename=f'Predictions/models/pca_{today}_{n_components}.joblib')
+        
     # Apply dimensionality reduction to X.
     X_principal = pca.transform(df)
+
     # rename columns and put in dataframe
     columns = [f'P{c}' for c in range(n_components)]
     df = pd.DataFrame(X_principal, columns=columns, index=df.index) 

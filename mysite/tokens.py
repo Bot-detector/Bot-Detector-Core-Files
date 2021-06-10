@@ -51,7 +51,7 @@ def verify_token(token, verifcation):
 
 @app_token.route("/log/<token>", methods=['GET'])
 def print_log(token):
-    if not (verify_token(token, verifcation='create_token')):
+    if not (verify_token(token, verifcation='ban')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
     with open("error.log", "r") as f:
@@ -149,8 +149,7 @@ def create_predictions(token):
     if not (verify_token(token, verifcation='create_token')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
-    n_pca = 30
-    Config.sched.add_job(model.save_model ,args=[n_pca], replace_existing=True, name='save_model')
+    Config.sched.add_job(model.save_model ,args=[Config.n_pca, Config.use_pca], replace_existing=True, name='save_model')
     return jsonify({'OK': 'OK'})
 
 @app_token.route("/site/hiscorescraper/<token>")

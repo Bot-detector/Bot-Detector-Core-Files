@@ -67,6 +67,7 @@ def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerda
         session.commit()
         session.close()
         conn.close()
+        return
 
 '''
     Players Table
@@ -698,6 +699,35 @@ def get_discord_linked_accounts(discord_id):
     return data
     
 
+
+#Find other OSRS accounts the same user has linked to their Discord ID.
+def get_other_linked_accounts(player_name):
+
+    sql = '''
+            SELECT
+                name
+            FROM verified_players
+            WHERE 1 = 1
+                AND Verified_status = 1
+                AND Discord_id IN (
+                    SELECT
+                        Discord_id
+                    FROM verified_players
+                    WHERE 1 = 1
+                        AND Verified_status = 1
+                        AND name = :player_name
+                )
+          '''
+
+    param = {
+        'player_name': player_name
+    }
+
+    data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
+
+    return data
+
+
 def get_verification_player_id(player_name):
 
     sql = 'SELECT id FROM Players WHERE name = :player_name'
@@ -709,6 +739,7 @@ def get_verification_player_id(player_name):
     data = execute_sql(sql, param=param, debug=False, has_return=True)
 
     return data
+
 
 def verificationInsert(discord_id, player_id, code, token):
 
@@ -727,5 +758,24 @@ def verificationInsert(discord_id, player_id, code, token):
 def get_prediction_player(player_id):
     sql = 'select * from Predictions where id = :id'
     param = {'id':player_id}
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
+    return data
+
+def get_player_kc(players):
+    sql = ('''
+        SELECT
+            pl2.name,
+            count(DISTINCT rp.reportedID) kc
+        FROM Reports rp
+        INNER JOIN Players pl ON (rp.reportedID = pl.id)
+        INNER JOIN Players pl2 ON (rp.reportingID = pl2.id)
+        where 1=1
+            and pl2.name in :players
+            and pl.confirmed_ban = 1
+        GROUP BY
+            pl2.name
+        '''
+    )
+    param = {'players': players}
     data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
