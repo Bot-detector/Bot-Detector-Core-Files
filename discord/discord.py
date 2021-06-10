@@ -265,6 +265,7 @@ def get_discord_linked_accounts(token, discord_id=None):
 
     return jsonify(output)
 
+
 @discord.route('/discord/get_all_linked_ids/<token>', methods=['GET'])
 def get_all_linked_ids(token):
 
@@ -277,5 +278,41 @@ def get_all_linked_ids(token):
 
     df = pd.DataFrame(data)
     output = df.to_dict('records')
+
+    return jsonify(output)
+
+
+@discord.route('/discord/get_latest_sighting/<token>', methods=['GET'])
+def get_latest_sighting(token):
+
+    verified = tokens.verify_token(token=token, verifcation='verify_players')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    if isinstance(request.json, str):
+        req_data= json.loads(request.json)
+    else:
+        req_data = request.json
+
+    player_id = SQL.get_player(req_data["player_name"]).id
+    
+    last_sighting_data = SQL.user_latest_sighting(player_id)
+
+    df = pd.DataFrame(last_sighting_data)
+
+    df = df[[  "equip_head_id",
+	            "equip_amulet_id",
+	            "equip_torso_id",
+	            "equip_legs_id",
+	            "equip_boots_id",
+	            "equip_cape_id",
+	            "equip_hands_id",
+	            "equip_weapon_id",
+            ]]
+
+    
+    output = df.to_dict('records')
+    output = output[0]
 
     return jsonify(output)

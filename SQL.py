@@ -187,7 +187,21 @@ def insert_highscore(player_id, skills, minigames):
 '''
     Reports Table
 '''
+def user_latest_sighting(player_id):
+    sql = '''
+            SELECT *
+            FROM Reports rpts
+            WHERE 1 = 1
+                AND rpts.reportedID = :player_id
+            ORDER BY rpts.timestamp DESC
+            LIMIT 1
 
+        '''
+    param = {
+        "player_id": player_id
+    }
+
+    return execute_sql(sql, param=param, debug=False, has_return=True)
 
 def insert_report(data):
     
@@ -682,6 +696,7 @@ def get_discord_linked_accounts(discord_id):
     data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
     return data
+    
 
 def get_verification_player_id(player_name):
 
