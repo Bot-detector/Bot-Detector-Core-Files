@@ -309,9 +309,9 @@ def get_latest_sighting(token):
 	            "equip_cape_id",
 	            "equip_hands_id",
 	            "equip_weapon_id",
+                "equip_shield_id"
             ]]
 
-    
     output = df.to_dict('records')
     output = output[0]
 
