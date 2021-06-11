@@ -228,7 +228,8 @@ def predict_model(player_name=None, start=0, amount=100_000, use_pca=True, debug
 
             # player has no stored or old prediction
             old_prediction = True
-            df = highscores.scrape_one(player_name)
+            # df = highscores.scrape_one(player_name)########################
+            df =  SQL.get_highscores_data(0, 1, player.name)
             Config.debug('hiscores')
             # player is not on the hiscores
             if df == (None, None):
@@ -378,14 +379,16 @@ def save_model(n_pca='mle', use_pca=True):
 
 if __name__ == '__main__':
     use_pca = False
-    debug = True
+    debug = False
     n_pca = 2
     
     players = [
-        'memahao'
+        'memahao',
+        'extreme4all',
+        'ferrariic'
     ]
     
-    train_model(use_pca=use_pca, n_pca=n_pca)
+    # train_model(use_pca=use_pca, n_pca=n_pca)
     # save_model(use_pca=use_pca, n_pca=n_pca)
 
     for player in players:

@@ -345,7 +345,12 @@ def get_player_labels():
 '''
 
 
-def get_highscores_data(start=0, amount=1_000_000):
+def get_highscores_data(start=0, amount=1_000_000, name=None):
+    param = {
+        'start': start,
+        'amount': amount
+    }
+
     sql_highscores = (
         '''
         SELECT 
@@ -353,13 +358,14 @@ def get_highscores_data(start=0, amount=1_000_000):
             pl.name 
         FROM playerHiscoreDataLatest hdl 
         inner join Players pl on(hdl.Player_id=pl.id)
-        LIMIT :start, :amount
-        ;
+        
     ''')
-    param = {
-        'start': start,
-        'amount': amount
-    }
+    if name is not None:
+        param['name'] = name
+        sql_highscores = f'{sql_highscores} where 1=1 and pl.name = :name'
+        
+    sql_highscores = f'{sql_highscores} LIMIT :start, :amount;'
+
     highscores = execute_sql(sql_highscores, param=param,
                              debug=False, has_return=True)
     return highscores
