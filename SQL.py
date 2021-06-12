@@ -344,6 +344,10 @@ def get_player_labels():
     Queries using Views
 '''
 
+def get_count_players_to_scrape():
+    sql = "SELECT COUNT(*) FROM playerdata.playersToScrape;"
+    return execute_sql(sql, param=None, debug=False, has_return=True)
+
 
 def get_highscores_data(start=0, amount=1_000_000, name=None):
     param = {

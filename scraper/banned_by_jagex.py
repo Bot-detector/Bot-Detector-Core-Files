@@ -86,10 +86,10 @@ def check_player(player):
 
     # this is a bot
     if data['error'] == 'NOT_A_MEMBER':
-        if player["prediction"] == 'Real_Player':
-            SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
-        else:
-            SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=1, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
+        #if player["prediction"] == 'Real_Player':
+            #SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
+        #else:
+        SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=1, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
             
         players_banned.append(player['name'])
         

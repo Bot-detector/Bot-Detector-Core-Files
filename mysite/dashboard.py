@@ -3,6 +3,8 @@ from flask.json import jsonify
 import pandas as pd
 import SQL
 
+import mysite.tokens as tokens
+
 dashboard = Blueprint('dashboard', __name__, template_folder='templates')
 
 #######################
@@ -65,6 +67,21 @@ def leaderboard(board=None):
 	# Post processing: rename, group by reporter and count, sort, and limit results
     df = df.rename(columns={"reported": "count"}).groupby(['reporter']).count().reset_index().sort_values(by='count', ascending=False).head(25)
 
+    output = df.to_dict('records')
+
+    return jsonify(output)
+
+
+@dashboard.route('/site/dashboard/playerstoscrape/<token>')
+def get_count_players_to_scrape(token):
+
+    verified = tokens.verify_token(token=token, verifcation='verify_players')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    count_data = SQL.get_count_players_to_scrape()
+    df = pd.DataFrame(count_data)
     output = df.to_dict('records')
 
     return jsonify(output)
