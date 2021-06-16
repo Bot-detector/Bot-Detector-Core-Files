@@ -186,9 +186,6 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
 
 @logging
 def f_standardize(df, scaler=None, dummy=False):
-    if dummy:
-        return df
-
     if scaler is None:
         print('new scaler')
         scaler = RobustScaler()
@@ -197,14 +194,14 @@ def f_standardize(df, scaler=None, dummy=False):
         today = int(time.time())
         dump(value=scaler, filename=f'Predictions/models/scaler_{today}_100.joblib')
     
+    if dummy: 
+        return df
+
     X_scaled = scaler.transform(df) 
     return pd.DataFrame(X_scaled, columns=df.columns, index=df.index)
 
 @logging
 def f_normalize(df, transformer=None, dummy=False):
-    if dummy:
-        return df
-
     if transformer is None:
         print('new normalizer')
         transformer = Normalizer()
@@ -212,6 +209,9 @@ def f_normalize(df, transformer=None, dummy=False):
 
         today = int(time.time())
         dump(value=transformer, filename=f'Predictions/models/normalizer_{today}_100.joblib')
+
+    if dummy: 
+        return df
 
     X_normalized = transformer.transform(df)
     return pd.DataFrame(X_normalized, columns=df.columns, index=df.index)
