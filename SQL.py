@@ -707,7 +707,46 @@ def get_discord_linked_accounts(discord_id):
     data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
     return data
+
+
+def insert_export_link(export_info):
     
+    # list of column values
+    columns = list_to_string(list(export_info.keys()))
+    values = list_to_string([f':{column}' for column in list(export_info.keys())])
+
+    sql_insert = f"INSERT IGNORE INTO export_links ({columns}) VALUES ({values});"
+
+    execute_sql(sql_insert, param=export_info, debug=True, has_return=False, db_name="discord")
+
+    return
+
+
+def get_export_links(url_text):
+
+    sql = 'SELECT * FROM export_links WHERE url_text IN (:url_text)'
+    
+    param = {
+        'url_text': url_text
+    }
+
+    data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
+
+    return data
+    
+
+def update_export_links(update_export):
+
+    sql = '''UPDATE export_links
+             SET 
+                time_redeemed = :time_redeemed,
+                is_redeemed - :is_redeemed
+             WHERE id = :id
+     '''
+
+    execute_sql(sql, param=update_export, debug=False, has_return=False, db_name="discord")
+
+    return
 
 
 #Find other OSRS accounts the same user has linked to their Discord ID.
