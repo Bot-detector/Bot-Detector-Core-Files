@@ -94,6 +94,8 @@ def create_csv_export(linked_accounts, display_name):
 
     totalSheet.to_csv(file_path, encoding='utf-8', index=False)
 
+    return file_name
+
 
 def create_random_link():
     pool = string.ascii_letters + string.digits
