@@ -46,10 +46,11 @@ def process(df, scaler=None, transformer=None):
 
     # preprocess
     try:
+        dummy = True
         df_preprocess = (df_clean
             .pipe(pf.start_pipeline)
-            # .pipe(pf.f_standardize, scaler)
-            # .pipe(pf.f_normalize, transformer)
+            .pipe(pf.f_standardize, scaler, dummy)
+            .pipe(pf.f_normalize, transformer, dummy)
         )
     except Exception as e:
         Config.debug(f'Error normalizing: {e}')

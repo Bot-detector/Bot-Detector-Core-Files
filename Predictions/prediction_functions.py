@@ -125,10 +125,21 @@ def wintertodt_feature(df):
     return df
 
 def botname(df):
-    mask = (df.index.astype(str).str[0:2].str.isdigit())
-    df['botname_feature'] = 0
-    df.loc[mask,'botname_feature'] = 1
-
+    L = '[A-Za-z]'
+    C = '[_-]'
+    S = '[ ]'
+    N = '[0-9]'
+    name_transform = [
+                      (L, 'L'), 
+                      (C, 'C'), 
+                      (S, 'S'), 
+                      (N, 'N')]
+    df['botname'] = df.index
+    for token_regex, token in name_transform:
+        df['botname'] = df['botname'].str.replace(token_regex, token)
+    
+    df['botname'] = df['botname'].astype("category").cat.add_categories([0])
+    df['botname_feature'] = df['botname'].cat.codes
     return df
 
 @logging
@@ -145,14 +156,14 @@ def f_features(df, skills_list, minigames_list):
          df[f'{boss}/boss_total'] = df[boss] / boss_total
 
 
-    df = wintertodt_feature(df)
+    # df = wintertodt_feature(df)
     # df = zalcano_feature(df)
-    # df = botname(df)
+    df = botname(df)
     # df['rangebot_feature'] = (df['ranged'] + df['hitpoints'])/total
 
     df['median_feature'] = df[skills_list].median(axis=1)
     df['mean_feature'] = df[skills_list].mean(axis=1)
-    df['std_feature'] = df[skills_list].std(axis=1)
+    # df['std_feature'] = df[skills_list].std(axis=1)
 
     # df['bot_name_feature'] = botname(df)
     # replace infinities & nan
@@ -174,7 +185,10 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
 
 
 @logging
-def f_standardize(df, scaler=None):
+def f_standardize(df, scaler=None, dummy=False):
+    if dummy:
+        return df
+
     if scaler is None:
         print('new scaler')
         scaler = RobustScaler()
@@ -187,7 +201,10 @@ def f_standardize(df, scaler=None):
     return pd.DataFrame(X_scaled, columns=df.columns, index=df.index)
 
 @logging
-def f_normalize(df, transformer=None):
+def f_normalize(df, transformer=None, dummy=False):
+    if dummy:
+        return df
+
     if transformer is None:
         print('new normalizer')
         transformer = Normalizer()
