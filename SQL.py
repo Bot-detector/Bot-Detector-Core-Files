@@ -344,8 +344,17 @@ def get_player_labels():
     Queries using Views
 '''
 
+def get_count_players_to_scrape():
+    sql = "SELECT COUNT(*) FROM playerdata.playersToScrape;"
+    return execute_sql(sql, param=None, debug=False, has_return=True)
 
-def get_highscores_data(start=0, amount=1_000_000):
+
+def get_highscores_data(start=0, amount=1_000_000, name=None):
+    param = {
+        'start': start,
+        'amount': amount
+    }
+
     sql_highscores = (
         '''
         SELECT 
@@ -353,13 +362,14 @@ def get_highscores_data(start=0, amount=1_000_000):
             pl.name 
         FROM playerHiscoreDataLatest hdl 
         inner join Players pl on(hdl.Player_id=pl.id)
-        LIMIT :start, :amount
-        ;
+        
     ''')
-    param = {
-        'start': start,
-        'amount': amount
-    }
+    if name is not None:
+        param['name'] = name
+        sql_highscores = f'{sql_highscores} where 1=1 and pl.name = :name'
+        
+    sql_highscores = f'{sql_highscores} LIMIT :start, :amount;'
+
     highscores = execute_sql(sql_highscores, param=param,
                              debug=False, has_return=True)
     return highscores
@@ -697,7 +707,46 @@ def get_discord_linked_accounts(discord_id):
     data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
     return data
+
+
+def insert_export_link(export_info):
     
+    # list of column values
+    columns = list_to_string(list(export_info.keys()))
+    values = list_to_string([f':{column}' for column in list(export_info.keys())])
+
+    sql_insert = f"INSERT IGNORE INTO export_links ({columns}) VALUES ({values});"
+
+    execute_sql(sql_insert, param=export_info, debug=True, has_return=False, db_name="discord")
+
+    return
+
+
+def get_export_links(url_text):
+
+    sql = 'SELECT * FROM export_links WHERE url_text IN (:url_text)'
+    
+    param = {
+        'url_text': url_text
+    }
+
+    data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
+
+    return data
+    
+
+def update_export_links(update_export):
+
+    sql = '''UPDATE export_links
+             SET 
+                time_redeemed = :time_redeemed,
+                is_redeemed = :is_redeemed
+             WHERE id = :id
+     '''
+
+    execute_sql(sql, param=update_export, debug=False, has_return=False, db_name="discord")
+
+    return
 
 
 #Find other OSRS accounts the same user has linked to their Discord ID.

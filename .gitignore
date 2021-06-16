@@ -11,6 +11,9 @@ venv/
 env/
 env
 
+exports
+exports/
+
 .env
 flaskwebapp.log
 

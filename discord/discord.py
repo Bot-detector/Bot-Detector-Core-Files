@@ -1,15 +1,18 @@
 import os
 import sys
+import time
+import json
+import pandas as pd
 
+from flask.json import jsonify
+from flask import Blueprint, request, make_response
 from flask.helpers import send_file
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import SQL
-from flask.json import jsonify
-from flask import Blueprint, request, make_response
+import errors
 import mysite.tokens as tokens
-import json
-import pandas as pd
+import discord.ban_export as ban_export
 
 
 discord = Blueprint('discord', __name__, template_folder='templates')
@@ -119,47 +122,64 @@ def get_player_bans(token, discord_id=None):
         return jsonify({'error':'Invalid data'}), 401
 
     if discord_id is None:
-        req_data = json.loads(request.get_json())
+        if isinstance(request.json, str):
+            req_data = json.loads(request.json)
+        else:
+            req_data = request.json
     
         if req_data is None:
             return jsonify({'error':'No data provided.'}), 400
 
-        discord_id = req_data['discord_id']
+        discord_id = req_data.get("discord_id")
+
+        if discord_id is None:
+            return jsonify({'error':'No Discord ID provided.'}), 400
 
     linked_accounts = SQL.get_discord_linked_accounts(discord_id=discord_id)
 
     if len(linked_accounts) == 0:
         return jsonify({"error": "User has no OSRS accounts linked to their Discord ID."}), 500
 
-    sheets = []
-    names = []
-
-    for account in linked_accounts:
-        data = SQL.get_player_banned_bots(account.name)
-        df = pd.DataFrame(data)
-
-        sheets.append(df)
-        names.append(account.name)
-
-    if len(sheets) > 0:
-        totalSheet = pd.concat(sheets)
-        totalSheet = totalSheet.drop_duplicates(inplace=False, subset=["Player_id"], keep="last")
-
-        file_name = f"{req_data['display_name']}_bans.xlsx"
-        writer = pd.ExcelWriter(file_name, engine="xlsxwriter")
-
-        totalSheet.to_excel(writer, sheet_name="Total")
-
-        for idx, name in enumerate(names):
-            sheets[idx].to_excel(writer, sheet_name=names[idx])
-
-        writer.save()
-
-        return send_file(file_name)
-
-
-    else:
+    try:
+        download_url = ban_export.create_ban_export(
+            file_type=req_data["file_type"],
+            linked_accounts=linked_accounts,
+            display_name=req_data["display_name"],
+            discord_id=req_data["discord_id"]
+        )
+    except errors.InvalidFileType:
+        return jsonify({"error": "File type specified was not valid."}), 400
+    except errors.NoDataAvailable:
         return jsonify({"error": "No ban data available for the linked account(s). Possibly the server timed out."}), 500
+
+    return jsonify({"url": download_url})
+
+
+@discord.route('/discord/download_export/<export_id>')
+def download_export(export_id=None):
+    if export_id is None:
+        return jsonify({"error": "Please provide a valid download ID."}), 400
+
+    download_data = SQL.get_export_links(export_id)
+
+    if len(download_data) == 0:
+        return jsonify({"error": "The URL you've provided is invalid."}), 500
+
+    file_path = f"{os.getcwd()}/exports/{download_data[0].file_name}"
+
+    if os.path.exists(file_path):
+
+        update_info = {
+            "id": download_data[0].id,
+            "time_redeemed": time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime()),
+            "is_redeemed": 1
+        }
+
+        SQL.update_export_links(update_export=update_info)
+
+        return send_file(file_path, as_attachment=True)
+    else:
+        return jsonify({"error": "File is no longer present on our system. Please use !excelban or !csvban and try again with a new URL."}), 500
   
 
 @discord.route('/discord/verify/player_rsn_discord_account_status/<token>/<player_name>', methods=['GET'])
@@ -291,7 +311,7 @@ def get_latest_sighting(token):
         return jsonify({'Invalid Data':'Data'})
 
     if isinstance(request.json, str):
-        req_data= json.loads(request.json)
+        req_data = json.loads(request.json)
     else:
         req_data = request.json
 
@@ -311,7 +331,6 @@ def get_latest_sighting(token):
 	            "equip_weapon_id",
                 "equip_shield_id"
             ]]
-
 
     output = df.to_dict('records')
     output = output[0]
