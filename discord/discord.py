@@ -170,7 +170,7 @@ def download_export(export_id=None):
     if os.path.exists(file_path):
 
         update_info = {
-            "id": download_data.id,
+            "id": download_data[0].id,
             "time_redeemed": time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime()),
             "is_redeemed": 1
         }
