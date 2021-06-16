@@ -48,8 +48,8 @@ def process(df, scaler=None, transformer=None):
     try:
         df_preprocess = (df_clean
             .pipe(pf.start_pipeline)
-            .pipe(pf.f_standardize, scaler)
-            .pipe(pf.f_normalize, transformer)
+            # .pipe(pf.f_standardize, scaler)
+            # .pipe(pf.f_normalize, transformer)
         )
     except Exception as e:
         Config.debug(f'Error normalizing: {e}')
@@ -388,7 +388,7 @@ if __name__ == '__main__':
         'ferrariic'
     ]
     
-    # train_model(use_pca=use_pca, n_pca=n_pca)
+    train_model(use_pca=use_pca, n_pca=n_pca)
     # save_model(use_pca=use_pca, n_pca=n_pca)
 
     for player in players:
