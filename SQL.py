@@ -740,7 +740,7 @@ def update_export_links(update_export):
     sql = '''UPDATE export_links
              SET 
                 time_redeemed = :time_redeemed,
-                is_redeemed - :is_redeemed
+                is_redeemed = :is_redeemed
              WHERE id = :id
      '''
 
