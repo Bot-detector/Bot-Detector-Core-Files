@@ -27,7 +27,7 @@ from Predictions import extra_data as ed
 import traceback
 
 def create_model():
-    rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
+    rfc = RandomForestClassifier(n_estimators=300, max_depth=50, random_state=7, n_jobs=-1)
     return rfc
 
 
