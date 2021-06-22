@@ -165,7 +165,7 @@ def fill_graveyard_plots(players_banned):
     embed = DiscordEmbed(title="All Ye Bots Lose All Hope", color="000000")
 
     embed.set_timestamp()
-    embed.add_embed_field(name="Newly Departed test", value=f"{', '.join(players_banned)}")
+    embed.add_embed_field(name="Newly Departed", value=f"{', '.join(players_banned)}")
     embed.set_thumbnail(url="https://i.imgur.com/pwtJVPj.gif")
 
     webhook.add_embed(embed=embed)
