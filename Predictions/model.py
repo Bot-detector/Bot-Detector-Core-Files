@@ -88,12 +88,14 @@ def train_model(n_pca='mle', use_pca=True):
 
     lbls = [
         'Real_Player', 'Smithing_bot', 'Mining_bot', 
-        'Magic_bot', 'PVM_Ranged_bot', 
+        'Magic_bot', 'PVM_Ranged_bot',  
         'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot',
         'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
         'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
-        'Cooking_bot', 'mort_myre_fungus_bot',
-        'Woodcutting_bot', 'Firemaking_bot','Fishing_Cooking_bot'
+        'Cooking_bot', 'mort_myre_fungus_bot', 
+        'Woodcutting_bot', 'Firemaking_bot','Fishing_Cooking_bot',
+        'Agility_Thieving_bot', 'Construction_Magic_bot','Construction_Prayer_bot',
+        'Zalcano_bot'
     ]
 
     Config.debug(f'labels: {len(lbls)}, {lbls}')
