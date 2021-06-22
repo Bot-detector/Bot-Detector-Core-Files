@@ -666,9 +666,22 @@ def get_leaderboard_stats(bans=False, manual=False, limit=25):
     return data
     
   
-def get_possible_ban_predicted():
-    sql = 'SELECT * FROM playerPossibleBanPrediction WHERE confirmed_ban = 0'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+def get_possible_ban_predicted(amount=1000):
+    sql = ('''
+        SELECT 
+            * 
+        FROM playerPossibleBanPrediction 
+        WHERE 1=1
+            and confirmed_ban = 0
+        ORDER BY RAND()
+        LIMIT :amount
+        
+    ''')
+    param ={
+        'amount':amount
+    }
+    
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
 
 
