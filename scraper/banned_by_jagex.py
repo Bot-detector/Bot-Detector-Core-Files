@@ -157,7 +157,7 @@ def confirm_possible_ban():
 #Sends an embed to the #bot-graveyard channel on our Discord server
 def fill_graveyard_plots(players_banned):
     # if is empty list return
-    if players_banned == []:
+    if not players_banned:
         Config.debug(f'There is no data in {players_banned}')
         return
     
