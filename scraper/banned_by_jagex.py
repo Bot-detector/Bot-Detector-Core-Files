@@ -134,7 +134,7 @@ def confirm_possible_ban():
                     Config.debug(f' scraped: {player["name"]} result: {result} {result}')
 
                     if new_ban:
-                        players_banned.append(player)
+                        players_banned.append(player["name"])
 
                     # some logging
                     if i % 100 == 0 and not(i == 0):
