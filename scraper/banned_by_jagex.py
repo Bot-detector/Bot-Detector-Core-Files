@@ -132,7 +132,7 @@ def confirm_possible_ban():
                     result, new_ban = future.result()
 
                     if new_ban:
-                        players_banned.append(player)
+                        players_banned.append(player["name"])
 
                     # some logging
                     if i % 100 == 0 and not(i == 0):
