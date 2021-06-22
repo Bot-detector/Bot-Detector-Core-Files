@@ -91,7 +91,7 @@ def check_player(player):
             SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=1, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
             
         if not (lbl_jgx == 2):
-            new_ban = True
+            new_ban = True 
         
         return data['error'], new_ban
 
