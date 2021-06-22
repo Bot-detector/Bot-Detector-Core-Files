@@ -27,7 +27,7 @@ from Predictions import extra_data as ed
 import traceback
 
 def create_model():
-    rfc = RandomForestClassifier(n_estimators=300, max_depth=50, random_state=7, n_jobs=-1)
+    rfc = RandomForestClassifier(n_estimators=100, random_state=7, n_jobs=-1)
     return rfc
 
 
@@ -46,11 +46,10 @@ def process(df, scaler=None, transformer=None):
 
     # preprocess
     try:
-        dummy = True
         df_preprocess = (df_clean
             .pipe(pf.start_pipeline)
-            .pipe(pf.f_standardize, scaler, dummy)
-            .pipe(pf.f_normalize, transformer, dummy)
+            .pipe(pf.f_standardize, scaler)
+            .pipe(pf.f_normalize, transformer)
         )
     except Exception as e:
         Config.debug(f'Error normalizing: {e}')
@@ -88,14 +87,12 @@ def train_model(n_pca='mle', use_pca=True):
 
     lbls = [
         'Real_Player', 'Smithing_bot', 'Mining_bot', 
-        'Magic_bot', 'PVM_Ranged_bot',  
+        'Magic_bot', 'PVM_Ranged_bot', 
         'Fletching_bot', 'PVM_Melee_bot', 'Herblore_bot',
         'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
         'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
-        'Cooking_bot', 'mort_myre_fungus_bot', 
-        'Woodcutting_bot', 'Firemaking_bot','Fishing_Cooking_bot',
-        'Agility_Thieving_bot', 'Construction_Magic_bot','Construction_Prayer_bot',
-        'Zalcano_bot'
+        'Cooking_bot', 'mort_myre_fungus_bot',
+        'Woodcutting_bot', 'Firemaking_bot','Fishing_Cooking_bot'
     ]
 
     Config.debug(f'labels: {len(lbls)}, {lbls}')

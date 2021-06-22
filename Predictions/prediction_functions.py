@@ -125,21 +125,10 @@ def wintertodt_feature(df):
     return df
 
 def botname(df):
-    L = '[A-Za-z]'
-    C = '[_-]'
-    S = '[ ]'
-    N = '[0-9]'
-    name_transform = [
-                      (L, 'L'), 
-                      (C, 'C'), 
-                      (S, 'S'), 
-                      (N, 'N')]
-    df['botname'] = df.index
-    for token_regex, token in name_transform:
-        df['botname'] = df['botname'].str.replace(token_regex, token)
-    
-    df['botname'] = df['botname'].astype("category").cat.add_categories([0])
-    df['botname_feature'] = df['botname'].cat.codes
+    mask = (df.index.astype(str).str[0:2].str.isdigit())
+    df['botname_feature'] = 0
+    df.loc[mask,'botname_feature'] = 1
+
     return df
 
 @logging
@@ -156,14 +145,14 @@ def f_features(df, skills_list, minigames_list):
          df[f'{boss}/boss_total'] = df[boss] / boss_total
 
 
-    # df = wintertodt_feature(df)
+    df = wintertodt_feature(df)
     # df = zalcano_feature(df)
-    df = botname(df)
+    # df = botname(df)
     # df['rangebot_feature'] = (df['ranged'] + df['hitpoints'])/total
 
     df['median_feature'] = df[skills_list].median(axis=1)
     df['mean_feature'] = df[skills_list].mean(axis=1)
-    # df['std_feature'] = df[skills_list].std(axis=1)
+    df['std_feature'] = df[skills_list].std(axis=1)
 
     # df['bot_name_feature'] = botname(df)
     # replace infinities & nan
@@ -185,7 +174,7 @@ def filter_relevant_features(df, skills_list ,myfeatures=None):
 
 
 @logging
-def f_standardize(df, scaler=None, dummy=False):
+def f_standardize(df, scaler=None):
     if scaler is None:
         print('new scaler')
         scaler = RobustScaler()
@@ -194,14 +183,11 @@ def f_standardize(df, scaler=None, dummy=False):
         today = int(time.time())
         dump(value=scaler, filename=f'Predictions/models/scaler_{today}_100.joblib')
     
-    if dummy: 
-        return df
-
     X_scaled = scaler.transform(df) 
     return pd.DataFrame(X_scaled, columns=df.columns, index=df.index)
 
 @logging
-def f_normalize(df, transformer=None, dummy=False):
+def f_normalize(df, transformer=None):
     if transformer is None:
         print('new normalizer')
         transformer = Normalizer()
@@ -209,9 +195,6 @@ def f_normalize(df, transformer=None, dummy=False):
 
         today = int(time.time())
         dump(value=transformer, filename=f'Predictions/models/normalizer_{today}_100.joblib')
-
-    if dummy: 
-        return df
 
     X_normalized = transformer.transform(df)
     return pd.DataFrame(X_normalized, columns=df.columns, index=df.index)
