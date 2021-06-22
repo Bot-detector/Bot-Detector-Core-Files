@@ -69,6 +69,7 @@ def check_player(player):
     cb = player["confirmed_ban"]
     cp = player["confirmed_player"]
     lbl = player["label_id"]
+    lbl_jgx = player["label_jagex"]
 
     # if no error, player exists
     if not('error' in data):
@@ -78,20 +79,18 @@ def check_player(player):
     # this we don't know (unbanned?)
     if data['error'] == 'NO_PROFILE':
         SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
-        # if player["prediction"] == 'Real_Player':
-        #     SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
-        # else:
-        #     SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=1, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
         return data['error']
 
     # this is a bot
     if data['error'] == 'NOT_A_MEMBER':
+        # confirmed ban should only be players that we predict as bot and jagex bans.
         if player["prediction"] == 'Real_Player':
             SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
         else:
             SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=1, confirmed_player=cp, label_id=lbl, label_jagex=2, debug=False)
             
-        players_banned.append(player['name'])
+        if lbl_jgx != 2 or cb != 1:
+            players_banned.append(player['name'])
         
         return data['error']
 
