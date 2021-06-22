@@ -131,8 +131,6 @@ def confirm_possible_ban():
                     player= futures[future]
                     result, new_ban = future.result()
 
-                    Config.debug(f' scraped: {player["name"]} result: {result} {result}')
-
                     if new_ban:
                         players_banned.append(player)
 
