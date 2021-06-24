@@ -28,7 +28,7 @@ def get_prediction(player_name, version=None, token=None):
 
     player_name, bad_name = SQL.name_check(player_name)
 
-    if player_name == "Mod Ash":
+    if player_name.lower() == "mod ash":
         df = {
             "player_id": 957580,
             "player_name": player_name,
