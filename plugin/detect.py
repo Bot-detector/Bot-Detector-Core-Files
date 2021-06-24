@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 import time
 
 import Config
@@ -76,13 +76,25 @@ def post_detect(version=None, manual_detect=0):
     
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
-    # remove duplicates
     df = pd.DataFrame(detections)
+
+    #remove blank rows
+    df.dropna(how="all")
+
+    # remove duplicates
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
 
+    #normalize time values
+    df["ts"] = pd.to_datetime(df['ts'], unit='s')
+
+    #remove any row with timestamps now within the LAST 24 hours. No future or really old entries.
+    now = datetime.now()
+    yesterday = datetime.now() - timedelta(days=1)
+    df["ts"] = df.loc[(df["ts"] >= yesterday) & (df["ts"] <= now)]
+
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        print('to many reports')
-        Config.debug('to many reports')
+        print('too many reports')
+        Config.debug('too many reports')
 
         return jsonify({'NOK': 'NOK'}), 400
     

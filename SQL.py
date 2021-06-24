@@ -205,9 +205,6 @@ def user_latest_sighting(player_id):
     return execute_sql(sql, param=param, debug=False, has_return=True)
 
 def insert_report(data):
-    
-    gmt = time.gmtime(data['ts'])
-    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
     param = {
         'reportedID': data.get('reported'),
@@ -216,7 +213,7 @@ def insert_report(data):
         'x_coord': data.get('x'),
         'y_coord': data.get('y'),
         'z_coord': data.get('z'),
-        'timestamp': human_time,
+        'timestamp': data.get('ts'),
         'manual_detect': data.get('manual_detect'),
         'on_members_world': data.get('on_members_world'),
         'on_pvp_world': data.get('on_pvp_world'),
