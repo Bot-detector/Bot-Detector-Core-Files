@@ -82,10 +82,10 @@ def post_detect(version=None, manual_detect=0):
     df.dropna(how="all")
 
     # remove duplicates
-    df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
+    df.drop_duplicates(subset=["reporter","reported","region_id"], inplace=True)
 
     #normalize time values
-    df["ts"] = pd.to_datetime(df['ts'], unit='s')
+    df["ts"] = pd.to_datetime(df["ts"], unit='s')
 
     #remove any row with timestamps now within the LAST 24 hours. No future or really old entries.
     now = datetime.now()
