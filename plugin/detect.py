@@ -68,6 +68,8 @@ def insync_detect(detections, manual_detect):
 
     Config.debug(f'      Done: Completed {idx + 1} detections')
 
+    return
+
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
 @detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
