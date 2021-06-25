@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import time
 
 import Config
 import pandas as pd
@@ -52,6 +51,7 @@ def custom_hiscore(detection):
 def insync_detect(detections, manual_detect):
     print("NSYNC")
     total_creates = 0
+
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
 
@@ -79,18 +79,26 @@ def post_detect(version=None, manual_detect=0):
     df = pd.DataFrame(detections)
 
     #remove blank rows
-    df.dropna(how="all")
+    df.dropna(inplace=True)
 
     # remove duplicates
     df.drop_duplicates(subset=["reporter","reported","region_id"], inplace=True)
 
     #normalize time values
-    df["ts"] = pd.to_datetime(df["ts"], unit='s')
+    df["ts"] = pd.to_datetime(df["ts"], unit='s', utc=True)
 
     #remove any row with timestamps now within the LAST 24 hours. No future or really old entries.
-    now = datetime.now()
+    now = datetime.utcnow()
+    now = pd.to_datetime(now, utc=True)
     yesterday = datetime.now() - timedelta(days=1)
-    df["ts"] = df.loc[(df["ts"] >= yesterday) & (df["ts"] <= now)]
+    yesterday = pd.to_datetime(yesterday, utc=True)
+
+    mask = (df["ts"] >= yesterday) & (df["ts"] <= now)
+
+    df = df[mask]
+
+    df["ts"].dt.strftime('%Y-%m-%d %H:%M:%S')
+
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         print('too many reports')
