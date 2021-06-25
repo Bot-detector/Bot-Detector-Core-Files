@@ -90,7 +90,7 @@ def post_detect(version=None, manual_detect=0):
     #remove any row with timestamps now within the LAST 24 hours. No future or really old entries.
     now = datetime.utcnow()
     now = pd.to_datetime(now, utc=True)
-    yesterday = datetime.now() - timedelta(days=1)
+    yesterday = datetime.utcnow() - timedelta(days=1)
     yesterday = pd.to_datetime(yesterday, utc=True)
 
     mask = (df["ts"] >= yesterday) & (df["ts"] <= now)
