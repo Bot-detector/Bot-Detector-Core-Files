@@ -76,6 +76,7 @@ def post_detect(version=None, manual_detect=0):
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
     df = pd.DataFrame(detections)
+    original_shape = df.shape
 
     #remove blank rows
     df.dropna(inplace=True)
@@ -95,12 +96,16 @@ def post_detect(version=None, manual_detect=0):
     #create filter for df; only timestamps between now and 24 hours ago
     mask = (df["ts"] >= yesterday) & (df["ts"] <= now)
     df = df[mask]
+    cleaned_shape = df.shape
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        Config.debug('too many reports')
-
-        return jsonify({'NOK': 'NOK'}), 400
+        Config.debug(f'too many reports: {df.shape}')
+        return jsonify({'OK': 'OK'})
     
+    if len(df) == 0:
+        Config.debug(f'No valid reports, {original_shape=}, {cleaned_shape=}')
+        return jsonify({'OK': 'OK'})
+
     detections = df.to_dict('records')
 
     Config.debug(f'      Received detections: DF shape: {df.shape}')
