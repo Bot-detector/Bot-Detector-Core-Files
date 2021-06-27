@@ -146,11 +146,13 @@ def f_features(df, skills_list, minigames_list):
          df[f'{boss}/boss_total'] = df[boss] / boss_total
 
 
+
     df = zalcano_feature(df)
     df = botname(df)
 
     df['median_feature'] = df[skills_list].median(axis=1)
     df['mean_feature'] = df[skills_list].mean(axis=1)
+    # df['std_feature'] = df[skills_list].std(axis=1)
 
     # replace infinities & nan
     df = df.replace([np.inf, -np.inf], 0) 

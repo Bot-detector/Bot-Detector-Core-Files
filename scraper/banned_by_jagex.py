@@ -72,6 +72,7 @@ def check_player(player):
 
     new_ban = False
 
+
     # if no error, player exists
     if not('error' in data):
         SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=5, debug=False)
@@ -80,7 +81,9 @@ def check_player(player):
     # this we don't know (unbanned?)
     if data['error'] == 'NO_PROFILE':
         SQL.update_player(player['id'], possible_ban=pb, confirmed_ban=cb, confirmed_player=cp, label_id=lbl, label_jagex=1, debug=False)
+
         return data['error'], new_ban
+
 
     # this is a bot
     if data['error'] == 'NOT_A_MEMBER':
