@@ -1,5 +1,4 @@
-import datetime
-import time
+from datetime import datetime, timedelta
 
 import Config
 import pandas as pd
@@ -50,23 +49,23 @@ def custom_hiscore(detection):
 
 
 def insync_detect(detections, manual_detect):
-    print("NSYNC")
     total_creates = 0
+
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
 
         total_creates += custom_hiscore(detection)
 
         if len(detection) > 1000 and total_creates/len(detections) > .75:
-            print(f'    Malicious: sender: {detection["reporter"]}')
             Config.debug(f'    Malicious: sender: {detection["reporter"]}')
-
             break
 
         if idx % 500 == 0 and idx != 0:
             Config.debug(f'      Completed {idx + 1}/{len(detections)}')
 
     Config.debug(f'      Done: Completed {idx + 1} detections')
+
+    return
 
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
@@ -76,22 +75,35 @@ def post_detect(version=None, manual_detect=0):
     
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
-    # remove duplicates
     df = pd.DataFrame(detections)
-    df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
+
+    #remove blank rows
+    df.dropna(inplace=True)
+
+    # remove duplicates
+    df.drop_duplicates(subset=["reporter","reported","region_id"], inplace=True)
+
+    #normalize time values
+    df["ts"] = pd.to_datetime(df["ts"], unit='s', utc=True)
+
+    #remove any row with timestamps now within the LAST 24 hours. No future or really old entries.
+    now = datetime.utcnow()
+    now = pd.to_datetime(now, utc=True)
+    yesterday = datetime.utcnow() - timedelta(days=1)
+    yesterday = pd.to_datetime(yesterday, utc=True)
+
+    #create filter for df; only timestamps between now and 24 hours ago
+    mask = (df["ts"] >= yesterday) & (df["ts"] <= now)
+    df = df[mask]
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        print('to many reports')
-        Config.debug('to many reports')
+        Config.debug('too many reports')
 
         return jsonify({'NOK': 'NOK'}), 400
     
     detections = df.to_dict('records')
 
-    print(f'      Received detections: DF shape: {df.shape}')
-
     Config.debug(f'      Received detections: DF shape: {df.shape}')
     Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
-
 
     return jsonify({'OK': 'OK'})

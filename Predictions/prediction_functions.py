@@ -97,31 +97,21 @@ def clean_dataset(df, skills_list, minigames_list):
     return df
 
 def zalcano_feature(df):
-    zalcano_mining      = df['zalcano'] * 13_500    / 15
-    zalcano_smithing    = df['zalcano'] * 3_000     / 15
-    zalcano_rc          = df['zalcano'] * 1_500     / 15
+    # zalcano_mining      = df['zalcano'] * 13_500    / 15
+    # zalcano_smithing    = df['zalcano'] * 3_000     / 15
+    # zalcano_rc          = df['zalcano'] * 1_500     / 15
     lvl70skill          = 737_627
 
-    df['zalcano_feature'] = (
-        zalcano_mining      / (df['mining']     - lvl70skill) + 
-        zalcano_smithing    / (df['smithing']   - lvl70skill) + 
-        zalcano_rc          / (df['runecraft'])
-    )
-        
+    # df['zalcano_feature'] = (
+    #     zalcano_mining      / (df['mining']     - lvl70skill) + 
+    #     zalcano_smithing    / (df['smithing']   - lvl70skill) + 
+    #     zalcano_rc          / (df['runecraft'])
+    # )
+    
+    # song of the elves requirements
     req = ['agility','construction','farming','herblore','hunter','smithing','woodcutting']
 
-    df['zalcano_flag_feature']              = np.where(df[req].min(axis=1) > lvl70skill, 1, 0) 
-    df['zalcano_req_overshoot_feature']     = df[req].mean(axis=1) - lvl70skill
-    # df['zalcano_req_overshoot_feature']     = np.where(df['zalcano_req_overshoot_feature'] < 0, 0, df['zalcano_req_overshoot_feature'])
-    return df
-
-def wintertodt_feature(df):
-    wintertodt_fm = df['wintertodt']*30_000
-    lvl50skill = 101_333
-
-    df['wintertodt_feature']        = wintertodt_fm/(df['firemaking'] - lvl50skill)
-
-    df['wintertodt_lag_feature']    = np.where(df['wintertodt'] > 670, 1, 0)
+    df['zalcano_flag_feature'] = np.where(df[req].min(axis=1) > lvl70skill, 1, 0) 
     return df
 
 def botname(df):
@@ -156,16 +146,14 @@ def f_features(df, skills_list, minigames_list):
          df[f'{boss}/boss_total'] = df[boss] / boss_total
 
 
-    # df = wintertodt_feature(df)
-    # df = zalcano_feature(df)
+
+    df = zalcano_feature(df)
     df = botname(df)
-    # df['rangebot_feature'] = (df['ranged'] + df['hitpoints'])/total
 
     df['median_feature'] = df[skills_list].median(axis=1)
     df['mean_feature'] = df[skills_list].mean(axis=1)
     # df['std_feature'] = df[skills_list].std(axis=1)
 
-    # df['bot_name_feature'] = botname(df)
     # replace infinities & nan
     df = df.replace([np.inf, -np.inf], 0) 
     df.fillna(0, inplace=True)

@@ -47,7 +47,7 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         save_model_time = day + dt.timedelta(hours=15)
 
         # sched.add_job(model.save_model, args=[n_pca], trigger='interval', days=1, start_date=today18h, replace_existing=True, name='save_model')
-        sched.add_job(banned_by_jagex.confirm_possible_ban, trigger='interval', days=1, start_date=dt.date.today(), replace_existing=True, name='confirm_possible_ban')
+        sched.add_job(banned_by_jagex.confirm_possible_ban, trigger='interval', hours=6, start_date=dt.date.today(), replace_existing=True, name='confirm_possible_ban')
 
         sched.add_job(hiscoreScraper.run_scraper, trigger='interval', minutes=1,start_date=dt.date.today(), name='run_hiscore', max_instances=10, coalesce=True)
         
