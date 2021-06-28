@@ -258,19 +258,18 @@ def verify_discord_user(token, version=None):
 
                 break
 
-    else:
         if matched_code_found:
             if already_linked:
                 return jsonify({"error": "User has already been verified."}), 400
             else:
                 return jsonify({"success": "User was successfully verified."}), 200
         else:
-            if(discord_links):
-                return jsonify({"error": f"Code submitted by {player.name} was incorrect."}), 400
-            else:
-                return jsonify({"error": f"{player.name} has no pending Discord links."}), 400
+            return jsonify({"error": f"Code submitted by {player.name} was incorrect."}), 400
 
-
+    else:
+        return jsonify({"error": f"{player.name} has no pending Discord links."}), 400
+        
+                
 # CORS Policy: Allow Access to These Methods From Any Origin
 @app_token.after_request
 def after_request(response):
