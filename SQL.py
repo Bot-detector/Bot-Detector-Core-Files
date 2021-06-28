@@ -268,9 +268,8 @@ def get_verified_discord_user(discord_id):
     return execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
 
-def get_unverified_discord_user(player_id):
-    sql = 'SELECT * from discordVerification WHERE Player_id = :player_id ' \
-          'AND Verified_status = 0;'
+def get_discord_user_link(player_id):
+    sql = 'SELECT * from discordVerification WHERE Player_id = :player_id;'
 
     param = {
         "player_id": player_id
