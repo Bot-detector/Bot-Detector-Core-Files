@@ -96,9 +96,9 @@ def post_detect(version=None, manual_detect=0):
     mask = (df["ts"] >= yesterday) & (df["ts"] <= now)
     df = df[mask]
 
+    #Kicks out lists with more than 5k sightings and more than 1 reporter
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         Config.debug('too many reports')
-
         return jsonify({'NOK': 'NOK'}), 400
     
     detections = df.to_dict('records')
