@@ -1,4 +1,6 @@
 import os, sys
+
+from sqlalchemy.sql.expression import false
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -238,23 +240,36 @@ def verify_discord_user(token, version=None):
     if(player is None):
         return jsonify({"error": "Could not find player."}), 400
 
-    pending_discord = SQL.get_unverified_discord_user(player.id)
+    discord_links = SQL.get_discord_user_link(player.id)
 
     token_id = SQL.get_token(token).id
 
-    if(pending_discord):
-        for record in pending_discord:
+    matched_code_found = False
+    already_linked = False
 
+    if(discord_links):
+        for record in discord_links:
             if str(record.Code) == str(verify_data["code"]):
                 SQL.set_discord_verification(id=record.Entry, token=token_id)
+                matched_code_found = True
+
+                if int(record.Verified_status) == 1:
+                    already_linked = True
+
                 break
 
+        if matched_code_found:
+            if already_linked:
+                return jsonify({"error": "User has already been verified."}), 400
+            else:
+                return jsonify({"success": "User was successfully verified."}), 200
+        else:
+            return jsonify({"error": f"Code submitted by {player.name} was incorrect."}), 400
+
     else:
-        return jsonify({"error": "No pending links for this user."}), 400
-
-    return jsonify({"success": "User was successfully verified."}), 200
-
-
+        return jsonify({"error": f"{player.name} has no pending Discord links."}), 400
+        
+                
 # CORS Policy: Allow Access to These Methods From Any Origin
 @app_token.after_request
 def after_request(response):

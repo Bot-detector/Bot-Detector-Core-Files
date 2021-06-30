@@ -98,6 +98,7 @@ def post_detect(version=None, manual_detect=0):
     df = df[mask]
     cleaned_shape = df.shape
 
+    #Kicks out lists with more than 5k sightings and more than 1 reporter
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         Config.debug(f'too many reports: {df.shape}')
         return jsonify({'OK': 'OK'})
