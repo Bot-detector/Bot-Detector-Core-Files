@@ -93,7 +93,7 @@ def train_model(n_pca='mle', use_pca=True):
         'Thieving_bot','Crafting_bot', 'PVM_Ranged_Magic_bot',
         'Hunter_bot','Runecrafting_bot','Fishing_bot','Agility_bot',
         'Cooking_bot', 'mort_myre_fungus_bot', 
-        'Woodcutting_bot', 'Firemaking_bot','Fishing_Cooking_bot',
+        'Woodcutting_bot', 'Fishing_Cooking_bot',
         'Agility_Thieving_bot', 'Construction_Magic_bot','Construction_Prayer_bot',
         'Zalcano_bot'
     ]
