@@ -153,17 +153,12 @@ class Player(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, unique=True)
-    created_at = Column(DateTime, nullable=False,
-                        server_default=text("CURRENT_TIMESTAMP"))
+    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime)
-    possible_ban = Column(TINYINT(1), nullable=False,
-                          server_default=text("'0'"))
-    confirmed_ban = Column(TINYINT(1), nullable=False,
-                           index=True, server_default=text("'0'"))
-    confirmed_player = Column(
-        TINYINT(1), nullable=False, server_default=text("'0'"))
-    label_id = Column(ForeignKey('Labels.id', ondelete='RESTRICT', onupdate='RESTRICT'),
-                      nullable=False, index=True, server_default=text("'0'"))
+    possible_ban = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    confirmed_ban = Column(TINYINT(1), nullable=False, index=True, server_default=text("'0'"))
+    confirmed_player = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    label_id = Column(ForeignKey('Labels.id', ondelete='RESTRICT', onupdate='RESTRICT'),nullable=False, index=True, server_default=text("'0'"))
     label_jagex = Column(Integer, nullable=False, server_default=text("'0'"))
 
     label = relationship('Label')
