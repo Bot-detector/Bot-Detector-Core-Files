@@ -4,23 +4,14 @@ import sqlalchemy
 from Config import engine
 import models
 from flask_restful import Resource, abort
+from flask import jsonify
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
-from collections import namedtuple
-from dataclasses import dataclass
+from Routes.functions import sqlalchemy_result
+
 
 engine.echo = True
 Session = sessionmaker(engine)
-
-
-def row2dict(rows):
-    return [{col.name: getattr(row, col.name) for col in row.__table__.columns} for row in rows]
-
-def row2tuple(rows):
-    # create named tuple
-    columns = [col.name for col in rows[0].__table__.columns]
-    Record = namedtuple('Record', columns)
-    return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in rows]
 
 # TODO: token verification
 # abort(404, message="Insufficient permissions")
@@ -35,13 +26,9 @@ class Player(Resource):
         )
         with Session() as session:
             rows = session.execute(select_sql)
-
-         # get data out ChunkedIteratorResult
-        rows = [row[0] for row in rows]
-        print(f"{row2dict(rows)=}")
-        print(f"{row2tuple(rows)=}")
         
-        return {'ok':'ok'}
+        rows = sqlalchemy_result(rows)
+        return jsonify(rows.rows2dict())
     
     def put(self):
         '''
