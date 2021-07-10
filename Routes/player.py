@@ -17,10 +17,10 @@ def verify_token(token, access):
 
 # TODO: swagger support
 
-parser = reqparse.RequestParser()
-parser.add_argument('id', type=int, location='args')
-parser.add_argument('name', type=str, location='args')
-parser.add_argument('token', type=str, location='headers')
+get_parser = reqparse.RequestParser()
+get_parser.add_argument('id', type=int, location='args')
+get_parser.add_argument('name', type=str, location='args')
+get_parser.add_argument('token', type=str, location='headers')
 
 class Player(Resource):
     def get(self):
@@ -28,9 +28,10 @@ class Player(Resource):
         select from table
         '''
         # parse arguments
-        args = parser.parse_args()
+        args = get_parser.parse_args()
         verified = verify_token(args['token'], 'hiscores')
         verified_args = []
+        
         # convert arguments to sql filter
         filters = []
         for col in args:
@@ -38,9 +39,11 @@ class Player(Resource):
             if args[col] is None or col == 'token':
                 continue
 
+            # verified_args can only be used if you have a valid token
             if not(verified) and col in verified_args:
                 continue
             
+            # create filter & add filter to list of filters
             filter = (getattr(models.Player, col) == args[col])
             filters.append(filter)
 
