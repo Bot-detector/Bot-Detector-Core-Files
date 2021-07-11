@@ -230,12 +230,24 @@ def insert_report(data):
         'equip_ge_value': data.get('equipment_ge')
 
     }
+
     # list of column values
     columns = list_to_string(list(param.keys()))
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
     sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
     execute_sql(sql_insert, param=param, debug=False, has_return=False)
+
+
+def transfer_kc(old_id, new_id):
+
+    reports_transfer_sql = f"UPDATE Reports SET reportingID = {new_id} WHERE reporting ID = {old_id};"
+    execute_sql(reports_transfer_sql, param=None, debug=False, has_return=False)
+
+    discord_removal_sql = f"DELETE FROM discordVerification WHERE Player_id = {old_id};"
+    execute_sql(discord_removal_sql, param=None, debug=False, has_return=False, db_name="discord")
+
+    return
 
 
 '''
@@ -397,7 +409,7 @@ def get_hiscores_of_interst():
 
 
 def get_players_to_scrape(start=None, amount=None):
-    sql = 'select * from playersToScrape'
+    sql = 'select * from playersToScrape WHERE len(name) <= 12'
     if not (start is None and amount is None):
         sql = f'{sql} limit {start},{amount}'
     sql = f'{sql};'

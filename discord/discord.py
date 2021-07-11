@@ -302,6 +302,39 @@ def get_all_linked_ids(token):
     return jsonify(output)
 
 
+@discord.route('/discord/transfer_kc/<token>', methods=['POST', 'OPTIONS'])
+def transfer_kc(token):
+    #Preflight
+    if request.method == 'OPTIONS':
+        response = make_response()
+        header = response.headers
+        header['Access-Control-Allow-Origin'] = '*'
+        return response
+
+    verified = tokens.verify_token(token=token, verifcation='verify_players')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    if isinstance(request.json, str):
+        req_data = json.loads(request.json)
+    else:
+        req_data = request.json
+    
+    if req_data is None:
+        return jsonify({'error':'No data provided.'}), 400
+
+    old_id = req_data.get("old_id")
+    new_id = req_data.get("new_id")
+
+    if None in [old_id, new_id]:
+        return jsonify({'error': 'Missing a parameter.'}), 400
+    
+    SQL.transfer_kc(old_id=old_id, new_id=new_id)
+
+    return jsonify({'Success': 'KC Transferred'})
+    
+
 @discord.route('/discord/get_latest_sighting/<token>', methods=['GET'])
 def get_latest_sighting(token):
 
