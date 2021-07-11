@@ -409,7 +409,7 @@ def get_hiscores_of_interst():
 
 
 def get_players_to_scrape(start=None, amount=None):
-    sql = 'select * from playersToScrape WHERE len(name) <= 12'
+    sql = 'select * from playersToScrape WHERE length(name) <= 12'
     if not (start is None and amount is None):
         sql = f'{sql} limit {start},{amount}'
     sql = f'{sql};'
