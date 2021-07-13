@@ -262,6 +262,23 @@ def insert_prediction_feedback(vote_info):
                  'values (:voter_id, :prediction, :confidence, :vote, :subject_id, :feedback_text);'
     execute_sql(sql_insert, param=vote_info, debug=False, has_return=False)
 
+    return
+
+
+def get_total_feedback_submissions(voters):
+    sql = '''SELECT PredictionsFeedback.id
+             FROM PredictionsFeedback 
+             JOIN Players ON Players.id = PredictionsFeedback.voter_id
+             WHERE 1=1
+                AND Players.name IN ( :voters );
+     '''
+
+    params = {
+        "voters": voters
+    }
+
+    return execute_sql(sql, param=params, debug=False, has_return=True)
+
 
 '''
     Discord User Table
