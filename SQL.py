@@ -270,7 +270,7 @@ def get_total_feedback_submissions(voters):
              FROM PredictionsFeedback 
              JOIN Players ON Players.id = PredictionsFeedback.voter_id
              WHERE 1=1
-                AND Players.name IN ( :voters );
+                AND Players.name IN :voters;
      '''
 
     params = {
