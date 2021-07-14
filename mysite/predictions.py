@@ -85,6 +85,9 @@ def receive_plugin_feedback(version=None):
 
     voter = get_player(vote_info['player_name'])
 
+    if voter is None:
+        voter = SQL.insert_player(vote_info['player_name'])
+
     # Voter ID will be 0 if player is not logged in.
     # There is a plugin check for this also.
     if(int(voter.id) > 0):
