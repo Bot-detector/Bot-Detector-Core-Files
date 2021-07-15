@@ -369,3 +369,28 @@ def get_latest_sighting(token):
     output = output[0]
 
     return jsonify(output)
+
+
+@discord.route('/discord/get_xp_gains/<token>', methods=['GET'])
+def get_latest_xp_gains(token):
+
+    verified = tokens.verify_token(token=token, verifcation='verify_players')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
+
+    if isinstance(request.json, str):
+        req_data = json.loads(request.json)
+    else:
+        req_data = request.json
+
+    player_id = SQL.get_player(req_data["player_name"]).id
+    
+    last_xp_gain = SQL.user_latest_xp_gain(player_id)
+
+    df = pd.DataFrame(last_xp_gain)
+
+    output = df.to_dict('records')
+    output = output[0]
+
+    return jsonify(output)

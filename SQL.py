@@ -185,6 +185,23 @@ def insert_highscore(player_id, skills, minigames):
     execute_sql(sql_insert, param=None, debug=False, has_return=False)
 
 
+def user_latest_xp_gain(player_id):
+    sql = '''          
+            SELECT * 
+            FROM playerHiscoreDataXPChange xp
+            WHERE 1 = 1
+                AND xp.Player_id = :player_id
+            ORDER BY xp.timestamp DESC
+            LIMIT 1
+
+        '''
+    param = {
+        "player_id": player_id
+    }
+
+    return execute_sql(sql, param=param, debug=False, has_return=True)
+
+
 '''
     Reports Table
 '''
