@@ -384,13 +384,36 @@ def get_latest_xp_gains(token):
     else:
         req_data = request.json
 
-    player_id = SQL.get_player(req_data["player_name"]).id
-    
-    last_xp_gain = SQL.user_latest_xp_gain(player_id)
+    player = SQL.get_player(req_data["player_name"])
 
-    df = pd.DataFrame(last_xp_gain)
+    if player:
+        player_id = player.id
+    else:
+        return "Player not found.", 404
 
-    output = df.to_dict('records')
-    output = output[0]
+    last_xp_gains = SQL.user_latest_xp_gain(player_id)
 
-    return jsonify(output)
+    df = pd.DataFrame(last_xp_gains)
+
+    gains_rows_count = len(df.index)
+
+
+    if(gains_rows_count > 0):
+
+        output = df.to_dict('records')
+
+        output_dict = {
+            "latest": output[0],
+        }
+
+        if(gains_rows_count == 2):
+            output_dict["second"] = output[1]
+        elif(gains_rows_count == 1):
+            output_dict["second"] = None
+        else:
+            return "Server Error: Somehow more than 2 xp gains entries were returned..", 500
+
+        return jsonify(output_dict)
+    else:
+        return "No gains found for this player.", 404
+

@@ -192,7 +192,7 @@ def user_latest_xp_gain(player_id):
             WHERE 1 = 1
                 AND xp.Player_id = :player_id
             ORDER BY xp.timestamp DESC
-            LIMIT 1
+            LIMIT 2
 
         '''
     param = {
