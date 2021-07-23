@@ -50,7 +50,18 @@ Q: "Your code looks like trash"
 
 A: I'm a medical student that's doing this as a hobby, I'm learning as I go :(
 
-
+## api documentation
+```
+http://127.0.0.1:8000/docs
+http://127.0.0.1:8000/redoc
+```
+## extra info
+```
+POST: to create data.
+GET: to read data.
+PUT: to update data.
+DELETE: to delete data.
+```
 
 ## setup
 ```

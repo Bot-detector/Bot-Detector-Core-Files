@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from Routes.functions import sqlalchemy_result
 
 Session = sessionmaker(engine)
+engine.echo = True
 
 # TODO: token verification
 def verify_token(token, access):

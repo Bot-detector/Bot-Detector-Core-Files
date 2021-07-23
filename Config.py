@@ -1,10 +1,10 @@
+import logging
 import os
-from dotenv import load_dotenv, find_dotenv
-from flask import Flask
+
+from dotenv import find_dotenv, load_dotenv
+from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
-import logging
-from flask_restful import Api
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -24,10 +24,8 @@ except Exception as e:
     logging.debug(e)
     dev_mode=1
 
-# create flask app
-app = Flask(__name__)
-# create flask_restfull
-api = Api(app)
+# create application
+app = FastAPI()
 
 # create databas engine
 engine = create_engine(sql_uri, poolclass=NullPool)

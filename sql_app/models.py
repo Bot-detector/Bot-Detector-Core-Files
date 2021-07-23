@@ -3,11 +3,10 @@ from sqlalchemy import (DECIMAL, TIMESTAMP, BigInteger, Column, Date, DateTime,
                         Float, ForeignKey, Index, Integer, String, Table, Text,
                         text)
 from sqlalchemy.dialects.mysql import TEXT, TINYINT, TINYTEXT, VARCHAR
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
 
-Base = declarative_base()
-metadata = Base.metadata
+from sqlalchemy.orm import relationship
+from .database import Base
+
 
 
 class LabelJagex(Base):
