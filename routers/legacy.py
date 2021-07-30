@@ -9,6 +9,13 @@ from database.functions import execute_sql, list_to_string
 from pydantic import BaseModel
 from typing import List
 
+'''
+This file will have all legacy routes from the Flask api.
+after everything is ported, validated & discussed route desing should be done
+'''
+
+router = APIRouter()
+
 class equipment(BaseModel):
 	equip_head_id: int
 	equip_amulet_id: int
@@ -38,7 +45,7 @@ class detection(BaseModel):
 class detections(BaseModel):
     detections: List[detection] = list
 
-router = APIRouter()
+
 
 def name_check(name):
     bad_name = False
