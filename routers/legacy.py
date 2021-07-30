@@ -45,8 +45,6 @@ class detection(BaseModel):
 class detections(BaseModel):
     detections: List[detection] = list
 
-
-
 def name_check(name):
     bad_name = False
     if len(name) > 13:
