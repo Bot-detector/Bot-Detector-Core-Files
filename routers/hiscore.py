@@ -41,11 +41,9 @@ async def get(
     }
 
     # build query
-    has_good_param = False
-    for k, v in param.items():
-        if v is not None:
-            sql = f'{sql} and {k} = :{k}'
-            has_good_param = True
+    sql_filter = [f' and {k} = :{k}' for k,v in param.items() if v is not None]
+    has_good_param = True if len(sql_filter) > 0 else False
+    sql = f'{sql} {"".join(sql_filter)}'
 
     # return exception if no param are given
     if not (has_good_param):
