@@ -17,8 +17,8 @@ def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100_000, 
     if has_return:
         # add pagination to every query
         # max number of rows = 100k
-        offset = (page - 1)*20 
         row_count = row_count if row_count <= 100_000 else 100_000
+        offset = (page - 1)*row_count
         sql = f'{sql} limit ({offset}, {row_count})'
     
     # parsing
