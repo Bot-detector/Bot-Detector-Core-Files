@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 from dotenv import find_dotenv, load_dotenv
 from fastapi import FastAPI
@@ -20,10 +21,17 @@ app = FastAPI()
 # setup logging
 logging.FileHandler(filename="error.log", mode='a')
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
+
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.WARNING)
+logging.getLogger('uvicorn').setLevel(logging.WARNING)
+
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logging.getLogger().addHandler(handler)
 
 # for machine learning
 n_pca=2
