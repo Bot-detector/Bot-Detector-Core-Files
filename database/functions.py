@@ -1,12 +1,10 @@
 from collections import namedtuple
 
 from sqlalchemy import text
-from sqlalchemy.orm import sessionmaker, with_expression
+from sqlalchemy.orm import sessionmaker
 
 from .database import engine
 import logging
-
-
 
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
@@ -14,6 +12,7 @@ def list_to_string(l):
     
 def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100_000, page=1):
     has_return = True if sql.strip().lower().startswith('select') else False
+    
     if has_return:
         # add pagination to every query
         # max number of rows = 100k
@@ -49,10 +48,6 @@ def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100_000, 
             session.commit()
     return records
 
-
-'''
-just in case wee need it later
-'''
 class sql_cursor:
     def __init__(self, rows):
         self.rows = rows
