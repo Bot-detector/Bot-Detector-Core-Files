@@ -38,17 +38,19 @@ async def get(
         'label_id': label_id
     }
 
+    # build query
     has_good_param = False
     for k, v in param.items():
         if v is not None:
             sql = f'{sql} and {k} = :{k}'
             has_good_param = True
 
+    # return exception if no param are given
     if not (has_good_param):
         raise HTTPException(status_code=404, detail="No valid parameters given")
 
-    data = execute_sql(sql, param, debug=True)
-    return {'ok': data}
+    data = execute_sql(sql, param).rows2dict()
+    return data
 
 @router.get("/v1/hiscoreLatest", tags=["hiscore"])
 async def get():
