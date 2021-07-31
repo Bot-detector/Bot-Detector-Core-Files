@@ -18,7 +18,9 @@ class hiscore(BaseModel):
 async def get(
     player_name: Optional[str] = None,
     player_id: Optional[int] = None,
-    label_id: Optional[int] = None
+    label_id: Optional[int] = None,
+    row_count: int = 100_000,
+    page: int = 1
 ):
     '''
     select data from database
@@ -49,7 +51,7 @@ async def get(
     if not (has_good_param):
         raise HTTPException(status_code=404, detail="No valid parameters given")
 
-    data = execute_sql(sql, param).rows2dict()
+    data = execute_sql(sql, param, row_count=row_count, page=page).rows2dict()
     return data
 
 @router.get("/v1/hiscoreLatest", tags=["hiscore"])

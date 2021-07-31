@@ -19,7 +19,11 @@ def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100_000, 
         # max number of rows = 100k
         row_count = row_count if row_count <= 100_000 else 100_000
         offset = (page - 1)*row_count
-        sql = f'{sql} limit ({offset}, {row_count})'
+        # add limit to sql
+        sql = f'{sql} limit :offset, :row_count'
+        # add the param
+        param['offset'] = offset
+        param['row_count'] = row_count
     
     # parsing
     sql = text(sql)
@@ -41,14 +45,8 @@ def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100_000, 
             # execute session
             rows = session.execute(sql, param)
             # parse data
-            if has_return:
-                records = sql_cursor(rows)
-                # Record = namedtuple('Record', rows.keys())
-                # records = [Record(*r) for r in rows.fetchall()]
-            else:
-                records = None
-                # commit session
-                session.commit()
+            records = sql_cursor(rows) if has_return else None
+            session.commit()
     return records
 
 
