@@ -132,8 +132,8 @@ async def get(
     if not (has_good_param):
         raise HTTPException(status_code=404, detail="No valid parameters given")
 
-    data = execute_sql(sql, param, row_count=row_count, page=page).rows2dict()
-    return data
+    data = await execute_sql(sql, param, row_count=row_count, page=page)
+    return data.rows2dict()
 
 @router.get("/v1/hiscoreLatest", tags=["hiscore"])
 async def get(
@@ -170,8 +170,8 @@ async def get(
     if not (has_good_param):
         raise HTTPException(status_code=404, detail="No valid parameters given")
 
-    data = execute_sql(sql, param, row_count=row_count, page=page).rows2dict()
-    return data
+    data = await execute_sql(sql, param, row_count=row_count, page=page)
+    return data.rows2dict()
 
 @router.get("/v1/hiscoreXPChange", tags=["hiscore"])
 async def get(
@@ -208,8 +208,8 @@ async def get(
     if not (has_good_param):
         raise HTTPException(status_code=404, detail="No valid parameters given")
 
-    data = execute_sql(sql, param, row_count=row_count, page=page).rows2dict()
-    return data
+    data = await execute_sql(sql, param, row_count=row_count, page=page)
+    return data.rows2dict()
 
 @router.get("/v1/hiscoreXPChangeLatest", tags=["hiscore"])
 async def get(
@@ -247,8 +247,8 @@ async def get(
     if not (has_good_param):
         raise HTTPException(status_code=404, detail="No valid parameters given")
 
-    data = execute_sql(sql, param, row_count=row_count, page=page).rows2dict()
-    return data
+    data = await execute_sql(sql, param, row_count=row_count, page=page)
+    return data.rows2dict()
 
 @router.post("/v1/hiscore", tags=["hiscore"])
 async def post(hiscores: hiscore):
@@ -261,5 +261,5 @@ async def post(hiscores: hiscore):
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
     sql = f'insert ignore into playerHiscoreData ({columns}) values ({values});'
-    execute_sql(sql, param)
+    await execute_sql(sql, param)
     return {'ok':'ok'}

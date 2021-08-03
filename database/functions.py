@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .database import engine
 import logging
@@ -10,7 +11,7 @@ def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
     
-def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100_000, page=1):
+async def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100_000, page=1):
     has_return = True if sql.strip().lower().startswith('select') else False
     
     if has_return:
@@ -34,18 +35,18 @@ def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100_000, 
         logging.debug(f'{param=}')
     
     # make sure that we dont use another engine
-    engine.dispose()
+    await engine.dispose()
 
     # with handles open and close connection
-    with engine.connect() as conn:
+    async with engine.connect() as conn:
         # creates thread save session
-        Session = sessionmaker(conn)
-        with Session() as session:
+        Session = sessionmaker(conn, class_=AsyncSession)
+        async with Session() as session:
             # execute session
-            rows = session.execute(sql, param)
+            rows = await session.execute(sql, param)
             # parse data
             records = sql_cursor(rows) if has_return else None
-            session.commit()
+            await session.commit()
     return records
 
 class sql_cursor:
