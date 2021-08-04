@@ -1,10 +1,10 @@
 import os, sys
 
-from discord_webhook.webhook import DiscordEmbed
 from flask import config
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from discord_webhook import DiscordWebhook
+from discord_webhook.webhook import DiscordEmbed
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import requests

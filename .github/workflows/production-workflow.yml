@@ -29,6 +29,7 @@ jobs:
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
           echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
+          echo "${{ secrets.FEEDBACK_WEBHOOK_URL }}" >> .env
           echo dev_mode=0 >> .env
           
       - name: Start Flask API 0
@@ -61,6 +62,7 @@ jobs:
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
           echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
+          echo "${{ secrets.FEEDBACK_WEBHOOK_URL }}" >> .env
           echo dev_mode=0 >> .env
           
       - name: Start Flask API 1
@@ -93,6 +95,7 @@ jobs:
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
           echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
+          echo "${{ secrets.FEEDBACK_WEBHOOK_URL }}" >> .env
           echo dev_mode=0 >> .env
           
       - name: Start Flask API 2
@@ -124,6 +127,7 @@ jobs:
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
           echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
+          echo "${{ secrets.FEEDBACK_WEBHOOK_URL }}" >> .env
           echo dev_mode=0 >> .env
           
       - name: Start Flask API 3

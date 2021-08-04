@@ -17,6 +17,7 @@ proxy_http = os.environ.get('proxy_http')
 proxy_https = os.environ.get('proxy_https')
 flask_port = os.environ.get('flask_port')
 graveyard_webhook_url = os.environ.get('graveyard_webhook')
+feedback_webhook_url = os.environ.get('feedback_webhook')
 
 # TODO: BUG
 # it does not like the bool()

@@ -2,8 +2,9 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Blueprint, jsonify, request, make_response
-import json
 import numpy as np
+from discord_webhook import DiscordWebhook
+from discord_webhook.webhook import DiscordEmbed
 
 import Config
 from Predictions import model
@@ -94,6 +95,10 @@ def receive_plugin_feedback(version=None):
         vote_info["voter_id"] = voter.id
 
         insert_prediction_feedback(vote_info)
+
+        if vote_info["feedback_text"] != None:
+            broadcast_feedback(vote_info)
+
     else:
         Config.debug(f'prediction feedback error: {vote_info}')
 
@@ -137,3 +142,36 @@ def sort_predictions(d):
     # sort dict decending
     d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
     return d
+
+
+def broadcast_feedback(feedback):
+
+    if feedback["vote"] == 1:
+        embed_color="009302"
+        vote_name="Looks good!"
+    elif feedback["vote"] == 0:
+        embed_color="6A6A6A"
+        vote_name="Not sure.."
+    else:
+        embed_color="FF0000"
+        vote_name="Looks wrong."
+
+    subject = SQL.get_player_names([feedback["subject_id"]])[0]
+
+    webhook = DiscordWebhook(url=Config.feedback_webhook_url)
+
+    embed = DiscordEmbed(title="New Feedback Submission", color=embed_color)
+
+    embed.add_embed_field(name="Voter Name", value=f"{feedback['player_name']}", inline=False)
+    embed.add_embed_field(name="Subject Name", value=f"{subject.name} ", inline=False)
+    embed.add_embed_field(name="Prediction", value=f"{feedback['prediction']}")
+    embed.add_embed_field(name="Confidence", value=f"{feedback['confidence']}")
+    embed.add_embed_field(name="Vote", value=f"{vote_name}", inline=False)
+    embed.add_embed_field(name="Explanation", value=f"{feedback['feedback_text']}", inline=False)
+
+    embed.set_timestamp()
+
+    webhook.add_embed(embed=embed)
+    webhook.execute()
+
+    return
