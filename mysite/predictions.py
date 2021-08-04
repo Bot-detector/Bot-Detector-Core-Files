@@ -164,7 +164,7 @@ def broadcast_feedback(feedback):
 
     embed.add_embed_field(name="Voter Name", value=f"{feedback['player_name']}", inline=False)
     embed.add_embed_field(name="Subject Name", value=f"{subject.name} ", inline=False)
-    embed.add_embed_field(name="Prediction", value=f"{feedback['prediction']}")
+    embed.add_embed_field(name="Prediction", value=f"{feedback['prediction'].replace('_', ' ')}")
     embed.add_embed_field(name="Confidence", value=f"{feedback['confidence'] * 100:.2f}%")
     embed.add_embed_field(name="Vote", value=f"{vote_name}", inline=False)
     embed.add_embed_field(name="Explanation", value=f"{feedback['feedback_text']}", inline=False)
