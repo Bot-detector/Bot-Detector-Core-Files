@@ -1,13 +1,13 @@
+import logging
 import time
+from typing import List
 
 import Config
 import pandas as pd
 import SQL
-from fastapi import APIRouter
 from database.functions import execute_sql, list_to_string
-
+from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import List
 
 '''
 This file will have all legacy routes from the Flask api.
@@ -161,7 +161,6 @@ def custom_hiscore(detection):
     return create
 
 def insync_detect(detections, manual_detect):
-    print("NSYNC")
     total_creates = 0
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
@@ -169,14 +168,14 @@ def insync_detect(detections, manual_detect):
         total_creates += custom_hiscore(detection)
 
         if len(detection) > 1000 and total_creates/len(detections) > .75:
-            print(f'    Malicious: sender: {detection["reporter"]}')
-            Config.debug(f'    Malicious: sender: {detection["reporter"]}')
+            logging.debug(f'    Malicious: sender: {detection["reporter"]}')
             break
 
         if idx % 500 == 0 and idx != 0:
-            Config.debug(f'      Completed {idx + 1}/{len(detections)}')
+            logging.debug(f'      Completed {idx + 1}/{len(detections)}')
 
-    Config.debug(f'      Done: Completed {idx + 1} detections')
+    logging.debug(f'      Done: Completed {idx + 1} detections')
+    return
 
 # @router.route('/plugin/detect/<manual_detect>', methods=['POST'])
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
@@ -188,15 +187,11 @@ def post_detect(detections:detection, version: str=None, manual_detect:int=0):
     df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        print('to many reports')
-        Config.debug('to many reports')
-
+        logging.debug('to many reports')
         return {'NOK': 'NOK'}, 400
     
     detections = df.to_dict('records')
 
-    print(f'      Received detections: DF shape: {df.shape}')
-
-    Config.debug(f'      Received detections: DF shape: {df.shape}')
+    logging.debug(f'      Received detections: DF shape: {df.shape}')
     Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
     return {'OK': 'OK'}
