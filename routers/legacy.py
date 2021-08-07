@@ -39,11 +39,8 @@ class detection(BaseModel):
 	on_members_world: int
 	on_pvp_world: int
 	world_number: int
-	equipment: List[equipment]
+	equipment: equipment
 	equip_ge_value: int
-
-class detections(BaseModel):
-    detections: List[detection] = list
 
 def name_check(name):
     bad_name = False
@@ -179,7 +176,7 @@ def insync_detect(detections, manual_detect):
 
 # @router.route('/plugin/detect/<manual_detect>', methods=['POST'])
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
-def post_detect(detections:detection, version: str=None, manual_detect:int=0):
+def post_detect(detections:List[detection], version: str=None, manual_detect:int=0):
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
     # remove duplicates
