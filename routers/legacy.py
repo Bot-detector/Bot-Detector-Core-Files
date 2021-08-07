@@ -179,7 +179,7 @@ def insync_detect(detections, manual_detect):
     Config.debug(f'      Done: Completed {idx + 1} detections')
 
 # @router.route('/plugin/detect/<manual_detect>', methods=['POST'])
-@router.route('/{version}/plugin/detect/{manual_detect}', methods=['POST'])
+@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 def post_detect(detections:detection, version: str=None, manual_detect:int=0):
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
