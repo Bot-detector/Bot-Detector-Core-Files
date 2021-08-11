@@ -1,5 +1,5 @@
 from Config import app
-from routers import hiscore, player, prediction, report, legacy
+from routers import hiscore, legacy, player, prediction, report
 
 app.include_router(hiscore.router)
 app.include_router(player.router)
