@@ -79,7 +79,6 @@ def get_all_regions(token):
 @discord.route('/discord/heatmap/<token>', methods=['GET'])
 @discord.route('/discord/heatmap/<token>/<region_id>', methods=['GET'])
 def get_heatmap_data(token, region_id=None):
-
     verified = tokens.verify_token(token=token, verifcation='hiscores')
 
     if not (verified):

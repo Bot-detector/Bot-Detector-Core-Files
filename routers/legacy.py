@@ -16,31 +16,34 @@ after everything is ported, validated & discussed route desing should be done
 
 router = APIRouter()
 
+
 class equipment(BaseModel):
-	equip_head_id: int
-	equip_amulet_id: int
-	equip_torso_id: int
-	equip_legs_id: int
-	equip_boots_id: int
-	equip_cape_id: int
-	equip_hands_id: int
-	equip_weapon_id: int
-	equip_shield_id: int
+    equip_head_id: int
+    equip_amulet_id: int
+    equip_torso_id: int
+    equip_legs_id: int
+    equip_boots_id: int
+    equip_cape_id: int
+    equip_hands_id: int
+    equip_weapon_id: int
+    equip_shield_id: int
+
 
 class detection(BaseModel):
-	reportedID: int
-	reportingID: int
-	region_id: int
-	x_coord: int
-	y_coord: int
-	z_coord: int
-	ts: int
-	manual_detect: int
-	on_members_world: int
-	on_pvp_world: int
-	world_number: int
-	equipment: equipment
-	equip_ge_value: int
+    reporter: str
+    reported: str
+    region_id: int
+    x_coord: int
+    y_coord: int
+    z_coord: int
+    ts: int
+    manual_detect: int
+    on_members_world: int
+    on_pvp_world: int
+    world_number: int
+    equipment: equipment
+    equip_ge_value: int
+
 
 def name_check(name):
     bad_name = False
@@ -57,6 +60,7 @@ def name_check(name):
 
     return name, bad_name
 
+
 def get_player(player_name):
     sql_player_id = 'select * from Players where name = :player_name;'
 
@@ -71,6 +75,7 @@ def get_player(player_name):
 
     return player_id
 
+
 def insert_player(player_name):
     sql_insert = "insert ignore into Players (name) values(:player_name);"
 
@@ -81,6 +86,7 @@ def insert_player(player_name):
     execute_sql(sql_insert, param=param, debug=False)
     player = get_player(player_name)
     return player
+
 
 def insert_report(data):
     gmt = time.gmtime(data['ts'])
@@ -106,7 +112,7 @@ def insert_report(data):
         'equip_cape_id': data.get('equipment').get('CAPE'),
         'equip_hands_id': data.get('equipment').get('HANDS'),
         'equip_weapon_id': data.get('equipment').get('WEAPON'),
-        'equip_shield_id': data.get('equipment').get('SHIELD') ,
+        'equip_shield_id': data.get('equipment').get('SHIELD'),
         'equip_ge_value': data.get('equipment_ge')
     }
 
@@ -118,6 +124,7 @@ def insert_report(data):
     execute_sql(sql_insert, param=param, debug=False)
     return
 
+
 def custom_hiscore(detection):
     # input validation
     bad_name = False
@@ -125,13 +132,14 @@ def custom_hiscore(detection):
     detection['reported'], bad_name = name_check(detection['reported'])
 
     if bad_name:
-        Config.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
+        Config.debug(
+            f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
         return 0
 
-    if  not (0 <= int(detection['region_id']) <= 15522):
+    if not (0 <= int(detection['region_id']) <= 15522):
         return 0
 
-    if  not (0 <= int(detection['region_id']) <= 15522):
+    if not (0 <= int(detection['region_id']) <= 15522):
         return 0
 
     # get reporter & reported
@@ -148,7 +156,6 @@ def custom_hiscore(detection):
         reported = insert_player(detection['reported'])
         create += 1
 
-
     # change in detection
     detection['reported'] = int(reported.id)
     detection['reporter'] = int(reporter.id)
@@ -156,6 +163,7 @@ def custom_hiscore(detection):
     # insert into reports
     SQL.insert_report(detection)
     return create
+
 
 def insync_detect(detections, manual_detect):
     total_creates = 0
@@ -176,19 +184,20 @@ def insync_detect(detections, manual_detect):
 
 # @router.route('/plugin/detect/<manual_detect>', methods=['POST'])
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
-def post_detect(detections:List[detection], version: str=None, manual_detect:int=0):
+def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
     # remove duplicates
-    df = pd.DataFrame(detections)
-    df.drop_duplicates(subset=['reporter','reported','region_id'], inplace=True)
+    df = pd.DataFrame([d.__dict__ for d in detections])
+    df.drop_duplicates(
+        subset=['reporter', 'reported', 'region_id'], inplace=True)
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         logging.debug('to many reports')
         return {'NOK': 'NOK'}, 400
-    
+
     detections = df.to_dict('records')
 
     logging.debug(f'      Received detections: DF shape: {df.shape}')
-    Config.sched.add_job(insync_detect ,args=[detections, manual_detect], replace_existing=False, name='detect')
+    # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
     return {'OK': 'OK'}
