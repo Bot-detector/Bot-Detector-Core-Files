@@ -1,7 +1,9 @@
 import logging
 import os
 import sys
+from multiprocessing import Queue
 
+import logging_loki
 from dotenv import find_dotenv, load_dotenv
 from fastapi import FastAPI
 
@@ -19,6 +21,16 @@ dev_mode = os.environ.get('dev_mode')
 app = FastAPI()
 
 # setup logging
+
+loki_handler = logging_loki.LokiQueueHandler(
+    Queue(-1),
+    url="http://loki:3100/loki/api/v1/push", 
+    tags={"service": "scraper_continuous"},
+)
+
+if dev_mode == 0:
+    logging.getLogger().addHandler(loki_handler)
+
 logging.FileHandler(filename="error.log", mode='a')
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
