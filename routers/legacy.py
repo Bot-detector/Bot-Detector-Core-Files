@@ -45,7 +45,7 @@ class detection(BaseModel):
     equip_ge_value: int
 
 
-def name_check(name):
+async def name_check(name):
     bad_name = False
     if len(name) > 13:
         bad_name = True
@@ -61,7 +61,7 @@ def name_check(name):
     return name, bad_name
 
 
-def get_player(player_name):
+async def get_player(player_name):
     sql_player_id = 'select * from Players where name = :player_name;'
 
     param = {
@@ -69,26 +69,27 @@ def get_player(player_name):
     }
 
     # returns a list of players
-    player = execute_sql(sql_player_id, param=param, debug=False)
+    player = await execute_sql(sql_player_id, param=param, debug=False)
+    player = player.rows2dict()
 
     player_id = None if len(player) == 0 else player[0]
 
     return player_id
 
 
-def insert_player(player_name):
+async def insert_player(player_name):
     sql_insert = "insert ignore into Players (name) values(:player_name);"
 
     param = {
         'player_name': player_name
     }
 
-    execute_sql(sql_insert, param=param, debug=False)
+    await execute_sql(sql_insert, param=param, debug=False)
     player = get_player(player_name)
     return player
 
 
-def insert_report(data):
+async def insert_report(data):
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
@@ -121,11 +122,11 @@ def insert_report(data):
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
     sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
-    execute_sql(sql_insert, param=param, debug=False)
+    await execute_sql(sql_insert, param=param, debug=False)
     return
 
 
-def custom_hiscore(detection):
+async def custom_hiscore(detection):
     # input validation
     bad_name = False
     detection['reporter'], bad_name = name_check(detection['reporter'])
@@ -165,7 +166,7 @@ def custom_hiscore(detection):
     return create
 
 
-def insync_detect(detections, manual_detect):
+async def insync_detect(detections, manual_detect):
     total_creates = 0
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
@@ -205,7 +206,7 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
 class contributor(BaseModel):
     name: str
 
-def sql_get_contributions(contributors):
+async def sql_get_contributions(contributors):
     query = '''
         SELECT
             rs.detect,
@@ -228,23 +229,22 @@ def sql_get_contributions(contributors):
         "contributors": contributors
     }
 
-    data = execute_sql(query, param=params, debug=False, has_return=True)
-    return data
+    data = await execute_sql(query, param=params, debug=False)
+    return data.rows2dict()
 
-def sql_get_player(player_name: str):
+async def sql_get_player(player_name: str):
     sql_player_id = 'select * from Players where name = :player_name;'
     param = {
         'player_name': player_name
     }
 
     # returns a list of players
-    player = execute_sql(
+    player = await execute_sql(
         sql=sql_player_id,
         param=param,
-        debug=False,
-        has_return=True
+        debug=False
     )
-
+    player = player.rows2dict()
     if len(player) == 0:
         player_id = None
     else:
@@ -252,8 +252,8 @@ def sql_get_player(player_name: str):
 
     return player_id
 
-def parse_contributors(contributors: list, version:str=None) -> dict:
-    contributions = sql_get_contributions(contributors)
+async def parse_contributors(contributors: list, version:str=None) -> dict:
+    contributions = await sql_get_contributions(contributors)
     
     df = pd.DataFrame(contributions)
     df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
@@ -308,20 +308,21 @@ def parse_contributors(contributors: list, version:str=None) -> dict:
     return return_dict
 
 @router.post('/stats/contributions/', tags=['legacy'])
-def get_contributions(contributors: List[contributor]):
+async def get_contributions(contributors: List[contributor]):
     contributors = [d.__dict__["name"] for d in contributors]
-    data = parse_contributors(contributors, version=None)
+    
+    data = await parse_contributors(contributors, version=None)
     return data
 
 @router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
-def get_contributions(contributors: str, version: str):
-    data = parse_contributors([contributors], version=version)
+async def get_contributions(contributors: str, version: str):
+    data = await parse_contributors([contributors], version=version)
     return data
 
 
 @router.get('/stats/getcontributorid/{contributor}', tags=['legacy'])
-def get_contributor_id(contributor: str):
-    player = sql_get_player(contributor)
+async def get_contributor_id(contributor: str):
+    player = await sql_get_player(contributor)
 
     if player:
         return_dict = {
