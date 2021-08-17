@@ -124,7 +124,7 @@ async def get(
     }
 
     # build query
-    sql_filter = [f' and {k} = :{k}' for k,v in param.items() if v is not None]
+    sql_filter = [f' and pl.{k} = :{k}' for k,v in param.items() if v is not None]
     has_good_param = True if len(sql_filter) > 0 else False
     sql = f'{sql} {"".join(sql_filter)}'
 
@@ -162,7 +162,7 @@ async def get(
     }
 
     # build query
-    sql_filter = [f' and {k} = :{k}' for k,v in param.items() if v is not None]
+    sql_filter = [f' and pl.{k} = :{k}' for k,v in param.items() if v is not None]
     has_good_param = True if len(sql_filter) > 0 else False
     sql = f'{sql} {"".join(sql_filter)}'
 
@@ -200,7 +200,7 @@ async def get(
     }
 
     # build query
-    sql_filter = [f' and {k} = :{k}' for k,v in param.items() if v is not None]
+    sql_filter = [f' and pl.{k} = :{k}' for k,v in param.items() if v is not None]
     has_good_param = True if len(sql_filter) > 0 else False
     sql = f'{sql} {"".join(sql_filter)}'
 
@@ -229,6 +229,7 @@ async def get(
         from playerHiscoreDataXPChange phd
         inner join Players pl on (phd.Player_id = pl.id)
         where 1=1
+            and ts_date = :ts_date
     ''')
 
     param = {
@@ -239,7 +240,7 @@ async def get(
     }
 
     # build query
-    sql_filter = [f' and {k} = :{k}' for k,v in param.items() if v is not None]
+    sql_filter = [f' and {k} = :{k}' for k,v in param.items() if v is not None or k != 'ts_date']
     has_good_param = True if len(sql_filter) > 0 else False
     sql = f'{sql} {"".join(sql_filter)}'
 
