@@ -16,6 +16,8 @@ after everything is ported, validated & discussed route desing should be done
 
 router = APIRouter()
 
+class contributor(BaseModel):
+    name: str
 
 class equipment(BaseModel):
     equip_head_id: int
@@ -27,7 +29,6 @@ class equipment(BaseModel):
     equip_hands_id: int
     equip_weapon_id: int
     equip_shield_id: int
-
 
 class detection(BaseModel):
     reporter: str
@@ -44,24 +45,7 @@ class detection(BaseModel):
     equipment: equipment
     equip_ge_value: int
 
-
-async def name_check(name):
-    bad_name = False
-    if len(name) > 13:
-        bad_name = True
-
-    temp_name = name
-    temp_name = temp_name.replace(' ', '')
-    temp_name = temp_name.replace('_', '')
-    temp_name = temp_name.replace('-', '')
-
-    if not (temp_name.isalnum()):
-        bad_name = True
-
-    return name, bad_name
-
-
-async def get_player(player_name):
+async def sql_get_player(player_name):
     sql_player_id = 'select * from Players where name = :player_name;'
 
     param = {
@@ -76,8 +60,7 @@ async def get_player(player_name):
 
     return player_id
 
-
-async def insert_player(player_name):
+async def sql_insert_player(player_name):
     sql_insert = "insert ignore into Players (name) values(:player_name);"
 
     param = {
@@ -85,11 +68,10 @@ async def insert_player(player_name):
     }
 
     await execute_sql(sql_insert, param=param, debug=False)
-    player = get_player(player_name)
+    player = await sql_get_player(player_name)
     return player
 
-
-async def insert_report(data):
+async def sql_insert_report(data):
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
@@ -121,90 +103,9 @@ async def insert_report(data):
     columns = list_to_string(list(param.keys()))
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
-    sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
-    await execute_sql(sql_insert, param=param, debug=False)
+    sql = f'insert ignore into Reports ({columns}) values ({values});'
+    await execute_sql(sql, param=param, debug=False)
     return
-
-
-async def custom_hiscore(detection):
-    # input validation
-    bad_name = False
-    detection['reporter'], bad_name = name_check(detection['reporter'])
-    detection['reported'], bad_name = name_check(detection['reported'])
-
-    if bad_name:
-        Config.debug(
-            f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
-        return 0
-
-    if not (0 <= int(detection['region_id']) <= 15522):
-        return 0
-
-    if not (0 <= int(detection['region_id']) <= 15522):
-        return 0
-
-    # get reporter & reported
-    reporter = get_player(detection['reporter'])
-    reported = get_player(detection['reported'])
-
-    create = 0
-    # if reporter or reported is None (=player does not exist), create player
-    if reporter is None:
-        reporter = insert_player(detection['reporter'])
-        create += 1
-
-    if reported is None:
-        reported = insert_player(detection['reported'])
-        create += 1
-
-    # change in detection
-    detection['reported'] = int(reported.id)
-    detection['reporter'] = int(reporter.id)
-
-    # insert into reports
-    SQL.insert_report(detection)
-    return create
-
-
-async def insync_detect(detections, manual_detect):
-    total_creates = 0
-    for idx, detection in enumerate(detections):
-        detection['manual_detect'] = manual_detect
-
-        total_creates += custom_hiscore(detection)
-
-        if len(detection) > 1000 and total_creates/len(detections) > .75:
-            logging.debug(f'    Malicious: sender: {detection["reporter"]}')
-            break
-
-        if idx % 500 == 0 and idx != 0:
-            logging.debug(f'      Completed {idx + 1}/{len(detections)}')
-
-    logging.debug(f'      Done: Completed {idx + 1} detections')
-    return
-
-# @router.route('/plugin/detect/<manual_detect>', methods=['POST'])
-@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
-async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
-    manual_detect = 0 if int(manual_detect) == 0 else 1
-
-    # remove duplicates
-    df = pd.DataFrame([d.__dict__ for d in detections])
-    df.drop_duplicates(
-        subset=['reporter', 'reported', 'region_id'], inplace=True)
-
-    if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logging.debug('to many reports')
-        return {'NOK': 'NOK'}, 400
-
-    detections = df.to_dict('records')
-
-    logging.debug(f'      Received detections: DF shape: {df.shape}')
-    # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
-    return {'OK': 'OK'}
-
-class contributor(BaseModel):
-    name: str
 
 async def sql_get_contributions(contributors):
     query = '''
@@ -232,25 +133,94 @@ async def sql_get_contributions(contributors):
     data = await execute_sql(query, param=params, debug=False)
     return data.rows2dict()
 
-async def sql_get_player(player_name: str):
-    sql_player_id = 'select * from Players where name = :player_name;'
-    param = {
-        'player_name': player_name
-    }
+async def name_check(name):
+    bad_name = False
+    if len(name) > 13:
+        bad_name = True
 
-    # returns a list of players
-    player = await execute_sql(
-        sql=sql_player_id,
-        param=param,
-        debug=False
-    )
-    player = player.rows2dict()
-    if len(player) == 0:
-        player_id = None
-    else:
-        player_id = player[0]
+    temp_name = name
+    temp_name = temp_name.replace(' ', '')
+    temp_name = temp_name.replace('_', '')
+    temp_name = temp_name.replace('-', '')
 
-    return player_id
+    if not (temp_name.isalnum()):
+        bad_name = True
+
+    return name, bad_name
+
+async def custom_hiscore(detection):
+    # input validation
+    bad_name = False
+    detection['reporter'], bad_name = name_check(detection['reporter'])
+    detection['reported'], bad_name = name_check(detection['reported'])
+
+    if bad_name:
+        Config.debug(
+            f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
+        return 0
+
+    if not (0 <= int(detection['region_id']) <= 15522):
+        return 0
+
+    if not (0 <= int(detection['region_id']) <= 15522):
+        return 0
+
+    # get reporter & reported
+    reporter = await sql_get_player(detection['reporter'])
+    reported = await sql_get_player(detection['reported'])
+
+    create = 0
+    # if reporter or reported is None (=player does not exist), create player
+    if reporter is None:
+        reporter = await sql_insert_player(detection['reporter'])
+        create += 1
+
+    if reported is None:
+        reported = await sql_insert_player(detection['reported'])
+        create += 1
+
+    # change in detection
+    detection['reported'] = int(reported.id)
+    detection['reporter'] = int(reporter.id)
+
+    # insert into reports
+    await sql_insert_report(detection)
+    return create
+
+async def insync_detect(detections, manual_detect):
+    total_creates = 0
+    for idx, detection in enumerate(detections):
+        detection['manual_detect'] = manual_detect
+
+        total_creates += await custom_hiscore(detection)
+
+        if len(detection) > 1000 and total_creates/len(detections) > .75:
+            logging.debug(f'    Malicious: sender: {detection["reporter"]}')
+            break
+
+        if idx % 500 == 0 and idx != 0:
+            logging.debug(f'      Completed {idx + 1}/{len(detections)}')
+
+    logging.debug(f'      Done: Completed {idx + 1} detections')
+    return
+
+@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
+async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
+    manual_detect = 0 if int(manual_detect) == 0 else 1
+
+    # remove duplicates
+    df = pd.DataFrame([d.__dict__ for d in detections])
+    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
+
+    if len(df) > 5000 or df["reporter"].nunique() > 1:
+        logging.debug('to many reports')
+        return {'NOK': 'NOK'}, 400
+
+    detections = df.to_dict('records')
+
+    logging.debug(f'      Received detections: DF shape: {df.shape}')
+    # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
+    return {'OK': 'OK'}
 
 async def parse_contributors(contributors: list, version:str=None) -> dict:
     contributions = await sql_get_contributions(contributors)
