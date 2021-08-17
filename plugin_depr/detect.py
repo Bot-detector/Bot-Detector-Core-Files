@@ -72,6 +72,9 @@ def insync_detect(detections, manual_detect):
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
 @detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
 def post_detect(version=None, manual_detect=0):
+    '''
+        ported by extreme4all 13-08
+    '''
     detections = request.get_json()
     
     manual_detect = 0 if int(manual_detect) == 0 else 1
