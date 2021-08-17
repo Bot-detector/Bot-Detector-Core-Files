@@ -50,7 +50,7 @@ async def put(old_user_id: int, new_user_id: int):
     '''
     # can be used for name change
     sql = ('''
-        UPDATE Reports
+    UPDATE Reports
     SET
         reportingID = :NewUser
     where 
