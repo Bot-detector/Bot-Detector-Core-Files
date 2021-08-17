@@ -184,7 +184,7 @@ def insync_detect(detections, manual_detect):
 
 # @router.route('/plugin/detect/<manual_detect>', methods=['POST'])
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
-def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
+async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
     # remove duplicates
@@ -201,3 +201,131 @@ def post_detect(detections: List[detection], version: str = None, manual_detect:
     logging.debug(f'      Received detections: DF shape: {df.shape}')
     # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
     return {'OK': 'OK'}
+
+class contributor(BaseModel):
+    name: str
+
+def sql_get_contributions(contributors):
+    query = '''
+        SELECT
+            rs.detect,
+            rs.reported as reported_ids,
+            pl.confirmed_ban as confirmed_ban,
+            pl.possible_ban as possible_ban,
+            pl.confirmed_player as confirmed_player
+        FROM
+            (SELECT
+                r.reportedID as reported,
+                r.manual_detect as detect
+        FROM Reports as r
+        JOIN Players as pl on pl.id = r.reportingID
+        WHERE 1=1
+            AND pl.name IN :contributors ) rs
+        JOIN Players as pl on (pl.id = rs.reported);
+    '''
+
+    params = {
+        "contributors": contributors
+    }
+
+    data = execute_sql(query, param=params, debug=False, has_return=True)
+    return data
+
+def sql_get_player(player_name: str):
+    sql_player_id = 'select * from Players where name = :player_name;'
+    param = {
+        'player_name': player_name
+    }
+
+    # returns a list of players
+    player = execute_sql(
+        sql=sql_player_id,
+        param=param,
+        debug=False,
+        has_return=True
+    )
+
+    if len(player) == 0:
+        player_id = None
+    else:
+        player_id = player[0]
+
+    return player_id
+
+def parse_contributors(contributors: list, version:str=None) -> dict:
+    contributions = sql_get_contributions(contributors)
+    
+    df = pd.DataFrame(contributions)
+    df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
+
+    try:
+        df_detect_manual = df.loc[df['detect'] == 1]
+
+        manual_dict = {
+            "reports": len(df_detect_manual.index),
+            "bans": int(df_detect_manual['confirmed_ban'].sum()),
+            "possible_bans": int(df_detect_manual['possible_ban'].sum()),
+            "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
+        }
+    except KeyError:
+        manual_dict = {
+            "reports": 0,
+            "bans": 0,
+            "possible_bans": 0,
+            "incorrect_reports": 0
+        }
+
+    try:
+        df_detect_passive = df.loc[df['detect'] == 0]
+
+        passive_dict = {
+            "reports": len(df_detect_passive.index),
+            "bans": int(df_detect_passive['confirmed_ban'].sum()),
+            "possible_bans": int(df_detect_passive['possible_ban'].sum())
+        }
+    except KeyError:
+        passive_dict = {
+            "reports": 0,
+            "bans": 0,
+            "possible_bans": 0
+        }
+
+    total_dict = {
+        "reports": passive_dict['reports'] + manual_dict['reports'],
+        "bans": passive_dict['bans'] + manual_dict['bans'],
+        "possible_bans": passive_dict['possible_bans'] + manual_dict['possible_bans']
+    }
+
+    if version in ['1.3','1.3.1'] or None:
+        return total_dict
+
+    return_dict = {
+        "passive": passive_dict,
+        "manual": manual_dict,
+        "total": total_dict
+    }
+
+    return return_dict
+
+@router.post('/stats/contributions/', tags=['legacy'])
+def get_contributions(contributors: List[contributor]):
+    contributors = [d.__dict__["name"] for d in contributors]
+    data = parse_contributors(contributors, version=None)
+    return data
+
+@router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
+def get_contributions(contributors: str, version: str):
+    data = parse_contributors([contributors], version=version)
+    return data
+
+
+@router.get('/stats/getcontributorid/{contributor}', tags=['legacy'])
+def get_contributor_id(contributor: str):
+    player = sql_get_player(contributor)
+
+    if player:
+        return_dict = {
+            "id": player.id
+        }
+
+    return return_dict

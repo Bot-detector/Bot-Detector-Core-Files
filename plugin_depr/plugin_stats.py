@@ -11,7 +11,9 @@ plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 @plugin_stats.route('/stats/contributions/<contributor>', methods=['GET'])
 @plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
 def get_contributions(version=None, contributor=None):
-
+    '''
+        ported by extreme4all 17-08
+    '''
     if contributor is not None:
         contributors = [contributor]
     else:
@@ -82,6 +84,9 @@ def get_contributions(version=None, contributor=None):
 
 @plugin_stats.route('/stats/getcontributorid/<contributor>', methods=['GET'])
 def get_contributor_id(contributor=""):
+    '''
+        ported by extreme4all 17-08
+    '''
     if (contributor == ""):
         return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 

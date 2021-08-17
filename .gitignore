@@ -24,7 +24,6 @@ Predictions/models/*
 
 .idea
 .idea/
-test.py
 
 vcs.xml
 
