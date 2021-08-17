@@ -46,7 +46,7 @@ class detection(BaseModel):
     equip_ge_value: int
 
 async def sql_get_player(player_name):
-    sql_player_id = 'select * from Players where name = :player_name;'
+    sql_player_id = 'select * from Players where name = :player_name'
 
     param = {
         'player_name': player_name
@@ -107,30 +107,25 @@ async def sql_insert_report(data):
     await execute_sql(sql, param=param, debug=False)
     return
 
-async def sql_get_contributions(contributors):
-    query = '''
+async def sql_get_contributions(contributors: List):
+    query = ("""
         SELECT
-            rs.detect,
-            rs.reported as reported_ids,
+            rs.manual_detect as detect,
+            rs.reportedID as reported_ids,
             pl.confirmed_ban as confirmed_ban,
             pl.possible_ban as possible_ban,
             pl.confirmed_player as confirmed_player
-        FROM
-            (SELECT
-                r.reportedID as reported,
-                r.manual_detect as detect
-        FROM Reports as r
-        JOIN Players as pl on pl.id = r.reportingID
+        FROM Reports as rs
+        JOIN Players as pl on (pl.id = rs.reportingID)
         WHERE 1=1
-            AND pl.name IN :contributors ) rs
-        JOIN Players as pl on (pl.id = rs.reported);
-    '''
+            AND pl.name in :contributors
+    """)
 
     params = {
         "contributors": contributors
     }
 
-    data = await execute_sql(query, param=params, debug=False)
+    data = await execute_sql(query, param=params, debug=False, row_count=100_000_000)
     return data.rows2dict()
 
 async def name_check(name):
@@ -222,11 +217,11 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
     # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
     return {'OK': 'OK'}
 
-async def parse_contributors(contributors: list, version:str=None) -> dict:
+async def parse_contributors(contributors, version=None):
     contributions = await sql_get_contributions(contributors)
-    
+
     df = pd.DataFrame(contributions)
-    df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
+    df.drop_duplicates(inplace=True, subset=["reported_ids", "detect"], keep="last")
 
     try:
         df_detect_manual = df.loc[df['detect'] == 1]
@@ -237,7 +232,8 @@ async def parse_contributors(contributors: list, version:str=None) -> dict:
             "possible_bans": int(df_detect_manual['possible_ban'].sum()),
             "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
         }
-    except KeyError:
+    except KeyError as e:
+        logging.debug(e)
         manual_dict = {
             "reports": 0,
             "bans": 0,
@@ -253,7 +249,8 @@ async def parse_contributors(contributors: list, version:str=None) -> dict:
             "bans": int(df_detect_passive['confirmed_ban'].sum()),
             "possible_bans": int(df_detect_passive['possible_ban'].sum())
         }
-    except KeyError:
+    except KeyError as e:
+        logging.debug(e)
         passive_dict = {
             "reports": 0,
             "bans": 0,
@@ -279,7 +276,7 @@ async def parse_contributors(contributors: list, version:str=None) -> dict:
 
 @router.post('/stats/contributions/', tags=['legacy'])
 async def get_contributions(contributors: List[contributor]):
-    contributors = [d.__dict__["name"] for d in contributors]
+    contributors = [d.__dict__['name'] for d in contributors]
     
     data = await parse_contributors(contributors, version=None)
     return data
