@@ -14,6 +14,9 @@ dashboard = Blueprint('dashboard', __name__, template_folder='templates')
 
 @dashboard.route('/site/dashboard/gettotaltrackedplayers', methods=['GET'])
 def get_total_tracked_players():
+    '''
+        20/08 ported by extreme4all
+    '''
     num_of_players = SQL.get_number_tracked_players()
     return_dict = {
         "players": num_of_players[0]
@@ -24,6 +27,9 @@ def get_total_tracked_players():
 
 @dashboard.route('/site/dashboard/getreportsstats', methods=['GET'])
 def get_total_reports():
+    '''
+        20/08 ported by extreme4all
+    '''
     report_stats = SQL.get_report_stats()[0]
 
     return_dict = {
@@ -46,6 +52,9 @@ def get_region_reports():
 
 @dashboard.route('/labels/get_player_labels', methods=['GET'])
 def get_player_labels():
+    '''
+        20/08 ported by extreme4all
+    '''
     labels = SQL.get_player_labels()
 
     df = pd.DataFrame(labels)

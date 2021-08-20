@@ -16,6 +16,9 @@ after everything is ported, validated & discussed route desing should be done
 
 router = APIRouter()
 
+'''
+    models
+'''
 class contributor(BaseModel):
     name: str
 
@@ -45,6 +48,9 @@ class detection(BaseModel):
     equipment: equipment
     equip_ge_value: int
 
+'''
+    sql
+'''
 async def sql_get_player(player_name):
     sql_player_id = 'select * from Players where name = :player_name'
 
@@ -128,6 +134,38 @@ async def sql_get_contributions(contributors: List):
     data = await execute_sql(query, param=params, debug=False, row_count=100_000_000)
     return data.rows2dict()
 
+async def sql_get_number_tracked_players():
+    sql = 'SELECT COUNT(*) count FROM Players'
+    data = await execute_sql(sql, param=None, debug=False)
+    return data.rows2dict()
+
+async def sql_get_report_stats():
+    sql = '''
+        SELECT
+            sum(bans) bans,
+            sum(false_reports) false_reports,
+            sum(bans) + sum(false_reports) total_reports,
+            sum(bans)/ (sum(bans) + sum(false_reports)) accuracy
+        FROM (
+            SELECT 
+                confirmed_ban,
+                sum(confirmed_ban) bans,
+                sum(confirmed_player) false_reports
+            FROM Players
+            GROUP BY
+                confirmed_ban
+            ) a
+    '''
+    data = await execute_sql(sql, param=None, debug=False)
+    return data.rows2dict()
+
+async def sql_get_player_labels():
+    sql = 'select * from Labels'
+    data = await execute_sql(sql, param=None, debug=False)
+    return data.rows2dict()
+'''
+    helper functions
+'''
 async def name_check(name):
     bad_name = False
     if len(name) > 13:
@@ -199,24 +237,6 @@ async def insync_detect(detections, manual_detect):
     logging.debug(f'      Done: Completed {idx + 1} detections')
     return
 
-@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
-async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
-    manual_detect = 0 if int(manual_detect) == 0 else 1
-
-    # remove duplicates
-    df = pd.DataFrame([d.__dict__ for d in detections])
-    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
-
-    if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logging.debug('to many reports')
-        return {'NOK': 'NOK'}, 400
-
-    detections = df.to_dict('records')
-
-    logging.debug(f'      Received detections: DF shape: {df.shape}')
-    # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
-    return {'OK': 'OK'}
-
 async def parse_contributors(contributors, version=None):
     contributions = await sql_get_contributions(contributors)
 
@@ -274,6 +294,28 @@ async def parse_contributors(contributors, version=None):
 
     return return_dict
 
+
+'''
+    routes
+'''
+@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
+async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
+    manual_detect = 0 if int(manual_detect) == 0 else 1
+
+    # remove duplicates
+    df = pd.DataFrame([d.__dict__ for d in detections])
+    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
+
+    if len(df) > 5000 or df["reporter"].nunique() > 1:
+        logging.debug('to many reports')
+        return {'NOK': 'NOK'}, 400
+
+    detections = df.to_dict('records')
+
+    logging.debug(f'      Received detections: DF shape: {df.shape}')
+    # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
+    return {'OK': 'OK'}
+
 @router.post('/stats/contributions/', tags=['legacy'])
 async def get_contributions(contributors: List[contributor]):
     contributors = [d.__dict__['name'] for d in contributors]
@@ -286,7 +328,6 @@ async def get_contributions(contributors: str, version: str):
     data = await parse_contributors([contributors], version=version)
     return data
 
-
 @router.get('/stats/getcontributorid/{contributor}', tags=['legacy'])
 async def get_contributor_id(contributor: str):
     player = await sql_get_player(contributor)
@@ -297,3 +338,27 @@ async def get_contributor_id(contributor: str):
         }
 
     return return_dict
+
+@router.get('/site/dashboard/gettotaltrackedplayers', tags=['legacy'])
+async def get_total_tracked_players():
+    num_of_players = await sql_get_number_tracked_players()
+    return {"players": num_of_players[0]}
+
+@router.get('/site/dashboard/getreportsstats', tags=['legacy'])
+async def get_total_reports():
+    report_stats = await sql_get_report_stats()[0]
+
+    output = {
+        "bans": int(report_stats[0]),
+        "false_reports": int(report_stats[1]),
+        "total_reports": int(report_stats[2]),
+        "accuracy": float(report_stats[3])
+    }
+
+    return output
+
+@router.get('/labels/get_player_labels', tags=['legacy'])
+async def get_player_labels():
+    labels = sql_get_player_labels()
+    df = pd.DataFrame(labels)
+    return df.to_dict('records')
