@@ -34,9 +34,6 @@ async def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100
         logging.debug(f'sql={sql.compile(engine)}')
         logging.debug(f'{param=}')
     
-    # make sure that we dont use another engine
-    await engine.dispose()
-
     # with handles open and close connection
     async with engine.connect() as conn:
         # creates thread save session
@@ -47,6 +44,8 @@ async def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100
             # parse data
             records = sql_cursor(rows) if has_return else None
             await session.commit()
+     # make sure that we dont use another engine
+    await engine.dispose()
     return records
 
 class sql_cursor:

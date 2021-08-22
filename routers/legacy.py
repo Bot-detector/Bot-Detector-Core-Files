@@ -16,6 +16,11 @@ after everything is ported, validated & discussed route desing should be done
 
 router = APIRouter()
 
+'''
+    models
+'''
+class contributor(BaseModel):
+    name: str
 
 class equipment(BaseModel):
     equip_head_id: int
@@ -27,7 +32,6 @@ class equipment(BaseModel):
     equip_hands_id: int
     equip_weapon_id: int
     equip_shield_id: int
-
 
 class detection(BaseModel):
     reporter: str
@@ -44,51 +48,36 @@ class detection(BaseModel):
     equipment: equipment
     equip_ge_value: int
 
-
-def name_check(name):
-    bad_name = False
-    if len(name) > 13:
-        bad_name = True
-
-    temp_name = name
-    temp_name = temp_name.replace(' ', '')
-    temp_name = temp_name.replace('_', '')
-    temp_name = temp_name.replace('-', '')
-
-    if not (temp_name.isalnum()):
-        bad_name = True
-
-    return name, bad_name
-
-
-def get_player(player_name):
-    sql_player_id = 'select * from Players where name = :player_name;'
+'''
+    sql
+'''
+async def sql_get_player(player_name):
+    sql_player_id = 'select * from Players where name = :player_name'
 
     param = {
         'player_name': player_name
     }
 
     # returns a list of players
-    player = execute_sql(sql_player_id, param=param, debug=False)
+    player = await execute_sql(sql_player_id, param=param, debug=False)
+    player = player.rows2dict()
 
     player_id = None if len(player) == 0 else player[0]
 
     return player_id
 
-
-def insert_player(player_name):
+async def sql_insert_player(player_name):
     sql_insert = "insert ignore into Players (name) values(:player_name);"
 
     param = {
         'player_name': player_name
     }
 
-    execute_sql(sql_insert, param=param, debug=False)
-    player = get_player(player_name)
+    await execute_sql(sql_insert, param=param, debug=False)
+    player = await sql_get_player(player_name)
     return player
 
-
-def insert_report(data):
+async def sql_insert_report(data):
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
@@ -120,12 +109,79 @@ def insert_report(data):
     columns = list_to_string(list(param.keys()))
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
-    sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
-    execute_sql(sql_insert, param=param, debug=False)
+    sql = f'insert ignore into Reports ({columns}) values ({values});'
+    await execute_sql(sql, param=param, debug=False)
     return
 
+async def sql_get_contributions(contributors: List):
+    query = ("""
+        SELECT
+            rs.manual_detect as detect,
+            rs.reportedID as reported_ids,
+            pl.confirmed_ban as confirmed_ban,
+            pl.possible_ban as possible_ban,
+            pl.confirmed_player as confirmed_player
+        FROM Reports as rs
+        JOIN Players as pl on (pl.id = rs.reportingID)
+        WHERE 1=1
+            AND pl.name in :contributors
+    """)
 
-def custom_hiscore(detection):
+    params = {
+        "contributors": contributors
+    }
+
+    data = await execute_sql(query, param=params, debug=False, row_count=100_000_000)
+    return data.rows2dict()
+
+async def sql_get_number_tracked_players():
+    sql = 'SELECT COUNT(*) count FROM Players'
+    data = await execute_sql(sql, param=None, debug=False)
+    return data.rows2dict()
+
+async def sql_get_report_stats():
+    sql = '''
+        SELECT
+            sum(bans) bans,
+            sum(false_reports) false_reports,
+            sum(bans) + sum(false_reports) total_reports,
+            sum(bans)/ (sum(bans) + sum(false_reports)) accuracy
+        FROM (
+            SELECT 
+                confirmed_ban,
+                sum(confirmed_ban) bans,
+                sum(confirmed_player) false_reports
+            FROM Players
+            GROUP BY
+                confirmed_ban
+            ) a
+    '''
+    data = await execute_sql(sql, param=None, debug=False)
+    return data.rows2dict()
+
+async def sql_get_player_labels():
+    sql = 'select * from Labels'
+    data = await execute_sql(sql, param=None, debug=False)
+    return data.rows2dict()
+'''
+    helper functions
+'''
+async def name_check(name):
+    bad_name = False
+    if len(name) > 13:
+        bad_name = True
+
+    temp_name = name
+    temp_name = temp_name.replace(' ', '')
+    temp_name = temp_name.replace('_', '')
+    temp_name = temp_name.replace('-', '')
+
+    if not (temp_name.isalnum()):
+        bad_name = True
+
+    return name, bad_name
+
+async def custom_hiscore(detection):
     # input validation
     bad_name = False
     detection['reporter'], bad_name = name_check(detection['reporter'])
@@ -143,17 +199,17 @@ def custom_hiscore(detection):
         return 0
 
     # get reporter & reported
-    reporter = get_player(detection['reporter'])
-    reported = get_player(detection['reported'])
+    reporter = await sql_get_player(detection['reporter'])
+    reported = await sql_get_player(detection['reported'])
 
     create = 0
     # if reporter or reported is None (=player does not exist), create player
     if reporter is None:
-        reporter = insert_player(detection['reporter'])
+        reporter = await sql_insert_player(detection['reporter'])
         create += 1
 
     if reported is None:
-        reported = insert_player(detection['reported'])
+        reported = await sql_insert_player(detection['reported'])
         create += 1
 
     # change in detection
@@ -161,16 +217,15 @@ def custom_hiscore(detection):
     detection['reporter'] = int(reporter.id)
 
     # insert into reports
-    SQL.insert_report(detection)
+    await sql_insert_report(detection)
     return create
 
-
-def insync_detect(detections, manual_detect):
+async def insync_detect(detections, manual_detect):
     total_creates = 0
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
 
-        total_creates += custom_hiscore(detection)
+        total_creates += await custom_hiscore(detection)
 
         if len(detection) > 1000 and total_creates/len(detections) > .75:
             logging.debug(f'    Malicious: sender: {detection["reporter"]}')
@@ -182,81 +237,11 @@ def insync_detect(detections, manual_detect):
     logging.debug(f'      Done: Completed {idx + 1} detections')
     return
 
-# @router.route('/plugin/detect/<manual_detect>', methods=['POST'])
-@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
-async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
-    manual_detect = 0 if int(manual_detect) == 0 else 1
+async def parse_contributors(contributors, version=None):
+    contributions = await sql_get_contributions(contributors)
 
-    # remove duplicates
-    df = pd.DataFrame([d.__dict__ for d in detections])
-    df.drop_duplicates(
-        subset=['reporter', 'reported', 'region_id'], inplace=True)
-
-    if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logging.debug('to many reports')
-        return {'NOK': 'NOK'}, 400
-
-    detections = df.to_dict('records')
-
-    logging.debug(f'      Received detections: DF shape: {df.shape}')
-    # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
-    return {'OK': 'OK'}
-
-class contributor(BaseModel):
-    name: str
-
-def sql_get_contributions(contributors):
-    query = '''
-        SELECT
-            rs.detect,
-            rs.reported as reported_ids,
-            pl.confirmed_ban as confirmed_ban,
-            pl.possible_ban as possible_ban,
-            pl.confirmed_player as confirmed_player
-        FROM
-            (SELECT
-                r.reportedID as reported,
-                r.manual_detect as detect
-        FROM Reports as r
-        JOIN Players as pl on pl.id = r.reportingID
-        WHERE 1=1
-            AND pl.name IN :contributors ) rs
-        JOIN Players as pl on (pl.id = rs.reported);
-    '''
-
-    params = {
-        "contributors": contributors
-    }
-
-    data = execute_sql(query, param=params, debug=False, has_return=True)
-    return data
-
-def sql_get_player(player_name: str):
-    sql_player_id = 'select * from Players where name = :player_name;'
-    param = {
-        'player_name': player_name
-    }
-
-    # returns a list of players
-    player = execute_sql(
-        sql=sql_player_id,
-        param=param,
-        debug=False,
-        has_return=True
-    )
-
-    if len(player) == 0:
-        player_id = None
-    else:
-        player_id = player[0]
-
-    return player_id
-
-def parse_contributors(contributors: list, version:str=None) -> dict:
-    contributions = sql_get_contributions(contributors)
-    
     df = pd.DataFrame(contributions)
-    df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
+    df.drop_duplicates(inplace=True, subset=["reported_ids", "detect"], keep="last")
 
     try:
         df_detect_manual = df.loc[df['detect'] == 1]
@@ -267,7 +252,8 @@ def parse_contributors(contributors: list, version:str=None) -> dict:
             "possible_bans": int(df_detect_manual['possible_ban'].sum()),
             "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
         }
-    except KeyError:
+    except KeyError as e:
+        logging.debug(e)
         manual_dict = {
             "reports": 0,
             "bans": 0,
@@ -283,7 +269,8 @@ def parse_contributors(contributors: list, version:str=None) -> dict:
             "bans": int(df_detect_passive['confirmed_ban'].sum()),
             "possible_bans": int(df_detect_passive['possible_ban'].sum())
         }
-    except KeyError:
+    except KeyError as e:
+        logging.debug(e)
         passive_dict = {
             "reports": 0,
             "bans": 0,
@@ -307,21 +294,43 @@ def parse_contributors(contributors: list, version:str=None) -> dict:
 
     return return_dict
 
+
+'''
+    routes
+'''
+@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
+async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
+    manual_detect = 0 if int(manual_detect) == 0 else 1
+
+    # remove duplicates
+    df = pd.DataFrame([d.__dict__ for d in detections])
+    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
+
+    if len(df) > 5000 or df["reporter"].nunique() > 1:
+        logging.debug('to many reports')
+        return {'NOK': 'NOK'}, 400
+
+    detections = df.to_dict('records')
+
+    logging.debug(f'      Received detections: DF shape: {df.shape}')
+    # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
+    return {'OK': 'OK'}
+
 @router.post('/stats/contributions/', tags=['legacy'])
-def get_contributions(contributors: List[contributor]):
-    contributors = [d.__dict__["name"] for d in contributors]
-    data = parse_contributors(contributors, version=None)
+async def get_contributions(contributors: List[contributor]):
+    contributors = [d.__dict__['name'] for d in contributors]
+    
+    data = await parse_contributors(contributors, version=None)
     return data
 
 @router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
-def get_contributions(contributors: str, version: str):
-    data = parse_contributors([contributors], version=version)
+async def get_contributions(contributors: str, version: str):
+    data = await parse_contributors([contributors], version=version)
     return data
 
-
 @router.get('/stats/getcontributorid/{contributor}', tags=['legacy'])
-def get_contributor_id(contributor: str):
-    player = sql_get_player(contributor)
+async def get_contributor_id(contributor: str):
+    player = await sql_get_player(contributor)
 
     if player:
         return_dict = {
@@ -329,3 +338,27 @@ def get_contributor_id(contributor: str):
         }
 
     return return_dict
+
+@router.get('/site/dashboard/gettotaltrackedplayers', tags=['legacy'])
+async def get_total_tracked_players():
+    num_of_players = await sql_get_number_tracked_players()
+    return {"players": num_of_players[0]}
+
+@router.get('/site/dashboard/getreportsstats', tags=['legacy'])
+async def get_total_reports():
+    report_stats = await sql_get_report_stats()[0]
+
+    output = {
+        "bans": int(report_stats[0]),
+        "false_reports": int(report_stats[1]),
+        "total_reports": int(report_stats[2]),
+        "accuracy": float(report_stats[3])
+    }
+
+    return output
+
+@router.get('/labels/get_player_labels', tags=['legacy'])
+async def get_player_labels():
+    labels = sql_get_player_labels()
+    df = pd.DataFrame(labels)
+    return df.to_dict('records')
