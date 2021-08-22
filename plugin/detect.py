@@ -5,6 +5,7 @@ import pandas as pd
 import SQL
 from flask import Blueprint, request
 from flask.json import jsonify
+import utils.string_processing
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
