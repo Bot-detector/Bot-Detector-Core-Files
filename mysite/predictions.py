@@ -169,7 +169,7 @@ def broadcast_feedback(feedback):
     embed.add_embed_field(name="Vote", value=f"{vote_name}", inline=False)
     embed.add_embed_field(name="Explanation", value=f"{feedback['feedback_text']}", inline=False)
 
-    if feedback["vote"] == -1:
+    if feedback["vote"] == -1 and feedback.get('proposed_label'):
         embed.add_embed_field(name="Proposed Label", value=f"{feedback['proposed_label'].replace('_', ' ')}")
 
     embed.set_footer(text=datetime.datetime.utcnow().strftime('%a %B %d %Y  %I:%M:%S %p'))
