@@ -1,8 +1,8 @@
 import os, sys
+import datetime
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Blueprint, jsonify, request, make_response
-import numpy as np
 from discord_webhook import DiscordWebhook
 from discord_webhook.webhook import DiscordEmbed
 
@@ -169,7 +169,10 @@ def broadcast_feedback(feedback):
     embed.add_embed_field(name="Vote", value=f"{vote_name}", inline=False)
     embed.add_embed_field(name="Explanation", value=f"{feedback['feedback_text']}", inline=False)
 
-    embed.set_timestamp()
+    if feedback["vote"] == -1:
+        embed.add_embed_field(name="Proposed Label", value=f"{feedback['proposed_label'].replace('_', ' ')}")
+
+    embed.set_footer(text=datetime.datetime.utcnow().strftime('%a %B %d %Y  %I:%M:%S %p'))
 
     webhook.add_embed(embed=embed)
     webhook.execute()
