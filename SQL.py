@@ -274,9 +274,10 @@ def transfer_kc(old_id, new_id):
 
 def insert_prediction_feedback(vote_info):
     vote_info.setdefault('feedback_text')
+    vote_info.setdefault('proposed_label')
 
-    sql_insert = 'insert ignore into PredictionsFeedback (voter_id, prediction, confidence, vote, subject_id, feedback_text) ' \
-                 'values (:voter_id, :prediction, :confidence, :vote, :subject_id, :feedback_text);'
+    sql_insert = 'insert ignore into PredictionsFeedback (voter_id, prediction, confidence, vote, subject_id, feedback_text, proposed_label) ' \
+                 'values (:voter_id, :prediction, :confidence, :vote, :subject_id, :feedback_text, :proposed_label);'
     execute_sql(sql_insert, param=vote_info, debug=False, has_return=False)
 
     return

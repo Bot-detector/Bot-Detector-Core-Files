@@ -14,6 +14,7 @@ import SQL
 import Config
 from Predictions import model
 from scraper import banned_by_jagex, hiscoreScraper
+from utils import string_processing
 
 app_token = Blueprint('app_token', __name__, template_folder='templates')
 
@@ -235,7 +236,9 @@ def verify_discord_user(token, version=None):
 
     verify_data = request.get_json()
 
-    player = SQL.get_player(verify_data["player_name"])
+    normalized_name = string_processing.to_jagex_name(verify_data["player_name"])
+
+    player = SQL.get_player(normalized_name)
 
     if(player is None):
         return jsonify({"error": "Could not find player."}), 400
