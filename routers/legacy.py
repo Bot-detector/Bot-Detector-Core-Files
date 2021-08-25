@@ -5,8 +5,9 @@ from typing import List, Optional
 import Config
 import pandas as pd
 import SQL
-from database.functions import execute_sql, list_to_string
-from fastapi import APIRouter
+from database.functions import execute_sql, list_to_string, verify_token
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 '''
@@ -401,3 +402,10 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
     await execute_sql(sql, param=feedback_params, debug=True)
     
     return {"OK": "OK"}
+
+@router.get("/log/{token}", tags=['legacy'])
+async def print_log(token):
+    permission = await verify_token(token, verifcation='ban')
+    if not (permission):
+        raise HTTPException(status_code=404, detail="insufficient permissions")
+    return FileResponse(path='error.log', filename='error.log', media_type='text/log')
