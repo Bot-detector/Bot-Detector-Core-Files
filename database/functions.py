@@ -1,17 +1,19 @@
+import logging
 from collections import namedtuple
 
+from fastapi import HTTPException
 from sqlalchemy import text
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker
 
 from .database import engine
-import logging
+
 
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
     
-async def execute_sql(sql, param=None, debug=False, engine=engine, row_count=100_000, page=1):
+async def execute_sql(sql, param={}, debug=False, engine=engine, row_count=100_000, page=1):
     has_return = True if sql.strip().lower().startswith('select') else False
     
     if has_return:
@@ -77,25 +79,23 @@ async def verify_token(token:str, verifcation:str) -> bool:
     data = await execute_sql(sql, param=param, debug=False)
     player_token = data.rows2tuple()
 
-    if not (player_token):
-        return False
+    # default no permissions
+    perm = False 
 
-    player_token = player_token[0]
-    if verifcation == "hiscores":
-        if not (player_token.request_highscores == 1):
-            return False
+    # check if token exists (empty list if token does not exist)
+    if not player_token:
+        raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
 
-    if verifcation == "ban":
-        if not (player_token.verify_ban == 1):
-            return False
+    # all possible checks
+    permissions = {
+        'hiscore': player_token[0].request_highscores,
+        'ban':player_token[0].verify_ban,
+        'create_token': player_token[0].create_token,
+        'verify_players': player_token[0].verify_players
+    }
 
-    if verifcation == "create_token":
-        if not (player_token.create_token == 1):
-            return False
-
-    if verifcation == "verify_players":
-        if not (player_token.verify_players == 1):
-            return False
-    
-    # has permission
-    return True
+    if permissions.get(verifcation, 0) == 1:
+        perm = True
+    else:
+        raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
+    return perm

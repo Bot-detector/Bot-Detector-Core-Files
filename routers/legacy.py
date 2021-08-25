@@ -396,16 +396,38 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
         values ({values}) 
     ''')
 
-    print(sql)
-    print(feedback_params)
-
     await execute_sql(sql, param=feedback_params, debug=True)
     
     return {"OK": "OK"}
 
 @router.get("/log/{token}", tags=['legacy'])
 async def print_log(token):
-    permission = await verify_token(token, verifcation='ban')
-    if not (permission):
-        raise HTTPException(status_code=404, detail="insufficient permissions")
+    await verify_token(token, verifcation='ban')
     return FileResponse(path='error.log', filename='error.log', media_type='text/log')
+
+
+@router.get('/site/highscores/<{token}>', tags=['legacy'])
+@router.get('/site/highscores/<{token}>/<{ofInterest}>', tags=['legacy'])
+async def get_highscores(token, ofInterest=None):
+    await verify_token(token, verifcation='hiscore')
+
+    if ofInterest is None:
+        sql = ('''
+            SELECT 
+                hdl.*, 
+                pl.name 
+            FROM playerHiscoreDataLatest hdl 
+            inner join Players pl on(hdl.Player_id=pl.id)    
+        ''')
+    else:
+        sql =('''
+            SELECT 
+                htl.*, 
+                poi.name 
+            FROM playerHiscoreDataLatest htl 
+            INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)
+        '''
+        )
+
+    data = await execute_sql(sql)
+    return data.rows2dict()
