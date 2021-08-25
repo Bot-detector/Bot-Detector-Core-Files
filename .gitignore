@@ -10,10 +10,10 @@ venv
 venv/
 env/
 env
-fastapi
-fastapi/
 flask
 flask/
+fastapi
+fastapi/
 
 exports
 exports/

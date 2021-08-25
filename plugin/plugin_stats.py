@@ -13,8 +13,9 @@ plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 @plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
 def get_contributions(version=None, contributor=None):
 
+    #TODO Figure out the name normalization siutation..
     if contributor is not None:
-        contributors = [utils.string_processing.to_jagex_name(contributor)]
+        contributors = [contributor]
     else:
         if isinstance(request.json, str):
             contrib_data = json.loads(request.json)
@@ -22,7 +23,7 @@ def get_contributions(version=None, contributor=None):
             contrib_data = request.json
 
         if contrib_data is not None:
-            contributors = tuple([utils.string_processing.to_jagex_name(c["name"]) for c in contrib_data])
+            contributors = tuple([c["name"] for c in contrib_data])
         else:
             return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
