@@ -10,6 +10,10 @@ venv
 venv/
 env/
 env
+flask
+flask/
+fastapi
+fastapi/
 
 exports
 exports/
@@ -27,4 +31,3 @@ Predictions/models/*
 test.py
 
 vcs.xml
-
