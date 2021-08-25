@@ -70,3 +70,30 @@ class sqlalchemy_result:
         columns = [col.name for col in self.rows[0].__table__.columns]
         Record = namedtuple('Record', columns)
         return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in self.rows]
+
+async def verify_token(token, verifcation):
+    sql = 'select * from Tokens where token=:token;'
+    param = {'token': token}
+    data = await execute_sql(sql, param=param, debug=False)
+    player_token = data.rows2tuple
+
+    if not (player_token):
+        return False
+
+    if verifcation == "hiscores":
+        if not (player_token.request_highscores == 1):
+            return False
+
+    if verifcation == "ban":
+        if not (player_token.verify_ban == 1):
+            return False
+
+    if verifcation == "create_token":
+        if not (player_token.create_token == 1):
+            return False
+
+    if verifcation == "verify_players":
+        if not (player_token.verify_players == 1):
+            return False
+
+    return True
