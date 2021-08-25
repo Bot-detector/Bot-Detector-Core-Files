@@ -68,9 +68,14 @@ def get_prediction(player_name, version=None, token=None):
 
     return jsonify(return_dict)
 
+
+
 @app_predictions.route('/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
 @app_predictions.route('/<version>/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
 def receive_plugin_feedback(version=None):
+    '''
+    Ported on Aug 25 by Seltzer. See routers/feedback.py
+    '''
 
     #Preflight
     if request.method == 'OPTIONS':

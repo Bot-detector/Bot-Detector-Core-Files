@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List
+from typing import List, Optional
 
 import Config
 import pandas as pd
@@ -47,6 +47,15 @@ class detection(BaseModel):
     world_number: int
     equipment: equipment
     equip_ge_value: int
+
+class Feedback(BaseModel):
+    player_name: str
+    vote: int
+    prediction: str
+    confidence: float
+    subject_id: int
+    feedback_text: Optional[str] = None
+    proposed_label: Optional[str] = None
 
 '''
     sql
@@ -362,3 +371,33 @@ async def get_player_labels():
     labels = sql_get_player_labels()
     df = pd.DataFrame(labels)
     return df.to_dict('records')
+
+
+@router.post('/{version}/plugin/predictionfeedback/', tags=['legacy'])
+async def receive_plugin_feedback(feedback: Feedback, version: str = None):
+ 
+    feedback_params = feedback.dict()
+
+    voter_data = await execute_sql(sql=f"select * from Players where name = :player_name", param={"player_name": feedback_params.pop("player_name")})
+    voter_data = voter_data.rows2dict()[0]
+
+    feedback_params["voter_id"] = voter_data.get("id")
+    exclude = ["player_name"]
+
+    columns = [k for k,v in feedback_params.items() if v is not None and k not in exclude]
+    columns = list_to_string(columns)
+
+    values = [f':{k}' for k,v in feedback_params.items() if v is not None and k not in exclude]
+    values = list_to_string(values)
+
+    sql = (f'''
+        insert ignore into PredictionsFeedback ({columns})
+        values ({values}) 
+    ''')
+
+    print(sql)
+    print(feedback_params)
+
+    await execute_sql(sql, param=feedback_params, debug=True)
+    
+    return {"OK": "OK"}
