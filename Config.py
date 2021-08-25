@@ -21,7 +21,6 @@ dev_mode = os.environ.get('dev_mode')
 app = FastAPI()
 
 # setup logging
-
 loki_handler = logging_loki.LokiQueueHandler(
     Queue(-1),
     url="http://loki:3100/loki/api/v1/push", 
