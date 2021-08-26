@@ -1,5 +1,5 @@
 from time import sleep
-from flask import config, jsonify, redirect, make_response
+from flask import config, jsonify, request
 from waitress import serve
 import datetime as dt
 import os
@@ -16,6 +16,7 @@ from Predictions import model
 from discord.discord import discord
 from scraper.scraper import app_scraper
 from plugin.clan import clan
+from SQL import track_user_agent
 import gc
 
 app.register_blueprint(plugin_stats)
@@ -59,6 +60,11 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
 # do we need this?
 else:
     started = False
+
+
+@app.before_request
+def before_request():
+    track_user_agent(request.user_agent)
 
 
 @app.errorhandler(404)
