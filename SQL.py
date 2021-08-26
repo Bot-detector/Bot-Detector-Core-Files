@@ -884,3 +884,17 @@ def get_player_kc(players):
     param = {'players': players}
     data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
+
+
+def track_user_agent(agent):
+
+    sql = ('''
+        INSERT INTO User_Agents
+            (agent_name, count)
+        VALUES
+            (:agent_name, 1)
+        ON DUPLICATE KEY UPDATE
+            count = count + 1
+    ''')
+
+    execute_sql(sql=sql, param={"agent_name": agent.string}, debug=False, has_return=False)
