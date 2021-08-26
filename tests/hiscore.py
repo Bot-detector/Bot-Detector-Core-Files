@@ -9,8 +9,10 @@ from Config import app
 client = TestClient(app)
 
 def test_hiscore():
-    response = client.get("/v1/hiscore")
+    response = client.get("/v1/hiscore?player_name=extreme4all")
     assert response.status_code == 200, f'invalid response {response.status_code }'
     assert response.json() == list, f'invalid response return type:'
 
 
+if __name__ == "__main__":
+  test_hiscore()
