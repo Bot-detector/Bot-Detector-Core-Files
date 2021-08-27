@@ -10,17 +10,10 @@ venv
 venv/
 env/
 env
-<<<<<<< HEAD
 fastapi
 fastapi/
 flask
 flask/
-=======
-flask
-flask/
-fastapi
-fastapi/
->>>>>>> 9b9e9d9 (Until I can get the normalization straight I'm going to leave special characters in the names for stat lookups..)
 
 exports
 exports/
