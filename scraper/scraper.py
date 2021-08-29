@@ -31,5 +31,7 @@ def post_hiscores_to_db(token):
     if not (verify_token(token, verifcation='ban')):
         return "<h1>404</h1><p>Invalid token</p>", 404
     data = request.get_json()
-    Config.debug(data)
+    player, hiscores = zip(*[(d['player'], d['hiscores']) for d in data])
+    Config.debug(player)
+    Config.debug(hiscores)
     return jsonify({'OK':'OK'})
