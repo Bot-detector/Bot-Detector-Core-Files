@@ -66,8 +66,8 @@ executors = {
     'default': ProcessPoolExecutor()  # processpool
 }
 
-# if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-sched = BackgroundScheduler(daemon=False, executors=executors)
+if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    sched = BackgroundScheduler(daemon=False, executors=executors)
 
 # setup logging
 logging.FileHandler(filename="error.log", mode='a')
