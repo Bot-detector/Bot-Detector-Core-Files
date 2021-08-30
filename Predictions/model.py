@@ -326,7 +326,7 @@ def insert_prepared_data(df, columns):
     # insert many
     row = data[0]
     values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
-    sql_insert = f'insert ignore into Predictions values ({values});'
+    sql_insert = f'replace into Predictions values ({values});'
     SQL.execute_sql(sql_insert, param=data, debug=False, has_return=False)
     return length
 
