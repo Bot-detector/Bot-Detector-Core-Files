@@ -190,7 +190,7 @@ def get_prediction_from_db(player):
         return df_resf
     except Exception as e:
         Config.debug(f'error in get_prediction_from_db: {e}')
-        Config.debug(traceback.print_exc())
+        # Config.debug(traceback.print_exc())
         # prediction is not in the database
         return None
 
