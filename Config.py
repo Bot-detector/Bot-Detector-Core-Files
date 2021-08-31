@@ -6,6 +6,8 @@ from multiprocessing import Queue
 import logging_loki
 from dotenv import find_dotenv, load_dotenv
 from fastapi import FastAPI
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -47,3 +49,12 @@ logging.getLogger().addHandler(handler)
 # for machine learning
 n_pca=2
 use_pca=False
+
+
+executors = {
+    # 'default': ThreadPoolExecutor(max_workers=4),
+    'default': ProcessPoolExecutor()  # processpool
+}
+# scheduler
+if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    sched = BackgroundScheduler(daemon=False, executors=executors)
