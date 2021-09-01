@@ -104,15 +104,19 @@ async def process_player(player, hiscore):
 
 
 
-@router.get("/scraper/hiscores/{token}", tags=["scraper"])
+@router.post("/scraper/hiscores/{token}", tags=["scraper"])
 async def post_hiscores_to_db(token, data: List[scraper]):
     await verify_token(token, verifcation='ban')
 
-    data = data.__dict__
-
-    print(len(data))
+    data = [d.__dict__ for d in data]
+    data = [
+        {
+            'player': d['player'].__dict__,
+            'hiscore': d['hiscore'].__dict__
+        } for d in data
+    ]
 
     for i, d in enumerate(data):
-        Config.sched.add_job(await process_player ,args=[d['player'], d['hiscores']], replace_existing=False, name=f'scrape_{d["player"]["name"]}')
+        Config.sched.add_job(process_player ,args=[d['player'], d['hiscore']], replace_existing=False, name=f'scrape_{d["player"]["name"]}')
         
     return {'OK':'OK'}
