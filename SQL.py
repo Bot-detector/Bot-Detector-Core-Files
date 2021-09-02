@@ -132,6 +132,8 @@ def insert_player(player_name):
 
 def update_player(player_id, possible_ban=None, confirmed_ban=None, confirmed_player=None, label_id=None, label_jagex=None, debug=False):
     time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
+
+    Config.debug(f'{player_id=}, {time_now=}')
     param = {
         'updated_at':       time_now,
         'possible_ban':     possible_ban,
@@ -438,17 +440,14 @@ def get_highscores_data_oneplayer(player_id):
 
 def get_hiscores_of_interst():
     sql ='SELECT htl.*, poi.name FROM playerHiscoreDataLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id);'
-    highscores = execute_sql(sql=sql, param=None,
-                             debug=False, has_return=True)
+    highscores = execute_sql(sql=sql, param=None, debug=False, has_return=True)
     return highscores
 
 
-def get_players_to_scrape(start=None, amount=None):
-    sql = 'select * from playersToScrape WHERE length(name) <= 12'
-    if not (start is None and amount is None):
-        sql = f'{sql} limit {start},{amount}'
-    sql = f'{sql};'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+def get_players_to_scrape(start=0, amount=100):
+    sql = 'select * from playersToScrape WHERE length(name) <= 12 ORDER BY RAND() LIMIT :start, :amount;'
+    param = {'amount': int(amount), 'start': int(start)}
+    data = execute_sql(sql, param=param, debug=False, has_return=True)
     return data
 
 
@@ -458,9 +457,7 @@ def get_max_players_to_scrape():
     return data
 
 def get_players_of_interest():
-
     sql = 'select * from playersOfInterest;'
-
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 

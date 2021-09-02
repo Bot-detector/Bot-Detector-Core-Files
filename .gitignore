@@ -10,10 +10,17 @@ venv
 venv/
 env/
 env
+<<<<<<< HEAD
 fastapi
 fastapi/
 flask
 flask/
+=======
+flask
+flask/
+fastapi
+fastapi/
+>>>>>>> develop
 
 exports
 exports/
