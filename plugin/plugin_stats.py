@@ -29,7 +29,20 @@ def get_contributions(version=None, contributor=None):
             return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
     contributions = SQL.get_contributions(contributors)
-    
+
+    total_submissions_sql = '''
+        SELECT
+                COUNT(*) subs
+        FROM Reports as r
+        JOIN Players as pl on pl.id = r.reportingID
+        WHERE 1=1
+        AND pl.name IN :contributors
+    '''
+
+    total_subs_data = SQL.execute_sql(sql=total_submissions_sql, param={"contributors": contributors})
+    total_subs = int(total_subs_data[0].subs)
+
+
     df = pd.DataFrame(contributions)
     df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
 
@@ -57,7 +70,7 @@ def get_contributions(version=None, contributor=None):
         df_detect_passive = df.loc[df['detect'] == 0]
 
         passive_dict = {
-            "reports": len(df_detect_passive.index),
+            "reports": total_subs - manual_dict["reports"],
             "bans": int(df_detect_passive['confirmed_ban'].sum()),
             "possible_bans": int(df_detect_passive['possible_ban'].sum())
         }
@@ -72,7 +85,7 @@ def get_contributions(version=None, contributor=None):
         }
 
     total_dict = {
-        "reports": passive_dict['reports'] + manual_dict['reports'],
+        "reports": total_subs,
         "bans": passive_dict['bans'] + manual_dict['bans'],
         "possible_bans": passive_dict['possible_bans'] + manual_dict['possible_bans'],
         "feedback": len(pd.DataFrame(SQL.get_total_feedback_submissions(contributors)).index)
@@ -104,7 +117,7 @@ def get_contributions_plus(token):
     else:
         return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
-    sql = '''
+    contrib_sql = '''
         SELECT
             rs.detect,
             rs.reported as reported_ids,
@@ -114,20 +127,31 @@ def get_contributions_plus(token):
             phdl.total as total_xp
         FROM
             (SELECT
-                    r.reportedID as reported,
-                    r.manual_detect as detect
-                FROM Reports as r
-                JOIN Players as pl on pl.id = r.reportingID
-                WHERE 1=1
-                AND pl.name IN :contributors
+                r.reportedID as reported,
+                r.manual_detect as detect
+            FROM Reports as r
+            JOIN Players as pl on pl.id = r.reportingID
+            WHERE 1=1
+            AND pl.name IN :contributors
             ) rs
         JOIN Players as pl on pl.id = rs.reported
         JOIN playerHiscoreDataLatest as phdl on phdl.Player_id = pl.id;
 
     '''
 
-    contributions = SQL.execute_sql(sql=sql, param={"contributors": contributors})
-    
+    total_submissions_sql = '''
+        SELECT
+                COUNT(*) subs
+        FROM Reports as r
+        JOIN Players as pl on pl.id = r.reportingID
+        WHERE 1=1
+        AND pl.name IN :contributors
+    '''
+
+    contributions = SQL.execute_sql(sql=contrib_sql, param={"contributors": contributors})
+    total_subs_data = SQL.execute_sql(sql=total_submissions_sql, param={"contributors": contributors})
+    total_subs = int(total_subs_data[0].subs)
+
     df = pd.DataFrame(contributions)
     df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
 
@@ -157,7 +181,7 @@ def get_contributions_plus(token):
         df_detect_passive = df.loc[df['detect'] == 0]
 
         passive_dict = {
-            "reports": len(df_detect_passive.index),
+            "reports": total_subs - manual_dict["reports"],
             "bans": int(df_detect_passive['confirmed_ban'].sum()),
             "possible_bans": int(df_detect_passive['possible_ban'].sum())
         }
@@ -172,7 +196,7 @@ def get_contributions_plus(token):
         }
 
     total_dict = {
-        "reports": passive_dict['reports'] + manual_dict['reports'],
+        "reports": total_subs,
         "bans": passive_dict['bans'] + manual_dict['bans'],
         "possible_bans": passive_dict['possible_bans'] + manual_dict['possible_bans'],
         "feedback": len(pd.DataFrame(SQL.get_total_feedback_submissions(contributors)).index),
