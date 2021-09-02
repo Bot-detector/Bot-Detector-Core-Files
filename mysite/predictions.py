@@ -70,6 +70,16 @@ def get_prediction(player_name, version=None, token=None):
 
     return jsonify(return_dict)
 
+
+# delete this beast later
+def sort_predictions(d):
+    # remove 0's
+    d = {key: value for key, value in d.items() if value > 0}
+    # sort dict decending
+    d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
+    return d
+
+
 @app_predictions.route('/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
 @app_predictions.route('/<version>/plugin/predictionfeedback/', methods=['POST', 'OPTIONS'])
 def receive_plugin_feedback(version=None):
