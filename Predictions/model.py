@@ -190,7 +190,7 @@ def get_prediction_from_db(player):
         return df_resf
     except Exception as e:
         Config.debug(f'error in get_prediction_from_db: {e}')
-        Config.debug(traceback.print_exc())
+        # Config.debug(traceback.print_exc())
         # prediction is not in the database
         return None
 
@@ -326,7 +326,7 @@ def insert_prepared_data(df, columns):
     # insert many
     row = data[0]
     values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
-    sql_insert = f'insert ignore into Predictions values ({values});'
+    sql_insert = f'replace into Predictions values ({values});'
     SQL.execute_sql(sql_insert, param=data, debug=False, has_return=False)
     return length
 
