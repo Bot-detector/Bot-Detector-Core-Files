@@ -8,6 +8,7 @@ from discord_webhook.webhook import DiscordEmbed
 
 import Config
 from Predictions import model
+from utils.string_processing import escape_markdown
 from SQL import get_player, insert_prediction_feedback, get_verified_discord_user
 import SQL
 
@@ -82,8 +83,6 @@ def receive_plugin_feedback(version=None):
 
     vote_info = request.get_json()
 
-    print(vote_info)
-
     voter = get_player(vote_info['player_name'])
 
     if voter is None:
@@ -103,45 +102,6 @@ def receive_plugin_feedback(version=None):
         Config.debug(f'prediction feedback error: {vote_info}')
 
     return jsonify({'OK':'OK'})
-
-
-@app_predictions.route('/discord/predictionfeedback/', methods=['POST', 'OPTIONS'])
-def receive_discord_feedback():
-    # Preflight
-    if request.method == 'OPTIONS':
-        response = make_response()
-        header = response.headers
-        header['Access-Control-Allow-Origin'] = '*'
-        return response
-
-    vote_info = request.get_json()
-
-    discord_link = get_verified_discord_user(vote_info["discord_id"])
-
-    if(discord_link):
-        print(discord_link)
-
-        if int(discord_link[0].Discord_id) == int(vote_info["discord_id"]):
-            vote_info["voter_id"] = discord_link[0].Player_id
-
-            vote_info["subject_id"] = get_player(vote_info["name"]).id
-
-            insert_prediction_feedback(vote_info)
-        else:
-            return "<h1>400</h1><p>You are not permitted to vote from this account.</p>", 400
-
-    else:
-        return "<h1>400</h1><p>Use the !link command to link a Runescape account to your discord account first.</p>", 400
-
-    return 'OK'
-
-# delete this beast later
-def sort_predictions(d):
-    # remove 0's
-    d = {key: value for key, value in d.items() if value > 0}
-    # sort dict decending
-    d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
-    return d
 
 
 def broadcast_feedback(feedback):
@@ -167,7 +127,7 @@ def broadcast_feedback(feedback):
     embed.add_embed_field(name="Prediction", value=f"{feedback['prediction'].replace('_', ' ')}")
     embed.add_embed_field(name="Confidence", value=f"{feedback['confidence'] * 100:.2f}%")
     embed.add_embed_field(name="Vote", value=f"{vote_name}", inline=False)
-    embed.add_embed_field(name="Explanation", value=f"{feedback['feedback_text']}", inline=False)
+    embed.add_embed_field(name="Explanation", value=f"{escape_markdown(feedback['feedback_text'])}", inline=False)
 
     if feedback["vote"] == -1 and feedback.get('proposed_label'):
         embed.add_embed_field(name="Proposed Label", value=f"{feedback['proposed_label'].replace('_', ' ')}")
