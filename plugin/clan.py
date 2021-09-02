@@ -3,11 +3,17 @@ import json
 import pandas as pd
 import SQL
 from flask import Blueprint, json, jsonify, request
+import mysite.tokens as tokens
 
 clan = Blueprint('clan', __name__, template_folder='templates')
 
 @clan.route('/<version>/plugin/clan/rank-update/<token>', methods=['POST'])
 def get_clan_rank(version, token):
+
+    verified = tokens.verify_token(token=token, verifcation='hiscores')
+
+    if not (verified):
+        return jsonify({'Invalid Data':'Data'})
     '''
         receive a dictionary of
         [
