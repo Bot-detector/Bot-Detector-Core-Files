@@ -32,7 +32,7 @@ def get_contributions(version=None, contributor=None):
 
     total_submissions_sql = '''
         SELECT
-                COUNT(*) subs
+            COUNT(*) submissions
         FROM Reports as r
         JOIN Players as pl on pl.id = r.reportingID
         WHERE 1=1
@@ -40,7 +40,7 @@ def get_contributions(version=None, contributor=None):
     '''
 
     total_subs_data = SQL.execute_sql(sql=total_submissions_sql, param={"contributors": contributors})
-    total_subs = int(total_subs_data[0].subs)
+    total_subs = int(total_subs_data[0].submissions)
 
 
     df = pd.DataFrame(contributions)
@@ -117,45 +117,35 @@ def get_contributions_plus(token):
     else:
         return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
-    contrib_sql = '''
-        SELECT
-            rs.detect,
-            rs.reported as reported_ids,
-            pl.confirmed_ban as confirmed_ban,
-            pl.possible_ban as possible_ban,
-            pl.confirmed_player as confirmed_player,
-            phdl.total as total_xp
-        FROM
-            (SELECT
-                r.reportedID as reported,
-                r.manual_detect as detect
-            FROM Reports as r
-            JOIN Players as pl on pl.id = r.reportingID
-            WHERE 1=1
-            AND pl.name IN :contributors
-            ) rs
-        JOIN Players as pl on pl.id = rs.reported
-        JOIN playerHiscoreDataLatest as phdl on phdl.Player_id = pl.id;
-
-    '''
+    contributions = SQL.get_contributions(contributors)
 
     total_submissions_sql = '''
         SELECT
-                COUNT(*) subs
+            COUNT(*) submissions
         FROM Reports as r
         JOIN Players as pl on pl.id = r.reportingID
         WHERE 1=1
         AND pl.name IN :contributors
     '''
 
-    contributions = SQL.execute_sql(sql=contrib_sql, param={"contributors": contributors})
     total_subs_data = SQL.execute_sql(sql=total_submissions_sql, param={"contributors": contributors})
-    total_subs = int(total_subs_data[0].subs)
+    total_subs = int(total_subs_data[0].submissions)
+
 
     df = pd.DataFrame(contributions)
     df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
 
     banned_df = df[df["confirmed_ban"] == 1]
+    banned_ids = banned_df["reported_ids"].tolist()
+
+    total_xp_sql = '''
+        SELECT
+            SUM(total) as total_xp
+        FROM playerHiscoreDataLatest
+        WHERE Player_id IN :banned_ids
+    '''
+
+    total_xp_data = SQL.execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
 
     try:
         df_detect_manual = df.loc[df['detect'] == 1]
@@ -200,7 +190,7 @@ def get_contributions_plus(token):
         "bans": passive_dict['bans'] + manual_dict['bans'],
         "possible_bans": passive_dict['possible_bans'] + manual_dict['possible_bans'],
         "feedback": len(pd.DataFrame(SQL.get_total_feedback_submissions(contributors)).index),
-        "total_xp_removed": float(banned_df["total_xp"].sum())
+        "total_xp_removed": float(total_xp_data[0].total_xp)
     }
 
     return_dict = {
