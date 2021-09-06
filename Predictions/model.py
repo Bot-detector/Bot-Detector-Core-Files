@@ -95,7 +95,7 @@ def train_model(n_pca='mle', use_pca=True):
         'Cooking_bot', 'mort_myre_fungus_bot', 
         'Woodcutting_bot', 'Fishing_Cooking_bot',
         'Agility_Thieving_bot', 'Construction_Magic_bot','Construction_Prayer_bot',
-        'Zalcano_bot'
+        'Zaff_BStaff_Bot', 'Zalcano_bot'
     ]
 
     Config.debug(f'labels: {len(lbls)}, {lbls}')
@@ -327,7 +327,8 @@ def insert_prepared_data(df, columns):
     row = data[0]
     values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
     sql_insert = f'replace into Predictions values ({values});'
-    SQL.execute_sql(sql_insert, param=data, debug=False, has_return=False)
+
+    SQL.execute_sql(sql_insert, param=data, debug=True, has_return=False)
     return length
 
 def insert_into_db(df):
