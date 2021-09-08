@@ -523,7 +523,6 @@ def get_player_banned_bots(player_name):
         '''
         SELECT 
             pl1.name reporter,
-            pl2.name reported,
             lbl.label,
             hdl.*
         FROM Reports rp
