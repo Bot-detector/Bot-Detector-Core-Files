@@ -26,12 +26,13 @@ def get_players_to_scrape(token, start=None, amount=None):
     df = pd.DataFrame(data)
 
     if df.empty:
-        return jsonify({'OK':'No players to scrape currently.'})
+        return jsonify([{}])
 
     df['created_at'] = pd.to_datetime(df['created_at'])
     df['updated_at'] = pd.to_datetime(df['updated_at'])
     df.fillna(0, inplace=True)
     output = df.to_dict('records')
+
     return jsonify(output)
 
 def process_player(player, hiscore):
