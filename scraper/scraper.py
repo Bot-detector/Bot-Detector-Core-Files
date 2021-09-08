@@ -24,6 +24,10 @@ def get_players_to_scrape(token, start=None, amount=None):
     data = SQL.get_players_to_scrape(start, amount)
 
     df = pd.DataFrame(data)
+
+    if df.empty:
+        return jsonify({'OK':'No players to scrape currently.'})
+
     df['created_at'] = pd.to_datetime(df['created_at'])
     df['updated_at'] = pd.to_datetime(df['updated_at'])
     df.fillna(0, inplace=True)
