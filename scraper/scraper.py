@@ -56,7 +56,10 @@ def process_player(player, hiscore):
             minigames=minigames
         )
         # make ml prediction
-        Config.sched.add_job(model.predict_model ,args=[player['name'], 0, 100_000, Config.use_pca, True], replace_existing=False, name='scrape-predict')
+        # bulk predicting, based on hiscores = today and predictions != today should be better
+        # Config.sched.add_job(model.predict_model ,args=[player['name'], 0, 100_000, Config.use_pca, True], replace_existing=False, name='scrape-predict')
+        del skills, minigames
+    del player, hiscore
     return
 
 @app_scraper.route("/scraper/hiscores/<token>", methods=['POST'])
@@ -66,9 +69,8 @@ def post_hiscores_to_db(token):
 
     data = request.get_json()
 
-    print(len(data))
-
-    for i, d in enumerate(data):
+    for d in data:
         Config.sched.add_job(process_player ,args=[d['player'], d['hiscores']], replace_existing=False, name=f'scrape_{d["player"]["name"]}')
-        
+
+    del data
     return jsonify({'OK':'OK'})
