@@ -133,7 +133,6 @@ def insert_player(player_name):
 def update_player(player_id, possible_ban=None, confirmed_ban=None, confirmed_player=None, label_id=None, label_jagex=None, debug=False):
     time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
 
-    Config.debug(f'{player_id=}, {time_now=}')
     param = {
         'updated_at':       time_now,
         'possible_ban':     possible_ban,
