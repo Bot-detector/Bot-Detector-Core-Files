@@ -10,10 +10,13 @@ venv
 venv/
 env/
 env
+
 flask
 flask/
+
 fastapi
 fastapi/
+
 
 exports
 exports/

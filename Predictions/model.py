@@ -95,7 +95,7 @@ def train_model(n_pca='mle', use_pca=True):
         'Cooking_bot', 'mort_myre_fungus_bot', 
         'Woodcutting_bot', 'Fishing_Cooking_bot',
         'Agility_Thieving_bot', 'Construction_Magic_bot','Construction_Prayer_bot',
-        'Zalcano_bot'
+        'Zaff_BStaff_Bot', 'Zalcano_bot'
     ]
 
     Config.debug(f'labels: {len(lbls)}, {lbls}')
@@ -190,7 +190,7 @@ def get_prediction_from_db(player):
         return df_resf
     except Exception as e:
         Config.debug(f'error in get_prediction_from_db: {e}')
-        Config.debug(traceback.print_exc())
+        # Config.debug(traceback.print_exc())
         # prediction is not in the database
         return None
 
@@ -326,8 +326,9 @@ def insert_prepared_data(df, columns):
     # insert many
     row = data[0]
     values = SQL.list_to_string([f':{column}' for column in list(row.keys())])
-    sql_insert = f'insert ignore into Predictions values ({values});'
-    SQL.execute_sql(sql_insert, param=data, debug=False, has_return=False)
+    sql_insert = f'replace into Predictions values ({values});'
+
+    SQL.execute_sql(sql_insert, param=data, debug=True, has_return=False)
     return length
 
 def insert_into_db(df):

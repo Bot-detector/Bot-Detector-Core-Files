@@ -77,7 +77,6 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.WARNING)
 
-
 def debug(str):
     print(str, flush=True)
     logging.debug(str)
