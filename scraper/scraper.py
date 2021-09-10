@@ -26,7 +26,7 @@ def get_players_to_scrape(token, start=None, amount=None):
     df = pd.DataFrame(data)
 
     if df.empty:
-        return jsonify([])
+        return jsonify({})
 
     df['created_at'] = pd.to_datetime(df['created_at'])
     df['updated_at'] = pd.to_datetime(df['updated_at'])
