@@ -9,6 +9,7 @@ from database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter, status
 from pydantic import BaseModel
 
+import routers.hiscore as hi
 from routers.hiscore import hiscore
 from routers.player import player
 
@@ -90,8 +91,8 @@ async def process_player(player, hiscore):
     )
     if hiscore is not None:
         # parse data
-        skills = {d:hiscore[d] for d in hiscore if d in ed.skills.keys()}
-        minigames = {d:hiscore[d] for d in hiscore if d in ed.minigames.keys()}
+        skills = {d:hiscore[d] for d in hiscore if d in hi.skills.__dict__.keys()}
+        minigames = {d:hiscore[d] for d in hiscore if d in hi.minigames.__dict__.keys()}
         # insert into hiscores
         await sql_insert_highscore(
             player_id=player['id'], 
@@ -100,6 +101,8 @@ async def process_player(player, hiscore):
         )
         # make ml prediction
         # Config.sched.add_job(model.predict_model ,args=[player['name'], 0, 100_000, Config.use_pca, True], replace_existing=False, name='scrape-predict')
+        del skills, minigames
+    del player, hiscore
     return
 
 
@@ -116,7 +119,7 @@ async def post_hiscores_to_db(token, data: List[scraper]):
         } for d in data
     ]
 
-    for i, d in enumerate(data):
+    for d in data:
         Config.sched.add_job(process_player ,args=[d['player'], d['hiscore']], replace_existing=False, name=f'scrape_{d["player"]["name"]}')
-        
+    del data
     return {'OK':'OK'}
