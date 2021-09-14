@@ -70,7 +70,7 @@ def post_hiscores_to_db(token):
     data = request.get_json()
 
     for d in data:
-        Config.sched.add_job(process_player ,args=[d['player'], d['hiscores']], replace_existing=False, name=f'scrape_{d["player"]["name"]}')
+        Config.sched.add_job(process_player ,args=[d['player'], d['hiscores']], replace_existing=False, name=f'scrape_{d["player"]["name"]}', misfire_grace_time=None)
 
     del data
     return jsonify({'OK':'OK'})
