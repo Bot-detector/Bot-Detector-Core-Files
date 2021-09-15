@@ -34,6 +34,8 @@ def get_players_to_scrape(token, start=None, amount=None):
     df.fillna(0, inplace=True)
     output = df.to_dict('records')
 
+    #return jsonify([{'id': 122716, 'name': 'Seltzer Bro', 'created_at': '2021-03-17 18:56:15', 'updated_at': '2021-09-15 04:13:51', 'possible_ban': 0, 'confirmed_ban': 0, 'confirmed_player': 1, 'label_id': 1, 'label_jagex': 0}])
+
     return jsonify(output)
 
 def process_player(player, hiscore):
@@ -114,11 +116,24 @@ def build_hiscores_strings(hs: dict) -> dict:
 
 def persist_scrapes(players, player_columns, hiscores, hiscores_columns):
 
-    SQL.update_multiple_players(columns=player_columns, values=players)
-    
     if len(hiscores) > 0:
-        SQL.insert_multiple_highscores(columns=hiscores_columns, values=hiscores)
+        attempts = 0
+        success = False
 
+        while attempts < 3:
+            try:
+                SQL.insert_multiple_highscores(columns=hiscores_columns, values=hiscores)
+                success = True
+                break
+            except:
+                attempts += 1
+                time.sleep(10)
+        
+        if success:
+            SQL.update_multiple_players(columns=player_columns, values=players)
+
+    else:
+        SQL.update_multiple_players(columns=player_columns, values=players)
     return
 
     
