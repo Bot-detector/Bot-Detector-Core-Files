@@ -3,7 +3,7 @@ import Config
 import time
 import random
 import string
-from sqlalchemy import sql, text
+from sqlalchemy import text
 from collections import namedtuple
 
 '''
