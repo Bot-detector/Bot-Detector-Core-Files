@@ -162,6 +162,25 @@ def update_player(player_id, possible_ban=None, confirmed_ban=None, confirmed_pl
     return
 
 
+def update_multiple_players(columns: str, values: list, debug: bool=False):
+    sql_update = (f'''
+        INSERT INTO Players 
+            {columns}
+        VALUES
+            {",".join(values)}
+        ON DUPLICATE KEY UPDATE
+            updated_at=VALUES(updated_at),
+        	possible_ban=VALUES(possible_ban),
+            confirmed_ban=VALUES(confirmed_ban),
+            confirmed_player=VALUES(confirmed_player),
+            label_id=VALUES(label_id),
+            label_jagex=VALUES(label_jagex)
+    ''')
+
+    execute_sql(sql=sql_update, param=None, debug=debug, has_return=False)
+    return
+
+
 '''
     playerHiscoreData Table
 '''
@@ -186,6 +205,16 @@ def insert_highscore(player_id, skills, minigames):
     sql_insert = f"insert ignore into playerHiscoreData ({columns}) values ({values});"
     execute_sql(sql_insert, param=None, debug=False, has_return=False)
     return
+
+
+def insert_multiple_highscores(columns: str, values: list, debug: bool=False):
+    sql_insert = f'''INSERT IGNORE INTO playerHiscoreData 
+                        {columns} 
+                     VALUES 
+                        {','.join(values)}'''
+
+    execute_sql(sql_insert, param=None, debug=debug, has_return=False)
+    return 
 
 
 def user_latest_xp_gain(player_id):
