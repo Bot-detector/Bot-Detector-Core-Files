@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -62,6 +63,65 @@ def process_player(player, hiscore):
     del player, hiscore
     return
 
+
+def process_scrapes(scrape_data):
+    players = []
+    hiscores = []
+
+    players_columns = "(name, updated_at, possible_ban, confirmed_ban, confirmed_player, label_id, id, label_jagex)"
+    hiscores_columns = ""
+
+    for d in scrape_data:
+        player = d['player']
+        players.append(build_player_string(player))
+
+        hiscore = d['hiscores']
+        if hiscore is not None:
+            hiscore['Player_id'] = player['id']
+            hiscore_separated_data = build_hiscores_strings(hiscore)
+
+            hiscores_columns = hiscore_separated_data["columns"]
+            hiscores.append(hiscore_separated_data["values"])
+
+    persist_scrapes(players=players, player_columns=players_columns, hiscores=hiscores, hiscores_columns=hiscores_columns)
+
+    return
+
+
+def build_player_string(p: dict) -> str:
+    time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
+    p['updated_at'] = time_now
+
+    return f"(\"{p['name']}\", \"{p['updated_at']}\", {p['possible_ban']}, {p['confirmed_ban']}, {p['confirmed_player']}, {p['label_id']}, {p['id']}, {p['label_jagex']})"
+
+
+def build_hiscores_strings(hs: dict) -> dict:
+    hs_columns_str = "("
+    hs_values_str = "("
+
+    columns_list = []
+    values_list = []
+
+    for k, v in hs.items():
+        columns_list.append(str(k))
+        values_list.append(str(v)) 
+
+    hs_columns_str += f"{','.join(columns_list)})"
+    hs_values_str += f"{','.join(values_list)})"
+
+    return {"columns": hs_columns_str, "values": hs_values_str}
+
+
+def persist_scrapes(players, player_columns, hiscores, hiscores_columns):
+
+    SQL.update_multiple_players(columns=player_columns, values=players)
+    
+    if len(hiscores) > 0:
+        SQL.insert_multiple_highscores(columns=hiscores_columns, values=hiscores)
+
+    return
+
+    
 @app_scraper.route("/scraper/hiscores/<token>", methods=['POST'])
 def post_hiscores_to_db(token):
     if not (verify_token(token, verifcation='ban')):
@@ -69,8 +129,9 @@ def post_hiscores_to_db(token):
 
     data = request.get_json()
 
-    for d in data:
-        Config.sched.add_job(process_player ,args=[d['player'], d['hiscores']], replace_existing=False, name=f'scrape_{d["player"]["name"]}', misfire_grace_time=None)
+    time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
 
+    Config.sched.add_job(process_scrapes ,args=[data], replace_existing=False, name=f'scrape_{time_now}', misfire_grace_time=None)
+        
     del data
     return jsonify({'OK':'OK'})
