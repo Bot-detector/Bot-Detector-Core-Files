@@ -20,7 +20,7 @@ from sklearn.metrics import classification_report
 from sklearn.calibration import CalibratedClassifierCV
 
 # custom imports
-import SQL, Config, SQL_folder
+import SQL, Config
 from scraper import hiscoreScraper as highscores
 from Predictions import prediction_functions as pf
 from Predictions import extra_data as ed

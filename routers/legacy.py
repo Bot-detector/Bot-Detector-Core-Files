@@ -10,7 +10,6 @@ from database.database import discord_engine
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-
 '''
 This file will have all legacy routes from the Flask api.
 after everything is ported, validated & discussed route desing should be done
@@ -581,3 +580,39 @@ async def verify_discord_user(token:str, discord:discord, version:str=None):
     else:
         raise HTTPException(status_code=400, detail=f"No pending links for this user.")
     return {'ok':'ok'}
+
+def sort_predictions(d):
+    # remove 0's
+    d = {key: value for key, value in d.items() if value > 0}
+    # sort dict decending
+    d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
+    return d
+
+async def sql_get_prediction_player(player_id):
+    sql = 'select * from Predictions where id = :id'
+    param = {'id':player_id}
+    data = await execute_sql(sql, param=param)
+    return data.rows2dict()[0]
+
+@router.get('/{version}/site/prediction/{player_name}/{token}', tags=['legacy'])
+async def get_prediction(player_name, version=None, token=None):
+    player_name, bad_name = await name_check(player_name)
+    if bad_name:
+        raise HTTPException(status_code=400, detail=f"Bad name")
+    
+    player = await sql_get_player(player_name)
+    prediction = dict(await sql_get_prediction_player(player['id']))
+    prediction.pop("created")
+
+    return_dict = {
+        "player_id":                prediction.pop("id"),
+        "player_name":              prediction.pop("name"),
+        "prediction_label":         prediction.pop("prediction"),
+        "prediction_confidence":    prediction.pop("Predicted_confidence"),
+        #"predictions_breakdown":    prediction_dict
+    }
+    if version is None:
+        return_dict['secondary_predictions'] = sort_predictions(prediction)
+    else:
+        return_dict['predictions_breakdown'] = prediction
+    return return_dict
