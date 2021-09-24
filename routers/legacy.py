@@ -58,6 +58,12 @@ class Feedback(BaseModel):
     feedback_text: Optional[str] = None
     proposed_label: Optional[str] = None
 
+class bots(BaseModel):
+    bot: int
+    label: int
+    names: List[str]
+
+
 '''
     sql
 '''
@@ -72,9 +78,7 @@ async def sql_get_player(player_name):
     player = await execute_sql(sql_player_id, param=param, debug=False)
     player = player.rows2dict()
 
-    player_id = None if len(player) == 0 else player[0]
-
-    return player_id
+    return None if len(player) == 0 else player[0]
 
 async def sql_insert_player(player_name):
     sql_insert = "insert ignore into Players (name) values(:player_name);"
@@ -172,6 +176,28 @@ async def sql_get_report_stats():
 async def sql_get_player_labels():
     sql = 'select * from Labels'
     data = await execute_sql(sql, param=None, debug=False)
+    return data.rows2dict()
+
+async def sql_update_player(player: dict):
+    time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
+    param = player
+    param['updated_at'] = time_now
+
+    exclude = ['player_id', 'name']
+    values = [f'{k}=:{k}' for k,v in param.items() if v is not None and k not in exclude]
+    values = list_to_string(values)
+
+    sql = (f'''
+        update Players 
+        set
+            {values}
+        where 
+            id=:player_id;
+    ''')
+    select = "select * from Players where id=:player_id"
+
+    await execute_sql(sql, param)
+    data = await execute_sql(select, param)
     return data.rows2dict()
 '''
     helper functions
@@ -405,8 +431,6 @@ async def print_log(token:str):
     await verify_token(token, verifcation='ban')
     return FileResponse(path='error.log', filename='error.log', media_type='text/log')
 
-
-
 @router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
 async def get_highscores(token:str, ofInterest:int=None, row_count:int=100_000, page:int=1):
     await verify_token(token, verifcation='hiscore')
@@ -452,3 +476,43 @@ async def get_labels(token):
     sql = 'select * from Labels'
     data = await execute_sql(sql)
     return data.rows2dict()
+
+
+
+@router.post('/site/verify/{token}', tags=['legacy'])
+async def verify_bot(token:str, bots:bots):
+    await verify_token(token, verifcation='ban')
+
+    bots = bots.__dict__
+    playerNames = bots['names']
+    bot = bots['bot']
+    label = bots['label']
+
+    if len(playerNames) == 0:
+        raise HTTPException(status_code=40, detail=f"Invalid Parameters")
+
+    data = []
+    for name in playerNames:
+        user = await sql_get_player(name)
+
+        if user == None:
+            continue
+
+        p = dict()
+        p['player_id'] = user.id
+
+        if bot == 0 and label == 1:
+            # Real player
+            p['possible_ban'] = 0
+            p['confirmed_ban'] = 0
+            p['label_id'] = 1
+            p['confirmed_player'] = 1
+        else:
+            # bot
+            p['possible_ban'] = 1
+            p['confirmed_ban'] = 1
+            p['label_id'] = label
+            p['confirmed_player'] = 0
+        data.append(await sql_update_player(p))
+    
+    return data
