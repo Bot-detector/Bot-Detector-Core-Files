@@ -401,14 +401,14 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
     return {"OK": "OK"}
 
 @router.get("/log/{token}", tags=['legacy'])
-async def print_log(token):
+async def print_log(token:str):
     await verify_token(token, verifcation='ban')
     return FileResponse(path='error.log', filename='error.log', media_type='text/log')
 
 
 
 @router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
-async def get_highscores(token, ofInterest=None, row_count=100_000, page=1):
+async def get_highscores(token:str, ofInterest:int=None, row_count:int=100_000, page:int=1):
     await verify_token(token, verifcation='hiscore')
 
     if ofInterest is None:
@@ -433,7 +433,7 @@ async def get_highscores(token, ofInterest=None, row_count=100_000, page=1):
     return data.rows2dict()
 
 @router.get('site/players/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
-async def get_players(token, ofInterest=None, row_count=100_000, page=1):
+async def get_players(token:str, ofInterest:int=None, row_count:int=100_000, page:int=1):
     await verify_token(token, verifcation='hiscore')
 
     # get data
