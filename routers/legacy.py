@@ -6,6 +6,7 @@ import Config
 import pandas as pd
 import SQL
 from database.functions import execute_sql, list_to_string, verify_token
+from database.database import discord_engine
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -63,6 +64,9 @@ class bots(BaseModel):
     label: int
     names: List[str]
 
+class discord(BaseModel):
+    player_name: str
+    code: str
 
 '''
     sql
@@ -489,7 +493,7 @@ async def verify_bot(token:str, bots:bots):
     label = bots['label']
 
     if len(playerNames) == 0:
-        raise HTTPException(status_code=40, detail=f"Invalid Parameters")
+        raise HTTPException(status_code=405, detail=f"Invalid Parameters")
 
     data = []
     for name in playerNames:
@@ -514,5 +518,66 @@ async def verify_bot(token:str, bots:bots):
             p['label_id'] = label
             p['confirmed_player'] = 0
         data.append(await sql_update_player(p))
-    
     return data
+    
+async def sql_get_unverified_discord_user(player_id):
+    sql = ('''
+        SELECT * from discordVerification 
+        WHERE 1=1
+            and Player_id = :player_id 
+            and Verified_status = 0
+        ''')
+
+    param = {
+        "player_id": player_id
+    }
+    data = await execute_sql(sql, param,engine=discord_engine)
+    return data.rows2tuple()
+
+async def sql_get_token(token):
+    sql = 'select * from Tokens where token=:token'
+    param = {
+        'token': token
+    }
+    data = await execute_sql(sql, param=param)
+    return data.rows2tuple()[0]
+
+async def set_discord_verification(id, token):
+    sql = ('''
+        UPDATE discordVerification
+        SET
+            Verified_status = 1,
+            token_used = :token
+        where 1=1
+            and Entry = :id
+    ''')
+
+    param = {
+        "id": id,
+        "token" : token
+    }
+    await execute_sql(sql, param, engine=discord_engine)
+    return 
+
+@router.post('/{version}/site/discord_user/{token}', tags=['legacy'])
+async def verify_discord_user(token:str, discord:discord, version:str=None):
+    await verify_token(token, verifcation='verify_players') 
+    
+    verify_data = discord.dict()
+    player = await sql_get_player(verify_data["player_name"])
+
+    if player == None:
+        raise HTTPException(status_code=400, detail=f"Could not find player")
+
+    pending_discord = await sql_get_unverified_discord_user(player['id'])
+
+    token_id = await sql_get_token(token).id
+
+    if pending_discord:
+        for record in pending_discord:
+            if str(record.Code) == str(verify_data["code"]):
+                await set_discord_verification(id=record.Entry, token=token_id)
+                break
+    else:
+        raise HTTPException(status_code=400, detail=f"No pending links for this user.")
+    return {'ok':'ok'}

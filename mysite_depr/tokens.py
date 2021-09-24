@@ -84,11 +84,12 @@ def get_highscores(token, ofInterest=None):
 
     return jsonify(json.loads(myjson))
 
-'''
-    is this used? -- extreme4all
-'''
+
 @app_token.route('/site/verify/<token>', methods=['POST', 'OPTIONS'])
 def verify_bot(token):
+    '''
+        ported by extreme4all 2021-09-24
+    '''
 
     #Preflight
     if request.method == 'OPTIONS':
@@ -182,6 +183,9 @@ def hiscorescraper(token):
     These routes are accessible if you have a token
 '''
 
+'''
+    not in use
+'''
 @app_token.route('/site/player/<token>/<player_name>', methods=['GET', 'POST'])
 def get_player_route(token, player_name):
     # verify token
@@ -246,6 +250,9 @@ def get_labels(token):
 @app_token.route('/site/discord_user/<token>', methods=['POST', 'OPTIONS'])
 @app_token.route('/<version>/site/discord_user/<token>', methods=['POST', 'OPTIONS'])
 def verify_discord_user(token, version=None):
+    '''
+        ported by extreme4all on 2021-09-24
+    '''
     #Preflight
     if request.method == 'OPTIONS':
         response = make_response()
