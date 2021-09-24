@@ -406,9 +406,9 @@ async def print_log(token):
     return FileResponse(path='error.log', filename='error.log', media_type='text/log')
 
 
-@router.get('/site/highscores/<{token}>', tags=['legacy'])
-@router.get('/site/highscores/<{token}>/<{ofInterest}>', tags=['legacy'])
-async def get_highscores(token, ofInterest=None):
+
+@router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
+async def get_highscores(token, ofInterest=None, row_count=100_000, page=1):
     await verify_token(token, verifcation='hiscore')
 
     if ofInterest is None:
@@ -429,5 +429,26 @@ async def get_highscores(token, ofInterest=None):
         '''
         )
 
+    data = await execute_sql(sql, row_count=row_count, page=page)
+    return data.rows2dict()
+
+@router.get('site/players/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
+async def get_players(token, ofInterest=None, row_count=100_000, page=1):
+    await verify_token(token, verifcation='hiscore')
+
+    # get data
+    if ofInterest is None:
+        sql = 'select * from Players'
+    else:
+        sql = 'select * from playersOfInterest'
+
+    data = await execute_sql(sql, row_count=row_count, page=page)
+    return data.rows2dict()
+
+@router.get('/site/labels/{tokens}', tags=['legacy'])
+async def get_labels(token):
+    await verify_token(token, verifcation='hiscore')
+
+    sql = 'select * from Labels'
     data = await execute_sql(sql)
     return data.rows2dict()

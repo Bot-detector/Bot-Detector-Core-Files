@@ -65,6 +65,9 @@ def print_log(token):
 @app_token.route('/site/highscores/<token>', methods=['POST', 'GET'])
 @app_token.route('/site/highscores/<token>/<ofInterest>', methods=['POST', 'GET'])
 def get_highscores(token, ofInterest=None):
+    '''
+        ported by extreme4all
+    '''
 
     if not (verify_token(token, verifcation='hiscore')):
         return "<h1>404</h1><p>Invalid token</p>", 404
@@ -81,7 +84,9 @@ def get_highscores(token, ofInterest=None):
 
     return jsonify(json.loads(myjson))
 
-
+'''
+    is this used? -- extreme4all
+'''
 @app_token.route('/site/verify/<token>', methods=['POST', 'OPTIONS'])
 def verify_bot(token):
 
@@ -121,7 +126,9 @@ def verify_bot(token):
 
     return 'OK'
 
-
+'''
+    this is not used -- extreme4all
+'''
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>')
 @app_token.route('/site/token/<token>/<player_name>/<hiscore>/<ban>')
 def create_user_token(token, player_name, hiscore=0, ban=0):
@@ -139,6 +146,9 @@ def create_user_token(token, player_name, hiscore=0, ban=0):
 '''
     These routes schedule jos
 '''
+'''
+    depricated
+'''
 @app_token.route("/site/possible_ban/<token>")
 def possible_ban(token):
     if not (verify_token(token, verifcation='create_token')):
@@ -147,6 +157,9 @@ def possible_ban(token):
     Config.sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
     return jsonify({'OK': 'OK'})
 
+'''
+    depricated
+'''
 @app_token.route('/site/save_model/<token>')
 def create_predictions(token):
     if not (verify_token(token, verifcation='create_token')):
@@ -155,6 +168,9 @@ def create_predictions(token):
     Config.sched.add_job(model.save_model ,args=[Config.n_pca, Config.use_pca], replace_existing=True, name='save_model')
     return jsonify({'OK': 'OK'})
 
+'''
+    depricated
+'''
 @app_token.route("/site/hiscorescraper/<token>")
 def hiscorescraper(token):
     if not (verify_token(token, verifcation='create_token')):
@@ -188,6 +204,9 @@ def get_player_route(token, player_name):
 @app_token.route('/site/players/<token>', methods=['GET', 'POST'])
 @app_token.route('/site/players/<token>/<ofInterest>', methods=['GET', 'POST'])
 def get_players(token, ofInterest=None):
+    '''
+        ported by extreme4al 2021-09-24
+    '''
     # verify token
     if not (verify_token(token, verifcation=None)):
         return "<h1>404</h1><p>Invalid token</p>", 404
@@ -207,6 +226,9 @@ def get_players(token, ofInterest=None):
 
 @app_token.route('/site/labels/<token>', methods=['GET', 'POST'])
 def get_labels(token):
+    '''
+        ported by extreme4all 2021-09-24
+    '''
     # verify token
     if not (verify_token(token, verifcation=None)):
         return "<h1>404</h1><p>Invalid token</p>", 404
