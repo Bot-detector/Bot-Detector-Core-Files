@@ -27,3 +27,7 @@ Predictions/models/*
 
 vcs.xml
 
+flask
+flask/
+fastapi
+fastapi/
