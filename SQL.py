@@ -699,11 +699,12 @@ def get_report_data_heatmap(region_id):
 
     sql = ('''
         SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban
-            FROM Reports rpts
-            INNER JOIN Players plys ON rpts.reportedID = plys.id 
-                WHERE confirmed_ban = 1
-                AND region_id = :region_id
+            FROM Players pls
+            JOIN Reports rpts ON rpts.reportedID = pls.id
+                WHERE pls.confirmed_ban = 1
+                AND rpts.region_id = :region_id
         ORDER BY pls.id DESC LIMIT 100000
+                
     ''')
 
     param = {
