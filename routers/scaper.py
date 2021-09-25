@@ -76,7 +76,7 @@ async def sql_insert_highscore(player_id, skills, minigames):
 
     # f string is not so secure but we control the skills & minigames dict
     sql_insert = f"insert ignore into playerHiscoreData ({columns}) values ({values});"
-    await execute_sql(sql_insert, param=None)
+    await execute_sql(sql_insert, param={})
     return
 
 async def process_player(player, hiscore):

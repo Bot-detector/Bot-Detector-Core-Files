@@ -387,18 +387,17 @@ async def get_total_tracked_players():
 async def get_total_reports():
     report_stats = await sql_get_report_stats()
 
-    print(report_stats)
+    report_stats = report_stats[0]
 
-    '''
     output = {
-        "bans": int(report_stats[0]),
-        "false_reports": int(report_stats[1]),
-        "total_reports": int(report_stats[2]),
-        "accuracy": float(report_stats[3])
+        "bans": report_stats["bans"],
+        "false_reports": report_stats["false_reports"],
+        "total_reports": report_stats["total_reports"],
+        "accuracy": report_stats["accuracy"]
     }
-    '''
 
-    return "OK"
+    return output
+
 
 @router.get('/labels/get_player_labels', tags=['legacy'])
 async def get_player_labels():

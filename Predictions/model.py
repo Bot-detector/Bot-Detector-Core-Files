@@ -363,10 +363,10 @@ def save_model(n_pca='mle', use_pca=True):
             indexname = 'ALTER TABLE playerdata.Predictions ADD UNIQUE name (name);'
             fk = 'ALTER TABLE `Predictions` ADD CONSTRAINT `FK_pred_player_id` FOREIGN KEY (`id`) REFERENCES `Players`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;'
 
-            SQL.execute_sql(droptable,      param=None, debug=False, has_return=False)
-            SQL.execute_sql(createtable,    param=None, debug=False, has_return=False)
-            SQL.execute_sql(indexname,      param=None, debug=False, has_return=False)
-            SQL.execute_sql(fk,             param=None, debug=False, has_return=False)
+            SQL.execute_sql(droptable,      param={}, debug=False, has_return=False)
+            SQL.execute_sql(createtable,    param={}, debug=False, has_return=False)
+            SQL.execute_sql(indexname,      param={}, debug=False, has_return=False)
+            SQL.execute_sql(fk,             param={}, debug=False, has_return=False)
 
         length = insert_prepared_data(df, columns)
 

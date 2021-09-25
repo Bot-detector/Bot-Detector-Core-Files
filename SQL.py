@@ -37,7 +37,7 @@ def get_random_string(length):
     return result_str
 
 
-def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerdata"):
+def execute_sql(sql, param={}, debug=False, has_return=True, db_name="playerdata"):
     engine = Config.db_engines[db_name]
     engine.dispose()
     conn = engine.connect()
@@ -108,13 +108,13 @@ def get_player(player_name):
 
 def get_number_confirmed_bans():
     sql = 'SELECT COUNT(*) bans FROM Players WHERE confirmed_ban = 1;'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data[0].bans
 
 
 def get_number_tracked_players():
     sql = 'SELECT COUNT(*) count FROM Players;'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
 
@@ -181,7 +181,7 @@ def insert_highscore(player_id, skills, minigames):
 
     # f string is not so secure but we control the skills & minigames dict
     sql_insert = f"insert ignore into playerHiscoreData ({columns}) values ({values});"
-    execute_sql(sql_insert, param=None, debug=False, has_return=False)
+    execute_sql(sql_insert, param={}, debug=False, has_return=False)
 
 
 '''
@@ -283,7 +283,7 @@ def get_unverified_discord_user(player_id):
 def get_all_verified_ids():
     sql = 'SELECT DISTINCT Discord_id FROM verified_players;'
 
-    return execute_sql(sql, param=None, debug=False, has_return=True, db_name="discord")
+    return execute_sql(sql, param={}, debug=False, has_return=True, db_name="discord")
 
 
 def set_discord_verification(id, token):
@@ -335,7 +335,7 @@ def create_token(player_name, highscores, verify_ban):
 
 def get_player_labels():
     sql = 'select * from Labels;'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
 
@@ -345,7 +345,7 @@ def get_player_labels():
 
 def get_count_players_to_scrape():
     sql = "SELECT COUNT(*) FROM playerdata.playersToScrape;"
-    return execute_sql(sql, param=None, debug=False, has_return=True)
+    return execute_sql(sql, param={}, debug=False, has_return=True)
 
 
 def get_highscores_data(start=0, amount=1_000_000, name=None):
@@ -394,7 +394,7 @@ def get_highscores_data_oneplayer(player_id):
 
 def get_hiscores_of_interst():
     sql ='SELECT htl.*, poi.name FROM playerHiscoreDataLatest htl INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id);'
-    highscores = execute_sql(sql=sql, param=None,
+    highscores = execute_sql(sql=sql, param={},
                              debug=False, has_return=True)
     return highscores
 
@@ -404,20 +404,20 @@ def get_players_to_scrape(start=None, amount=None):
     if not (start is None and amount is None):
         sql = f'{sql} limit {start},{amount}'
     sql = f'{sql};'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
 
 def get_max_players_to_scrape():   
     sql = 'select COUNT(*) as max_players from playersToScrape;'
-    data = execute_sql(sql, param=None, debug=True, has_return=True)
+    data = execute_sql(sql, param={}, debug=True, has_return=True)
     return data
 
 def get_players_of_interest():
 
     sql = 'select * from playersOfInterest;'
 
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
 
@@ -443,7 +443,7 @@ def get_report_stats():
                 confirmed_ban
             ) a;
     '''
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
 # TODO: please clean, add count in query
@@ -538,7 +538,7 @@ def get_player_table_stats():
             Date(updated_at) DESC
         ;
     '''
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
 # TODO: route & visual on website
@@ -556,7 +556,7 @@ def get_hiscore_table_stats():
             Date(timestamp) DESC
         ;
     '''
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
 
@@ -566,7 +566,7 @@ def get_region_report_stats():
         SELECT * FROM `reportedRegion` ORDER BY `reportedRegion`.`region_id` ASC;
     '''
 
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
 def get_player_report_locations(players):
@@ -615,7 +615,7 @@ def get_all_regions():
 
     sql = "SELECT * FROM regionIDNames;"
 
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
   
@@ -661,13 +661,13 @@ def get_leaderboard_stats(bans=False, manual=False, limit=25):
     if manual:
         sql += " AND rp.manual_detect = 1"
 
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
     
   
 def get_possible_ban_predicted():
     sql = 'SELECT * FROM playerPossibleBanPrediction WHERE confirmed_ban = 0'
-    data = execute_sql(sql, param=None, debug=False, has_return=True)
+    data = execute_sql(sql, param={}, debug=False, has_return=True)
     return data
 
 
