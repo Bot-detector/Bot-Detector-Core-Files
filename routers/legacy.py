@@ -153,7 +153,7 @@ async def sql_get_contributions(contributors: List):
 
 async def sql_get_number_tracked_players():
     sql = 'SELECT COUNT(*) count FROM Players'
-    data = await execute_sql(sql, param=None, debug=False)
+    data = await execute_sql(sql, param={}, debug=False)
     return data.rows2dict()
 
 async def sql_get_report_stats():
@@ -173,12 +173,12 @@ async def sql_get_report_stats():
                 confirmed_ban
             ) a
     '''
-    data = await execute_sql(sql, param=None, debug=False)
+    data = await execute_sql(sql, param={}, debug=False, )
     return data.rows2dict()
 
 async def sql_get_player_labels():
     sql = 'select * from Labels'
-    data = await execute_sql(sql, param=None, debug=False)
+    data = await execute_sql(sql, param={}, debug=False)
     return data.rows2dict()
 
 async def sql_update_player(player: dict):
@@ -385,16 +385,20 @@ async def get_total_tracked_players():
 
 @router.get('/site/dashboard/getreportsstats', tags=['legacy'])
 async def get_total_reports():
-    report_stats = await sql_get_report_stats()[0]
+    report_stats = await sql_get_report_stats()
 
+    print(report_stats)
+
+    '''
     output = {
         "bans": int(report_stats[0]),
         "false_reports": int(report_stats[1]),
         "total_reports": int(report_stats[2]),
         "accuracy": float(report_stats[3])
     }
+    '''
 
-    return output
+    return "OK"
 
 @router.get('/labels/get_player_labels', tags=['legacy'])
 async def get_player_labels():
