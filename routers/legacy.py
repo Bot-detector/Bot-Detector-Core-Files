@@ -383,7 +383,7 @@ async def get_total_tracked_players():
     num_of_players = await sql_get_number_tracked_players()
     return {"players": num_of_players[0]}
 
-@router.get('site/dashboard/getreportsstats', tags=['legacy'])
+@router.get('/site/dashboard/getreportsstats', tags=['legacy'])
 async def get_total_reports():
     report_stats = await sql_get_report_stats()[0]
 
