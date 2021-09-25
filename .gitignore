@@ -10,6 +10,14 @@ venv
 venv/
 env/
 env
+fastapi/
+flask
+flask/
+flask
+flask/
+fastapi
+fastapi/
+
 
 exports
 exports/
