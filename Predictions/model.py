@@ -340,7 +340,7 @@ def save_model(n_pca='mle', use_pca=True):
     Config.debug(os.listdir())
     Config.debug(f'Save Model config: n_pca {n_pca}, use_pca {use_pca}')
     # chunking data
-    limit = 5_000
+    limit = 50_000
     end = False
     first_run = True
     loop = 0
