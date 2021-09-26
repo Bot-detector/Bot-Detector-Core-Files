@@ -393,22 +393,18 @@ async def parse_detection(data:dict) ->dict:
 
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
-
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
     # remove duplicates
     df = pd.DataFrame([d.dict() for d in detections])
     df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
 
+    # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         logging.debug('to many reports')
         return {'NOK': 'NOK'}, 400
 
-    #detections = df.to_dict('records')
-
-    # logging.debug(f'      Received detections: DF shape: {df.shape}')
-    #Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect', misfire_grace_time=None)
-    #await insync_detect(detections=detections, manual_detect=manual_detect)
+    logging.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
     # 1) Get a list of unqiue reported names and reporter name 
     names = list(df['reported'].unique())
