@@ -355,7 +355,7 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
     detections = df.to_dict('records')
 
     logging.debug(f'      Received detections: DF shape: {df.shape}')
-    Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
+    Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect', misfire_grace_time=None)
     return {'OK': 'OK'}
 
 @router.post('/stats/contributions/', tags=['legacy'])
