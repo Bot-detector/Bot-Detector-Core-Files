@@ -2,6 +2,8 @@ import logging
 import time
 from typing import List, Optional
 
+from numpy import datetime64
+
 import Config
 import pandas as pd
 import SQL
@@ -24,30 +26,29 @@ class contributor(BaseModel):
     name: str
 
 class equipment(BaseModel):
-    equip_head_id: int
-    equip_amulet_id: int
-    equip_torso_id: int
-    equip_legs_id: int
-    equip_boots_id: int
-    equip_cape_id: int
-    equip_hands_id: int
-    equip_weapon_id: int
-    equip_shield_id: int
+    equip_head_id: Optional[int]
+    equip_amulet_id: Optional[int]
+    equip_torso_id: Optional[int]
+    equip_legs_id: Optional[int]
+    equip_boots_id: Optional[int]
+    equip_cape_id: Optional[int]
+    equip_hands_id: Optional[int]
+    equip_weapon_id: Optional[int]
+    equip_shield_id: Optional[int]
 
 class detection(BaseModel):
     reporter: str
     reported: str
     region_id: int
-    x_coord: int
-    y_coord: int
-    z_coord: int
+    x: int
+    y: int
+    z: int
     ts: int
-    manual_detect: int
     on_members_world: int
     on_pvp_world: int
     world_number: int
-    equipment: equipment
-    equip_ge_value: int
+    equipment: Optional[equipment]
+    equip_ge_value: Optional[int]
 
 class Feedback(BaseModel):
     player_name: str
@@ -339,6 +340,8 @@ async def parse_contributors(contributors, version=None):
 '''
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
+
+    logging.debug(detections)
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
     # remove duplicates
@@ -352,7 +355,7 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
     detections = df.to_dict('records')
 
     logging.debug(f'      Received detections: DF shape: {df.shape}')
-    # Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
+    Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect')
     return {'OK': 'OK'}
 
 @router.post('/stats/contributions/', tags=['legacy'])
@@ -597,8 +600,8 @@ async def sql_get_prediction_player(player_id):
     data = await execute_sql(sql, param=param)
     return data.rows2dict()[0]
 
-@router.get('/{version}/site/prediction/{player_name}', tags=['legacy'])
-async def get_prediction(player_name, version=None):
+@router.get('/{version}/site/prediction/{player_name}/{token}', tags=['legacy'])
+async def get_prediction(player_name, version=None, token=None):
     player_name, bad_name = await name_check(player_name)
     if bad_name:
         raise HTTPException(status_code=400, detail=f"Bad name")
@@ -611,12 +614,9 @@ async def get_prediction(player_name, version=None):
         "player_id":                prediction.pop("id"),
         "player_name":              prediction.pop("name"),
         "prediction_label":         prediction.pop("prediction"),
-        "prediction_confidence":    prediction.pop("Predicted_confidence")/100,
+        "prediction_confidence":    prediction.pop("Predicted_confidence"),
         #"predictions_breakdown":    prediction_dict
     }
-
-    prediction = {p:float(prediction[p]/100) for p in prediction}
-
     if version is None:
         return_dict['secondary_predictions'] = sort_predictions(prediction)
     else:
