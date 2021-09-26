@@ -1,6 +1,7 @@
 import logging
 import time
-from typing import List, Optional
+import re
+from typing import List, Match, Optional
 
 from numpy import datetime64
 
@@ -224,6 +225,16 @@ async def name_check(name):
 
     return name, bad_name
 
+
+async def is_valid_rsn(rsn):
+    return re.fullmatch('[\w\d\s_-]{1,12}', rsn)
+
+
+async def to_jagex_name(name: str) -> str:
+    return name
+    #TODO Normalization on DB
+    
+
 async def custom_hiscore(detection):
     # input validation
     bad_name = False
@@ -348,32 +359,59 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
     # remove duplicates
-    df = pd.DataFrame([d.__dict__ for d in detections])
+    df = pd.DataFrame([d.dict() for d in detections])
     df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
 
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         logging.debug('to many reports')
         return {'NOK': 'NOK'}, 400
 
-    detections = df.to_dict('records')
+    #detections = df.to_dict('records')
 
-    logging.debug(f'      Received detections: DF shape: {df.shape}')
-    Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect', misfire_grace_time=None)
+    # logging.debug(f'      Received detections: DF shape: {df.shape}')
+    #Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect', misfire_grace_time=None)
     #await insync_detect(detections=detections, manual_detect=manual_detect)
 
+    # 1) Get a list of unqiue reported names and reporter name 
+    names = list(df['reported'].unique())
+    names.extend(df['reporter'].unique())
+
+    # 1.1) Normalize and validate all names
+    clean_names = [await to_jagex_name(name) for name in names if await is_valid_rsn(name)]
+
+    # 2) Get IDs for all unique names
+    async def sql_select_players(names):
+        sql = "SELECT * FROM Players WHERE name in :names"
+        param = {"names": names}
+        data = await execute_sql(sql, param)
+        return data.rows2dict()
+
+    data = await sql_select_players(clean_names)
+
+    # 3) Create entries for players that do not yet exist in Players table
+    existing_names = [d["name"] for d in data]
+    new_names = set(clean_names).difference(existing_names)
+    
+
+    # 3.1) Get those players' IDs from step 3
+    if new_names:
+        sql = "insert ignore into Players (name) values(:name)"
+        param = [{"name": name} for name in new_names]
+        await execute_sql(sql, param)
+
+        data.append(await sql_select_players(new_names))
+
+    # 4) Insert detections into Reports table with user ids 
+
+    df_names = pd.DataFrame(data)
+    df = df.merge(df_names, left_on="reported", right_on="name")
+    df["reporter_id"] = df_names.query()
+
+    sql = '''
+            INSERT IGNORE INTO Reports
+    
     '''
-        1) Get a list of unqiue reported names and reporter name 
-
-        1.1) Normalize and validate all names
-
-        2) Get IDs for all unique names
-
-        3) Create entries for players that do not yet exist in Players table
-
-        3.1) Get those players' IDs from step 3
-
-        4) Insert detections into Reports table with user ids 
-    '''
+    
 
     return {'OK': 'OK'}
 
