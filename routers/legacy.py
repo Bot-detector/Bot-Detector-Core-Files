@@ -99,6 +99,8 @@ async def sql_insert_report(data):
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
+    equipment = data.get('equipment').dict()
+
     param = {
         'reportedID': data.get('reported'),
         'reportingID': data.get('reporter'),
@@ -111,15 +113,15 @@ async def sql_insert_report(data):
         'on_members_world': data.get('on_members_world'),
         'on_pvp_world': data.get('on_pvp_world'),
         'world_number': data.get('world_number'),
-        'equip_head_id': data.get('equipment').get('HEAD'),
-        'equip_amulet_id': data.get('equipment').get('AMULET'),
-        'equip_torso_id': data.get('equipment').get('TORSO'),
-        'equip_legs_id': data.get('equipment').get('LEGS'),
-        'equip_boots_id': data.get('equipment').get('BOOTS'),
-        'equip_cape_id': data.get('equipment').get('CAPE'),
-        'equip_hands_id': data.get('equipment').get('HANDS'),
-        'equip_weapon_id': data.get('equipment').get('WEAPON'),
-        'equip_shield_id': data.get('equipment').get('SHIELD'),
+        'equip_head_id': equipment.get('HEAD'),
+        'equip_amulet_id': equipment.get('AMULET'),
+        'equip_torso_id': equipment.get('TORSO'),
+        'equip_legs_id': equipment.get('LEGS'),
+        'equip_boots_id': equipment.get('BOOTS'),
+        'equip_cape_id': equipment.get('CAPE'),
+        'equip_hands_id': equipment.get('HANDS'),
+        'equip_weapon_id': equipment.get('WEAPON'),
+        'equip_shield_id': equipment.get('SHIELD'),
         'equip_ge_value': data.get('equipment_ge')
     }
 
@@ -128,6 +130,7 @@ async def sql_insert_report(data):
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
     sql = f'insert ignore into Reports ({columns}) values ({values});'
+
     await execute_sql(sql, param=param, debug=False)
     return
 
@@ -224,8 +227,8 @@ async def name_check(name):
 async def custom_hiscore(detection):
     # input validation
     bad_name = False
-    detection['reporter'], bad_name = name_check(detection['reporter'])
-    detection['reported'], bad_name = name_check(detection['reported'])
+    detection['reporter'], bad_name = await name_check(detection['reporter'])
+    detection['reported'], bad_name = await name_check(detection['reported'])
 
     if bad_name:
         Config.debug(
@@ -261,6 +264,7 @@ async def custom_hiscore(detection):
     return create
 
 async def insync_detect(detections, manual_detect):
+    logging.debug("insync detect test")
     total_creates = 0
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
@@ -341,7 +345,6 @@ async def parse_contributors(contributors, version=None):
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
 
-    logging.debug(detections)
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
     # remove duplicates
@@ -356,6 +359,22 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
 
     logging.debug(f'      Received detections: DF shape: {df.shape}')
     Config.sched.add_job(insync_detect, args=[detections, manual_detect], replace_existing=False, name='detect', misfire_grace_time=None)
+    #await insync_detect(detections=detections, manual_detect=manual_detect)
+
+    '''
+        1) Get a list of unqiue reported names and reporter name 
+
+        1.1) Normalize and validate all names
+
+        2) Get IDs for all unique names
+
+        3) Create entries for players that do not yet exist in Players table
+
+        3.1) Get those players' IDs from step 3
+
+        4) Insert detections into Reports table with user ids 
+    '''
+
     return {'OK': 'OK'}
 
 @router.post('/stats/contributions/', tags=['legacy'])

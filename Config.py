@@ -25,6 +25,8 @@ logger = logging.getLogger()
 file_handler = logging.FileHandler(filename="error.log", mode='a')
 stream_handler = logging.StreamHandler(sys.stdout)
 
+logging.basicConfig(filename='error.log', level=logging.DEBUG)
+
 # log formatting
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
@@ -51,5 +53,5 @@ executors = {
 }
 
 # scheduler
-if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-    sched = BackgroundScheduler(daemon=False, executors=executors)
+#if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+sched = BackgroundScheduler(daemon=False, executors=executors)
