@@ -353,6 +353,44 @@ async def parse_contributors(contributors, version=None):
 '''
     routes
 '''
+
+async def sql_select_players(names):
+    sql = "SELECT * FROM Players WHERE name in :names"
+    param = {"names": names}
+    data = await execute_sql(sql, param)
+    return data.rows2dict()
+
+async def parse_detection(data:dict) ->dict:
+    gmt = time.gmtime(data['ts'])
+    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+
+    equipment = data.get('equipment')
+
+    param = {
+        'reportedID': data.get('id'),
+        'reportingID': data.get('reporter_id'),
+        'region_id': data.get('region_id'),
+        'x_coord': data.get('x'),
+        'y_coord': data.get('y'),
+        'z_coord': data.get('z'),
+        'timestamp': human_time,
+        'manual_detect': data.get('manual_detect'),
+        'on_members_world': data.get('on_members_world'),
+        'on_pvp_world': data.get('on_pvp_world'),
+        'world_number': data.get('world_number'),
+        'equip_head_id': equipment.get('HEAD'),
+        'equip_amulet_id': equipment.get('AMULET'),
+        'equip_torso_id': equipment.get('TORSO'),
+        'equip_legs_id': equipment.get('LEGS'),
+        'equip_boots_id': equipment.get('BOOTS'),
+        'equip_cape_id': equipment.get('CAPE'),
+        'equip_hands_id': equipment.get('HANDS'),
+        'equip_weapon_id': equipment.get('WEAPON'),
+        'equip_shield_id': equipment.get('SHIELD'),
+        'equip_ge_value': data.get('equipment_ge')
+    }
+    return param
+
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
 
@@ -380,19 +418,12 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
     clean_names = [await to_jagex_name(name) for name in names if await is_valid_rsn(name)]
 
     # 2) Get IDs for all unique names
-    async def sql_select_players(names):
-        sql = "SELECT * FROM Players WHERE name in :names"
-        param = {"names": names}
-        data = await execute_sql(sql, param)
-        return data.rows2dict()
-
     data = await sql_select_players(clean_names)
 
     # 3) Create entries for players that do not yet exist in Players table
     existing_names = [d["name"] for d in data]
     new_names = set(clean_names).difference(existing_names)
     
-
     # 3.1) Get those players' IDs from step 3
     if new_names:
         sql = "insert ignore into Players (name) values(:name)"
@@ -402,17 +433,23 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
         data.append(await sql_select_players(new_names))
 
     # 4) Insert detections into Reports table with user ids 
-
+    # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
     df = df.merge(df_names, left_on="reported", right_on="name")
-    df["reporter_id"] = df_names.query()
-
-    sql = '''
-            INSERT IGNORE INTO Reports
     
-    '''
-    
+    df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
+    # 4.2) parse data to param
+    data = df.to_dict('records')
+    param = [await parse_detection(d) for d in data]
 
+    # 4.3) parse query
+    params = list(param[0].keys())
+    columns = list_to_string(params)
+    values = list_to_string([f':{column}' for column in params])
+
+    sql = f'insert ignore into Reports ({columns}) values ({values})'
+    await execute_sql(sql, param)
+    
     return {'OK': 'OK'}
 
 @router.post('/stats/contributions/', tags=['legacy'])
