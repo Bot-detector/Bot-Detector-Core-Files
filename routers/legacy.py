@@ -611,9 +611,12 @@ async def get_prediction(player_name, version=None):
         "player_id":                prediction.pop("id"),
         "player_name":              prediction.pop("name"),
         "prediction_label":         prediction.pop("prediction"),
-        "prediction_confidence":    prediction.pop("Predicted_confidence"),
+        "prediction_confidence":    prediction.pop("Predicted_confidence")/100,
         #"predictions_breakdown":    prediction_dict
     }
+
+    prediction = {p:float(prediction[p]/100) for p in prediction}
+
     if version is None:
         return_dict['secondary_predictions'] = sort_predictions(prediction)
     else:
