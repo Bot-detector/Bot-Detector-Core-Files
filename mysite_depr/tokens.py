@@ -120,10 +120,10 @@ def verify_bot(token):
         if player:
             if bot == 0:
                 SQL.update_player(player.id, possible_ban=0,
-                          confirmed_ban=0, label_id=1, confirmed_player=1)
+                          confirmed_ban=0, label_id=label, confirmed_player=1)
             else:
-                SQL.update_player(player.id, possible_ban=1,
-                          confirmed_ban=1, label_id=label, confirmed_player=0)
+                SQL.update_player(player.id, possible_ban=0,
+                          confirmed_ban=0, label_id=label, confirmed_player=0)
 
     return 'OK'
 
