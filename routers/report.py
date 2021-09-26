@@ -1,6 +1,6 @@
 from typing import List
 
-from database.functions import execute_sql, list_to_string
+from database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -36,18 +36,20 @@ class detection(BaseModel):
 
 
 @router.get("v1/report", tags=["report"])
-async def get():
+async def get(token: str):
     '''
     select data from database
     '''
+    await verify_token(token, verifcation='hiscore')
     pass
 
 
 @router.put("v1/report", tags=["report"])
-async def put(old_user_id: int, new_user_id: int):
+async def put(old_user_id: int, new_user_id: int, token: str):
     '''
     update data into database
     '''
+    await verify_token(token, verifcation='ban')
     # can be used for name change
     sql = ('''
     UPDATE Reports

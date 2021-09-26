@@ -1,6 +1,6 @@
 from typing import Optional
 
-from database.functions import execute_sql, list_to_string
+from database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter, status
 from pydantic import BaseModel
 
@@ -18,18 +18,20 @@ class Feedback(BaseModel):
 router = APIRouter()
 
 @router.get("/v1/feedback/", tags=["feedback"])
-async def get():
+async def get(token:str):
     '''
     select data from database
     '''
+    await verify_token(token, verifcation='hiscore')
     pass
 
 
 @router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["feedback"])
-async def post(feedback: Feedback):
+async def post(feedback: Feedback, token:str):
     '''
     insert data into database
     '''
+    await verify_token(token, verifcation='hiscore')
     feedback_params = feedback.dict()
 
     voter_data = await execute_sql(sql=f"select * from Players where name = :player_name", param={"player_name": feedback_params.pop("player_name")})

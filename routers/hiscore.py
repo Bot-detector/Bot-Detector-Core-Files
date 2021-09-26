@@ -1,8 +1,8 @@
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 from typing import List, Optional
-from database.functions import execute_sql, list_to_string
+from database.functions import execute_sql, list_to_string, verify_token
 import datetime
 
 router = APIRouter()
@@ -182,6 +182,7 @@ class hiscore(BaseModel):
 
 @router.get("/v1/hiscore/", tags=["hiscore"])
 async def get(
+    token: str,
     player_name: Optional[str] = None,
     player_id: Optional[int] = None,
     label_id: Optional[int] = None,
@@ -191,6 +192,7 @@ async def get(
     '''
     select data from database
     '''
+    await verify_token(token, verifcation='hiscore')
     sql = ('''
         select 
             pl.name, 
@@ -220,6 +222,7 @@ async def get(
 
 @router.get("/v1/hiscoreLatest", tags=["hiscore"])
 async def get(
+    token: str,
     player_name: Optional[str] = None,
     player_id: Optional[int] = None,
     label_id: Optional[int] = None,
@@ -229,6 +232,7 @@ async def get(
     '''
     select data from database
     '''
+    await verify_token(token, verifcation='hiscore')
     sql = ('''
         select 
             pl.name, 
@@ -258,6 +262,7 @@ async def get(
 
 @router.get("/v1/hiscoreXPChange", tags=["hiscore"])
 async def get(
+    token: str,
     player_name: Optional[str] = None,
     player_id: Optional[int] = None,
     label_id: Optional[int] = None,
@@ -267,6 +272,7 @@ async def get(
     '''
     select data from database
     '''
+    await verify_token(token, verifcation='hiscore')
     sql = ('''
         select 
             pl.name, 
@@ -296,6 +302,7 @@ async def get(
 
 @router.get("/v1/hiscoreXPChangeLatest", tags=["hiscore"])
 async def get(
+    token: str,
     player_name: Optional[str] = None,
     player_id: Optional[int] = None,
     label_id: Optional[int] = None,
@@ -305,6 +312,7 @@ async def get(
     '''
     select data from database
     '''
+    await verify_token(token, verifcation='hiscore')
     sql = ('''
         select 
             pl.name, 
@@ -335,10 +343,11 @@ async def get(
     return data.rows2dict()
 
 @router.post("/v1/hiscore", tags=["hiscore"])
-async def post(hiscores: hiscore):
+async def post(hiscores: hiscore, token: str):
     '''
     insert data into database
     '''
+    await verify_token(token, verifcation='hiscore')
     param = hiscores.dict()
     # list of column values
     columns = list_to_string(list(param.keys()))

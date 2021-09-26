@@ -1,7 +1,7 @@
 import time
 from typing import Optional
 
-from database.functions import execute_sql, list_to_string
+from database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -18,6 +18,7 @@ class player(BaseModel):
 
 @router.get("/v1/player", tags=["player"])
 async def get(
+    token: str,
     player_name: Optional[str] = None,
     player_id: Optional[int] = None,
     label_id: Optional[int] = None,
@@ -27,6 +28,7 @@ async def get(
     '''
     select data from database
     '''
+    await verify_token(token, verifcation='hiscore')
     sql ='select * from Players where 1=1'
     param = {
         'name': player_name,
@@ -47,10 +49,11 @@ async def get(
     return data.rows2dict()
 
 @router.put("/v1/player", tags=["player"])
-async def put(player: player):
+async def put(player: player, token: str):
     '''
     update data into database
     '''
+    await verify_token(token, verifcation='hiscore')
     time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
     param = player.dict()
     param['updated_at'] = time_now
@@ -73,10 +76,11 @@ async def put(player: player):
     return data.rows2dict()
 
 @router.post("/v1/player", tags=["player"])
-async def post(player_name: str):
+async def post(player_name: str, token: str):
     '''
     insert data into database
     '''
+    await verify_token(token, verifcation='hiscore')
     sql = "insert ignore into Players (name) values(:player_name);"
     select = "select * from Players where name=:player_name"
 
