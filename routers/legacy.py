@@ -597,8 +597,8 @@ async def sql_get_prediction_player(player_id):
     data = await execute_sql(sql, param=param)
     return data.rows2dict()[0]
 
-@router.get('/{version}/site/prediction/{player_name}/{token}', tags=['legacy'])
-async def get_prediction(player_name, version=None, token=None):
+@router.get('/{version}/site/prediction/{player_name}', tags=['legacy'])
+async def get_prediction(player_name, version=None):
     player_name, bad_name = await name_check(player_name)
     if bad_name:
         raise HTTPException(status_code=400, detail=f"Bad name")

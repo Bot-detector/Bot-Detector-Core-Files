@@ -1,9 +1,7 @@
 import logging
 import os
 import sys
-from multiprocessing import Queue
 
-import logging_loki
 from dotenv import find_dotenv, load_dotenv
 from fastapi import FastAPI
 from apscheduler.schedulers.background import BackgroundScheduler
