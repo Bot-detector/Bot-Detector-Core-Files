@@ -23,38 +23,35 @@ dev_mode = os.environ.get('dev_mode')
 app = FastAPI()
 
 # setup logging
-loki_handler = logging_loki.LokiQueueHandler(
-    Queue(-1),
-    url="http://loki:3100/loki/api/v1/push", 
-    tags={"service": "scraper_continuous"},
-)
+logger = logging.getLogger()
+file_handler = logging.FileHandler(filename="error.log", mode='a')
+stream_handler = logging.StreamHandler(sys.stdout)
 
-if dev_mode == 0:
-    logging.getLogger().addHandler(loki_handler)
+# log formatting
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+stream_handler.setFormatter(formatter)
 
-logging.FileHandler(filename="error.log", mode='a')
-logging.basicConfig(filename='error.log', level=logging.DEBUG)
+# add handler
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
 
+# set imported loggers to warning
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.WARNING)
 logging.getLogger('uvicorn').setLevel(logging.WARNING)
 
-handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logging.getLogger().addHandler(handler)
-
 # for machine learning
 n_pca=2
 use_pca=False
-
 
 executors = {
     # 'default': ThreadPoolExecutor(max_workers=4),
     'default': ProcessPoolExecutor()  # processpool
 }
+
 # scheduler
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     sched = BackgroundScheduler(daemon=False, executors=executors)
