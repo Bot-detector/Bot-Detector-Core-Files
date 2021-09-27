@@ -1,5 +1,5 @@
 import time
-from typing import Optional
+from typing import Optional, List
 
 from database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter, HTTPException
@@ -7,7 +7,16 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-class player(BaseModel):
+
+class Name(BaseModel):
+    name: str
+
+
+class NamesList(BaseModel):
+    names: List[Name]
+
+
+class Player(BaseModel):
     player_id: int
     name: Optional[str]
     possible_ban: Optional[bool]
@@ -15,6 +24,7 @@ class player(BaseModel):
     confirmed_player: Optional[bool]
     label_id: Optional[int]
     label_jagex: Optional[int]
+
 
 @router.get("/v1/player", tags=["player"])
 async def get(
@@ -49,7 +59,7 @@ async def get(
     return data.rows2dict()
 
 @router.put("/v1/player", tags=["player"])
-async def put(player: player, token: str):
+async def put(player: Player, token: str):
     '''
     update data into database
     '''
@@ -90,4 +100,20 @@ async def post(player_name: str, token: str):
 
     await execute_sql(sql, param)
     data = await execute_sql(select, param)
+    return data.rows2dict()
+
+
+@router.get("/v1/bulk_players", tags=["player"])
+async def get_bulk(player_names: NamesList, token: str):
+    await verify_token(token, verifcation='hiscore')
+
+    names = [name_entry.name for name_entry in player_names.names]
+
+    sql ='select * from Players where name in :names'
+
+    param = {
+        'names': names
+    }
+
+    data = await execute_sql(sql, param)
     return data.rows2dict()

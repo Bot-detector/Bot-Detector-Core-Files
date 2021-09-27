@@ -11,13 +11,13 @@ from pydantic import BaseModel
 
 import routers.hiscore as hi
 from routers.hiscore import hiscore
-from routers.player import player
+from routers.player import Player
 
 router = APIRouter()
 
 class scraper(BaseModel):
     hiscore: hiscore
-    player: player
+    player: Player
 
 async def sql_get_players_to_scrape(start=0, amount=100):
     sql = 'select * from playersToScrape WHERE length(name) <= 12 ORDER BY RAND() LIMIT :start, :amount;'
