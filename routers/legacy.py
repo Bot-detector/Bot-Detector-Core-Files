@@ -4,6 +4,7 @@ import re
 from typing import List, Match, Optional
 
 from numpy import datetime64
+from sqlalchemy.exc import NoResultFound
 
 import Config
 import pandas as pd
@@ -715,7 +716,13 @@ async def sql_get_prediction_player(player_id):
     sql = 'select * from Predictions where id = :id'
     param = {'id':player_id}
     data = await execute_sql(sql, param=param)
-    return data.rows2dict()[0]
+    rows_dict = data.rows2dict()
+    
+    if len(rows_dict) > 0:
+        return rows_dict[0]
+    else:
+        raise NoResultFound
+    
 
 
 @router.get('/{version}/site/prediction/{player_name}', tags=['legacy'])
@@ -726,20 +733,30 @@ async def get_prediction(player_name, version=None, token=None):
         raise HTTPException(status_code=400, detail=f"Bad name")
     
     player = await sql_get_player(player_name)
-    prediction = dict(await sql_get_prediction_player(player['id']))
-    prediction.pop("created")
+    try:
+        prediction = dict(await sql_get_prediction_player(player['id']))
+        prediction.pop("created")
 
-    return_dict = {
-        "player_id":                prediction.pop("id"),
-        "player_name":              prediction.pop("name"),
-        "prediction_label":         prediction.pop("prediction"),
-        "prediction_confidence":    prediction.pop("Predicted_confidence")/100
-    }
+        return_dict = {
+            "player_id":                prediction.pop("id"),
+            "player_name":              prediction.pop("name"),
+            "prediction_label":         prediction.pop("prediction"),
+            "prediction_confidence":    prediction.pop("Predicted_confidence")/100
+        }
 
-    prediction = {p:float(prediction[p]/100) for p in prediction}
+        prediction = {p:float(prediction[p]/100) for p in prediction}
 
-    if version is None:
-        return_dict['secondary_predictions'] = sort_predictions(prediction)
-    else:
-        return_dict['predictions_breakdown'] = prediction
+        if version is None:
+            return_dict['secondary_predictions'] = sort_predictions(prediction)
+        else:
+            return_dict['predictions_breakdown'] = prediction
+
+    except NoResultFound:
+        return_dict = {
+            "player_id": player['id'],
+            "player_name": player_name,
+            "prediction_label": "No Prediction Yet",
+            "prediction_confidence": 0
+        }
+
     return return_dict
