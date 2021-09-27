@@ -232,31 +232,14 @@ async def post_hiscores_to_db(token, data: List[scraper]):
         players.append(player_dict)
         hiscores.append(hiscore_dict)
     
-    print('updating')
     # update many into players
     await sql_update_players(players)
-    # asyncio.ensure_future(sql_update_players(players))
-    # asyncio.create_task(sql_update_players(players))
-    # background_tasks.add_task(sql_update_player, players)
-    # Config.sched.add_job(
-    #     sql_update_players,
-    #     args=[players]
-    # )
-    print('done')
+
     # stop if there are no hiscores to insert
     if not hiscores:
         return {'ok':'ok'}
     
-    print('inserting')
     # insert many into hiscores
     await sql_insert_hiscores(hiscores)
-    # asyncio.ensure_future(sql_insert_hiscores(hiscores))
-    # asyncio.create_task(sql_insert_hiscores(hiscores))
-    # background_tasks.add_task(sql_insert_hiscores, hiscores)
-    # Config.sched.add_job(
-    #     sql_insert_hiscores,
-    #     args=[hiscores]
-    # )
-    print('done')
     return {'ok':'ok'}
     
