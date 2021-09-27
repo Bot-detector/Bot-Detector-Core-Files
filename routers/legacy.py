@@ -472,8 +472,8 @@ async def get_contributions(contributors: List[contributor]):
 
 
 @router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
-async def get_contributions(contributors: str, version: str):
-    data = await parse_contributors([contributors], version=version)
+async def get_contributions_url(contributor: str, version: str):
+    data = await parse_contributors([contributor], version=version)
     return data
 
 
