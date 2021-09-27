@@ -690,9 +690,10 @@ async def sql_get_prediction_player(player_id):
     data = await execute_sql(sql, param=param)
     return data.rows2dict()[0]
 
-@router.get('/{version}/site/prediction/{player_name}/{token}', tags=['legacy'])
+@router.get('/{version}/site/prediction/{player_name}', tags=['legacy'])
 async def get_prediction(player_name, version=None, token=None):
     player_name, bad_name = await name_check(player_name)
+
     if bad_name:
         raise HTTPException(status_code=400, detail=f"Bad name")
     
@@ -704,9 +705,11 @@ async def get_prediction(player_name, version=None, token=None):
         "player_id":                prediction.pop("id"),
         "player_name":              prediction.pop("name"),
         "prediction_label":         prediction.pop("prediction"),
-        "prediction_confidence":    prediction.pop("Predicted_confidence"),
-        #"predictions_breakdown":    prediction_dict
+        "prediction_confidence":    prediction.pop("Predicted_confidence")/100
     }
+
+    prediction = {p:float(prediction[p]/100) for p in prediction}
+
     if version is None:
         return_dict['secondary_predictions'] = sort_predictions(prediction)
     else:
