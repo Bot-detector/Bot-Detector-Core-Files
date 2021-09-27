@@ -19,13 +19,13 @@ class scraper(BaseModel):
     hiscore: hiscore
     player: Player
 
-async def sql_get_players_to_scrape(page=1, amount=100):
+async def sql_get_players_to_scrape(page=1, amount=100_000):
     sql = 'select * from playersToScrape WHERE length(name) <= 12 ORDER BY RAND()'
     data = await execute_sql(sql, page=page, row_count=amount)
-    return data.rows2dict
+    return data.rows2dict()
 
 @router.get("/scraper/players/{page}/{amount}/{token}", tags=["scraper"])
-async def get_players_to_scrape(token, page=None, amount=None):
+async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
     await verify_token(token, verifcation='ban')
     return await sql_get_players_to_scrape(page=page, amount=amount)
 

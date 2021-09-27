@@ -20,6 +20,7 @@ async def execute_sql(sql, param={}, debug=False, engine=engine, row_count=100_0
         # add pagination to every query
         # max number of rows = 100k
         row_count = row_count if row_count <= 100_000 else 100_000
+        page = page if page >= 1 else 1
         offset = (page - 1)*row_count
         # add limit to sql
         sql = f'{sql} limit :offset, :row_count'
