@@ -85,6 +85,7 @@ async def sql_get_player(player_name):
 
     return None if len(player) == 0 else player[0]
 
+
 async def sql_insert_player(player_name):
     sql_insert = "insert ignore into Players (name) values(:player_name);"
 
@@ -95,6 +96,7 @@ async def sql_insert_player(player_name):
     await execute_sql(sql_insert, param=param, debug=False)
     player = await sql_get_player(player_name)
     return player
+
 
 async def sql_insert_report(data):
     gmt = time.gmtime(data['ts'])
@@ -135,6 +137,7 @@ async def sql_insert_report(data):
     await execute_sql(sql, param=param, debug=False)
     return
 
+
 async def sql_get_contributions(contributors: List):
     query = ("""
         SELECT
@@ -156,10 +159,12 @@ async def sql_get_contributions(contributors: List):
     data = await execute_sql(query, param=params, debug=False, row_count=100_000_000)
     return data.rows2dict()
 
+
 async def sql_get_number_tracked_players():
     sql = 'SELECT COUNT(*) count FROM Players'
     data = await execute_sql(sql, param={}, debug=False)
     return data.rows2dict()
+
 
 async def sql_get_report_stats():
     sql = '''
@@ -181,10 +186,12 @@ async def sql_get_report_stats():
     data = await execute_sql(sql, param={}, debug=False, )
     return data.rows2dict()
 
+
 async def sql_get_player_labels():
     sql = 'select * from Labels'
     data = await execute_sql(sql, param={}, debug=False)
     return data.rows2dict()
+
 
 async def sql_update_player(player: dict):
     time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
@@ -207,6 +214,8 @@ async def sql_update_player(player: dict):
     await execute_sql(sql, param)
     data = await execute_sql(select, param)
     return data.rows2dict()
+
+
 '''
     helper functions
 '''
@@ -274,6 +283,7 @@ async def custom_hiscore(detection):
     await sql_insert_report(detection)
     return create
 
+
 async def insync_detect(detections, manual_detect):
     logging.debug("insync detect test")
     total_creates = 0
@@ -291,6 +301,7 @@ async def insync_detect(detections, manual_detect):
 
     logging.debug(f'      Done: Completed {idx + 1} detections')
     return
+
 
 async def parse_contributors(contributors, version=None):
     contributions = await sql_get_contributions(contributors)
@@ -360,6 +371,7 @@ async def sql_select_players(names):
     data = await execute_sql(sql, param)
     return data.rows2dict()
 
+
 async def parse_detection(data:dict) ->dict:
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
@@ -390,6 +402,7 @@ async def parse_detection(data:dict) ->dict:
         'equip_ge_value': data.get('equipment_ge')
     }
     return param
+
 
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
@@ -448,6 +461,7 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
     
     return {'OK': 'OK'}
 
+
 @router.post('/stats/contributions/', tags=['legacy'])
 async def get_contributions(contributors: List[contributor]):
     contributors = [d.__dict__['name'] for d in contributors]
@@ -455,10 +469,12 @@ async def get_contributions(contributors: List[contributor]):
     data = await parse_contributors(contributors, version=None)
     return data
 
+
 @router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
 async def get_contributions(contributors: str, version: str):
     data = await parse_contributors([contributors], version=version)
     return data
+
 
 @router.get('/stats/getcontributorid/{contributor}', tags=['legacy'])
 async def get_contributor_id(contributor: str):
@@ -471,10 +487,12 @@ async def get_contributor_id(contributor: str):
 
     return return_dict
 
+
 @router.get('/site/dashboard/gettotaltrackedplayers', tags=['legacy'])
 async def get_total_tracked_players():
     num_of_players = await sql_get_number_tracked_players()
     return {"players": num_of_players[0]}
+
 
 @router.get('/site/dashboard/getreportsstats', tags=['legacy'])
 async def get_total_reports():
@@ -525,10 +543,12 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
     
     return {"OK": "OK"}
 
+
 @router.get("/log/{token}", tags=['legacy'])
 async def print_log(token:str):
     await verify_token(token, verifcation='ban')
     return FileResponse(path='error.log', filename='error.log', media_type='text/log')
+
 
 @router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
 async def get_highscores(token:str, ofInterest:int=None, row_count:int=100_000, page:int=1):
@@ -555,6 +575,7 @@ async def get_highscores(token:str, ofInterest:int=None, row_count:int=100_000, 
     data = await execute_sql(sql, row_count=row_count, page=page)
     return data.rows2dict()
 
+
 @router.get('site/players/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
 async def get_players(token:str, ofInterest:int=None, row_count:int=100_000, page:int=1):
     await verify_token(token, verifcation='hiscore')
@@ -568,6 +589,7 @@ async def get_players(token:str, ofInterest:int=None, row_count:int=100_000, pag
     data = await execute_sql(sql, row_count=row_count, page=page)
     return data.rows2dict()
 
+
 @router.get('/site/labels/{tokens}', tags=['legacy'])
 async def get_labels(token):
     await verify_token(token, verifcation='hiscore')
@@ -575,7 +597,6 @@ async def get_labels(token):
     sql = 'select * from Labels'
     data = await execute_sql(sql)
     return data.rows2dict()
-
 
 
 @router.post('/site/verify/{token}', tags=['legacy'])
@@ -615,6 +636,7 @@ async def verify_bot(token:str, bots:bots):
         data.append(await sql_update_player(p))
     return data
     
+
 async def sql_get_unverified_discord_user(player_id):
     sql = ('''
         SELECT * from discordVerification 
@@ -629,6 +651,7 @@ async def sql_get_unverified_discord_user(player_id):
     data = await execute_sql(sql, param,engine=discord_engine)
     return data.rows2tuple()
 
+
 async def sql_get_token(token):
     sql = 'select * from Tokens where token=:token'
     param = {
@@ -636,6 +659,7 @@ async def sql_get_token(token):
     }
     data = await execute_sql(sql, param=param)
     return data.rows2tuple()[0]
+
 
 async def set_discord_verification(id, token):
     sql = ('''
@@ -653,6 +677,7 @@ async def set_discord_verification(id, token):
     }
     await execute_sql(sql, param, engine=discord_engine)
     return 
+
 
 @router.post('/{version}/site/discord_user/{token}', tags=['legacy'])
 async def verify_discord_user(token:str, discord:discord, version:str=None):
@@ -677,6 +702,7 @@ async def verify_discord_user(token:str, discord:discord, version:str=None):
         raise HTTPException(status_code=400, detail=f"No pending links for this user.")
     return {'ok':'ok'}
 
+
 def sort_predictions(d):
     # remove 0's
     d = {key: value for key, value in d.items() if value > 0}
@@ -684,11 +710,13 @@ def sort_predictions(d):
     d = list(sorted(d.items(), key=lambda x: x[1], reverse=True))
     return d
 
+
 async def sql_get_prediction_player(player_id):
     sql = 'select * from Predictions where id = :id'
     param = {'id':player_id}
     data = await execute_sql(sql, param=param)
     return data.rows2dict()[0]
+
 
 @router.get('/{version}/site/prediction/{player_name}', tags=['legacy'])
 async def get_prediction(player_name, version=None, token=None):
