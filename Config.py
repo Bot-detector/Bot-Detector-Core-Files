@@ -5,6 +5,7 @@ import sys
 from dotenv import find_dotenv, load_dotenv
 from fastapi import FastAPI
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 
 # load environment variables
@@ -47,11 +48,5 @@ logging.getLogger('uvicorn').setLevel(logging.WARNING)
 n_pca=2
 use_pca=False
 
-executors = {
-    # 'default': ThreadPoolExecutor(max_workers=4),
-    'default': ProcessPoolExecutor()  # processpool
-}
-
-# scheduler
-#if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-sched = BackgroundScheduler(daemon=False, executors=executors)
+sched = AsyncIOScheduler()
+sched.start()

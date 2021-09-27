@@ -1,14 +1,11 @@
 import time
-from re import I
 from typing import List, Optional
 
-from sqlalchemy.sql.expression import column
-
 from database.functions import execute_sql, list_to_string, verify_token
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
-
-import routers.hiscore as hi
+import asyncio
+import Config
 
 router = APIRouter()
 
@@ -195,8 +192,21 @@ async def process_player(player, hiscore):
     del player, hiscore
     return
 
+async def sql_update_players(players):
+    values = [f'{c}=:{c}' for c in players[0].keys()]
+    values = list_to_string(values)
+    sql = f'update Players set {values} where id = :id'
+    await execute_sql(sql, players)
+    return
 
-#TODO: rewrite
+async def sql_insert_hiscores(hiscores):
+    values = [f'{c}=:{c}' for c in hiscores[0].keys()]
+    values = list_to_string(values)
+    columns = list_to_string(hiscores[0].keys())
+    sql = f'insert ignore into playerHiscoreData ({columns}) values ({values})'
+    await execute_sql(sql, hiscores)
+    return
+
 @router.post("/scraper/hiscores/{token}", tags=["scraper"])
 async def post_hiscores_to_db(token, data: List[scraper]):
     await verify_token(token, verifcation='ban')
@@ -209,29 +219,44 @@ async def post_hiscores_to_db(token, data: List[scraper]):
         player_dict = d['player']
         hiscore_dict = d['hiscores']
 
+        # add extra data
+        time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
+        player_dict['updated_at'] = time_now
+        
         if not hiscore_dict:
             players.append(player_dict)
             continue
-
+        
         hiscore_dict['player_id'] = player_dict['id']
+
         players.append(player_dict)
         hiscores.append(hiscore_dict)
     
+    print('updating')
     # update many into players
-    values = [f'{c}=:{c}' for c in players[0].keys()]
-    values = list_to_string(values)
-    sql = f'update Players set {values} where id = :id'
-    await execute_sql(sql, players)
-    
+    await sql_update_players(players)
+    # asyncio.ensure_future(sql_update_players(players))
+    # asyncio.create_task(sql_update_players(players))
+    # background_tasks.add_task(sql_update_player, players)
+    # Config.sched.add_job(
+    #     sql_update_players,
+    #     args=[players]
+    # )
+    print('done')
     # stop if there are no hiscores to insert
     if not hiscores:
-        return
-
+        return {'ok':'ok'}
+    
+    print('inserting')
     # insert many into hiscores
-    values = [f'{c}=:{c}' for c in hiscores[0].keys()]
-    values = list_to_string(values)
-    columns = list_to_string(hiscores[0].keys())
-    sql = f'insert ignore into playerHiscoreData ({columns}) values ({values})'
-    await execute_sql(sql, hiscores)
-    return
+    await sql_insert_hiscores(hiscores)
+    # asyncio.ensure_future(sql_insert_hiscores(hiscores))
+    # asyncio.create_task(sql_insert_hiscores(hiscores))
+    # background_tasks.add_task(sql_insert_hiscores, hiscores)
+    # Config.sched.add_job(
+    #     sql_insert_hiscores,
+    #     args=[hiscores]
+    # )
+    print('done')
+    return {'ok':'ok'}
     
