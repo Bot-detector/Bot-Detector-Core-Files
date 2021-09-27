@@ -19,16 +19,15 @@ class scraper(BaseModel):
     hiscore: hiscore
     player: Player
 
-async def sql_get_players_to_scrape(start=0, amount=100):
-    sql = 'select * from playersToScrape WHERE length(name) <= 12 ORDER BY RAND() LIMIT :start, :amount;'
-    param = {'amount': int(amount), 'start': int(start)}
-    data = await execute_sql(sql, param=param)
+async def sql_get_players_to_scrape(page=1, amount=100):
+    sql = 'select * from playersToScrape WHERE length(name) <= 12 ORDER BY RAND()'
+    data = await execute_sql(sql, page=page, row_count=amount)
     return data.rows2dict
 
-@router.get("/scraper/players/{start}/{amount}/{token}", tags=["scraper"])
-async def get_players_to_scrape(token, start=None, amount=None):
+@router.get("/scraper/players/{page}/{amount}/{token}", tags=["scraper"])
+async def get_players_to_scrape(token, page=None, amount=None):
     await verify_token(token, verifcation='ban')
-    return await sql_get_players_to_scrape(start=0, amount=100)
+    return await sql_get_players_to_scrape(page=page, amount=amount)
 
 async def sql_update_player(player_id, possible_ban=None, confirmed_ban=None, confirmed_player=None, label_id=None, label_jagex=None, debug=False):
     time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
@@ -54,7 +53,7 @@ async def sql_update_player(player_id, possible_ban=None, confirmed_ban=None, co
         set
             {values}
         where 
-            id=:player_id;
+            id=:player_id
         ''')
     
     await execute_sql(sql_update, param=param)
