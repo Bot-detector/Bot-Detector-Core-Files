@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from database.functions import execute_sql, verify_token
 router = APIRouter()
 
-@router.get("v1/prediction", tags=["prediction"])
+@router.get("/v1/prediction", tags=["prediction"])
 async def get(token: str):
     '''
     select data from database
@@ -10,7 +10,7 @@ async def get(token: str):
     await verify_token(token, verifcation='hiscore')
     pass
 
-@router.put("v1/prediciton", tags=["prediction"])
+@router.put("/v1/prediciton", tags=["prediction"])
 async def put(token: str):
     '''
     update data into database
@@ -18,7 +18,7 @@ async def put(token: str):
     await verify_token(token, verifcation='hiscore')
     pass
 
-@router.post("v1/prediction", tags=["prediction"])
+@router.post("/v1/prediction", tags=["prediction"])
 async def post(token: str):
     '''
     insert data into database
@@ -26,7 +26,7 @@ async def post(token: str):
     await verify_token(token, verifcation='hiscore')
     pass
 
-@router.get("v1/prediction/data", tags=["prediction", "business-logic"])
+@router.get("/v1/prediction/data", tags=["prediction", "business-logic"])
 async def get(token: str):
     '''
         GET: the hiscore data where prediction is not from today
