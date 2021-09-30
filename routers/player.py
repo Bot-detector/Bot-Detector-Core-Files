@@ -77,6 +77,7 @@ async def post_bulk(
     token: str,
     player_name: Optional[List[str]] = None,
     player_id: Optional[List[int]] = None,
+    label_id: Optional[List[int]] = None,
     row_count: int = 100_000,
     page: int = 1
 ):
@@ -99,6 +100,9 @@ async def post_bulk(
 
     if not player_id == None:
         sql = sql.where(dbPlayer.id.in_(player_id))
+    
+    if not label_id == None:
+        sql = sql.where(dbPlayer.id.in_(label_id))
 
     # query pagination
     sql = sql.limit(row_count).offset(row_count*(page-1))
