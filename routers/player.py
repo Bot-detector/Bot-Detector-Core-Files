@@ -1,9 +1,12 @@
 import time
-from typing import Optional, List
+from typing import List, Optional
 
-from database.functions import execute_sql, list_to_string, verify_token
+from database.database import async_session
+from database.functions import execute_sql, sqlalchemy_result, verify_token
+from database.models import Player as dbPlayer
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.sql.expression import insert, select, update
 
 router = APIRouter()
 
@@ -34,29 +37,79 @@ async def get(
     label_id: Optional[int] = None,
     row_count: int = 100_000,
     page: int = 1
-    ):
+):
     '''
     select data from database
     '''
     await verify_token(token, verifcation='hiscore')
-    sql ='select * from Players where 1=1'
-    param = {
-        'name': player_name,
-        'id': player_id,
-        'label_id': label_id
-    }
-
-    # build query
-    sql_filter = [f' and {k} = :{k}' for k,v in param.items() if v is not None]
-    has_good_param = True if len(sql_filter) > 0 else False
-    sql = f'{sql} {"".join(sql_filter)}'
 
     # return exception if no param are given
-    if not (has_good_param):
-        raise HTTPException(status_code=404, detail="No valid parameters given")
+    if None == player_name == player_id == label_id:
+        raise HTTPException(
+            status_code=404, detail="No valid parameters given")
 
-    data = await execute_sql(sql, param, row_count=row_count, page=page)
+    # create query
+    sql = select(dbPlayer)
+
+    # filters
+    if not player_name == None:
+        sql = sql.where(dbPlayer.name == player_name)
+
+    if not player_id == None:
+        sql = sql.where(dbPlayer.id == player_id)
+
+    if not label_id == None:
+        sql = sql.where(dbPlayer.label_id == label_id)
+
+    # query pagination
+    sql = sql.limit(row_count).offset(row_count*(page-1))
+
+    # transaction
+    async with async_session() as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
     return data.rows2dict()
+
+
+@router.post("/v1/player/bulk", tags=["player"])
+async def post_bulk(
+    token: str,
+    player_name: Optional[List[str]] = None,
+    player_id: Optional[List[int]] = None,
+    row_count: int = 100_000,
+    page: int = 1
+):
+    '''
+        select data from database
+    '''
+    await verify_token(token, verifcation='hiscore')
+
+    # return exception if no param are given
+    if None == player_name == player_id:
+        raise HTTPException(
+            status_code=404, detail="No valid parameters given")
+
+    # create query
+    sql = select(dbPlayer)
+
+    # filters
+    if not player_name == None:
+        sql = sql.where(dbPlayer.name.in_(player_name))
+
+    if not player_id == None:
+        sql = sql.where(dbPlayer.id.in_(player_id))
+
+    # query pagination
+    sql = sql.limit(row_count).offset(row_count*(page-1))
+
+    # transaction
+    async with async_session() as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
+    return data.rows2dict()
+
 
 @router.put("/v1/player", tags=["player"])
 async def put(player: Player, token: str):
@@ -64,26 +117,30 @@ async def put(player: Player, token: str):
     update data into database
     '''
     await verify_token(token, verifcation='hiscore')
-    time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
+
+    # param
     param = player.dict()
-    param['updated_at'] = time_now
+    param['updated_at'] = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
 
-    exclude = ['player_id', 'name']
-    values = [f'{k}=:{k}' for k,v in param.items() if v is not None and k not in exclude]
-    values = list_to_string(values)
+    player_id = param.pop('player_id')
 
-    sql = (f'''
-        update Players 
-        set
-            {values}
-        where 
-            id=:player_id;
-    ''')
-    select = "select * from Players where id=:player_id"
+    # sql
+    sql_update = update(dbPlayer)
+    sql_update = sql_update.values(param)
+    sql_update = sql_update.where(dbPlayer.id == player_id)
 
-    await execute_sql(sql, param)
-    data = await execute_sql(select, param)
+    sql_select = select(dbPlayer)
+    sql_select = sql_select.where(dbPlayer.id == player_id)
+
+    # transaction
+    async with async_session() as session:
+        await session.execute(sql_update)
+        await session.commit()
+        data = await session.execute(sql_select)
+
+    data = sqlalchemy_result(data)
     return data.rows2dict()
+
 
 @router.post("/v1/player", tags=["player"])
 async def post(player_name: str, token: str):
@@ -91,15 +148,21 @@ async def post(player_name: str, token: str):
     insert data into database
     '''
     await verify_token(token, verifcation='hiscore')
-    sql = "insert ignore into Players (name) values(:player_name);"
-    select = "select * from Players where name=:player_name"
 
-    param = {
-        'player_name': player_name
-    }
+    sql_insert = insert(dbPlayer)
+    sql_insert = sql_insert.values(name=player_name)
+    sql_insert = sql_insert.prefix_with('ignore')
 
-    await execute_sql(sql, param)
-    data = await execute_sql(select, param)
+    sql_select = select(dbPlayer)
+    sql_select = sql_select.where(dbPlayer.name == player_name)
+
+    # transaction
+    async with async_session() as session:
+        await session.execute(sql_insert)
+        await session.commit()
+        data = await session.execute(sql_select)
+
+    data = sqlalchemy_result(data)
     return data.rows2dict()
 
 
@@ -109,7 +172,7 @@ async def get_bulk(player_names: NamesList, token: str):
 
     names = [name_entry.name for name_entry in player_names.names]
 
-    sql ='select * from Players where name in :names'
+    sql = 'select * from Players where name in :names'
 
     param = {
         'names': names
