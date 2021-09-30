@@ -87,7 +87,7 @@ async def post_bulk(
     await verify_token(token, verifcation='hiscore')
 
     # return exception if no param are given
-    if None == player_name == player_id:
+    if None == player_name == player_id == label_id:
         raise HTTPException(
             status_code=404, detail="No valid parameters given")
 
@@ -102,7 +102,7 @@ async def post_bulk(
         sql = sql.where(dbPlayer.id.in_(player_id))
     
     if not label_id == None:
-        sql = sql.where(dbPlayer.id.in_(label_id))
+        sql = sql.where(dbPlayer.label_id.in_(label_id))
 
     # query pagination
     sql = sql.limit(row_count).offset(row_count*(page-1))
@@ -167,20 +167,4 @@ async def post(player_name: str, token: str):
         data = await session.execute(sql_select)
 
     data = sqlalchemy_result(data)
-    return data.rows2dict()
-
-
-@router.get("/v1/bulk_players", tags=["player"])
-async def get_bulk(player_names: NamesList, token: str):
-    await verify_token(token, verifcation='hiscore')
-
-    names = [name_entry.name for name_entry in player_names.names]
-
-    sql = 'select * from Players where name in :names'
-
-    param = {
-        'names': names
-    }
-
-    data = await execute_sql(sql, param)
     return data.rows2dict()

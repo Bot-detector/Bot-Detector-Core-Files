@@ -18,3 +18,10 @@ class Player(Base):
     label_jagex = Column(Integer, default=0)
 
     # relationships
+
+class Label(Base):
+    __tablename__ = 'Labels'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    label = Column(String)
+
