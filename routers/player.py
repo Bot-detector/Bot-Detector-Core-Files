@@ -11,14 +11,6 @@ from sqlalchemy.sql.expression import insert, select, update
 router = APIRouter()
 
 
-class Name(BaseModel):
-    name: str
-
-
-class NamesList(BaseModel):
-    names: List[Name]
-
-
 class Player(BaseModel):
     player_id: int
     name: Optional[str]
@@ -69,22 +61,6 @@ async def get(
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
-    return data.rows2dict()
-
-
-@router.get("/v1/player/bulk_by_names", tags=["player"])
-async def get_bulk(player_names: NamesList, token: str):
-    await verify_token(token, verifcation='hiscore')
-
-    names = [name_entry.name for name_entry in player_names.names]
-
-    sql ='select * from Players where name in :names'
-
-    param = {
-        'names': names
-    }
-
-    data = await execute_sql(sql, param)
     return data.rows2dict()
 
 
