@@ -11,14 +11,6 @@ from sqlalchemy.sql.expression import insert, select, update
 router = APIRouter()
 
 
-class Name(BaseModel):
-    name: str
-
-
-class NamesList(BaseModel):
-    names: List[Name]
-
-
 class Player(BaseModel):
     player_id: int
     name: Optional[str]
