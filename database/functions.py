@@ -5,8 +5,10 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.expression import select
 
-from .database import engine
+from database.database import engine, async_session
+from database.models import Token
 
 
 def list_to_string(l):
@@ -75,13 +77,17 @@ class sqlalchemy_result:
         return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in self.rows]
 
 async def verify_token(token:str, verifcation:str) -> bool:
-    sql = 'select * from Tokens where token=:token'
-    param = {'token': token}
-    data = await execute_sql(sql, param=param, debug=False)
-    player_token = data.rows2tuple()
+    # query
+    sql = select(Token)
+    sql = sql.where(Token.token==token)
 
-    # default no permissions
-    perm = False 
+    # transaction
+    async with async_session() as session:
+        data = await session.execute(sql)
+    
+    # parse data
+    data = sqlalchemy_result(data)
+    player_token = data.rows2tuple()
 
     # check if token exists (empty list if token does not exist)
     if not player_token:
@@ -89,14 +95,14 @@ async def verify_token(token:str, verifcation:str) -> bool:
 
     # all possible checks
     permissions = {
-        'hiscore': player_token[0].request_highscores,
-        'ban':player_token[0].verify_ban,
-        'create_token': player_token[0].create_token,
-        'verify_players': player_token[0].verify_players
+        'hiscore':          player_token[0].request_highscores,
+        'ban':              player_token[0].verify_ban,
+        'create_token':     player_token[0].create_token,
+        'verify_players':   player_token[0].verify_players
     }
 
+    # get permission, default: 0
     if permissions.get(verifcation, 0) == 1:
-        perm = True
-    else:
-        raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
-    return perm
+        return True
+
+    raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
