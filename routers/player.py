@@ -72,6 +72,22 @@ async def get(
     return data.rows2dict()
 
 
+@router.get("/v1/player/bulk_by_names", tags=["player"])
+async def get_bulk(player_names: NamesList, token: str):
+    await verify_token(token, verifcation='hiscore')
+
+    names = [name_entry.name for name_entry in player_names.names]
+
+    sql ='select * from Players where name in :names'
+
+    param = {
+        'names': names
+    }
+
+    data = await execute_sql(sql, param)
+    return data.rows2dict()
+
+
 @router.post("/v1/player/bulk", tags=["player"])
 async def post_bulk(
     token: str,
