@@ -8,7 +8,7 @@ from sqlalchemy.sql.expression import select, text
 from sqlalchemy.sql.functions import func
 
 router = APIRouter()
-engine.echo = True
+
 
 class Prediction(BaseModel):
     name: str
@@ -66,6 +66,7 @@ async def post(token: str, prediction: List[Prediction]):
     '''
     await verify_token(token, verifcation='hiscore')
     # TODO: this is not working for some fucking reason
+    engine.echo = True
     data = [d.dict() for d in prediction]
 
     columns = list_to_string([k for k in data[0].keys()])
@@ -77,6 +78,7 @@ async def post(token: str, prediction: List[Prediction]):
         await session.execute(sql, data)
         await session.commit()
 
+    engine.echo = False
     return {'ok':'ok'}
 
 @router.get("/v1/prediction/data", tags=["prediction", "business-logic"])
