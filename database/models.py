@@ -1,6 +1,7 @@
 # coding: utf-8
 from sqlalchemy import BigInteger, Column, Date, DateTime, Float, ForeignKey, Index, Integer, String, TIMESTAMP, Text, text
 from sqlalchemy.dialects.mysql import TEXT, TINYINT, VARCHAR
+from sqlalchemy.dialects.mysql.types import DECIMAL
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -8,6 +9,41 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 metadata = Base.metadata
 
+class Prediction(Base):
+    __tablename__ = 'Predictions'
+
+    name = Column(String(50), primary_key=True)
+    Prediction = Column(String(50))
+    id = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'))
+    created = Column(TIMESTAMP)
+
+    Predicted_confidence = Column(DECIMAL(5,2))
+    Agility_Thieving_bot = Column(Float)
+    Agility_bot = Column(Float)
+    Construction_Magic_bot = Column(Float)
+    Construction_Prayer_bot = Column(Float)
+    Cooking_bot = Column(Float)
+    Crafting_bot = Column(Float)
+    Fishing_Cooking_bot = Column(Float)
+    Fishing_bot = Column(Float)
+    Fletching_bot = Column(Float)
+    Herblore_bot = Column(Float)
+    Hunter_bot = Column(Float)
+    Magic_bot = Column(Float)
+    Mining_bot = Column(Float)
+    PVM_Melee_bot = Column(Float)
+    PVM_Ranged_Magic_bot = Column(Float)
+    PVM_Ranged_bot = Column(Float)
+    Real_Player = Column(Float)
+    Runecrafting_bot = Column(Float)
+    Smithing_bot = Column(Float)
+    Thieving_bot = Column(Float)
+    Woodcutting_bot = Column(Float)
+    Zaff_BStaff_Bot = Column(Float)
+    Zalcano_bot = Column(Float)
+    mort_myre_fungus_bot = Column(Float)
+
+    
 
 class Clan(Base):
     __tablename__ = 'Clan'
