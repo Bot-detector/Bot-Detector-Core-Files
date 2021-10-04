@@ -92,7 +92,7 @@ async def get(token: str):
     sql = select(columns=[PlayerHiscoreDataLatest, Player.name])
     sql = sql.where(func.date(dbPrediction.created) != func.curdate())
     sql = sql.order_by(func.rand())
-    sql = sql.limit(5).offset(0)
+    sql = sql.limit(5000).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
 
     async with async_session() as session:
