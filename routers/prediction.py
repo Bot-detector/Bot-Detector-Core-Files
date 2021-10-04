@@ -1,4 +1,5 @@
 from inspect import isdatadescriptor
+from operator import or_
 from typing import List, Optional
 from database.functions import async_session, execute_sql, list_to_string, sql_cursor, sqlalchemy_result, verify_token, engine
 from database.models import Player, PlayerHiscoreDataLatest
@@ -82,7 +83,7 @@ async def post(token: str, prediction: List[Prediction]):
     return {'ok':'ok'}
 
 @router.get("/v1/prediction/data", tags=["prediction", "business-logic"])
-async def get(token: str):
+async def get(token: str, limit: int = 50_000):
     '''
         GET: the hiscore data where prediction is not from today
     '''
@@ -90,14 +91,19 @@ async def get(token: str):
 
     # query
     sql = select(columns=[PlayerHiscoreDataLatest, Player.name])
-    sql = sql.where(func.date(dbPrediction.created) != func.curdate())
+    sql = sql.where(
+        or_(
+            func.date(dbPrediction.created) != func.curdate(),
+            dbPrediction.created == None
+        )
+    )
     sql = sql.order_by(func.rand())
-    sql = sql.limit(50000).offset(0)
+    sql = sql.limit(limit).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
 
     async with async_session() as session:
         data = await session.execute(sql)
-    
+
     names, objs, output = [], [], []
     for d in data:
         objs.append((d[0],))
