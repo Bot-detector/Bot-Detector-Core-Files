@@ -1,10 +1,11 @@
+from inspect import isdatadescriptor
 from typing import List, Optional
-from database.functions import async_session, list_to_string, sqlalchemy_result, verify_token, engine
+from database.functions import async_session, execute_sql, list_to_string, sql_cursor, sqlalchemy_result, verify_token, engine
 from database.models import Player, PlayerHiscoreDataLatest
 from database.models import Prediction as dbPrediction
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlalchemy.sql.expression import select, text
+from sqlalchemy.sql.expression import delete, select, text
 from sqlalchemy.sql.functions import func
 
 router = APIRouter()
@@ -65,20 +66,19 @@ async def post(token: str, prediction: List[Prediction]):
         insert, on duplicate update prediction into table
     '''
     await verify_token(token, verifcation='hiscore')
-    # TODO: this is not working for some fucking reason
-    engine.echo = True
+
     data = [d.dict() for d in prediction]
 
     columns = list_to_string([k for k in data[0].keys()])
     values = list_to_string([f':{k}' for k in data[0].keys()])
+
     sql = f'''replace into Predictions ({columns}) values ({values})'''
     sql = text(sql)
 
     async with async_session() as session:
         await session.execute(sql, data)
         await session.commit()
-
-    engine.echo = False
+    
     return {'ok':'ok'}
 
 @router.get("/v1/prediction/data", tags=["prediction", "business-logic"])
@@ -92,7 +92,7 @@ async def get(token: str):
     sql = select(columns=[PlayerHiscoreDataLatest, Player.name])
     sql = sql.where(func.date(dbPrediction.created) != func.curdate())
     sql = sql.order_by(func.rand())
-    sql = sql.limit(100).offset(0)
+    sql = sql.limit(5).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
 
     async with async_session() as session:

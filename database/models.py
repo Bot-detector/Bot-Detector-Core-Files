@@ -5,6 +5,8 @@ from sqlalchemy.dialects.mysql.types import DECIMAL
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
+
+
 # generated with sqlacodegen
 Base = declarative_base()
 metadata = Base.metadata
@@ -17,7 +19,7 @@ class Prediction(Base):
     id = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'))
     created = Column(TIMESTAMP)
 
-    Predicted_confidence = Column(DECIMAL(5,2))
+    Predicted_confidence = Column(Float)
     Agility_Thieving_bot = Column(Float)
     Agility_bot = Column(Float)
     Construction_Magic_bot = Column(Float)
