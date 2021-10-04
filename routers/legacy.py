@@ -729,7 +729,7 @@ async def sql_get_prediction_player(player_id):
 async def get_prediction(player_name, version=None, token=None):
     player_name, bad_name = await name_check(player_name)
 
-    if bad_name:
+    if bad_name or player_name is None:
         raise HTTPException(status_code=400, detail=f"Bad name")
     
     player = await sql_get_player(player_name)
