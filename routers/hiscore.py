@@ -111,7 +111,7 @@ async def get(
         select data from database
     '''
     # verify token
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
 
     # query
     table = playerHiscoreData
@@ -141,7 +141,7 @@ async def get(
         select data from database
     '''
     # verify token
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
 
     # query
     table = PlayerHiscoreDataLatest
@@ -172,7 +172,7 @@ async def get_hiscore_latest_bulk(
         select data from database
     '''
     # verify token
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
 
     # query
     table = PlayerHiscoreDataLatest
@@ -202,7 +202,7 @@ async def get(
         select data from database
     '''
     # verify token
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
 
     # query
     table = PlayerHiscoreDataXPChange
@@ -226,7 +226,7 @@ async def post(hiscores: hiscore, token: str):
     '''
         Insert hiscores into table: hiscore
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
 
     values = hiscores.dict()
 

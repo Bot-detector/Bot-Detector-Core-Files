@@ -72,7 +72,7 @@ async def post_bulk(
     label_id: Optional[List[int]] = None,
     row_count: int = 100_000,
     page: int = 1
-):
+    ):
     '''
         select data from database
     '''
@@ -112,7 +112,7 @@ async def put(player: Player, token: str):
     '''
     update data into database
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
 
     # param
     param = player.dict()
@@ -143,7 +143,7 @@ async def post(player_name: str, token: str):
     '''
     insert data into database
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
 
     sql_insert = insert(dbPlayer)
     sql_insert = sql_insert.values(name=player_name)

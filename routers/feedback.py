@@ -22,7 +22,7 @@ async def get(token:str):
     '''
     select data from database
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
     pass
 
 
@@ -31,7 +31,7 @@ async def post(feedback: Feedback, token:str):
     '''
     insert data into database
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
     feedback_params = feedback.dict()
 
     voter_data = await execute_sql(sql=f"select * from Players where name = :player_name", param={"player_name": feedback_params.pop("player_name")})

@@ -68,10 +68,11 @@ async def put(old_user_id: int, new_user_id: int, token: str):
 
 
 @router.post("v1/report", tags=["report"])
-async def post(detections: List[detection]):
+async def post(token:str,detections: List[detection]):
     '''
     insert data into database
     '''
+    await verify_token(token, verifcation='ban')
     sql = ('''
         insert ignore into Reports
     ''')

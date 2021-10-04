@@ -43,14 +43,14 @@ class Prediction(BaseModel):
     mort_myre_fungus_bot: float
 
 @router.get("/v1/prediction", tags=["prediction"])
-async def get(token: str, player_id: int):
+async def get(token: str, name: str):
     '''
-    select data from database
+        select predictionf from database
     '''
     await verify_token(token, verifcation='hiscore')
 
     sql = select(dbPrediction)
-    sql = sql.where(dbPrediction.id == player_id)
+    sql = sql.where(dbPrediction.name == name)
     
     async with async_session() as session:
         data = await session.execute(sql)
@@ -63,9 +63,9 @@ async def get(token: str, player_id: int):
 @router.post("/v1/prediction", tags=["prediction"])
 async def post(token: str, prediction: List[Prediction]):
     '''
-        insert, on duplicate update prediction into table
+        replace into prediction table
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verifcation='ban')
 
     data = [d.dict() for d in prediction]
 
@@ -92,7 +92,7 @@ async def get(token: str):
     sql = select(columns=[PlayerHiscoreDataLatest, Player.name])
     sql = sql.where(func.date(dbPrediction.created) != func.curdate())
     sql = sql.order_by(func.rand())
-    sql = sql.limit(5000).offset(0)
+    sql = sql.limit(50000).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
 
     async with async_session() as session:
