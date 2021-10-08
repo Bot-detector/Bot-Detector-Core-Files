@@ -552,7 +552,12 @@ async def print_log(token:str):
 
 
 @router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
-async def get_highscores(token:str, ofInterest:int=None, row_count:int=100_000, page:int=1):
+async def get_highscores(
+        token: str, 
+        ofInterest: int = None, 
+        row_count: Optional[int] = 100_000, 
+        page: Optional[int] = 1
+    ):
     await verify_token(token, verifcation='hiscore')
 
     if ofInterest is None:
