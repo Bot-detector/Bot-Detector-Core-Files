@@ -550,7 +550,7 @@ async def print_log(token:str):
     await verify_token(token, verifcation='ban')
     return FileResponse(path='error.log', filename='error.log', media_type='text/log')
 
-
+@router.get('/site/highscores/{token}/{ofInterest}', tags=['legacy'])
 @router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
 async def get_highscores(
         token: str, 
