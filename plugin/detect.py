@@ -49,8 +49,6 @@ def post_detect(version=None, manual_detect=0):
         Config.debug(f'No valid reports, {original_shape=}, {cleaned_shape=}')
         return jsonify({'OK': 'OK'})
 
-    df = set_player_ids(df)
-
     detections = df.to_dict('records')
 
     Config.debug(f'      Received detections: DF shape: {df.shape}')
@@ -68,41 +66,35 @@ def process_detections(detections, manual_detect: int):
     return
 
 
-def set_player_ids(detections):
-    names = list(detections["reported"])
-    names.append(detections["reporter"].iloc[0])
-
-    names_with_quotes = [f"('{name}')" for name in names if utils.string_processing.is_valid_rsn(name)]
-
-    players = SQL.insert_multiple_players(names_with_quotes)
-
-    reporter_id = find_player_id(detections["reporter"].iloc[0], players)
-
-    for index, row in detections.iterrows():
-        detections.loc[index, 'reporter'] = int(reporter_id)
-        detections.loc[index, 'reported'] = find_player_id(row["reported"], players)
-
-    return detections
-
-
-def find_player_id(name: str, players):
-    for player in players:
-        if player.name == name:
-            return int(player.id)
-    else:
-        return None
-
-
 def normalize_detection(detection, manual_detect):
+    # input validation
+    detection['reporter'], bad_name_reporter = SQL.name_check(detection['reporter'])
+    detection['reported'], bad_name_reported = SQL.name_check(detection['reported'])
+
+    if bad_name_reporter or bad_name_reported:
+        Config.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
+        return
+
     if  not (0 <= int(detection['region_id']) <= 15522):
         return
 
     if  not (0 <= int(detection['region_id']) <= 15522):
         return
+
+    # get reporter & reported
+    reporter = SQL.get_player(detection['reporter'])
+    reported = SQL.get_player(detection['reported'])
+
+    # if reporter or reported is None (=player does not exist), create player
+    if reporter is None:
+        reporter = SQL.insert_player(detection['reporter'])
+
+    if reported is None:
+        reported = SQL.insert_player(detection['reported'])
 
     data = {
-        'reportedID': detection.get('reported'),
-        'reportingID': detection.get('reporter'),
+        'reportedID': int(reported.id),
+        'reportingID': int(reporter.id),
         'region_id': detection.get('region_id'),
         'x_coord': detection.get('x'),
         'y_coord': detection.get('y'),
