@@ -288,6 +288,18 @@ def insert_report(data):
     execute_sql(sql_insert, param=param, debug=False, has_return=False)
 
 
+def insert_multiple_reports(columns: list, values: list, debug: bool=False):
+
+    sql_insert = f'''INSERT IGNORE INTO Reports 
+                        ({','.join(columns)}) 
+                     VALUES 
+                        {','.join(values)}'''
+
+    execute_sql(sql_insert, param=None, debug=debug, has_return=False)
+        
+    return 
+
+
 def transfer_kc(old_id, new_id):
 
     reports_transfer_sql = f"UPDATE Reports SET reportingID = {new_id} WHERE reporting ID = {old_id};"
