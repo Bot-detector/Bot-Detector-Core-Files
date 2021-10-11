@@ -1,3 +1,4 @@
+from typing import List
 from werkzeug.wrappers import CommonRequestDescriptorsMixin
 import Config
 import time
@@ -253,39 +254,19 @@ def user_latest_sighting(player_id):
 
     return execute_sql(sql, param=param, debug=False, has_return=True)
 
-def insert_report(data):
-
-    param = {
-        'reportedID': data.get('reported'),
-        'reportingID': data.get('reporter'),
-        'region_id': data.get('region_id'),
-        'x_coord': data.get('x'),
-        'y_coord': data.get('y'),
-        'z_coord': data.get('z'),
-        'timestamp': data.get('ts'),
-        'manual_detect': data.get('manual_detect'),
-        'on_members_world': data.get('on_members_world'),
-        'on_pvp_world': data.get('on_pvp_world'),
-        'world_number': data.get('world_number'),
-        'equip_head_id': data.get('equipment').get('HEAD'),
-        'equip_amulet_id': data.get('equipment').get('AMULET'),
-        'equip_torso_id': data.get('equipment').get('TORSO'),
-        'equip_legs_id': data.get('equipment').get('LEGS'),
-        'equip_boots_id': data.get('equipment').get('BOOTS'),
-        'equip_cape_id': data.get('equipment').get('CAPE'),
-        'equip_hands_id': data.get('equipment').get('HANDS'),
-        'equip_weapon_id': data.get('equipment').get('WEAPON'),
-        'equip_shield_id': data.get('equipment').get('SHIELD') ,
-        'equip_ge_value': data.get('equipment_ge')
-
-    }
-
+def insert_report(data: List):
+    '''
+        create the db query based on dict keys
+        insert ignore into Reports (col, col col) VALUES (:col, :col, :col)
+        colon infront of the col name makes it a variable
+    '''
     # list of column values
-    columns = list_to_string(list(param.keys()))
-    values = list_to_string([f':{column}' for column in list(param.keys())])
+    columns = list_to_string(list(data[0].keys()))
+    values = list_to_string([f':{column}' for column in list(data[0].keys())])
 
     sql_insert = f'insert ignore into Reports ({columns}) values ({values});'
-    execute_sql(sql_insert, param=param, debug=False, has_return=False)
+    execute_sql(sql_insert, param=data, debug=False, has_return=False)
+    return
 
 
 def insert_multiple_reports(columns: list, values: list, debug: bool=False):
