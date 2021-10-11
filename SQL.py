@@ -108,11 +108,6 @@ def get_player(player_name):
     return player_id
 
 
-def get_players_by_names(name: List[str]):
-    sql = f"SELECT * FROM Players WHERE name IN :name;"
-    return execute_sql(sql=sql, param={"name": name}, has_return=True)
-
-
 def get_number_confirmed_bans():
     sql = 'SELECT COUNT(*) bans FROM Players WHERE confirmed_ban = 1;'
     data = execute_sql(sql, param=None, debug=False, has_return=True)
@@ -134,15 +129,6 @@ def insert_player(player_name):
     execute_sql(sql_insert, param=param, debug=False, has_return=False)
     player = get_player(player_name)
     return player
-
-
-def insert_multiple_players(names):
-    sql_insert = f"insert ignore into Players (name) values (:name);"
-
-    execute_sql(sql_insert, param=[{"name": name} for name in names], has_return=False)
-
-    players = get_players_by_names(names)
-    return players
 
 
 def update_player(player_id, possible_ban=None, confirmed_ban=None, confirmed_player=None, label_id=None, label_jagex=None, debug=False):
