@@ -58,42 +58,7 @@ def parse_detection(data:dict) ->dict:
     }
     return param
 
-def process_data(param):
-
-    # 4.3) parse query
-    params = list(param[0].keys())
-    columns = SQL.list_to_string(params)
-    values = SQL.list_to_string([f':{column}' for column in params])
-
-    sql = f'insert ignore into Reports ({columns}) values ({values})'
-    SQL.execute_sql(sql, param, has_return=False)
-    return
-
-@detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
-@detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
-def post_detect(version=None, manual_detect=0):
-    # parse input
-    detections = request.get_json()
-    manual_detect = 0 if int(manual_detect) == 0 else 1
-
-        # remove duplicates
-    df = pd.DataFrame(detections)
-    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
-
-    # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
-    if len(df) > 5000 or df["reporter"].nunique() > 1:
-        Config.debug('to many reports')
-        return {'OK': 'OK'}
-
-    Config.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
-
-    # 1) Get a list of unqiue reported names and reporter name 
-    names = list(df['reported'].unique())
-    names.extend(df['reporter'].unique())
-
-    # 1.1) Normalize and validate all names
-    clean_names = [to_jagex_name(name) for name in names if is_valid_rsn(name)]
-    
+def process_data(df, clean_names, manual_detect):
     # 2) Get IDs for all unique names
     data = sql_select_players(clean_names)
     
@@ -120,8 +85,41 @@ def post_detect(version=None, manual_detect=0):
     # 4.2) parse data to param
     data = df.to_dict('records')
     param = [parse_detection(d) for d in data]
+    # 4.3) parse query
+    params = list(param[0].keys())
+    columns = SQL.list_to_string(params)
+    values = SQL.list_to_string([f':{column}' for column in params])
 
+    sql = f'insert ignore into Reports ({columns}) values ({values})'
+    SQL.execute_sql(sql, param, has_return=False)
+    return
+
+@detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
+@detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
+def post_detect(version=None, manual_detect=0):
+    # parse input
+    detections = request.get_json()
+    manual_detect = 0 if int(manual_detect) == 0 else 1
+
+    # remove duplicates
+    df = pd.DataFrame(detections)
+    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
+
+    # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
+    if len(df) > 5000 or df["reporter"].nunique() > 1:
+        Config.debug('to many reports')
+        return {'OK': 'OK'}
+
+    Config.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
+
+    # 1) Get a list of unqiue reported names and reporter name 
+    names = list(df['reported'].unique())
+    names.extend(df['reporter'].unique())
+
+    # 1.1) Normalize and validate all names
+    clean_names = [to_jagex_name(name) for name in names if is_valid_rsn(name)]
+    
     Config.sched.add_job(
-        process_data, args=[param], name='detect' , misfire_grace_time=None, replace_existing=False
+        process_data, args=[df, clean_names, manual_detect], name='detect' , misfire_grace_time=None, replace_existing=False
     )
     return {'OK': 'OK'}
