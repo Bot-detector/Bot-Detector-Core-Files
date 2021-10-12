@@ -4,7 +4,7 @@ import Config
 import time
 import random
 import string
-from sqlalchemy import text
+from sqlalchemy import text, exc
 from collections import namedtuple
 
 '''
@@ -289,8 +289,12 @@ def insert_multiple_reports(columns: list, values: list, debug: bool=False):
                      VALUES 
                         {','.join(values)}'''
 
-    execute_sql(sql_insert, param=None, debug=debug, has_return=False)
-        
+    try:
+        execute_sql(sql_insert, param=None, debug=debug, has_return=False)
+    except exc.OperationalError as e:
+        time.sleep(1)
+        execute_sql(sql_insert, param=None, debug=debug, has_return=False)
+
     return 
 
 
