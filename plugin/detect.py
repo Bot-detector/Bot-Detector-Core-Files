@@ -49,6 +49,8 @@ def post_detect(version=None, manual_detect=0):
         Config.debug(f'No valid reports, {original_shape=}, {cleaned_shape=}')
         return jsonify({'OK': 'OK'})
 
+    df = set_player_ids(df)
+
     detections = df.to_dict('records')
 
     Config.debug(f'      Received detections: DF shape: {df.shape}')
@@ -127,5 +129,5 @@ def normalize_detection(detection, manual_detect):
         'equip_shield_id': detection.get('equipment').get('SHIELD') ,
         'equip_ge_value': detection.get('equipment_ge')
     }
-    
+
     return data
