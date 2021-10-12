@@ -38,13 +38,15 @@ def get_random_string(length):
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
 
-def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerdata"):
+def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerdata", retry=False):
     engine = Config.db_engines[db_name] # create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool)
 
-    has_return = True if sql.lower().startswith('select') else False
+    
         
     # parsing
-    sql = text(sql)
+    if not retry:
+        has_return = True if sql.lower().startswith('select') else False
+        sql = text(sql)
 
     # debugging
     if debug:
@@ -74,10 +76,10 @@ def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerda
             # commit session
             session.commit()
         
-    except Exception as e:
+    except exc.OperationalError as e:
         Config.debug(e)
         Config.debug('retry')
-        execute_sql(sql, param, debug, has_return, db_name)
+        execute_sql(sql, param, debug, has_return, db_name, retry=True)
 
     return records
 
