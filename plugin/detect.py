@@ -58,8 +58,26 @@ def parse_detection(data:dict) ->dict:
     }
     return param
 
-def process_data(detections, manual_detect):
-    # remove duplicates
+def process_data(param)):
+
+
+    # 4.3) parse query
+    params = list(param[0].keys())
+    columns = SQL.list_to_string(params)
+    values = SQL.list_to_string([f':{column}' for column in params])
+
+    sql = f'insert ignore into Reports ({columns}) values ({values})'
+    SQL.execute_sql(sql, param, has_return=False)
+    return
+
+@detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
+@detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
+def post_detect(version=None, manual_detect=0):
+    # parse input
+    detections = request.get_json()
+    manual_detect = 0 if int(manual_detect) == 0 else 1
+
+        # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
 
@@ -104,22 +122,7 @@ def process_data(detections, manual_detect):
     data = df.to_dict('records')
     param = [parse_detection(d) for d in data]
 
-    # 4.3) parse query
-    params = list(param[0].keys())
-    columns = SQL.list_to_string(params)
-    values = SQL.list_to_string([f':{column}' for column in params])
-
-    sql = f'insert ignore into Reports ({columns}) values ({values})'
-    SQL.execute_sql(sql, param, has_return=False)
-    return
-
-@detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
-@detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
-def post_detect(version=None, manual_detect=0):
-    # parse input
-    detections = request.get_json()
-    manual_detect = 0 if int(manual_detect) == 0 else 1
     Config.sched.add_job(
-        process_data, args=[detections, manual_detect], name='detect' , misfire_grace_time=None, replace_existing=False
+        process_data, args=[param], name='detect' , misfire_grace_time=None, replace_existing=False
     )
     return {'OK': 'OK'}
