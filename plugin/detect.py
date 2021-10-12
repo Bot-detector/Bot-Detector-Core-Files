@@ -121,15 +121,7 @@ def post_detect(version=None, manual_detect=0):
     data = df.to_dict('records')
     param = [parse_detection(d) for d in data]
 
-    # 4.3) parse query
-    params = list(param[0].keys())
-    columns = SQL.list_to_string(params)
-    values = SQL.list_to_string([f':{column}' for column in params])
-
-    sql = f'insert ignore into Reports ({columns}) values ({values})'
-    SQL.execute_sql(sql, param, has_return=False)
-    
-    # Config.sched.add_job(
-    #     process_data, args=[param], name='detect' , misfire_grace_time=None, replace_existing=False
-    # )
+    Config.sched.add_job(
+        process_data, args=[param], name='detect' , misfire_grace_time=None, replace_existing=False
+    )
     return {'OK': 'OK'}
