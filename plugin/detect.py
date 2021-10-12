@@ -72,9 +72,9 @@ def process_detections(detections, manual_detect: int):
 
 def set_player_ids(detections):
     names = list(detections["reported"])
-    names.append(detections["reporter"].iloc[0])
 
     valid_names = [name for name in names if utils.string_processing.is_valid_rsn(name)]
+    valid_names.append(detections["reporter"].iloc[0]) #do this afterwards for the anon peeps
 
     players = SQL.insert_multiple_players(valid_names)
 
@@ -85,7 +85,7 @@ def set_player_ids(detections):
         
         reported_id = find_player_id(row["reported"], players)
 
-        if reported_id is not None:
+        if reported_id:
             detections.loc[index, 'reported'] = reported_id
         else:
             detections.drop([index], inplace=True)
