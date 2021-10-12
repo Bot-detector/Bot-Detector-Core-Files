@@ -77,8 +77,8 @@ def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerda
             session.commit()
         
     except exc.OperationalError as e:
-        Config.debug(e)
-        Config.debug('retry')
+        # Config.debug(e)
+        Config.debug('Deadlock: retrying')
         records = execute_sql(sql, param, debug, has_return, db_name, retry=True)
     return records
 
