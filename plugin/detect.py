@@ -2,6 +2,8 @@ import re
 import time
 from datetime import datetime, timedelta
 
+from sqlalchemy.util.langhelpers import NoneType
+
 import Config
 import pandas as pd
 import SQL
@@ -124,6 +126,7 @@ def post_detect(version=None, manual_detect=0):
     params = list(param[0].keys())
     columns = SQL.list_to_string(params)
     values = SQL.list_to_string([f':{column}' for column in params])
+
 
     sql = f'insert ignore into Reports ({columns}) values ({values})'
     SQL.execute_sql(sql, param, has_return=False)
