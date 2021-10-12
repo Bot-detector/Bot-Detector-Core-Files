@@ -61,7 +61,7 @@ def parse_detection(data:dict) ->dict:
 def post_detect(version=None, manual_detect=0):
     # parse input
     detections = request.get_json()
-    print(detections)
+    Config.debug(detections)
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
     # remove duplicates
