@@ -79,8 +79,7 @@ def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerda
     except exc.OperationalError as e:
         Config.debug(e)
         Config.debug('retry')
-        execute_sql(sql, param, debug, has_return, db_name, retry=True)
-
+        records = execute_sql(sql, param, debug, has_return, db_name, retry=True)
     return records
 
 # def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerdata"):
