@@ -64,26 +64,11 @@ def post_detect(version=None, manual_detect=0):
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
-    original_shape = df.shape
-
-    # remove any row with timestamps now within the LAST 24 hours. No future or really old entries.
-    now = pd.to_datetime(datetime.utcnow(), utc=True)
-    yesterday = datetime.utcnow() - timedelta(days=1)
-    yesterday = pd.to_datetime(yesterday, utc=True)
-
-    #create filter for df; only timestamps between now and 24 hours ago
-    mask = (df["ts"] >= yesterday) & (df["ts"] <= now)
-    df = df[mask]
-    cleaned_shape = df.shape
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         Config.debug('to many reports')
-        return {'NOK': 'NOK'}, 400
-    
-    if len(df) == 0:
-        Config.debug(f'No valid reports, {original_shape=}, {cleaned_shape=}')
-        return jsonify({'OK': 'OK'})
+        return {'OK': 'OK'}
 
     Config.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
@@ -127,4 +112,4 @@ def post_detect(version=None, manual_detect=0):
 
     sql = f'insert ignore into Reports ({columns}) values ({values})'
     SQL.execute_sql(sql, param, has_return=False)
-    return
+    return {'OK': 'OK'}
