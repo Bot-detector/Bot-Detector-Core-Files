@@ -83,9 +83,9 @@ def post_detect(version=None, manual_detect=0):
     
     # 2) Get IDs for all unique names
     data = sql_select_players(clean_names)
-
+    
     # 3) Create entries for players that do not yet exist in Players table
-    existing_names = [d["name"] for d in data]
+    existing_names = [d.name for d in data]
     new_names = set(clean_names).difference(existing_names)
     
     # 3.1) Get those players' IDs from step 3
