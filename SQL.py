@@ -38,37 +38,79 @@ def get_random_string(length):
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
 
-
 def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerdata"):
-    engine = Config.db_engines[db_name]
-    engine.dispose()
-    conn = engine.connect()
-    Session = Config.Session(bind=conn)
-    session = Session()
+    engine = Config.db_engines[db_name] # create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool)
 
+    has_return = True if sql.lower().startswith('select') else False
+        
+    # parsing
     sql = text(sql)
+
+    # debugging
     if debug:
         Config.debug(f'    SQL : {sql}')
         Config.debug(f'    Param: {param}')
 
-    if has_return:
-        rows = session.execute(sql, param)
-        # db.session.close()
-        Record = namedtuple('Record', rows.keys())
-        records = [Record(*r) for r in rows.fetchall()]
+    # make sure that we dont use another engine
+    engine.dispose()
 
-        if debug:
-            print(f'keys: {rows.keys()}')
+    # with handles open and close connection
+    try:
+        with engine.connect() as conn:
+            # creates thread save session
+            Session = Config.Session(bind=conn) # sqlalchemy.orm.sessionmaker
+            session = Session()
+            
+            # execute session
+            rows = session.execute(sql, param)
 
-        session.close()
-        conn.close()
-        return records
-    else:
-        session.execute(sql, param)
-        session.commit()
-        session.close()
-        conn.close()
-        return
+            # parse data
+            if has_return:
+                Record = namedtuple('Record', rows.keys())
+                records = [Record(*r) for r in rows.fetchall()]
+            else:
+                records = None
+
+            # commit session
+            session.commit()
+        
+    except Exception as e:
+        Config.debug(e)
+        Config.debug('retry')
+        execute_sql(sql, param, debug, has_return, db_name)
+
+    return records
+
+# def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerdata"):
+#     engine = Config.db_engines[db_name]
+#     engine.dispose()
+#     conn = engine.connect()
+#     Session = Config.Session(bind=conn)
+#     session = Session()
+
+#     sql = text(sql)
+#     if debug:
+#         Config.debug(f'    SQL : {sql}')
+#         Config.debug(f'    Param: {param}')
+
+#     if has_return:
+#         rows = session.execute(sql, param)
+#         # db.session.close()
+#         Record = namedtuple('Record', rows.keys())
+#         records = [Record(*r) for r in rows.fetchall()]
+
+#         if debug:
+#             print(f'keys: {rows.keys()}')
+
+#         session.close()
+#         conn.close()
+#         return records
+#     else:
+#         session.execute(sql, param)
+#         session.commit()
+#         session.close()
+#         conn.close()
+#         return
 
 '''
     Players Table
