@@ -13,7 +13,8 @@ from flask.json import jsonify
 detect = Blueprint('detect', __name__, template_folder='templates')
 
 def is_valid_rsn(rsn):
-    return re.fullmatch('[\w\d\s_-]{1,12}', rsn)
+    return True
+    # return re.fullmatch('[\w\d\s_-]{1,12}', rsn)
 
 def to_jagex_name(name: str) -> str:
     #TODO Normalization on DB
@@ -102,6 +103,7 @@ def post_detect(version=None, manual_detect=0):
     df = df.merge(df_names, left_on="reported", right_on="name")
 
     reported_id = df_names.query(f"name == {df['reporter'].unique()}")
+
     Config.debug(reported_id)
     
     df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
