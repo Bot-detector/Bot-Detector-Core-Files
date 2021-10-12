@@ -101,10 +101,6 @@ def post_detect(version=None, manual_detect=0):
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
     df = df.merge(df_names, left_on="reported", right_on="name")
-
-    reported_id = df_names.query(f"name == {df['reporter'].unique()}")
-
-    Config.debug(reported_id)
     
     df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
 
