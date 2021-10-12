@@ -1,3 +1,5 @@
+import re
+import time
 from datetime import datetime, timedelta
 
 from sqlalchemy.util.langhelpers import NoneType
@@ -7,33 +9,67 @@ import pandas as pd
 import SQL
 from flask import Blueprint, request
 from flask.json import jsonify
-import utils.string_processing
 
 detect = Blueprint('detect', __name__, template_folder='templates')
 
+def is_valid_rsn(rsn):
+    return re.fullmatch('[\w\d\s_-]{1,12}', rsn)
+
+def to_jagex_name(name: str) -> str:
+    #TODO Normalization on DB
+    return name
+
+def sql_select_players(names):
+    sql = "SELECT * FROM Players WHERE name in :names"
+    param = {'names': names}
+    data = SQL.execute_sql(sql, param, has_return=True)
+    return data
+
+def parse_detection(data:dict) ->dict:
+    gmt = time.gmtime(data['ts'])
+    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+
+    equipment = data.get('equipment')
+
+    param = {
+        'reportedID': data.get('id'),
+        'reportingID': data.get('reporter_id'),
+        'region_id': data.get('region_id'),
+        'x_coord': data.get('x'),
+        'y_coord': data.get('y'),
+        'z_coord': data.get('z'),
+        'timestamp': human_time,
+        'manual_detect': data.get('manual_detect'),
+        'on_members_world': data.get('on_members_world'),
+        'on_pvp_world': data.get('on_pvp_world'),
+        'world_number': data.get('world_number'),
+        'equip_head_id': equipment.get('HEAD'),
+        'equip_amulet_id': equipment.get('AMULET'),
+        'equip_torso_id': equipment.get('TORSO'),
+        'equip_legs_id': equipment.get('LEGS'),
+        'equip_boots_id': equipment.get('BOOTS'),
+        'equip_cape_id': equipment.get('CAPE'),
+        'equip_hands_id': equipment.get('HANDS'),
+        'equip_weapon_id': equipment.get('WEAPON'),
+        'equip_shield_id': equipment.get('SHIELD'),
+        'equip_ge_value': data.get('equipment_ge')
+    }
+    return param
 
 @detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
 @detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
 def post_detect(version=None, manual_detect=0):
+    # parse input
     detections = request.get_json()
-    
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
+    # remove duplicates
     df = pd.DataFrame(detections)
+    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
     original_shape = df.shape
 
-    #remove blank rows
-    df.dropna(inplace=True)
-
-    # remove duplicates
-    df.drop_duplicates(subset=["reporter","reported","region_id"], inplace=True)
-
-    #normalize time values
-    df["ts"] = pd.to_datetime(df["ts"], unit='s', utc=True)
-
-    #remove any row with timestamps now within the LAST 24 hours. No future or really old entries.
-    now = datetime.utcnow()
-    now = pd.to_datetime(now, utc=True)
+    # remove any row with timestamps now within the LAST 24 hours. No future or really old entries.
+    now = pd.to_datetime(datetime.utcnow(), utc=True)
     yesterday = datetime.utcnow() - timedelta(days=1)
     yesterday = pd.to_datetime(yesterday, utc=True)
 
@@ -42,80 +78,56 @@ def post_detect(version=None, manual_detect=0):
     df = df[mask]
     cleaned_shape = df.shape
 
-    #Kicks out lists with more than 5k sightings and more than 1 reporter
+    # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        Config.debug(f'too many reports: {df.shape}')
-        return jsonify({'OK': 'OK'})
+        Config.debug('to many reports')
+        return {'NOK': 'NOK'}, 400
     
     if len(df) == 0:
         Config.debug(f'No valid reports, {original_shape=}, {cleaned_shape=}')
         return jsonify({'OK': 'OK'})
 
-    detections = df.to_dict('records')
+    Config.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
-    Config.debug(f'      Received detections: DF shape: {df.shape}')
-    Config.sched.add_job(process_detections ,args=[detections, manual_detect], replace_existing=False, name='detect', misfire_grace_time=None)
+    # 1) Get a list of unqiue reported names and reporter name 
+    names = list(df['reported'].unique())
+    names.extend(df['reporter'].unique())
 
-    return jsonify({'OK': 'OK'})
+    # 1.1) Normalize and validate all names
+    clean_names = [to_jagex_name(name) for name in names if is_valid_rsn(name)]
+    
+    # 2) Get IDs for all unique names
+    data = sql_select_players(clean_names)
+
+    # 3) Create entries for players that do not yet exist in Players table
+    existing_names = [d["name"] for d in data]
+    new_names = set(clean_names).difference(existing_names)
+    
+    # 3.1) Get those players' IDs from step 3
+    if new_names:
+        sql = "insert ignore into Players (name) values(:name)"
+        param = [{"name": name} for name in new_names]
+        SQL.execute_sql(sql, param, has_return=False)
+
+        data.append(sql_select_players(new_names))
+
+    # 4) Insert detections into Reports table with user ids 
+    # 4.1) add reported & reporter id
+    df_names = pd.DataFrame(data)
+    df = df.merge(df_names, left_on="reported", right_on="name")
+    
+    df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
+
+    # 4.2) parse data to param
+    data = df.to_dict('records')
+    param = [parse_detection(d) for d in data]
+
+    # 4.3) parse query
+    params = list(param[0].keys())
+    columns = SQL.list_to_string(params)
+    values = SQL.list_to_string([f':{column}' for column in params])
 
 
-def process_detections(detections, manual_detect: int):
-    '''
-        create a list of dict with keys that match the db columns
-    '''
-    data = [normalize_detection(d, manual_detect) for d in detections]
-    SQL.insert_report(data)
+    sql = f'insert ignore into Reports ({columns}) values ({values})'
+    SQL.execute_sql(sql, param, has_return=False)
     return
-
-
-def normalize_detection(detection, manual_detect):
-    # input validation
-    detection['reporter'], bad_name_reporter = SQL.name_check(detection['reporter'])
-    detection['reported'], bad_name_reported = SQL.name_check(detection['reported'])
-
-    if bad_name_reporter or bad_name_reported:
-        Config.debug(f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
-        return
-
-    if  not (0 <= int(detection['region_id']) <= 15522):
-        return
-
-    if  not (0 <= int(detection['region_id']) <= 15522):
-        return
-
-    # get reporter & reported
-    reporter = SQL.get_player(detection['reporter'])
-    reported = SQL.get_player(detection['reported'])
-
-    # if reporter or reported is None (=player does not exist), create player
-    if reporter is None:
-        reporter = SQL.insert_player(detection['reporter'])
-
-    if reported is None:
-        reported = SQL.insert_player(detection['reported'])
-
-    data = {
-        'reportedID': int(reported.id),
-        'reportingID': int(reporter.id),
-        'region_id': detection.get('region_id'),
-        'x_coord': detection.get('x'),
-        'y_coord': detection.get('y'),
-        'z_coord': detection.get('z'),
-        'timestamp': detection.get('ts'),
-        'manual_detect': manual_detect,
-        'on_members_world': detection.get('on_members_world'),
-        'on_pvp_world': detection.get('on_pvp_world'),
-        'world_number': detection.get('world_number'),
-        'equip_head_id': detection.get('equipment').get('HEAD'),
-        'equip_amulet_id': detection.get('equipment').get('AMULET'),
-        'equip_torso_id': detection.get('equipment').get('TORSO'),
-        'equip_legs_id': detection.get('equipment').get('LEGS'),
-        'equip_boots_id': detection.get('equipment').get('BOOTS'),
-        'equip_cape_id': detection.get('equipment').get('CAPE'),
-        'equip_hands_id': detection.get('equipment').get('HANDS'),
-        'equip_weapon_id': detection.get('equipment').get('WEAPON'),
-        'equip_shield_id': detection.get('equipment').get('SHIELD') ,
-        'equip_ge_value': detection.get('equipment_ge')
-    }
-
-    return data
