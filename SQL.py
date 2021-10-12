@@ -293,7 +293,7 @@ def insert_multiple_reports(columns: list, values: list, debug: bool=False):
     try:
         execute_sql(sql_insert, param=None, debug=debug, has_return=False)
     except exc.OperationalError as e:
-        time.sleep(5)
+        time.sleep(1)
         execute_sql(sql_insert, param=None, debug=debug, has_return=False)
 
     return 
