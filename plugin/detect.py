@@ -58,8 +58,7 @@ def parse_detection(data:dict) ->dict:
     }
     return param
 
-def process_data(param)):
-
+def process_data(param):
 
     # 4.3) parse query
     params = list(param[0].keys())
