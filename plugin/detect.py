@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+from sqlalchemy.util.langhelpers import NoneType
+
 import Config
 import pandas as pd
 import SQL
@@ -83,7 +85,7 @@ def set_player_ids(detections):
         
         reported_id = find_player_id(row["reported"], players)
 
-        if reported_id:
+        if reported_id is not None:
             detections.loc[index, 'reported'] = reported_id
         else:
             detections.drop([index], inplace=True)
