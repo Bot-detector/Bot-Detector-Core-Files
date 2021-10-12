@@ -1,3 +1,4 @@
+from os import name
 import re
 import time
 from datetime import datetime, timedelta
@@ -57,13 +58,7 @@ def parse_detection(data:dict) ->dict:
     }
     return param
 
-@detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
-@detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
-def post_detect(version=None, manual_detect=0):
-    # parse input
-    detections = request.get_json()
-    manual_detect = 0 if int(manual_detect) == 0 else 1
-
+def process_data(detections, manual_detect):
     # remove duplicates
     df = pd.DataFrame(detections)
     df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
@@ -104,6 +99,7 @@ def post_detect(version=None, manual_detect=0):
     
     df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
 
+    df['manual_detect'] = manual_detect
     # 4.2) parse data to param
     data = df.to_dict('records')
     param = [parse_detection(d) for d in data]
@@ -113,7 +109,17 @@ def post_detect(version=None, manual_detect=0):
     columns = SQL.list_to_string(params)
     values = SQL.list_to_string([f':{column}' for column in params])
 
-
     sql = f'insert ignore into Reports ({columns}) values ({values})'
     SQL.execute_sql(sql, param, has_return=False)
+    return
+
+@detect.route('/plugin/detect/<manual_detect>', methods=['POST'])
+@detect.route('/<version>/plugin/detect/<manual_detect>', methods=['POST'])
+def post_detect(version=None, manual_detect=0):
+    # parse input
+    detections = request.get_json()
+    manual_detect = 0 if int(manual_detect) == 0 else 1
+    Config.sched.add_job(
+        process_data, args=[detections, manual_detect], name='detect' , misfire_grace_time=None, replace_existing=False
+    )
     return {'OK': 'OK'}
