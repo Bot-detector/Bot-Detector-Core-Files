@@ -108,9 +108,9 @@ def get_player(player_name):
     return player_id
 
 
-def get_players_by_names(names: List[str]):
-    sql = f"SELECT * FROM Players WHERE name IN ({','.join(names)})"
-    return execute_sql(sql=sql, has_return=True)
+def get_players_by_names(name: List[str]):
+    sql = f"SELECT * FROM Players WHERE name IN :name;"
+    return execute_sql(sql=sql, param={"name": name}, has_return=True)
 
 
 def get_number_confirmed_bans():
@@ -137,8 +137,9 @@ def insert_player(player_name):
 
 
 def insert_multiple_players(names):
-    sql_insert = f"insert ignore into Players (name) values {','.join(names)};"
-    execute_sql(sql_insert, has_return=False)
+    sql_insert = f"insert ignore into Players (name) values (:name);"
+
+    execute_sql(sql_insert, param=[{"name": name} for name in names], has_return=False)
 
     players = get_players_by_names(names)
     return players

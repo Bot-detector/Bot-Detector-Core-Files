@@ -72,15 +72,21 @@ def set_player_ids(detections):
     names = list(detections["reported"])
     names.append(detections["reporter"].iloc[0])
 
-    names_with_quotes = [f"('{name}')" for name in names if utils.string_processing.is_valid_rsn(name)]
+    valid_names = [name for name in names if utils.string_processing.is_valid_rsn(name)]
 
-    players = SQL.insert_multiple_players(names_with_quotes)
+    players = SQL.insert_multiple_players(valid_names)
 
     reporter_id = find_player_id(detections["reporter"].iloc[0], players)
 
     for index, row in detections.iterrows():
         detections.loc[index, 'reporter'] = int(reporter_id)
-        detections.loc[index, 'reported'] = find_player_id(row["reported"], players)
+        
+        reported_id = find_player_id(row["reported"], players)
+
+        if reported_id:
+            detections.loc[index, 'reported'] = reported_id
+        else:
+            detections.drop([index], inplace=True)
 
     return detections
 
