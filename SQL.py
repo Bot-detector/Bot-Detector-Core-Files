@@ -43,6 +43,7 @@ def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerda
 
     # parsing
     if not retry:
+        sql = sql.strip()
         has_return = True if sql.lower().startswith('select') else False
         sql = text(sql)
 
