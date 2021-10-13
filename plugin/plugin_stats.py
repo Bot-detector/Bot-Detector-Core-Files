@@ -109,21 +109,9 @@ def get_contributions_plus(token):
 
     contributions = SQL.get_contributions(contributors)
 
-    total_submissions_sql = '''
-        SELECT
-            COUNT(*) submissions
-        FROM Reports as r
-        JOIN Players as pl on pl.id = r.reportingID
-        WHERE 1=1
-        AND pl.name IN :contributors
-    '''
-
-    total_subs_data = SQL.execute_sql(sql=total_submissions_sql, param={"contributors": contributors})
-    total_subs = int(total_subs_data[0].submissions)
-
-
     df = pd.DataFrame(contributions)
     df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
+    total_subs = len(df)
 
     banned_df = df[df["confirmed_ban"] == 1]
     banned_ids = banned_df["reported_ids"].tolist()
