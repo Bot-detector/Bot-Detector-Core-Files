@@ -17,11 +17,11 @@ def get_contributions(version=None, contributor=None):
     contributors = None
 
     # check if a signal contributor was given
-    if not contributor == None:
+    if contributor is not None:
         contributors = [contributor]
     
     # if contributors is not set we need to get the request data
-    if contributors: # None == False
+    if contributors is None:
         data = request.json
         data = json.loads(data) if isinstance(data, str) else data
         contributors = tuple([c["name"] for c in data])
