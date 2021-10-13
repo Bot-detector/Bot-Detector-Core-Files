@@ -583,7 +583,7 @@ def get_contributions(contributors):
         JOIN Players as pl on pl.id = rp.reportedID
         JOIN Players as p on p.id = rp.reportingID
         WHERE 1=1
-            and pl.name in :names
+            and p.name in :names
     '''
 
     params = {
