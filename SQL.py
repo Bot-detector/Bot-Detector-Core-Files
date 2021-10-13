@@ -573,7 +573,7 @@ def get_report_stats():
 def get_contributions(contributors):
     
     query = '''Select 
-        rp.manual_detect,
+        rp.manual_detect as detect,
         rp.reportedID as reported_ids,
         pl.confirmed_ban as confirmed_ban,
         pl.possible_ban as possible_ban,
