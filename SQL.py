@@ -572,18 +572,16 @@ def get_report_stats():
 
 def get_contributions(contributors):
     
-    query = '''
-        SELECT
-            rp.manual_detect as detect,
-            rp.reportedID as reported_ids,
-            pl.confirmed_ban as confirmed_ban,
-            pl.possible_ban as possible_ban,
-            pl.confirmed_player as confirmed_player
-        FROM Reports as rp
-        JOIN Players as pl on pl.id = rp.reportedID
-        JOIN Players as p on p.id = rp.reportingID
-        WHERE 1=1
-            and pl.name in :names
+    query = '''Select 
+        rp.manual_detect as detect,
+        rp.reportedID as reported_ids,
+        pl.confirmed_ban as confirmed_ban,
+        pl.possible_ban as possible_ban,
+        pl.confirmed_player as confirmed_player
+    from Reports rp
+    join Players pl on (rp.reportingID = pl.id)
+    where
+        pl.name in :names
     '''
 
     params = {
