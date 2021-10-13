@@ -1,33 +1,44 @@
-import os, sys
 import datetime
+import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Blueprint, jsonify, request, make_response
+import Config
+import pandas as pd
+import SQL
 from discord_webhook import DiscordWebhook
 from discord_webhook.webhook import DiscordEmbed
-
-import Config
+from flask import Blueprint, jsonify, make_response, request
 from Predictions import model
+from SQL import (get_player, get_verified_discord_user,
+                 insert_prediction_feedback)
 from utils.string_processing import escape_markdown
-from SQL import get_player, insert_prediction_feedback, get_verified_discord_user
-import SQL
 
 from mysite import tokens
 
 app_predictions = Blueprint('predictions', __name__, template_folder='templates')
 
+
+def get_prediction_from_db(player):
+    try:
+        player = SQL.get_player(player)
+        df_resf = SQL.get_prediction_player(player.id)
+        df_resf = pd.DataFrame(df_resf)
+        df_resf.set_index('name', inplace=True)
+        df_resf.rename(columns={'Predicted_confidence': 'Predicted confidence'}, inplace=True)
+
+        columns = [c for c in df_resf.columns.tolist() if not(c in ['id','prediction', 'created'])]
+        df_resf.loc[:, columns]= df_resf[columns].astype(float)/100
+
+        return df_resf
+    except Exception as e:
+        Config.debug(f'error in get_prediction_from_db: {e}')
+        return None
+
 @app_predictions.route('/site/prediction/<player_name>', methods=['POST', 'GET'])
 @app_predictions.route('/<version>/site/prediction/<player_name>', methods=['POST', 'GET'])
-@app_predictions.route('/<version>/site/prediction/<player_name>/<token>', methods=['POST', 'GET'])
-def get_prediction(player_name, version=None, token=None):
-    if not (token is None):
-        debug = True if tokens.verify_token(token, verifcation=None) else False
-    else:
-        debug = False
-    Config.debug(f'Prediction route debug: {debug}')
-    # Config.debug("PREDICTION REQUEST\n")
-    # Config.debug(request.headers)
-
+def get_prediction(player_name, version=None):
     player_name, bad_name = SQL.name_check(player_name)
 
     if player_name.lower() == "mod ash":
@@ -37,21 +48,29 @@ def get_prediction(player_name, version=None, token=None):
             "prediction_label": "Big Daddy",
             "prediction_confidence": 1
         }
-    elif not( bad_name):
-        df = model.predict_model(player_name=player_name, use_pca=Config.use_pca, debug=debug)
-        df['name'] = player_name
-    else:
+        return jsonify(df)
+
+    if bad_name:
         df = {
             "player_id": -1,
             "player_name": player_name,
             "prediction_label": "Invalid player name",
             "prediction_confidence": 0
         }
-
-    if isinstance(df, dict):
+        return jsonify(df)
+   
+    df = get_prediction_from_db(player_name)
+    if df is None:
+        df = {
+            "player_id": -1,
+            "player_name": player_name,
+            "prediction_label": "Prediction not in database",
+            "prediction_confidence": 0
+        }
         return jsonify(df)
 
-    
+    df['name'] = player_name
+
     prediction_dict = df.to_dict(orient='records')[0]
     prediction_dict['id'] = int(prediction_dict['id'])
     prediction_dict.pop("created")
