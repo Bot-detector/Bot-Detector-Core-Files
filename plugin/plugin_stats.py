@@ -5,6 +5,7 @@ import SQL
 import json
 import utils.string_processing
 import mysite.tokens as tokens
+import Config
 
 plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 
@@ -13,38 +14,27 @@ plugin_stats = Blueprint('plugin_stats', __name__, template_folder='templates')
 @plugin_stats.route('/stats/contributions/<contributor>', methods=['GET'])
 @plugin_stats.route('/<version>/stats/contributions/<contributor>', methods=['GET'])
 def get_contributions(version=None, contributor=None):
+    contributors = None
 
-    #TODO Figure out the name normalization situtation..
-    if contributor is not None:
+    # check if a signal contributor was given
+    if not contributor == None:
         contributors = [contributor]
-    else:
-        if isinstance(request.json, str):
-            contrib_data = json.loads(request.json)
-        else:
-            contrib_data = request.json
+    
+    # if contributors is not set we need to get the request data
+    if contributors: # None == False
+        data = request.json
+        data = json.loads(data) if isinstance(data, str) else data
+        contributors = tuple([c["name"] for c in data])
 
-        if contrib_data is not None:
-            contributors = tuple([c["name"] for c in contrib_data])
-        else:
-            return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
+    # if for some reason contributors is still none
+    if contributors is None:
+        return "<h1>400</h1><p>You must include a Runescape Name in your query.</p>", 400
 
     contributions = SQL.get_contributions(contributors)
 
-    total_submissions_sql = '''
-        SELECT
-            COUNT(*) submissions
-        FROM Reports as r
-        JOIN Players as pl on pl.id = r.reportingID
-        WHERE 1=1
-        AND pl.name IN :contributors
-    '''
-
-    total_subs_data = SQL.execute_sql(sql=total_submissions_sql, param={"contributors": contributors})
-    total_subs = int(total_subs_data[0].submissions)
-
-
     df = pd.DataFrame(contributions)
     df = df.drop_duplicates(inplace=False, subset=["reported_ids", "detect"], keep="last")
+    total_subs = len(df)
 
     try:
         df_detect_manual = df.loc[df['detect'] == 1]

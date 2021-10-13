@@ -41,8 +41,6 @@ def get_random_string(length):
 def execute_sql(sql, param=None, debug=False, has_return=True, db_name="playerdata", retry=False):
     engine = Config.db_engines[db_name] # create_engine(sql_uri, poolclass=sqlalchemy.pool.NullPool)
 
-    
-        
     # parsing
     if not retry:
         has_return = True if sql.lower().startswith('select') else False
@@ -574,26 +572,20 @@ def get_report_stats():
 
 def get_contributions(contributors):
     
-    query = '''
-        SELECT
-            rs.detect,
-            rs.reported as reported_ids,
-            pl.confirmed_ban as confirmed_ban,
-            pl.possible_ban as possible_ban,
-            pl.confirmed_player as confirmed_player
-        FROM
-            (SELECT
-                r.reportedID as reported,
-                r.manual_detect as detect
-        FROM Reports as r
-        JOIN Players as pl on pl.id = r.reportingID
-        WHERE 1=1
-            AND pl.name IN :contributors ) rs
-        JOIN Players as pl on (pl.id = rs.reported);
+    query = '''Select 
+        rp.manual_detect,
+        rp.reportedID as reported_ids,
+        pl.confirmed_ban as confirmed_ban,
+        pl.possible_ban as possible_ban,
+        pl.confirmed_player as confirmed_player
+    from Reports rp
+    join Players pl on (rp.reportingID = pl.id)
+    where
+        pl.name in :names
     '''
 
     params = {
-        "contributors": contributors
+        "names": contributors
     }
 
     data = execute_sql(query, param=params, debug=False, has_return=True)
