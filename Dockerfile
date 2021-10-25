@@ -1,8 +1,11 @@
-FROM python:3
+FROM python:3.9
 
-WORKDIR /home
+WORKDIR /code
 
-COPY . .
-RUN pip3 install -r requirements.txt --no-cache-dir
+COPY ./requirements.txt /code/requirements.txt
 
-CMD ["python3", "app.py"]
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+COPY . /code
+
+CMD ["uvicorn", "app:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]
