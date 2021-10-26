@@ -10,7 +10,6 @@ import SQL
 from discord_webhook import DiscordWebhook
 from discord_webhook.webhook import DiscordEmbed
 from flask import Blueprint, jsonify, make_response, request
-from Predictions import model
 from SQL import (get_player, get_verified_discord_user,
                  insert_prediction_feedback)
 from utils.string_processing import escape_markdown

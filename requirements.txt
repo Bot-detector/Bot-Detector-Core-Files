@@ -36,16 +36,12 @@ python-dateutil==2.8.1
 python-dotenv==0.18.0
 pytz==2021.1
 requests==2.25.1
-scikit-learn
-scipy==1.7.0
 six==1.16.0
-sklearn
 soupsieve==2.2.1
 SQLAlchemy==1.4.19
 threadpoolctl==2.1.0
 toml==0.10.2
 tzlocal==2.1
 urllib3==1.26.6
-waitress==2.0.0
 Werkzeug==2.0.1
 XlsxWriter==1.4.3

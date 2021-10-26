@@ -5,16 +5,13 @@ import datetime as dt
 import os
 # custom
 import Config
-from scraper import hiscoreScraper, banned_by_jagex
 from mysite.tokens import app_token
 from mysite.dashboard import dashboard
 from plugin.plugin_stats import plugin_stats
 from plugin.detect import detect
 from Config import app, sched
 from mysite.predictions import app_predictions
-from Predictions import model
 from discord.discord import discord
-from scraper.scraper import app_scraper
 from plugin.clan import clan
 import gc
 
@@ -24,7 +21,6 @@ app.register_blueprint(app_token)
 app.register_blueprint(dashboard)
 app.register_blueprint(app_predictions)
 app.register_blueprint(discord)
-app.register_blueprint(app_scraper)
 app.register_blueprint(clan)
 
 def print_jobs():

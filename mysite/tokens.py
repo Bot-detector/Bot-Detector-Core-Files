@@ -3,7 +3,6 @@ import os, sys
 from sqlalchemy.sql.expression import false
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-
 from flask import Blueprint, request, make_response, after_this_request, render_template_string, redirect
 from flask.json import jsonify
 
@@ -12,8 +11,6 @@ import json
 
 import SQL
 import Config
-from Predictions import model
-from scraper import banned_by_jagex, hiscoreScraper
 from utils import string_processing
 
 app_token = Blueprint('app_token', __name__, template_folder='templates')
@@ -135,33 +132,6 @@ def create_user_token(token, player_name, hiscore=0, ban=0):
     # return created token
     return jsonify({'Token': token})
 
-
-'''
-    These routes schedule jos
-'''
-@app_token.route("/site/possible_ban/<token>")
-def possible_ban(token):
-    if not (verify_token(token, verifcation='create_token')):
-        return "<h1>404</h1><p>Invalid token</p>", 404
-        
-    Config.sched.add_job(banned_by_jagex.confirm_possible_ban, max_instances=10, coalesce=True, name='confirm_possible_ban')
-    return jsonify({'OK': 'OK'})
-
-@app_token.route('/site/save_model/<token>')
-def create_predictions(token):
-    if not (verify_token(token, verifcation='create_token')):
-        return "<h1>404</h1><p>Invalid token</p>", 404
-
-    Config.sched.add_job(model.save_model ,args=[Config.n_pca, Config.use_pca], replace_existing=True, name='save_model')
-    return jsonify({'OK': 'OK'})
-
-@app_token.route("/site/hiscorescraper/<token>")
-def hiscorescraper(token):
-    if not (verify_token(token, verifcation='create_token')):
-        return "<h1>404</h1><p>Invalid token</p>", 404
-
-    Config.sched.add_job(hiscoreScraper.run_scraper, name='run_hiscore',max_instances=10, coalesce=True)
-    return jsonify({'OK': 'OK'})
 '''
     These routes are accessible if you have a token
 '''
