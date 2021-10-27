@@ -1,13 +1,44 @@
-name: Dev deployment
+name: Docker Image CI
+
 on:
   push:
     branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
 
 jobs:
-  deploy:
+
+  build:
+
     runs-on: self-hosted
+
     steps:
-      - name: Run Update Script
-        run: |
-          cd ~/dev-api/Bot-Detector-Core-Files/
-          ./update.sh
+    - uses: actions/checkout@v2
+    - name: Set Up ENV
+      run: |
+          echo "${{ secrets.AIOMYSQL_URI }}" > .env
+          echo "${{ secrets.HTTP_PROXY }}" >> .env
+          echo "${{ secrets.HTTPS_PROXY }}" >> .env
+          echo "${{ secrets.DISCORD_AIOMYSQL_URI }}" >> .env
+          echo "${{ secrets.FLASK_PORT }}" >> .env
+          echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
+          echo "${{ secrets.FEEDBACK_WEBHOOK_URL }}" >> .env
+          echo dev_mode=0 >> .env
+    
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile -t bot-detector/bd-api:latest
+
+    - name: Tag Image
+      run: docker tag bot-detector/bd-api:latest hub.osrsbotdetector.com/bot-detector/bd-api:latest
+      
+    - name: Login to Docker Registry
+      run: echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | docker login https://hub.osrsbotdetector.com -u "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin
+
+    - name: Push Image to Registry
+      run: docker push hub.osrsbotdetector.com/bot-detector/bd-api:latest
+
+    - name: Apply Possible Deployment Changes
+      run: kubectl apply -f bd-dev-api-deploy.yaml
+
+    - name: Restart Deployment for Possible Container Changes
+      run: kubectl rollout restart deploy bd-dev-api

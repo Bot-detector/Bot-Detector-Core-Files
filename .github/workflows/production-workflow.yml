@@ -33,3 +33,9 @@ jobs:
 
     - name: Push Image to Registry
       run: docker push hub.osrsbotdetector.com/bot-detector/bd-api:production
+
+    - name: Apply Possible Deployment Changes
+      run: kubectl apply -f bd-prod-api-deploy.yaml
+
+    - name: Restart Deployment for Possible Container Changes
+      run: kubectl rollout restart deploy bd-prod-api
