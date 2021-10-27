@@ -1,10 +1,11 @@
-FROM python:slim
+FROM python:3.9
 
-WORKDIR /home
+WORKDIR /code
 
-COPY . .
+COPY ./requirements.txt /code/requirements.txt
 
-RUN pip3 install -r requirements.txt --no-cache-dir
+RUN pip install --no-cache-dir -r /code/requirements.txt
 
-CMD ["gunicorn","--bind","0.0.0.0:4000","app:app"]
+COPY . /code
 
+CMD ["uvicorn", "app:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "5000", "--root-path", "/dev"]
