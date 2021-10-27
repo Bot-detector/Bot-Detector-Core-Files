@@ -13,6 +13,7 @@ from Config import app, sched
 from mysite.predictions import app_predictions
 from discord.discord import discord
 from plugin.clan import clan
+from scraper.scraper import app_scraper
 import gc
 
 app.register_blueprint(plugin_stats)
@@ -22,6 +23,7 @@ app.register_blueprint(dashboard)
 app.register_blueprint(app_predictions)
 app.register_blueprint(discord)
 app.register_blueprint(clan)
+app.register_blueprint(app_scraper)
 
 def print_jobs():
     Config.debug('   Scheduled Jobs:')
