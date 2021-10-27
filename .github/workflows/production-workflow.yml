@@ -1,131 +1,41 @@
-name: Deployment workflow
+name: Production workflow
 on:
   push:
     branches: [ main ]
 
 jobs:
-  # checkout-0:
-  #   runs-on: main-node
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - name: Install Dependencies 0
-  #     run: |
-  #       sudo systemctl stop flaskapi.service
-  #       rm -rf error.log
-  #       (test -d env && rm -rf env || python3 -m venv env)
-  #       source ./env/bin/activate
-  #       python3 -m pip install --upgrade pip
-  #       pip3 install flake8 pytest
-  #       if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
-  # deploy-0:
-  #   runs-on: main-node
-  #   needs: [checkout-0]
-  #   steps:
-  #     - name: setup_env_Vars 0
-  #       run: |
-  #         echo "${{ secrets.DB_URI }}" > .env
-  #         echo "${{ secrets.HTTP_PROXY }}" >> .env
-  #         echo "${{ secrets.HTTPS_PROXY }}" >> .env
-  #         echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
-  #         echo "${{ secrets.FLASK_PORT }}" >> .env
-  #         echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
-  #         echo dev_mode=0 >> .env
-          
-  #     - name: Start Flask API 0
-  #       run: |
-  #         sudo systemctl start flaskapi.service
-          
-  checkout-1:
-    runs-on: node1
+
+  build:
+
+    runs-on: self-hosted
+
     steps:
     - uses: actions/checkout@v2
-    - name: Install Dependencies 1
+    - name: Set Up ENV
       run: |
-        sudo systemctl stop flaskapi.service
-        rm -rf error.log
-        (test -d env && rm -rf env && python3 -m venv env || python3 -m venv env)
-        source ./env/bin/activate
-        python3 -m pip install --upgrade pip
-        pip3 install flake8 pytest
-        if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
-        
-  deploy-1:
-    runs-on: node1
-    needs: [checkout-1]
-    steps:
-      - name: setup_env_Vars 1
-        run: |
           echo "${{ secrets.DB_URI }}" > .env
           echo "${{ secrets.HTTP_PROXY }}" >> .env
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
           echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
+          echo "${{ secrets.FEEDBACK_WEBHOOK_URL }}" >> .env
           echo dev_mode=0 >> .env
-          
-      - name: Start Flask API 1
-        run: |
-          sudo systemctl start flaskapi.service
-          
-  checkout-2:
-    runs-on: node2
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install Dependencies 2
-      run: |
-        sudo systemctl stop flaskapi.service
-        rm -rf error.log
-        (test -d env && rm -rf env && python3 -m venv env || python3 -m venv env)
-        source ./env/bin/activate
-        python3 -m pip install --upgrade pip
-        pip3 install flake8 pytest
-        if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
-        
-  deploy-2:
-    runs-on: node2
-    needs: [checkout-2]
-    steps:
-      - name: setup_env_Vars 2
-        run: |
-          echo "${{ secrets.DB_URI }}" > .env
-          echo "${{ secrets.HTTP_PROXY }}" >> .env
-          echo "${{ secrets.HTTPS_PROXY }}" >> .env
-          echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
-          echo "${{ secrets.FLASK_PORT }}" >> .env
-          echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
-          echo dev_mode=0 >> .env
-          
-      - name: Start Flask API 2
-        run: |
-          sudo systemctl start flaskapi.service
-          
-  checkout-3:
-    runs-on: node3
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install Dependencies 3
-      run: |
-        sudo systemctl stop flaskapi.service
-        rm -rf error.log
-        (test -d env && rm -rf env && python3 -m venv env || python3 -m venv env)
-        source ./env/bin/activate
-        python3 -m pip install --upgrade pip
-        pip3 install flake8 pytest
-        if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
-  deploy-3:
-    runs-on: node3
-    needs: [checkout-3]
-    steps:
-      - name: setup_env_Vars 3
-        run: |
-          echo "${{ secrets.DB_URI }}" > .env
-          echo "${{ secrets.HTTP_PROXY }}" >> .env
-          echo "${{ secrets.HTTPS_PROXY }}" >> .env
-          echo "${{ secrets.DISCORD_SQL_URI }}" >> .env
-          echo "${{ secrets.FLASK_PORT }}" >> .env
-          echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
-          echo dev_mode=0 >> .env
-          
-      - name: Start Flask API 3
-        run: |
-          sudo systemctl start flaskapi.service
+
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile -t bot-detector/bd-api:production
+
+    - name: Tag Image
+      run: docker tag bot-detector/bd-api:production hub.osrsbotdetector.com/bot-detector/bd-api:production
+      
+    - name: Login to Docker Registry
+      run: echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | docker login https://hub.osrsbotdetector.com -u "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin
+
+    - name: Push Image to Registry
+      run: docker push hub.osrsbotdetector.com/bot-detector/bd-api:production
+
+    - name: Apply Possible Deployment Changes
+      run: kubectl apply -f bd-prod-api-deploy.yaml
+
+    - name: Restart Deployment for Possible Container Changes
+      run: kubectl rollout restart deploy bd-prod-api

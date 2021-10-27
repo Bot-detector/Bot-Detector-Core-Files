@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: bd-api-service
+  name: bd-dev-api-service
 spec:
   selector:
-    app: bd-api
+    app: bd-dev-api
   ports:
   - protocol: "TCP"
     port: 5000
@@ -12,20 +12,20 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bd-api
+  name: bd-dev-api
 spec:
   selector:
     matchLabels:
-      app: bd-api
-  replicas: 3
+      app: bd-dev-api
+  replicas: 1
   template:
     metadata:
-      name: bl-api-app
+      name: bl-dev-api-app
       labels:
-        app: bd-api
+        app: bd-dev-api
     spec:
       containers:
-      - name: bd-api
+      - name: bd-dev-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
         imagePullPolicy: Always
         ports:
