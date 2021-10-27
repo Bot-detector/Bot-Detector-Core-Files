@@ -1,4 +1,4 @@
-name: Production workflow
+name: Development workflow
 on:
   push:
     branches: [ develop ]
