@@ -24,6 +24,15 @@ spec:
       labels:
         app: bd-dev-api
     spec:
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  name: bd-dev-api
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       volumes:
         - name: nfs-volume-exports
           nfs: 

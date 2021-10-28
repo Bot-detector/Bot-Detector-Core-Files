@@ -24,8 +24,17 @@ spec:
       labels:
         app: bd-prod-api
     spec:
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  name: bd-prod-api
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       volumes:
-        - name: nfs-volume-exports
+        - name: nfs-volume
           nfs: 
             server: 51.68.207.197
             path: /cluster/exports
@@ -40,9 +49,9 @@ spec:
         ports:
         - containerPort: 4000
         volumeMounts:
-        - name: nfs-volume-exports
+        - name: nfs-volume
           mountPath: /home/exports
-        - name: nfs-volume-exports
+        - name: nfs-volume-logs
           mountPath: /home/logs
       imagePullSecrets:
       - name: regcred
