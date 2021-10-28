@@ -37,6 +37,6 @@ spec:
         - containerPort: 4000
         volumeMounts:
         - name: nfs-volume
-          mountPath: /exports
+          mountPath: /home/exports
       imagePullSecrets:
       - name: regcred
