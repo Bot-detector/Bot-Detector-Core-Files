@@ -4,6 +4,7 @@ import Config
 import time
 import random
 import string
+import typing
 from sqlalchemy import text, exc
 from collections import namedtuple
 
@@ -551,22 +552,7 @@ def get_players_of_interest():
 
 
 def get_report_stats():
-    sql = '''
-        SELECT
-            sum(bans) bans,
-            sum(false_reports) false_reports,
-            sum(bans) + sum(false_reports) total_reports,
-            sum(bans)/ (sum(bans) + sum(false_reports)) accuracy
-        FROM (
-            SELECT 
-                confirmed_ban,
-                sum(confirmed_ban) bans,
-                sum(confirmed_player) false_reports
-            FROM Players
-            GROUP BY
-                confirmed_ban
-            ) a;
-    '''
+    sql = "SELECT * FROM playerdata.xx_stats;"
     data = execute_sql(sql, param=None, debug=False, has_return=True)
     return data
 

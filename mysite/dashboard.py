@@ -11,29 +11,19 @@ dashboard = Blueprint('dashboard', __name__, template_folder='templates')
 # Dashboard Endpoints #
 #######################
 
-
-@dashboard.route('/site/dashboard/gettotaltrackedplayers', methods=['GET'])
-def get_total_tracked_players():
-    num_of_players = SQL.get_number_tracked_players()
-    return_dict = {
-        "players": num_of_players[0]
-    }
-
-    return jsonify(return_dict)
-
-
-@dashboard.route('/site/dashboard/getreportsstats', methods=['GET'])
+@dashboard.route('/site/dashboard/projectstats', methods=['GET'])
 def get_total_reports():
-    report_stats = SQL.get_report_stats()[0]
+    report_stats = SQL.get_report_stats()
 
     return_dict = {
-        "bans": int(report_stats[0]),
-        "false_reports": int(report_stats[1]),
-        "total_reports": int(report_stats[2]),
-        "accuracy": float(report_stats[3])
+        "total_bans": sum(int(r.player_count) for r in report_stats if r.confirmed_ban == 1),
+        "total_real_players": sum(int(r.player_count) for r in report_stats \
+            if r.confirmed_ban == 0 and r.confirmed_player == 1),
+        "total_accounts": sum(int(r.player_count) for r in report_stats)
     }
 
     return jsonify(return_dict)
+
 
 @dashboard.route('/site/dashboard/getregionstats', methods=['GET'])
 def get_region_reports():
@@ -52,6 +42,7 @@ def get_player_labels():
     output = df.to_dict('records')
 
     return jsonify(output)
+
 
 @dashboard.route('/leaderboard', methods=['GET'])
 def leaderboard(board=None):
