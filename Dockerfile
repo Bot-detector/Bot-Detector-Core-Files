@@ -4,7 +4,7 @@ WORKDIR /home
 
 COPY . .
 
-RUN apt install gcc -y
+RUN apt update && apt install gcc -y
 
 RUN pip3 install -r requirements.txt --no-cache-dir
 
