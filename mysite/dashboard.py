@@ -29,9 +29,6 @@ def get_total_reports():
 def get_region_reports():
     region_stats = SQL.get_region_report_stats()
 
-    print(region_stats)
-    print(type(region_stats))
-
     return jsonify({'success': 'good job'})
 
 @dashboard.route('/labels/get_player_labels', methods=['GET'])
