@@ -24,11 +24,25 @@ spec:
       labels:
         app: bd-dev-api
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - bd-dev-api
+            topologyKey: kubernetes.io/hostname
       volumes:
-        - name: nfs-volume
+        - name: nfs-volume-exports
           nfs: 
             server: 51.68.207.197
             path: /cluster/exports
+        - name: nfs-volume-logs
+          nfs: 
+            server: 51.68.207.197
+            path: /cluster/logs
       containers:
       - name: bd-dev-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
@@ -36,7 +50,9 @@ spec:
         ports:
         - containerPort: 5000
         volumeMounts:
-        - name: nfs-volume
+        - name: nfs-volume-exports
           mountPath: /code/exports
+        - name: nfs-volume-logs
+          mountPath: /code/logs
       imagePullSecrets:
       - name: regcred

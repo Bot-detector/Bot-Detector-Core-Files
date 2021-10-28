@@ -17,18 +17,32 @@ spec:
   selector:
     matchLabels:
       app: bd-prod-api
-  replicas: 5
+  replicas: 3
   template:
     metadata:
       name: bl-prod-api-app
       labels:
         app: bd-prod-api
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - bd-prod-api
+            topologyKey: kubernetes.io/hostname
       volumes:
         - name: nfs-volume
           nfs: 
             server: 51.68.207.197
             path: /cluster/exports
+        - name: nfs-volume-logs
+          nfs: 
+            server: 51.68.207.197
+            path: /cluster/logs
       containers:
       - name: bd-prod-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:production
@@ -38,5 +52,7 @@ spec:
         volumeMounts:
         - name: nfs-volume
           mountPath: /home/exports
+        - name: nfs-volume-logs
+          mountPath: /home/logs
       imagePullSecrets:
       - name: regcred
