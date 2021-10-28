@@ -24,11 +24,19 @@ spec:
       labels:
         app: bd-dev-api
     spec:
+      volumes:
+        - name: nfs-volume
+          nfs: 
+            server: 51.68.207.197
+            path: /cluster/exports
       containers:
       - name: bd-dev-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
+        volumeMounts:
+        - name: nfs-volume
+          mountPath: /exports
       imagePullSecrets:
       - name: regcred
