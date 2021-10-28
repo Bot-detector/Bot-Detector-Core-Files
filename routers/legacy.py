@@ -527,7 +527,7 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
 @router.get("/log/{token}", tags=['legacy'])
 async def print_log(token:str):
     await verify_token(token, verifcation='ban')
-    return FileResponse(path='error.log', filename='error.log', media_type='text/log')
+    return FileResponse(path='logs/dev-error.log', filename='logs/dev-error.log', media_type='text/log')
 
 @router.get('/site/highscores/{token}/{ofInterest}', tags=['legacy'])
 @router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])

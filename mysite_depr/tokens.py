@@ -57,7 +57,7 @@ def print_log(token):
     if not (verify_token(token, verifcation='ban')):
         return "<h1>404</h1><p>Invalid token</p>", 404
 
-    with open("error.log", "r") as f:
+    with open("logs/dev-error.log", "r") as f:
         content = f.read()
         return render_template_string("<pre>{{ content }}</pre>", content=content)
 
