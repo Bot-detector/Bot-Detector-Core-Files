@@ -17,7 +17,7 @@ spec:
   selector:
     matchLabels:
       app: bd-prod-api
-  replicas: 5
+  replicas: 3
   template:
     metadata:
       name: bl-prod-api-app
@@ -25,13 +25,15 @@ spec:
         app: bd-prod-api
     spec:
       affinity:
-        podAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  name: bd-prod-api
-              topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - bd-prod-api
+            topologyKey: kubernetes.io/hostname
             weight: 100
       volumes:
         - name: nfs-volume
