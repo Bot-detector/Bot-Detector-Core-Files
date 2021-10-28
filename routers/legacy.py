@@ -168,22 +168,7 @@ async def sql_get_number_tracked_players():
 
 
 async def sql_get_report_stats():
-    sql = '''
-        SELECT
-            sum(bans) bans,
-            sum(false_reports) false_reports,
-            sum(bans) + sum(false_reports) total_reports,
-            sum(bans)/ (sum(bans) + sum(false_reports)) accuracy
-        FROM (
-            SELECT 
-                confirmed_ban,
-                sum(confirmed_ban) bans,
-                sum(confirmed_player) false_reports
-            FROM Players
-            GROUP BY
-                confirmed_ban
-            ) a
-    '''
+    sql = "SELECT * FROM playerdata.xx_stats;"
     data = await execute_sql(sql, param={}, debug=False, )
     return data.rows2dict()
 
@@ -489,12 +474,6 @@ async def get_contributor_id(contributor: str):
     return return_dict
 
 
-@router.get('/site/dashboard/gettotaltrackedplayers', tags=['legacy'])
-async def get_total_tracked_players():
-    num_of_players = await sql_get_number_tracked_players()
-    return {"players": num_of_players[0]}
-
-
 @router.get('/site/dashboard/getreportsstats', tags=['legacy'])
 async def get_total_reports():
     report_stats = await sql_get_report_stats()
@@ -502,10 +481,10 @@ async def get_total_reports():
     report_stats = report_stats[0]
 
     output = {
-        "bans": report_stats["bans"],
-        "false_reports": report_stats["false_reports"],
-        "total_reports": report_stats["total_reports"],
-        "accuracy": report_stats["accuracy"]
+        "total_bans": sum(int(r.player_count) for r in report_stats if r.confirmed_ban == 1),
+        "total_real_players": sum(int(r.player_count) for r in report_stats \
+            if r.confirmed_ban == 0 and r.confirmed_player == 1),
+        "total_accounts": sum(int(r.player_count) for r in report_stats)
     }
 
     return output
