@@ -25,10 +25,14 @@ spec:
         app: bd-prod-api
     spec:
       volumes:
-        - name: nfs-volume
+        - name: nfs-volume-exports
           nfs: 
             server: 51.68.207.197
             path: /cluster/exports
+        - name: nfs-volume-logs
+          nfs: 
+            server: 51.68.207.197
+            path: /cluster/logs
       containers:
       - name: bd-prod-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:production
@@ -36,7 +40,9 @@ spec:
         ports:
         - containerPort: 4000
         volumeMounts:
-        - name: nfs-volume
+        - name: nfs-volume-exports
           mountPath: /home/exports
+        - name: nfs-volume-exports
+          mountPath: /home/logs
       imagePullSecrets:
       - name: regcred

@@ -69,8 +69,8 @@ executors = {
 sched = BackgroundScheduler(daemon=False, executors=executors)
 
 # setup logging
-logging.FileHandler(filename="error.log", mode='a')
-logging.basicConfig(filename='error.log', level=logging.DEBUG)
+logging.FileHandler(filename="logs/error.log", mode='a')
+logging.basicConfig(filename='logs/error.log', level=logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
