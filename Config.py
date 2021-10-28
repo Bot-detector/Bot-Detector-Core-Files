@@ -23,10 +23,10 @@ app = FastAPI()
 
 # setup logging
 logger = logging.getLogger()
-file_handler = logging.FileHandler(filename="logs/error.log", mode='a')
+file_handler = logging.FileHandler(filename="logs/dev-error.log", mode='a')
 stream_handler = logging.StreamHandler(sys.stdout)
 
-logging.basicConfig(filename='logs/error.log', level=logging.DEBUG)
+logging.basicConfig(filename='logs/dev-error.log', level=logging.DEBUG)
 
 # log formatting
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
