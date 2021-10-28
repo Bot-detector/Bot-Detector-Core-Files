@@ -10,4 +10,6 @@ RUN pip install --no-cache-dir -r /code/requirements.txt
 
 COPY . /code
 
+RUN mkdir logs
+
 CMD ["uvicorn", "app:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "5000", "--root-path", "/dev"]
