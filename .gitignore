@@ -41,3 +41,5 @@ fastapi
 fastapi/
 
 dev-error.log
+
+.pytest_cache
