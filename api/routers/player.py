@@ -1,9 +1,9 @@
 import time
 from typing import List, Optional
 
-from database.database import async_session
-from database.functions import execute_sql, sqlalchemy_result, verify_token
-from database.models import Player as dbPlayer
+from api.database.database import async_session
+from api.database.functions import sqlalchemy_result, verify_token
+from api.database.models import Player as dbPlayer
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select, update

@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import select
 
-from database.database import engine, async_session
-from database.models import Token
+from api.database.database import engine, async_session
+from api.database.models import Token
 
 
 def list_to_string(l):

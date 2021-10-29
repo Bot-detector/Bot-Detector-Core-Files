@@ -1,5 +1,5 @@
-from Config import app
-from routers import feedback, hiscore, legacy, player, prediction, report, scaper, label
+from api.Config import app
+from api.routers import feedback, hiscore, legacy, player, prediction, report, scaper, label
 
 app.include_router(hiscore.router)
 app.include_router(player.router)

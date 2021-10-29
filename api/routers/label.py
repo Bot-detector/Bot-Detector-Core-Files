@@ -1,6 +1,6 @@
-from database.database import async_session
-from database.functions import sqlalchemy_result, verify_token
-from database.models import Label as dbLabel
+from api.database.database import async_session
+from api.database.functions import sqlalchemy_result, verify_token
+from api.database.models import Label as dbLabel
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select

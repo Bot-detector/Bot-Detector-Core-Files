@@ -1,19 +1,17 @@
 import logging
-import time
 import re
-from typing import List, Match, Optional
+import time
+from typing import List, Optional
 
-from numpy import datetime64
-from sqlalchemy.exc import NoResultFound
-
-import Config
 import pandas as pd
-import SQL
-from database.functions import execute_sql, list_to_string, verify_token
-from database.database import discord_engine
+from api import Config
+from api.database.database import discord_engine
+from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from sqlalchemy.exc import NoResultFound
+
 '''
 This file will have all legacy routes from the Flask api.
 after everything is ported, validated & discussed route desing should be done

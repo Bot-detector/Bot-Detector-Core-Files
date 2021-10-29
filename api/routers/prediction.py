@@ -1,9 +1,10 @@
-from inspect import isdatadescriptor
 from operator import or_
 from typing import List, Optional
-from database.functions import async_session, execute_sql, list_to_string, sql_cursor, sqlalchemy_result, verify_token, engine
-from database.models import Player, PlayerHiscoreDataLatest
-from database.models import Prediction as dbPrediction
+
+from api.database.functions import (async_session, list_to_string,
+                                    sqlalchemy_result, verify_token)
+from api.database.models import Player, PlayerHiscoreDataLatest
+from api.database.models import Prediction as dbPrediction
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import delete, select, text

@@ -3,9 +3,9 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import app
 import pytest
-from Config import token
+from api import app
+from api.Config import token
 from fastapi.testclient import TestClient
 
 client = TestClient(app.app)

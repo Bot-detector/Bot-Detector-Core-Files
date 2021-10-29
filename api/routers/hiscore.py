@@ -1,13 +1,13 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 from typing import List, Optional
 
+from api.database.database import async_session
+from api.database.functions import sqlalchemy_result, verify_token
+from api.database.models import (PlayerHiscoreDataLatest,
+                                 PlayerHiscoreDataXPChange, playerHiscoreData)
+from fastapi import APIRouter
+from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
-from database.functions import execute_sql, list_to_string, verify_token
-import datetime
-from database.models import playerHiscoreData, PlayerHiscoreDataLatest, PlayerHiscoreDataXPChange
-from database.database import async_session
-from database.functions import sqlalchemy_result
+
 router = APIRouter()
 
 
