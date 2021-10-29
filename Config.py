@@ -17,6 +17,7 @@ proxy_https = os.environ.get('proxy_https')
 flask_port = os.environ.get('flask_port')
 graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
+token = os.environ.get('token')
 
 # create application
 app = FastAPI()

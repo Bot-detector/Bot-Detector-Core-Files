@@ -87,6 +87,9 @@ async def verify_token(token:str, verifcation:str) -> bool:
     
     # parse data
     data = sqlalchemy_result(data)
+    if len(data.rows) == 0:
+        raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
+
     player_token = data.rows2tuple()
 
     # check if token exists (empty list if token does not exist)

@@ -221,13 +221,15 @@ async def name_check(name):
     return name, bad_name
 
 
+# TODO: normalize name
 async def is_valid_rsn(rsn):
+    return True
     return re.fullmatch('[\w\d\s_-]{1,12}', rsn)
 
 
+# TODO: normalize name
 async def to_jagex_name(name: str) -> str:
     return name
-    #TODO Normalization on DB
     
 
 async def custom_hiscore(detection):
