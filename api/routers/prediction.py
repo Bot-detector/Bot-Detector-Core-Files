@@ -18,31 +18,31 @@ class Prediction(BaseModel):
     Prediction: str
     id: int
     created: str
-    Predicted_confidence: float
-    Agility_Thieving_bot: float
-    Agility_bot: float
-    Construction_Magic_bot: float
-    Construction_Prayer_bot: float
-    Cooking_bot: float
-    Crafting_bot: float
-    Fishing_Cooking_bot: float
-    Fishing_bot: float
-    Fletching_bot: float
-    Herblore_bot: float
-    Hunter_bot: float
-    Magic_bot: float
-    Mining_bot: float
-    PVM_Melee_bot: float
-    PVM_Ranged_Magic_bot: float
-    PVM_Ranged_bot: float
-    Real_Player: float
-    Runecrafting_bot: float
-    Smithing_bot: float
-    Thieving_bot: float
-    Woodcutting_bot: float
+    Predicted_confidence: Optional[float] = 0
+    Agility_Thieving_bot: Optional[float] = 0
+    Agility_bot: Optional[float] = 0
+    Construction_Magic_bot: Optional[float] = 0
+    Construction_Prayer_bot: Optional[float] = 0
+    Cooking_bot: Optional[float] = 0
+    Crafting_bot: Optional[float] = 0
+    Fishing_Cooking_bot: Optional[float] = 0
+    Fishing_bot: Optional[float] = 0
+    Fletching_bot: Optional[float] = 0
+    Herblore_bot: Optional[float] = 0
+    Hunter_bot: Optional[float] = 0
+    Magic_bot: Optional[float] = 0
+    Mining_bot: Optional[float] = 0
+    PVM_Melee_bot: Optional[float] = 0
+    PVM_Ranged_Magic_bot: Optional[float] = 0
+    PVM_Ranged_bot: Optional[float] = 0
+    Real_Player: Optional[float] = 0
+    Runecrafting_bot: Optional[float] = 0
+    Smithing_bot: Optional[float] = 0
+    Thieving_bot: Optional[float] = 0
+    Woodcutting_bot: Optional[float] = 0
     Zaff_BStaff_Bot: Optional[float] = 0
-    Zalcano_bot: float
-    mort_myre_fungus_bot: float
+    Zalcano_bot: Optional[float] = 0
+    mort_myre_fungus_bot: Optional[float] = 0
 
 @router.get("/v1/prediction", tags=["prediction"])
 async def get(token: str, name: str):
