@@ -18,31 +18,32 @@ class Prediction(BaseModel):
     Prediction: str
     id: int
     created: str
-    Predicted_confidence: Optional[float] = 0
-    Agility_Thieving_bot: Optional[float] = 0
-    Agility_bot: Optional[float] = 0
-    Construction_Magic_bot: Optional[float] = 0
-    Construction_Prayer_bot: Optional[float] = 0
-    Cooking_bot: Optional[float] = 0
-    Crafting_bot: Optional[float] = 0
-    Fishing_Cooking_bot: Optional[float] = 0
-    Fishing_bot: Optional[float] = 0
-    Fletching_bot: Optional[float] = 0
-    Herblore_bot: Optional[float] = 0
-    Hunter_bot: Optional[float] = 0
-    Magic_bot: Optional[float] = 0
-    Mining_bot: Optional[float] = 0
+    Predicted_confidence: float
+    Real_Player: Optional[float] = 0
     PVM_Melee_bot: Optional[float] = 0
+    Smithing_bot: Optional[float] = 0
+    Magic_bot: Optional[float] = 0
+    Fishing_bot: Optional[float] = 0
+    Mining_bot: Optional[float] = 0
+    Crafting_bot: Optional[float] = 0
     PVM_Ranged_Magic_bot: Optional[float] = 0
     PVM_Ranged_bot: Optional[float] = 0
-    Real_Player: Optional[float] = 0
+    Hunter_bot: Optional[float] = 0
+    Fletching_bot: Optional[float] = 0
+    Clue_Scroll_bot: Optional[float] = 0
+    LMS_bot: Optional[float] = 0
+    Agility_bot: Optional[float] = 0
+    Wintertodt_bot: Optional[float] = 0
     Runecrafting_bot: Optional[float] = 0
-    Smithing_bot: Optional[float] = 0
-    Thieving_bot: Optional[float] = 0
-    Woodcutting_bot: Optional[float] = 0
-    Zaff_BStaff_Bot: Optional[float] = 0
     Zalcano_bot: Optional[float] = 0
-    mort_myre_fungus_bot: Optional[float] = 0
+    Woodcutting_bot: Optional[float] = 0
+    Thieving_bot: Optional[float] = 0
+    Soul_Wars_bot: Optional[float] = 0
+    Cooking_bot: Optional[float] = 0
+    Vorkath_bot: Optional[float] = 0
+    Barrows_bot: Optional[float] = 0
+    Herblore_bot: Optional[float] = 0
+
 
 @router.get("/v1/prediction", tags=["prediction"])
 async def get(token: str, name: str):
