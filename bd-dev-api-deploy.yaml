@@ -39,10 +39,6 @@ spec:
           nfs: 
             server: 51.68.207.197
             path: /cluster/exports
-        - name: nfs-volume-logs
-          nfs: 
-            server: 51.68.207.197
-            path: /cluster/logs
       containers:
       - name: bd-dev-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
@@ -52,7 +48,5 @@ spec:
         volumeMounts:
         - name: nfs-volume-exports
           mountPath: /code/exports
-        - name: nfs-volume-logs
-          mountPath: /code/logs
       imagePullSecrets:
       - name: regcred

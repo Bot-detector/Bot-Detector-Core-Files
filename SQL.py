@@ -410,6 +410,7 @@ def get_discord_user_link(player_id):
 
     return execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
+
 def get_all_verified_ids():
     sql = 'SELECT DISTINCT Discord_id FROM verified_players;'
 
@@ -814,6 +815,7 @@ def get_verified_info(player_name):
     data = execute_sql(sql, param=param, debug=False, has_return=True, db_name="discord")
 
     return data
+
 
 def get_discord_linked_accounts(discord_id):
 
