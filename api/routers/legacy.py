@@ -159,6 +159,22 @@ async def sql_get_contributions(contributors: List):
     data = await execute_sql(query, param=params, debug=False, row_count=100_000_000)
     return data.rows2dict()
 
+async def sql_get_feedback_submissions(voters: List):
+    sql = '''
+        SELECT 
+            PredictionsFeedback.id
+        FROM PredictionsFeedback 
+        JOIN Players ON Players.id = PredictionsFeedback.voter_id
+        WHERE 1=1
+            AND Players.name IN :voters
+     '''
+
+    params = {
+        "voters": voters
+    }
+
+    data = await execute_sql(sql, param=params, debug=False, row_count=100_000_000)
+    return data.rows2dict()
 
 async def sql_get_number_tracked_players():
     sql = 'SELECT COUNT(*) count FROM Players'
@@ -333,7 +349,8 @@ async def parse_contributors(contributors, version=None):
     total_dict = {
         "reports": passive_dict['reports'] + manual_dict['reports'],
         "bans": passive_dict['bans'] + manual_dict['bans'],
-        "possible_bans": passive_dict['possible_bans'] + manual_dict['possible_bans']
+        "possible_bans": passive_dict['possible_bans'] + manual_dict['possible_bans'],
+        'feedback': len(await sql_get_feedback_submissions(contributors))
     }
 
     if version in ['1.3','1.3.1'] or None:
