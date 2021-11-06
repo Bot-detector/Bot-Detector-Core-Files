@@ -142,11 +142,12 @@ async def sql_get_contributions(contributors: List):
         SELECT
             rs.manual_detect as detect,
             rs.reportedID as reported_ids,
-            pl.confirmed_ban as confirmed_ban,
-            pl.possible_ban as possible_ban,
-            pl.confirmed_player as confirmed_player
+            ban.confirmed_ban as confirmed_ban,
+            ban.possible_ban as possible_ban,
+            ban.confirmed_player as confirmed_player
         FROM Reports as rs
         JOIN Players as pl on (pl.id = rs.reportingID)
+        join Players as ban on (ban.id = rs.reportedID)
         WHERE 1=1
             AND pl.name in :contributors
     """)
