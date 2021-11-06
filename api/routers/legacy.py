@@ -183,7 +183,7 @@ async def sql_get_number_tracked_players():
 
 
 async def sql_get_report_stats():
-    sql = "SELECT * FROM playerdata.xx_stats;"
+    sql = "SELECT * FROM playerdata.xx_stats"
     data = await execute_sql(sql, param={}, debug=False, )
     return data.rows2dict()
 
