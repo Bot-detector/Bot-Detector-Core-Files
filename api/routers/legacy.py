@@ -496,8 +496,6 @@ async def get_contributor_id(contributor: str):
 async def get_total_reports():
     report_stats = await sql_get_report_stats()
 
-    report_stats = report_stats[0]
-
     output = {
         "total_bans": sum(int(r.player_count) for r in report_stats if r.confirmed_ban == 1),
         "total_real_players": sum(int(r.player_count) for r in report_stats \
