@@ -475,7 +475,7 @@ async def get_contributor_id(contributor: str):
     return return_dict
 
 
-@router.get('/site/dashboard/getreportsstats', tags=['legacy'])
+@router.get('/site/dashboard/projectstats', tags=['legacy'])
 async def get_total_reports():
     report_stats = await sql_get_report_stats()
 
