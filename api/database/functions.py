@@ -20,8 +20,8 @@ async def execute_sql(sql, param={}, debug=False, engine=engine, row_count=100_0
     
     if has_return:
         # add pagination to every query
-        # max number of rows = 1M
-        row_count = row_count if row_count <= 1_000_000 else 1_000_000
+        # max number of rows = 100k
+        row_count = row_count if row_count <= 100_000 else 100_000
         page = page if page >= 1 else 1
         offset = (page - 1)*row_count
         # add limit to sql

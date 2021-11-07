@@ -171,12 +171,22 @@ async def sql_get_contributions(contributors: List):
             AND pl.name in :contributors
     """)
 
-    params = {
+    param = {
         "contributors": contributors
     }
 
-    data = await execute_sql(query, param=params, debug=False, row_count=1_000_000)
-    return data.rows2dict()
+    output = []
+
+    page = 1
+    while True:
+        data = await execute_sql(query, param=param, page=page)
+        data_dict = data.rows2dict()
+        output.extend(data_dict)
+        if len(data_dict) < 100_000:
+            break
+        page += 1
+
+    return output
 
 
 async def sql_get_feedback_submissions(voters: List):
