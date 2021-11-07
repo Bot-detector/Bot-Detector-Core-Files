@@ -71,6 +71,9 @@ class discord(BaseModel):
 class PlayerName(BaseModel):
     player_name: str
 
+class RegionName(BaseModel):
+    region_name: str
+
 '''
     sql
 '''
@@ -272,6 +275,20 @@ async def sql_get_user_latest_sighting(player_id: int):
     }
 
     data = await execute_sql(sql, param, row_count=1)
+    return data.rows2dict()
+
+
+
+async def sql_region_search(region_name: str):
+    sql = "SELECT * FROM regionIDNames WHERE region_name LIKE :region"
+
+    region_name = "%" + region_name + "%"
+
+    param = {
+        'region': region_name
+    }
+
+    data = await execute_sql(sql, param)
     return data.rows2dict()
 
 
@@ -904,5 +921,13 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
     return filtered_sighting
 
 
+@router.post('/discord/region/{token}', tags=['legacy'])
+async def get_region(token:str, region: RegionName):
+    await verify_token(token, verifcation='verify_players')
 
+    region_info = region.dict()
+    region_name = region_info.get('region_name')
 
+    regions = sql_region_search(region_name)
+
+    return regions
