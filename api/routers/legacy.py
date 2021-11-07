@@ -1,9 +1,14 @@
 import logging
+import os
 import re
 import time
+import string
+import random
+import pathlib
 from typing import List, Optional
 
 import pandas as pd
+from sqlalchemy.sql.expression import update
 from api import Config
 from api.database.database import discord_engine
 from api.database.functions import execute_sql, list_to_string, verify_token
@@ -67,6 +72,11 @@ class bots(BaseModel):
 class discord(BaseModel):
     player_name: str
     code: str
+
+class ExportInfo(BaseModel):
+    discord_id: int
+    display_name: str
+    file_type: str
 
 class PlayerName(BaseModel):
     player_name: str
@@ -338,6 +348,65 @@ async def sql_region_search(region_name: str):
     data = await execute_sql(sql, param)
     return data.rows2dict()
 
+
+async def get_ban_spreadsheet_data(player_name: str):
+    sql = (
+        '''
+        SELECT 
+            pl1.name reporter,
+            lbl.label,
+            hdl.*
+        FROM Reports rp
+        INNER JOIN Players pl1 ON (rp.reportingID = pl1.id)
+        INNER JOIN Players pl2 on (rp.reportedID = pl2.id) 
+        INNER JOIN Labels lbl ON (pl2.label_id = lbl.id)
+        INNER JOIN playerHiscoreDataLatest hdl on (pl2.id = hdl.Player_id)
+        where 1=1
+            and lower(pl1.name) = :player_name
+            and pl2.confirmed_ban = 1
+            and pl2.possible_ban = 1
+        '''
+    )
+
+    param = {'player_name': player_name}
+
+    data = await execute_sql(sql, param, row_count=500_000)
+    return data.rows2dict()
+
+
+async def insert_export_link(export_info: dict):
+
+    columns = list_to_string(list(export_info.keys()))
+    values = list_to_string([f':{column}' for column in list(export_info.keys())])
+
+    sql = f"INSERT IGNORE INTO export_links ({columns}) VALUES ({values});"
+
+    await execute_sql(sql, param=export_info, engine=discord_engine)
+    return
+
+
+async def get_export_link(url_text: str):
+    sql = 'SELECT * FROM export_links WHERE url_text IN (:url_text)'
+    
+    param = {
+        'url_text': url_text
+    }
+
+    data = await execute_sql(sql, param, engine=discord_engine)
+
+    return data.rows2dict()
+
+
+async def update_export_link(update_export: dict):
+    sql = '''UPDATE export_links
+             SET 
+                time_redeemed = :time_redeemed,
+                is_redeemed = :is_redeemed
+             WHERE id = :id
+     '''
+
+    await execute_sql(sql, param=update_export, engine=discord_engine)
+    return
 
 '''
     helper functions
@@ -1028,3 +1097,174 @@ async def get_heatmap_data(token: str, region_id: RegionID):
     output = df.to_dict('records')
     
     return output
+
+
+@router.post('/discord/player_bans/{token}', tags=['legacy'])
+async def generate_excel_export(token: str, export_info: ExportInfo):
+    await verify_token(token, verifcation='verify_players')
+    #get_ban_spreadsheet_data
+
+    req_data = export_info.dict()
+    discord_id = req_data.get('discord_id')
+    display_name = req_data.get('display_name')
+    file_type =req_data.get('file_type')
+
+    linked_accounts = await sql_get_discord_linked_accounts(discord_id)
+
+    if len(linked_accounts) == 0:
+        raise HTTPException(status_code=500, detail="User doesn't have any accounts linked.")
+    
+    try:
+        download_url = await create_ban_export(
+            file_type=file_type,
+            linked_accounts=linked_accounts,
+            display_name=display_name,
+            discord_id=discord_id
+        )
+    except InvalidFileType:
+        raise HTTPException(status_code=400, detail="File type specified is invalid.")
+    except NoDataAvailable:
+        raise HTTPException(status_code=500, detail="No ban data available for the linked account(s). Possibly the server timed out.")
+
+    return {"url": download_url}
+
+
+@router.get('/discord/download_export/{export_id}', tags=['legacy'])
+async def download_export(export_id: str):
+    
+    download_data = await get_export_link(export_id)
+
+    if len(download_data) == 0:
+        raise HTTPException(status_code=400, detail="No export found at the URL provided.")
+    else:
+        file_name = download_data[0].get('file_name')
+        file_path = f"{os.getcwd()}/exports/{file_name}"
+
+        if os.path.exists(file_path):
+
+            update_info = {
+                "id": download_data[0].id,
+                "time_redeemed": time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime()),
+                "is_redeemed": 1
+            }
+
+            await update_export_link(update_info)
+
+            return FileResponse(file_path, filename=file_name)
+
+        else:
+            raise HTTPException(status_code=500, detail="File is no longer present on our system. Please use !excelban to generate a new file.")
+
+
+#
+# Excelban helper functions
+#
+
+class Error(Exception):
+    pass
+
+
+class NoDataAvailable(Error):
+    pass
+
+
+class InvalidFileType(Error):
+    pass
+
+
+async def create_ban_export(file_type, linked_accounts, display_name, discord_id):
+
+    pathlib.Path(f"{os.getcwd()}/exports/").mkdir(parents=True, exist_ok=True)
+
+    export_data = {}
+
+    export_data["url_text"] = await create_random_link()
+    export_data["discord_id"] = discord_id
+
+    if file_type == "csv":
+        csv_file_name = await create_csv_export(
+            linked_accounts=linked_accounts,
+            display_name=display_name
+        )
+
+        export_data["file_name"] = csv_file_name
+        export_data["is_csv"] = 1
+
+
+    elif file_type == "excel":
+        excel_file_name = await create_excel_export(
+            linked_accounts=linked_accounts, 
+            display_name=display_name
+        )
+
+        export_data["file_name"] = excel_file_name
+        export_data["is_excel"] = 1
+
+    else:
+        raise InvalidFileType
+
+    await insert_export_link(export_data)
+
+    return export_data.get("url_text")
+
+
+async def create_excel_export(linked_accounts, display_name):
+    sheets = []
+    names = []
+
+    for account in linked_accounts:
+        data = await get_ban_spreadsheet_data(account.name)
+        df = pd.DataFrame(data)
+
+        sheets.append(df)
+        names.append(account.name)
+
+    if len(sheets) > 0:
+        totalSheet = pd.concat(sheets)
+        totalSheet = totalSheet.drop_duplicates(inplace=False, subset=["Player_id"], keep="last")
+
+        file_name = f"{display_name}_bans.xlsx"
+        file_path = f"{os.getcwd()}/exports/" + file_name
+
+        writer = pd.ExcelWriter(file_path, engine="xlsxwriter")
+
+        totalSheet.to_excel(writer, sheet_name="Total")
+
+        for idx, name in enumerate(names):
+            sheets[idx].to_excel(writer, sheet_name=names[idx])
+
+        writer.save()
+
+        return file_name
+
+    else:
+        raise NoDataAvailable
+
+
+async def create_csv_export(linked_accounts, display_name):
+    sheets = []
+
+    for account in linked_accounts:
+        data = await get_ban_spreadsheet_data(account.name)
+        df = pd.DataFrame(data)
+
+        sheets.append(df)
+
+    totalSheet = pd.concat(sheets)
+    totalSheet = totalSheet.drop_duplicates(inplace=False, subset=["Player_id"], keep="last")
+
+    file_name = f"{display_name}_bans.csv"
+    file_path = f"{os.getcwd()}/exports/" + file_name
+
+    totalSheet.to_csv(file_path, encoding='utf-8', index=False)
+
+    return file_name
+
+
+async def create_random_link():
+    pool = string.ascii_letters + string.digits
+
+    link = ''.join(random.choice(pool) for i in range(12))
+
+    return link
+

@@ -35,3 +35,4 @@ typing-extensions>=3.10.0.0
 tzlocal>=2.1
 urllib3>=1.26.6
 uvicorn>=0.15.0
+xlsxwriter>=3.0.2
