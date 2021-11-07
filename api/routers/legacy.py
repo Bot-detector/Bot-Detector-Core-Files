@@ -175,8 +175,9 @@ async def sql_get_contributions(contributors: List):
         "contributors": contributors
     }
 
-    data = await execute_sql(query, param=params, debug=False, row_count=100_000_000)
+    data = await execute_sql(query, param=params, debug=False, row_count=1_000_000)
     return data.rows2dict()
+
 
 async def sql_get_feedback_submissions(voters: List):
     sql = '''
