@@ -928,6 +928,6 @@ async def get_region(token:str, region: RegionName):
     region_info = region.dict()
     region_name = region_info.get('region_name')
 
-    regions = sql_region_search(region_name)
+    regions = await sql_region_search(region_name)
 
     return regions
