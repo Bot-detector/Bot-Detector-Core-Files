@@ -245,7 +245,7 @@ async def sql_get_discord_verification_status(player_name: str):
     }
 
     data = await execute_sql(sql, param, engine=discord_engine)
-    return data.rows2dict
+    return data.rows2dict()
 
 
 '''
@@ -834,5 +834,6 @@ async def  get_discord_verification_status(token: str, player_name: str):
     await verify_token(token, verifcation='verify_players')
 
     status_info = await sql_get_discord_verification_status(player_name)
+
     return status_info
 
