@@ -74,6 +74,9 @@ class PlayerName(BaseModel):
 class RegionName(BaseModel):
     region_name: str
 
+class RegionID(BaseModel):
+    region_id: int
+
 '''
     sql
 '''
@@ -303,6 +306,24 @@ async def sql_get_user_latest_sighting(player_id: int):
     data = await execute_sql(sql, param, row_count=1)
     return data.rows2dict()
 
+
+async def sql_get_report_data_heatmap(region_id: int):
+    sql = ('''
+        SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban
+            FROM Players pls
+            JOIN Reports rpts ON rpts.reportedID = pls.id
+                WHERE pls.confirmed_ban = 1
+                AND rpts.region_id = :region_id
+        ORDER BY pls.id DESC
+                
+    ''')
+
+    param = {
+        'region_id': region_id
+    }
+
+    data = await execute_sql(sql, param, row_count=100_000)
+    return data.rows2dict()
 
 
 async def sql_region_search(region_name: str):
@@ -974,7 +995,7 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
     return filtered_sighting
 
 
-@router.post('/discord/region/{token}', tags=['legacy'])
+@router.post('/discord/region/{token}', tags=['legacy', 'maps'])
 async def get_region(token:str, region: RegionName):
     await verify_token(token, verifcation='verify_players')
 
@@ -984,3 +1005,26 @@ async def get_region(token:str, region: RegionName):
     regions = await sql_region_search(region_name)
 
     return regions
+
+
+@router.post('/discord/heatmap/{token}', tags=['legacy', 'maps'])
+async def get_heatmap_data(token: str, region_id: RegionID):
+    await verify_token(token, verifcation='verify_players')
+
+    region_data = region_id.dict()
+    id = region_data.get('region_id')
+
+    data = await sql_get_report_data_heatmap(id)
+
+    df = pd.DataFrame(data)
+
+    #Remove unnecessary columns
+    df = df.drop(columns=['z_coord', 'region_id'])
+
+    #Group by tiles
+    df = df.groupby(["x_coord", "y_coord"], as_index=False).sum()
+    df = df.astype({"confirmed_ban": int})
+
+    output = df.to_dict('records')
+    
+    return output
