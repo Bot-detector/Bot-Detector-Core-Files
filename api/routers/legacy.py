@@ -259,6 +259,22 @@ async def sql_get_discord_linked_accounts(discord_id: int):
     return data.rows2dict()
 
 
+async def sql_get_user_latest_sighting(player_id: int):
+    sql = '''
+            SELECT *
+            FROM Reports rpts
+            WHERE 1 = 1
+                AND rpts.reportedID = :player_id
+            ORDER BY rpts.timestamp DESC
+        '''
+    param = {
+        "player_id": player_id
+    }
+
+    data = await execute_sql(sql, param, row_count=1)
+    return data.rows2dict()
+
+
 '''
     helper functions
 '''
@@ -856,5 +872,37 @@ async def get_discord_linked_accounts(token: str, discord_id: int):
     linked_accounts = await sql_get_discord_linked_accounts(discord_id)
 
     return linked_accounts
+
+
+@router.post('/discord/get_latest_sighting/<token>', tags=['legacy'])
+async def get_latest_sighting(token: str, player_info: PlayerName):
+    await verify_token(token, verifcation='verify_players')
+
+    player = player_info.dict()
+    player_name = player.get('player_name')
+
+    player = await sql_get_player(player_name)
+    player_id = player.get('id')
+
+    last_sighting_data = await sql_get_user_latest_sighting(player_id)
+
+    df = pd.DataFrame(last_sighting_data)
+
+    df = df[[  "equip_head_id",
+	            "equip_amulet_id",
+	            "equip_torso_id",
+	            "equip_legs_id",
+	            "equip_boots_id",
+	            "equip_cape_id",
+	            "equip_hands_id",
+	            "equip_weapon_id",
+                "equip_shield_id"
+            ]]
+
+    filtered_sighting = df.to_dict('records')
+
+    return filtered_sighting
+
+
 
 
