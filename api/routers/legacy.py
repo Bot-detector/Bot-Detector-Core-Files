@@ -10,7 +10,7 @@ from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound
 
 '''
 This file will have all legacy routes from the Flask api.
@@ -67,6 +67,9 @@ class bots(BaseModel):
 class discord(BaseModel):
     player_name: str
     code: str
+
+class PlayerName(BaseModel):
+    player_name: str
 
 '''
     sql
@@ -215,6 +218,34 @@ async def sql_update_player(player: dict):
     await execute_sql(sql, param)
     data = await execute_sql(select, param)
     return data.rows2dict()
+
+
+async def sql_get_latest_xp_gain(player_id: int):
+    sql = '''          
+        SELECT * 
+        FROM playerHiscoreDataXPChange xp
+        WHERE 1 = 1
+            AND xp.Player_id = :player_id
+        ORDER BY xp.timestamp DESC
+    '''
+
+    param = {
+        "player_id": player_id
+    }
+
+    data = await execute_sql(sql, param, row_count=2)
+    return data.rows2dict()
+
+
+async def sql_get_discord_verification_status(player_name: str):
+    sql = 'SELECT * FROM verified_players WHERE name = :player_name'
+    
+    param = {
+        'player_name': player_name
+    }
+
+    data = await execute_sql(sql, param, engine=discord_engine)
+    return data.rows2dict
 
 
 '''
@@ -508,7 +539,7 @@ async def get_total_reports():
 
 @router.get('/labels/get_player_labels', tags=['legacy'])
 async def get_player_labels():
-    labels = sql_get_player_labels()
+    labels = await sql_get_player_labels()
     df = pd.DataFrame(labels)
     return df.to_dict('records')
 
@@ -539,11 +570,6 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
     
     return {"OK": "OK"}
 
-
-@router.get("/log/{token}", tags=['legacy'])
-async def print_log(token:str):
-    await verify_token(token, verifcation='ban')
-    return FileResponse(path='logs/dev-error.log', filename='logs/dev-error.log', media_type='text/log')
 
 @router.get('/site/highscores/{token}/{ofInterest}', tags=['legacy'])
 @router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
@@ -659,7 +685,7 @@ async def sql_get_token(token):
         'token': token
     }
     data = await execute_sql(sql, param=param)
-    return data.rows2tuple()[0]
+    return data.rows2dict()
 
 
 async def set_discord_verification(id, token):
@@ -692,7 +718,9 @@ async def verify_discord_user(token:str, discord:discord, version:str=None):
 
     pending_discord = await sql_get_unverified_discord_user(player['id'])
 
-    token_id = await sql_get_token(token).id
+    token_info = await sql_get_token(token)
+    token_info = token_info[0]
+    token_id = token_info.get('id')
 
     if pending_discord:
         for record in pending_discord:
@@ -723,7 +751,6 @@ async def sql_get_prediction_player(player_id):
     else:
         raise NoResultFound
     
-
 
 @router.get('/{version}/site/prediction/{player_name}', tags=['legacy'])
 async def get_prediction(player_name, version=None, token=None):
@@ -760,3 +787,52 @@ async def get_prediction(player_name, version=None, token=None):
         }
 
     return return_dict
+
+
+###
+#  Discord Routes
+##
+@router.post('/discord/get_xp_gains/{token}', tags=['legacy'])
+async def get_latest_xp_gains(player_info:PlayerName, token:str):
+    await verify_token(token, verifcation='verify_players')
+
+    player = player_info.dict()
+    player_name = player.get('player_name')
+
+    player = await sql_get_player(player_name)
+    player_id = player.get('id')
+
+    last_xp_gains = await sql_get_latest_xp_gain(player_id)
+
+    df = pd.DataFrame(last_xp_gains)
+
+    gains_rows_count = len(df.index)
+
+
+    if(gains_rows_count > 0):
+
+        output = df.to_dict('records')
+
+        output_dict = {
+            "latest": output[0],
+        }
+
+        if(gains_rows_count == 2):
+            output_dict["second"] = output[1]
+        elif(gains_rows_count == 1):
+            output_dict["second"] = {}
+        else:
+            return "Server Error: Somehow more than 2 xp gains entries were returned..", 500
+
+        return output_dict
+    else:
+        return "No gains found for this player.", 404
+
+
+@router.get('/discord/verify/player_rsn_discord_account_status/{token}/{player_name}', tags=['legacy'])
+async def  get_discord_verification_status(token: str, player_name: str):
+    await verify_token(token, verifcation='verify_players')
+
+    status_info = await sql_get_discord_verification_status(player_name)
+    return status_info
+
