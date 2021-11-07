@@ -251,6 +251,32 @@ async def sql_get_discord_verification_status(player_name: str):
     return data.rows2dict()
 
 
+async def sql_get_discord_verification_attempts(player_id: int):
+    sql = 'SELECT * FROM discordVerification WHERE Player_id = :player_id'
+    
+    param = {
+        'player_id': player_id
+    }
+
+    data = await execute_sql(sql, param, engine=discord_engine)
+    return data.rows2dict()
+
+
+async def sql_insert_verification_request(discord_id: int, player_id: int, code: int, token_id: int):
+    sql = "INSERT INTO discordVerification (Discord_id, Player_id, Code, token_used) VALUES (:discord_id, :player_id, :code, :token)"
+    
+    param = {
+        'player_id': player_id ,
+        'discord_id' : discord_id ,
+        'code' : code,
+        'token' : token_id
+    }
+
+    await execute_sql(sql, param)
+
+    return
+
+
 async def sql_get_discord_linked_accounts(discord_id: int):
     sql = 'SELECT * FROM verified_players WHERE Discord_id = :discord_id and Verified_status = 1'
     
@@ -874,12 +900,39 @@ async def get_latest_xp_gains(player_info:PlayerName, token:str):
 
 
 @router.get('/discord/verify/player_rsn_discord_account_status/{token}/{player_name}', tags=['legacy'])
-async def get_discord_verification_status(token: str, player_name: str):
+async def get_discord_verification_status_by_name(token: str, player_name: str):
     await verify_token(token, verifcation='verify_players')
 
     status_info = await sql_get_discord_verification_status(player_name)
 
     return status_info
+
+
+@router.get('/discord/verify/get_verification_attempts/{token}/{player_name}', tags=['legacy'])
+async def get_discord_verification_attempts(token: str, player_name: str):
+    await verify_token(token, verifcation='verify_players')
+
+    player = await sql_get_player(player_name)
+    player_id = player.get('id')
+
+    attempts = await sql_get_discord_verification_attempts(player_id)
+
+    return attempts
+
+
+@router.get('/discord/verify/insert_player_dpc/{token}/{discord_id}/{player_name}/{code}', tags=['legacy'])
+async def post_verification_request_information(token: str, discord_id: int, player_name: str, code: int):
+    await verify_token(token, verifcation='verify_players')
+
+    player = await sql_get_player(player_name)
+    player_id = player.get('id')
+
+    token_info = await sql_get_token(token)
+    token_id = token_info.get('id')
+
+    await sql_insert_verification_request(discord_id, player_id, code, token_id)
+
+    return
 
 
 @router.get('/discord/get_linked_accounts/{token}/{discord_id}', tags=['legacy'])
