@@ -497,7 +497,7 @@ async def insync_detect(detections, manual_detect):
     return
 
 
-async def parse_contributors(contributors, version=None):
+async def parse_contributors(contributors, version=None, add_patron_stats:bool=False):
     contributions = await sql_get_contributions(contributors)
 
     df = pd.DataFrame(contributions)
@@ -537,6 +537,7 @@ async def parse_contributors(contributors, version=None):
             "possible_bans": 0
         }
 
+
     total_dict = {
         "reports": passive_dict['reports'] + manual_dict['reports'],
         "bans": passive_dict['bans'] + manual_dict['bans'],
@@ -546,6 +547,23 @@ async def parse_contributors(contributors, version=None):
 
     if version in ['1.3','1.3.1'] or None:
         return total_dict
+
+
+    if add_patron_stats:
+        banned_df = df[df["confirmed_ban"] == 1]
+        banned_ids = banned_df["reported_ids"].tolist()
+
+        total_xp_sql = '''
+            SELECT
+                SUM(total) as total_xp
+            FROM playerHiscoreDataLatest
+            WHERE Player_id IN :banned_ids
+        '''
+
+        total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
+        total_xp = total_xp_data.rows2dict()[0].get("total_xp") or 0 #eeewwww
+        total_dict["total_xp_removed"] = total_xp
+
 
     return_dict = {
         "passive": passive_dict,
@@ -658,10 +676,18 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
 
 
 @router.post('/stats/contributions/', tags=['legacy'])
-async def get_contributions(contributors: List[contributor]):
+async def get_contributions(contributors: List[contributor], token: str = None):
+    if token:
+        await verify_token(token, verifcation='hiscore')
+
+        add_patron_stats = True
+    else:
+        add_patron_stats = False
+
+
     contributors = [d.__dict__['name'] for d in contributors]
     
-    data = await parse_contributors(contributors, version=None)
+    data = await parse_contributors(contributors, version=None, add_patron_stats=add_patron_stats)
     return data
 
 
