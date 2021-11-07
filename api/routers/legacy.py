@@ -874,7 +874,7 @@ async def get_discord_linked_accounts(token: str, discord_id: int):
     return linked_accounts
 
 
-@router.post('/discord/get_latest_sighting/<token>', tags=['legacy'])
+@router.post('/discord/get_latest_sighting/{token}', tags=['legacy'])
 async def get_latest_sighting(token: str, player_info: PlayerName):
     await verify_token(token, verifcation='verify_players')
 
