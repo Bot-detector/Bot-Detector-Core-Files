@@ -248,6 +248,17 @@ async def sql_get_discord_verification_status(player_name: str):
     return data.rows2dict()
 
 
+async def sql_get_discord_linked_accounts(discord_id: int):
+    sql = 'SELECT * FROM verified_players WHERE Discord_id = :discord_id and Verified_status = 1'
+    
+    param = {
+        'discord_id': discord_id
+    }
+
+    data = await execute_sql(sql, param, engine=discord_engine)
+    return data.rows2dict()
+
+
 '''
     helper functions
 '''
@@ -830,10 +841,20 @@ async def get_latest_xp_gains(player_info:PlayerName, token:str):
 
 
 @router.get('/discord/verify/player_rsn_discord_account_status/{token}/{player_name}', tags=['legacy'])
-async def  get_discord_verification_status(token: str, player_name: str):
+async def get_discord_verification_status(token: str, player_name: str):
     await verify_token(token, verifcation='verify_players')
 
     status_info = await sql_get_discord_verification_status(player_name)
 
     return status_info
+
+
+@router.get('/discord/get_linked_accounts/{token}/{discord_id}', tags=['legacy'])
+async def get_discord_linked_accounts(token: str, discord_id: int):
+    await verify_token(token, verifcation='verify_players')
+
+    linked_accounts = await sql_get_discord_linked_accounts(discord_id)
+
+    return linked_accounts
+
 
