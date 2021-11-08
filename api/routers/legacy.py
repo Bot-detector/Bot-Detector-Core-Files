@@ -1049,7 +1049,7 @@ async def get_discord_verification_attempts(token: str, player_name: str):
     return attempts
 
 
-@router.get('/discord/verify/insert_player_dpc/{token}/{discord_id}/{player_name}/{code}', tags=['legacy'])
+@router.post('/discord/verify/insert_player_dpc/{token}/{discord_id}/{player_name}/{code}', tags=['legacy'])
 async def post_verification_request_information(token: str, discord_id: int, player_name: str, code: int):
     await verify_token(token, verifcation='verify_players')
 
