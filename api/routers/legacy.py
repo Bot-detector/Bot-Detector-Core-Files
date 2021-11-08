@@ -682,6 +682,9 @@ async def detect(detections, manual_detect):
 
     sql = f'insert ignore into Reports ({columns}) values ({values})'
     await execute_sql(sql, param)
+    return
+
+import asyncio
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
     asyncio.create_task(detect(detections, manual_detect))
