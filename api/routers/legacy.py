@@ -15,7 +15,6 @@ from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from sqlalchemy.ext import asyncio
 from sqlalchemy.orm.exc import NoResultFound
 
 '''
