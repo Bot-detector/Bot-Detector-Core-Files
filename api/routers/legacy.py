@@ -12,7 +12,7 @@ import pandas as pd
 from api import Config
 from api.database.database import discord_engine
 from api.database.functions import execute_sql, list_to_string, verify_token
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm.exc import NoResultFound
@@ -682,9 +682,15 @@ async def detect(detections, manual_detect):
 
     sql = f'insert ignore into Reports ({columns}) values ({values})'
     await execute_sql(sql, param)
+
+
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
-    asyncio.create_task(detect(detections, manual_detect))
+    # 
+    asyncio.to_thread(
+        detect(detections,manual_detect)
+    )
+    # asyncio.create_task(detect(detections, manual_detect))
     return {'OK': 'OK'}
 
 

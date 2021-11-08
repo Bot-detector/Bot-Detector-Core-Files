@@ -3,7 +3,7 @@ import os
 import sys
 
 from dotenv import find_dotenv, load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, background
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
@@ -51,3 +51,6 @@ use_pca=False
 
 sched = AsyncIOScheduler()
 sched.start()
+
+bsched = BackgroundScheduler()
+bsched.start()
