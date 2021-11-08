@@ -440,12 +440,13 @@ async def name_check(name):
 
 # TODO: normalize name
 async def is_valid_rsn(rsn):
-    return True
+    #return True
     return re.fullmatch('[\w\d\s_-]{1,12}', rsn)
 
 
 # TODO: normalize name
 async def to_jagex_name(name: str) -> str:
+    print(name)
     return name
     
 
@@ -659,17 +660,18 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
     
     # 3.1) Get those players' IDs from step 3
     if new_names:
-        sql = "insert ignore into Players (name) values(:name)"
+        sql = "insert ignore into Players (name) values (:name)"
         param = [{"name": name} for name in new_names]
+
         await execute_sql(sql, param)
 
-        data.append(await sql_select_players(new_names))
+        data.extend(await sql_select_players(new_names))
 
     # 4) Insert detections into Reports table with user ids 
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
     df = df.merge(df_names, left_on="reported", right_on="name")
-    
+
     df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
     # 4.2) parse data to param
     data = df.to_dict('records')
