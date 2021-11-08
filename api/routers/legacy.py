@@ -589,8 +589,9 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     routes
 '''
 
-async def sql_select_players(names):
-    sql = "SELECT * FROM Players WHERE name in :names"
+async def sql_select_players(names: List) -> dict:
+    names = [n.lower() for n in names]
+    sql = "SELECT * FROM Players WHERE lower(name) in :names"
     param = {"names": names}
     data = await execute_sql(sql, param)
     return data.rows2dict()
@@ -654,8 +655,8 @@ async def post_detect(detections: List[detection], version: str = None, manual_d
     data = await sql_select_players(clean_names)
 
     # 3) Create entries for players that do not yet exist in Players table
-    existing_names = [d["name"] for d in data]
-    new_names = set(clean_names).difference(existing_names)
+    existing_names = [d["name"].lower() for d in data]
+    new_names = set([name.lower() for name in clean_names]).difference(existing_names)
     
     # 3.1) Get those players' IDs from step 3
     if new_names:
