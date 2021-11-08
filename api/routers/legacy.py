@@ -446,7 +446,6 @@ async def is_valid_rsn(rsn):
 
 # TODO: normalize name
 async def to_jagex_name(name: str) -> str:
-    print(name)
     return name
     
 
