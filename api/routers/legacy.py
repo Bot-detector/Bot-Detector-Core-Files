@@ -684,36 +684,36 @@ async def detect(detections, manual_detect):
     await execute_sql(sql, param)
 
 
-@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
-async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
-    # 
-    asyncio.to_thread(
-        detect(detections,manual_detect)
-    )
-    # asyncio.create_task(detect(detections, manual_detect))
-    return {'OK': 'OK'}
+# @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
+# async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
+#     # 
+#     asyncio.to_thread(
+#         detect(detections,manual_detect)
+#     )
+#     # asyncio.create_task(detect(detections, manual_detect))
+#     return {'OK': 'OK'}
 
 
-@router.post('/stats/contributions/', tags=['legacy'])
-async def get_contributions(contributors: List[contributor], token: str = None):
-    if token:
-        await verify_token(token, verifcation='hiscore')
+# @router.post('/stats/contributions/', tags=['legacy'])
+# async def get_contributions(contributors: List[contributor], token: str = None):
+#     if token:
+#         await verify_token(token, verifcation='hiscore')
 
-        add_patron_stats = True
-    else:
-        add_patron_stats = False
+#         add_patron_stats = True
+#     else:
+#         add_patron_stats = False
 
 
-    contributors = [d.__dict__['name'] for d in contributors]
+#     contributors = [d.__dict__['name'] for d in contributors]
     
-    data = await parse_contributors(contributors, version=None, add_patron_stats=add_patron_stats)
-    return data
+#     data = await parse_contributors(contributors, version=None, add_patron_stats=add_patron_stats)
+#     return data
 
 
-@router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
-async def get_contributions_url(contributor: str, version: str):
-    data = await parse_contributors([contributor], version=version)
-    return data
+# @router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
+# async def get_contributions_url(contributor: str, version: str):
+#     data = await parse_contributors([contributor], version=version)
+#     return data
 
 
 @router.get('/stats/getcontributorid/{contributor}', tags=['legacy'])
