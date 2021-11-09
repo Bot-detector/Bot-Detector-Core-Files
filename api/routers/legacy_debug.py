@@ -6,7 +6,7 @@ from typing import List, Optional
 import pandas as pd
 from api.Config import app
 from api.database.functions import execute_sql, list_to_string, verify_token
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter
 from pydantic import BaseModel
 import time
 
@@ -145,13 +145,13 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(
         detections:List[detection],
-        background_tasks: BackgroundTasks,
         version:str=None, 
         manual_detect:int=0
     ):
-    background_tasks.add_task(run_in_process, detect, detections, manual_detect)
+    asyncio.create_task(
+        detect(detections, manual_detect)
+    )
     return {'ok':'ok'}
-
 
 '''CONTRIBUTIONS ROUTE'''
 class contributor(BaseModel):
@@ -290,7 +290,6 @@ async def get_contributions(contributors: List[contributor], token:str=None):
     
     data = await parse_contributors(contributors, version=None, add_patron_stats=add_patron_stats)
     return data
-
 
 @router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
 async def get_contributions_url(contributor: str, version: str):
