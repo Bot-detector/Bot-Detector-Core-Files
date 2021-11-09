@@ -3,10 +3,9 @@ import os
 import sys
 
 from dotenv import find_dotenv, load_dotenv
-from fastapi import FastAPI, background
+from fastapi import FastAPI
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -24,18 +23,20 @@ app = FastAPI()
 
 # setup logging
 logger = logging.getLogger()
-#file_handler = logging.FileHandler(filename="logs/dev-error.log", mode='a')
+logger.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler(filename="error.log", mode='a')
 stream_handler = logging.StreamHandler(sys.stdout)
 
-#logging.basicConfig(filename='logs/dev-error.log', level=logging.DEBUG)
+#logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
 # log formatting
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#file_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
 
 # add handler
-#logger.addHandler(file_handler)
+logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
 # set imported loggers to warning
