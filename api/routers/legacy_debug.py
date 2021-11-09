@@ -142,6 +142,9 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     sql = f'insert ignore into Reports ({columns}) values ({values})'
     await execute_sql(sql, param)
 
+async def offload_detect(detections:List[detection], manual_detect:int) -> None:
+    await run_in_process(detect, detections, manual_detect)
+
 @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(
         detections:List[detection],
@@ -149,7 +152,7 @@ async def post_detect(
         version:str=None, 
         manual_detect:int=0
     ):
-    background_tasks.add_task(run_in_process, detect, detections, manual_detect)
+    background_tasks.add_task(offload_detect, detections, manual_detect)
     return {'ok':'ok'}
 
 
