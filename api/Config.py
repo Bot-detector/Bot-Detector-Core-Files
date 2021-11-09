@@ -40,11 +40,11 @@ logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
 # set imported loggers to warning
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger('flask_cors').setLevel(logging.WARNING)
-logging.getLogger('uvicorn').setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.DEBUG)
+logging.getLogger("urllib3").setLevel(logging.DEBUG)
+logging.getLogger("apscheduler").setLevel(logging.DEBUG)
+logging.getLogger('flask_cors').setLevel(logging.DEBUG)
+logging.getLogger('uvicorn').setLevel(logging.DEBUG)
 
 # for machine learning
 n_pca=2
