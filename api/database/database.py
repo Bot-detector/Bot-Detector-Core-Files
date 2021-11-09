@@ -20,5 +20,3 @@ asyncio.gather(async_main())
 
 async_session = sessionmaker(engine, class_= AsyncSession, expire_on_commit=False, autoflush=True)
 async_discord_session = sessionmaker(discord_engine, class_= AsyncSession, expire_on_commit=False)
-
-

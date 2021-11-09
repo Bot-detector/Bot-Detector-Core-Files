@@ -33,6 +33,8 @@ async def execute_sql(sql, param={}, debug=False, engine=engine, row_count=100_0
     # parsing
     sql = text(sql)
 
+    logging.info(f"SQL query: {sql}")
+
     # debugging
     if debug:
         logging.debug(f'{has_return=}')
@@ -41,16 +43,22 @@ async def execute_sql(sql, param={}, debug=False, engine=engine, row_count=100_0
     
     # with handles open and close connection
     async with engine.connect() as conn:
+        logging.debug("engine connected")
         # creates thread save session
         Session = sessionmaker(conn, class_=AsyncSession)
         async with Session() as session:
+            logging.debug("session connected")
             # execute session
             rows = await session.execute(sql, param)
+            logging.debug(f"rows result: {rows}")
             # parse data
             records = sql_cursor(rows) if has_return else None
             await session.commit()
+            logging.debug("committed changes")
      # make sure that we dont use another engine
     await engine.dispose()
+    logging.debug("engine disposed")
+    
     return records
 
 class sql_cursor:
