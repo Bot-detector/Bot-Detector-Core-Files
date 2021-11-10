@@ -16,7 +16,7 @@ async def async_main():
 engine = create_async_engine(Config.sql_uri, poolclass=NullPool, echo=True, echo_pool=True)
 discord_engine = create_async_engine(Config.discord_sql_uri, poolclass=NullPool)
 
-asyncio.gather(async_main())
+# asyncio.gather(async_main())
 
 async_session = sessionmaker(engine, class_= AsyncSession, expire_on_commit=False, autoflush=True)
 async_discord_session = sessionmaker(discord_engine, class_= AsyncSession, expire_on_commit=False)
