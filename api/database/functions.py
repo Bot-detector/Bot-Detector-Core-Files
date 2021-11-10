@@ -59,12 +59,12 @@ async def execute_sql(sql, param={}, debug=False, engine=engine, row_count=100_0
         # make sure that we dont use another engine
         await engine.dispose()
         logging.debug("engine disposed")
-        return records
-        
+
     except Exception as e:
         logging.debug(e)
-        return
+        records = None
     
+    return records
 
 class sql_cursor:
     def __init__(self, rows):
