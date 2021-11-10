@@ -13,7 +13,7 @@ async def async_main():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-engine = create_async_engine(Config.sql_uri, poolclass=NullPool, echo=True)
+engine = create_async_engine(Config.sql_uri, poolclass=NullPool, echo=True, echo_pool=True)
 discord_engine = create_async_engine(Config.discord_sql_uri, poolclass=NullPool)
 
 asyncio.gather(async_main())
