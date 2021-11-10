@@ -1054,6 +1054,10 @@ async def get_discord_verification_attempts(token: str, player_name: str):
     await verify_token(token, verifcation='verify_players')
 
     player = await sql_get_player(player_name)
+
+    if player is None:
+        return []
+
     player_id = player.get('id')
 
     attempts = await sql_get_discord_verification_attempts(player_id)
