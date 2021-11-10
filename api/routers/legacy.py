@@ -726,6 +726,9 @@ async def detect(detections, manual_detect):
 async def get_contributor_id(contributor: str):
     player = await sql_get_player(contributor)
 
+    if player is None:
+        player = await sql_insert_player(contributor)
+
     if player:
         return_dict = {
             "id": player.id
@@ -1011,6 +1014,10 @@ async def get_latest_xp_gains(player_info:PlayerName, token:str):
     player_name = player.get('player_name')
 
     player = await sql_get_player(player_name)
+
+    if player is None:
+        raise HTTPException(404, detail="Player not found.")
+
     player_id = player.get('id')
 
     last_xp_gains = await sql_get_latest_xp_gain(player_id)
@@ -1070,6 +1077,9 @@ async def post_verification_request_information(token: str, discord_id: int, pla
     await verify_token(token, verifcation='verify_players')
 
     player = await sql_get_player(player_name)
+    if player is None:
+        raise HTTPException(404, detail="We've never seen this account before.")
+
     player_id = player.get('id')
 
     token_info = await sql_get_token(token)
@@ -1097,6 +1107,9 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
     player_name = player.get('player_name')
 
     player = await sql_get_player(player_name)
+    if player is None:
+        raise HTTPException(404, detail="Player not found.")
+        
     player_id = player.get('id')
 
     last_sighting_data = await sql_get_user_latest_sighting(player_id)
