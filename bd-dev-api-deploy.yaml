@@ -43,13 +43,6 @@ spec:
       - name: bd-dev-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
         imagePullPolicy: Always
-        resources:
-          limits:
-            memory: "2500Mi"
-            cpu: "1500m"
-          requests:
-            memory: "2500Mi"
-            cpu: "1500m"
         ports:
         - containerPort: 5000
         volumeMounts:
