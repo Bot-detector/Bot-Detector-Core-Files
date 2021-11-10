@@ -1083,6 +1083,7 @@ async def post_verification_request_information(token: str, discord_id: int, pla
     player_id = player.get('id')
 
     token_info = await sql_get_token(token)
+    token_info = token_info[0]
     token_id = token_info.get('id')
 
     await sql_insert_verification_request(discord_id, player_id, code, token_id)
@@ -1109,7 +1110,7 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
     player = await sql_get_player(player_name)
     if player is None:
         raise HTTPException(404, detail="Player not found.")
-        
+
     player_id = player.get('id')
 
     last_sighting_data = await sql_get_user_latest_sighting(player_id)
