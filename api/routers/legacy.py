@@ -87,6 +87,11 @@ class RegionName(BaseModel):
 class RegionID(BaseModel):
     region_id: int
 
+class DiscordVerifyInfo(BaseModel):
+    discord_id: int
+    player_name: str
+    code: int
+
 '''
     sql
 '''
@@ -100,6 +105,8 @@ async def sql_get_player(player_name):
     # returns a list of players
     player = await execute_sql(sql_player_id, param=param, debug=False)
     player = player.rows2dict()
+
+    print(player)
 
     return None if len(player) == 0 else player[0]
 
@@ -1072,9 +1079,15 @@ async def get_discord_verification_attempts(token: str, player_name: str):
     return attempts
 
 
-@router.post('/discord/verify/insert_player_dpc/{token}/{discord_id}/{player_name}/{code}', tags=['legacy'])
-async def post_verification_request_information(token: str, discord_id: int, player_name: str, code: int):
+@router.post('/discord/verify/insert_player_dpc/{token}', tags=['legacy'])
+async def post_verification_request_information(token: str, verify_info: DiscordVerifyInfo):
     await verify_token(token, verifcation='verify_players')
+
+    info = verify_info.dict()
+
+    player_name = info.get("player_name")
+    discord_id = info.get("discord_id")
+    code = info.get("code")
 
     player = await sql_get_player(player_name)
     if player is None:
