@@ -296,7 +296,7 @@ async def sql_insert_verification_request(discord_id: int, player_id: int, code:
         'token' : token_id
     }
 
-    await execute_sql(sql, param)
+    await execute_sql(sql, param, engine=discord_engine)
 
     return
 
