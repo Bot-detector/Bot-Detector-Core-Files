@@ -48,6 +48,7 @@ spec:
             cpu: "600m"
           requests:
             cpu: "300m"
+        ports:
         - containerPort: 5000
         volumeMounts:
         - name: nfs-volume-exports
