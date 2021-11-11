@@ -38,7 +38,7 @@ async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDA
     # debugging
     if debug:
         logging.debug(f'{has_return=}')
-        logging.debug(f'sql={sql.compile(engine)}')
+        logging.debug(f'sql={sql.compile(engine.engine)}')
         logging.debug(f'{param=}')
     
     try:

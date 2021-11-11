@@ -278,7 +278,7 @@ async def sql_get_discord_verification_status(player_name: str):
         'player_name': player_name
     }
 
-    data = await execute_sql(sql, param, EngineType.DISCORD)
+    data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
     return data.rows2dict()
 
 
@@ -289,7 +289,7 @@ async def sql_get_discord_verification_attempts(player_id: int):
         'player_id': player_id
     }
 
-    data = await execute_sql(sql, param, EngineType.DISCORD)
+    data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
     return data.rows2dict()
 
 
@@ -303,7 +303,7 @@ async def sql_insert_verification_request(discord_id: int, player_id: int, code:
         'token' : token_id
     }
 
-    await execute_sql(sql, param, EngineType.DISCORD)
+    await execute_sql(sql, param, engine_type=EngineType.DISCORD)
 
     return
 
@@ -315,7 +315,7 @@ async def sql_get_discord_linked_accounts(discord_id: int):
         'discord_id': discord_id
     }
 
-    data = await execute_sql(sql, param, EngineType.DISCORD)
+    data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
     return data.rows2dict()
 
 
@@ -904,7 +904,7 @@ async def sql_get_unverified_discord_user(player_id):
     param = {
         "player_id": player_id
     }
-    data = await execute_sql(sql, param,EngineType.DISCORD)
+    data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
     return data.rows2tuple()
 
 
@@ -931,7 +931,7 @@ async def set_discord_verification(id, token):
         "id": id,
         "token" : token
     }
-    await execute_sql(sql, param, EngineType.DISCORD)
+    await execute_sql(sql, param, engine_type=EngineType.DISCORD)
     return 
 
 
