@@ -78,7 +78,6 @@ def process_data(df, names, manual_detect):
     # 4) Insert detections into Reports table with user ids 
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
-    print(df_names)
     df = df.merge(df_names, left_on="reported", right_on="name")
     
     df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
