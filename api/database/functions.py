@@ -25,7 +25,7 @@ async def execute_sql(sql, param={}, debug=False, engine=engine, row_count=100_0
         page = page if page >= 1 else 1
         offset = (page - 1)*row_count
         # add limit to sql
-        sql = f'{sql} limit :offset, :row_count'
+        sql = f'{sql} limit :offset, :row_count;'
         # add the param
         param['offset'] = offset
         param['row_count'] = row_count
