@@ -989,7 +989,11 @@ async def get_prediction(player_name, version=None, token=None):
         raise HTTPException(status_code=400, detail=f"Bad name")
     
     player = await sql_get_player(player_name)
+
     try:
+        if player is None:
+            raise NoResultFound
+
         prediction = dict(await sql_get_prediction_player(player['id']))
         prediction.pop("created")
 
@@ -1009,7 +1013,7 @@ async def get_prediction(player_name, version=None, token=None):
 
     except NoResultFound:
         return_dict = {
-            "player_id": player['id'],
+            "player_id": "null",
             "player_name": player_name,
             "prediction_label": "No Prediction Yet",
             "prediction_confidence": 0
