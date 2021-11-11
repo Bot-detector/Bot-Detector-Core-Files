@@ -574,15 +574,18 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
 
 
     if add_patron_stats:
-        banned_df = df[df["confirmed_ban"] == 1]
-        banned_ids = banned_df["reported_ids"].tolist()
+        if df.empty:
+            total_dict["total_xp_removed"] = 0
+        else:
+            banned_df = df[df["confirmed_ban"] == 1]
+            banned_ids = banned_df["reported_ids"].tolist()
 
-        total_xp_sql = '''
-            SELECT
-                SUM(total) as total_xp
-            FROM playerHiscoreDataLatest
-            WHERE Player_id IN :banned_ids
-        '''
+            total_xp_sql = '''
+                SELECT
+                    SUM(total) as total_xp
+                FROM playerHiscoreDataLatest
+                WHERE Player_id IN :banned_ids
+            '''
 
         total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
         total_xp = total_xp_data.rows2dict()[0].get("total_xp") or 0 #eeewwww
