@@ -43,7 +43,11 @@ spec:
       - name: bd-dev-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
         imagePullPolicy: Always
-        ports:
+        resources:
+          limits:
+            cpu: "600m"
+          requests:
+            cpu: "300m"
         - containerPort: 5000
         volumeMounts:
         - name: nfs-volume-exports
