@@ -212,7 +212,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     contributions = await sql_get_contributions(contributors)
 
     df = pd.DataFrame(contributions)
-    print(df)
+
     df.drop_duplicates(inplace=True, subset=["reported_ids", "detect"], keep="last")
 
     try:

@@ -18,8 +18,8 @@ graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
 
-uvlog = logging.getLogger("uvicorn.error")
-uvlog.propagate = False
+# uvlog = logging.getLogger("uvicorn.error")
+# uvlog.propagate = False
 
 # create application
 app = FastAPI()
