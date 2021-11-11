@@ -9,6 +9,8 @@ from sqlalchemy.sql.expression import select
 from api.database.database import Engine, EngineType
 from api.database.models import Token
 
+engines = [Engine(EngineType.PLAYERDATA), Engine(EngineType.DISCORD)]
+
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
@@ -16,8 +18,8 @@ def list_to_string(l):
 async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1):
     has_return = True if sql.strip().lower().startswith('select') else False
 
-    engine = Engine(engine_type)
-    
+    engine = [e for e in engines if e.type == engine_type][0]
+
     if has_return:
         # add pagination to every query
         # max number of rows = 100k
@@ -42,27 +44,17 @@ async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDA
         logging.debug(f'{param=}')
     
     try:
-        # with handles open and close connection
-        async with engine.engine.connect() as conn:
-            logging.debug("engine connected")
-            # creates thread save session
-            #Session = sessionmaker(conn, class_=AsyncSession)
-            Session = engine.session
-            async with Session() as session:
-                logging.debug("session connected")
-                # execute session
-                rows = await session.execute(sql, param)
-                logging.debug(f"rows result: {rows}")
-                # parse data
-                records = sql_cursor(rows) if has_return else None
-                await session.commit()
-                logging.debug("committed changes")
-        # make sure that we dont use another engine
+        async with engine.session() as session:
+            # execute session
+            rows = await session.execute(sql, param)
+            # parse data
+            records = sql_cursor(rows) if has_return else None
+            # commit session
+            await session.commit()
         await engine.engine.dispose()
-        logging.debug("engine disposed")
 
     except Exception as e:
-        logging.debug(e)
+        logging.error(e)
         records = None
     
     return records
@@ -96,9 +88,7 @@ async def verify_token(token:str, verifcation:str) -> bool:
     sql = sql.where(Token.token==token)
 
     # transaction
-    Session = Engine().session
-
-    async with Session() as session:
+    async with async_session() as session:
         data = await session.execute(sql)
     
     # parse data

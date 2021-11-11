@@ -7,9 +7,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
 from api import app
-from api.Config import token
 from fastapi.testclient import TestClient
 
 client = TestClient(app.app)
@@ -52,13 +50,18 @@ def test_detect():
 
 def test_get_prediction():
     version = "test"
-    player_names = [("this_is_bad", 200), ("testing", 200), ("Seltzer Bro", 200), ("a;d;5230fadgkas", 400)]
+    player_names = [
+        ("this_is_bad", 200), 
+        ("testing", 200), 
+        ("Seltzer Bro", 200), 
+        ("a;d;5230fadgkas", 400)
+    ]
 
     for name in player_names:
         response = client.get(f"/{version}/site/prediction/{name[0]}")
-        print(type(response))
+        assert isinstance(response.json(), dict), f'invalid response return type: {type(response.json())}'
         assert response.status_code == name[1], f'invalid response {response.status_code }'
 
 
 if __name__ == "__main__":
-  test_get_prediction()
+    test_get_prediction()

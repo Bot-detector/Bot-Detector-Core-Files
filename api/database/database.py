@@ -13,9 +13,11 @@ class EngineType(Enum):
 
 class Engine():
     def __init__(self, engine_type: EngineType = EngineType.PLAYERDATA):
-        if engine_type == EngineType.PLAYERDATA:
+        self.type = engine_type
+        
+        if self.type == EngineType.PLAYERDATA:
             connection_string = Config.sql_uri
-        elif engine_type == EngineType.DISCORD:
+        elif self.type == EngineType.DISCORD:
             connection_string = Config.discord_sql_uri
         else:
             raise ValueError(f"Engine type {engine_type} not valid.")
