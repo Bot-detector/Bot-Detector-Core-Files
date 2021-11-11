@@ -14,7 +14,7 @@ from flask.json import jsonify
 detect = Blueprint('detect', __name__, template_folder='templates')
 
 def is_valid_rsn(rsn):
-    return re.fullmatch('[\w\d\s_-]{1,12}', rsn)
+    return re.fullmatch('[\w\d\s_-]{1,13}', rsn)
 
 def to_jagex_name(name: str) -> str:
     return name.lower().replace('_', ' ').replace('-',' ').strip()
