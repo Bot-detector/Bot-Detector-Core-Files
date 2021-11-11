@@ -87,8 +87,9 @@ async def verify_token(token:str, verifcation:str) -> bool:
     sql = select(Token)
     sql = sql.where(Token.token==token)
 
+    engine = [e for e in engines if e.type == EngineType.PLAYERDATA][0]
     # transaction
-    async with async_session() as session:
+    async with engine.session() as session:
         data = await session.execute(sql)
     
     # parse data
