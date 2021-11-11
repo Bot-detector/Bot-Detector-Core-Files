@@ -23,7 +23,7 @@ app = FastAPI()
 
 # setup logging
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 file_handler = logging.FileHandler(filename="error.log", mode='a')
 stream_handler = logging.StreamHandler(sys.stdout)
