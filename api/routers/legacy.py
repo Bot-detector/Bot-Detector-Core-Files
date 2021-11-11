@@ -10,7 +10,7 @@ from typing import List, Optional
 
 import pandas as pd
 from api import Config
-from api.database.database import discord_engine
+from api.database.database import discord_engine, Engine
 from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
@@ -278,7 +278,7 @@ async def sql_get_discord_verification_status(player_name: str):
         'player_name': player_name
     }
 
-    data = await execute_sql(sql, param, engine=discord_engine)
+    data = await execute_sql(sql, param, Engine.DISCORD)
     return data.rows2dict()
 
 
@@ -289,7 +289,7 @@ async def sql_get_discord_verification_attempts(player_id: int):
         'player_id': player_id
     }
 
-    data = await execute_sql(sql, param, engine=discord_engine)
+    data = await execute_sql(sql, param, Engine.DISCORD)
     return data.rows2dict()
 
 
@@ -303,7 +303,7 @@ async def sql_insert_verification_request(discord_id: int, player_id: int, code:
         'token' : token_id
     }
 
-    await execute_sql(sql, param, engine=discord_engine)
+    await execute_sql(sql, param, Engine.DISCORD)
 
     return
 
@@ -315,7 +315,7 @@ async def sql_get_discord_linked_accounts(discord_id: int):
         'discord_id': discord_id
     }
 
-    data = await execute_sql(sql, param, engine=discord_engine)
+    data = await execute_sql(sql, param, Engine.DISCORD)
     return data.rows2dict()
 
 
@@ -399,7 +399,7 @@ async def insert_export_link(export_info: dict):
 
     sql = f"INSERT IGNORE INTO export_links ({columns}) VALUES ({values});"
 
-    await execute_sql(sql, param=export_info, engine=discord_engine)
+    await execute_sql(sql, param=export_info, engine_type=Engine.DISCORD)
     return
 
 
@@ -410,7 +410,7 @@ async def get_export_link(url_text: str):
         'url_text': url_text
     }
 
-    data = await execute_sql(sql, param, engine=discord_engine)
+    data = await execute_sql(sql, param, Engine.DISCORD)
 
     return data.rows2dict()
 
@@ -423,7 +423,7 @@ async def update_export_link(update_export: dict):
              WHERE id = :id
      '''
 
-    await execute_sql(sql, param=update_export, engine=discord_engine)
+    await execute_sql(sql, param=update_export, engine_type=Engine.DISCORD)
     return
 
 '''
@@ -904,7 +904,7 @@ async def sql_get_unverified_discord_user(player_id):
     param = {
         "player_id": player_id
     }
-    data = await execute_sql(sql, param,engine=discord_engine)
+    data = await execute_sql(sql, param,Engine.DISCORD)
     return data.rows2tuple()
 
 
@@ -931,7 +931,7 @@ async def set_discord_verification(id, token):
         "id": id,
         "token" : token
     }
-    await execute_sql(sql, param, engine=discord_engine)
+    await execute_sql(sql, param, Engine.DISCORD)
     return 
 
 

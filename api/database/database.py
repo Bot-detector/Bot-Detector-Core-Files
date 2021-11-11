@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum, auto
 
 from api import Config
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -7,9 +8,14 @@ from sqlalchemy.pool import NullPool
 
 from api.database.models import Base
 
-# create database engine
+class Engine(Enum):
+    """"""
+    PLAYERDATA = auto()
+    DISCORD = auto()
+
 
 async def async_main():
+    """create database engine"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
