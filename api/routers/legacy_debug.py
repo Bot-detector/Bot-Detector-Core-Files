@@ -49,8 +49,8 @@ async def to_jagex_name(name: str) -> str:
     return name.lower().replace('_', ' ').replace('-',' ').strip()
 
 async def sql_select_players(names: List) -> dict:
-    names = [n.lower() for n in names]
-    sql = "SELECT * FROM Players WHERE lower(name) in :names"
+    names = [to_jagex_name(n)for n in names]
+    sql = "SELECT * FROM Players WHERE normalized_name in :names"
     param = {"names": names}
     data = await execute_sql(sql, param)
     return data.rows2dict()
@@ -111,13 +111,13 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     data = await sql_select_players(clean_names)
 
     # 3) Create entries for players that do not yet exist in Players table
-    existing_names = [d["name"].lower() for d in data]
-    new_names = set([name.lower() for name in clean_names]).difference(existing_names)
+    existing_names = [d["normalized_name"] for d in data]
+    new_names = set([name for name in clean_names]).difference(existing_names)
     
     # 3.1) Get those players' IDs from step 3
     if new_names:
-        sql = "insert ignore into Players (name) values (:name)"
-        param = [{"name": name} for name in new_names]
+        sql = "insert ignore into Players (name, normalized_name) values (:name, :nname)"
+        param = [{"name": name, "nname":name} for name in new_names]
 
         await execute_sql(sql, param)
 

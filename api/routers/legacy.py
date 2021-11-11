@@ -605,11 +605,10 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
 
 async def sql_select_players(names: List) -> dict:
     names = [n.lower() for n in names]
-    sql = "SELECT * FROM Players WHERE lower(name) in :names"
+    sql = "SELECT * FROM Players WHERE normalized_name in :names"
     param = {"names": names}
     data = await execute_sql(sql, param)
     return data.rows2dict()
-
 
 async def parse_detection(data:dict) ->dict:
     gmt = time.gmtime(data['ts'])
