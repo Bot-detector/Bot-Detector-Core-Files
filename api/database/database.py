@@ -1,4 +1,3 @@
-import asyncio
 from enum import Enum, auto
 
 from api import Config
@@ -6,23 +5,24 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
-from api.database.models import Base
 
-class Engine(Enum):
+class EngineType(Enum):
     """"""
     PLAYERDATA = auto()
     DISCORD = auto()
 
+class Engine():
+    def __init__(self, engine_type: EngineType = EngineType.PLAYERDATA):
+        if engine_type == EngineType.PLAYERDATA:
+            connection_string = Config.sql_uri
+        elif engine_type == EngineType.DISCORD:
+            connection_string = Config.discord_sql_uri
+        else:
+            raise ValueError(f"Engine type {engine_type} not valid.")
 
-async def async_main():
-    """create database engine"""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        self.engine = create_async_engine(connection_string, poolclass=NullPool)
+        self.session = sessionmaker(self.engine, class_= AsyncSession, expire_on_commit=False, autoflush=True)
 
-engine = create_async_engine(Config.sql_uri, poolclass=NullPool, echo=True, echo_pool=True)
-discord_engine = create_async_engine(Config.discord_sql_uri, poolclass=NullPool)
 
-# asyncio.gather(async_main())
-
-async_session = sessionmaker(engine, class_= AsyncSession, expire_on_commit=False, autoflush=True)
-async_discord_session = sessionmaker(discord_engine, class_= AsyncSession, expire_on_commit=False)
+engine = Engine(EngineType.PLAYERDATA)
+discord_engine = Engine(EngineType.DISCORD)

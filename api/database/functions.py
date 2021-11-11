@@ -3,36 +3,20 @@ from collections import namedtuple
 
 from fastapi import HTTPException
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import sessionmaker
+
 from sqlalchemy.sql.expression import select
 
-from api.database.database import engine, discord_engine, async_session, async_discord_session, Engine
+from api.database.database import Engine, EngineType
 from api.database.models import Token
-
-
-class InvalidEngineType(ValueError):
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(message)
-
 
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
     
-async def execute_sql(sql, param={}, debug=False, engine_type=Engine.PLAYERDATA, row_count=100_000, page=1):
+async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1):
     has_return = True if sql.strip().lower().startswith('select') else False
 
-    if engine_type == Engine.PLAYERDATA:
-        selected_engine = engine
-        selected_session = async_session
-    elif engine_type == Engine.DISCORD:
-        selected_engine = discord_engine
-        selected_session = async_discord_session
-    else:
-        raise InvalidEngineType("The engine type you provided does not match a valid database connection.")
-
+    engine = Engine(engine_type)
     
     if has_return:
         # add pagination to every query
@@ -59,11 +43,11 @@ async def execute_sql(sql, param={}, debug=False, engine_type=Engine.PLAYERDATA,
     
     try:
         # with handles open and close connection
-        async with selected_engine.connect() as conn:
+        async with engine.engine.connect() as conn:
             logging.debug("engine connected")
             # creates thread save session
             #Session = sessionmaker(conn, class_=AsyncSession)
-            Session = selected_session
+            Session = engine.session
             async with Session() as session:
                 logging.debug("session connected")
                 # execute session
@@ -74,7 +58,7 @@ async def execute_sql(sql, param={}, debug=False, engine_type=Engine.PLAYERDATA,
                 await session.commit()
                 logging.debug("committed changes")
         # make sure that we dont use another engine
-        await engine.dispose()
+        await engine.engine.dispose()
         logging.debug("engine disposed")
 
     except Exception as e:

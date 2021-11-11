@@ -1,7 +1,8 @@
 from operator import or_
 from typing import List, Optional
 
-from api.database.functions import (async_session, list_to_string,
+from api.database.database import Engine
+from api.database.functions import  (list_to_string,
                                     sqlalchemy_result, verify_token)
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
@@ -55,7 +56,9 @@ async def get(token: str, name: str):
     sql = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
     
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
@@ -78,7 +81,9 @@ async def post(token: str, prediction: List[Prediction]):
     sql = f'''replace into Predictions ({columns}) values ({values})'''
     sql = text(sql)
 
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         await session.execute(sql, data)
         await session.commit()
     
@@ -102,8 +107,10 @@ async def get(token: str, limit: int = 50_000):
     sql = sql.order_by(func.rand())
     sql = sql.limit(limit).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
+    
+    Session = Engine().session
 
-    async with async_session() as session:
+    async with Session() as session:
         data = await session.execute(sql)
 
     names, objs, output = [], [], []

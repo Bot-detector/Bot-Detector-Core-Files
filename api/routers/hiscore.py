@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from api.database.database import async_session
+from api.database.database import Engine
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import (PlayerHiscoreDataLatest,
                                  PlayerHiscoreDataXPChange, playerHiscoreData)
@@ -124,7 +124,9 @@ async def get(
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
@@ -154,7 +156,9 @@ async def get(
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
@@ -185,7 +189,9 @@ async def get_hiscore_latest_bulk(
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
@@ -215,7 +221,9 @@ async def get(
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
@@ -235,7 +243,9 @@ async def post(hiscores: hiscore, token: str):
     sql_insert = insert(table).values(values)
     sql_insert = sql_insert.prefix_with('ignore')
 
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         await session.execute(sql_insert)
         await session.commit()
     

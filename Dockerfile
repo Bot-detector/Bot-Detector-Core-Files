@@ -12,4 +12,4 @@ COPY . /code
 
 RUN mkdir logs
 
-CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "5000", "--root-path", "/dev"]
+CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "5000", "--root-path", "/dev", "--log-level", "warning"]

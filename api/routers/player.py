@@ -1,7 +1,7 @@
 import time
 from typing import List, Optional
 
-from api.database.database import async_session
+from api.database.database import Engine
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import Player as dbPlayer
 from fastapi import APIRouter, HTTPException
@@ -57,7 +57,9 @@ async def get(
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
     # transaction
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
@@ -100,7 +102,9 @@ async def post_bulk(
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
     # transaction
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
@@ -129,7 +133,9 @@ async def put(player: Player, token: str):
     sql_select = sql_select.where(dbPlayer.id == player_id)
 
     # transaction
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         await session.execute(sql_update)
         await session.commit()
         data = await session.execute(sql_select)
@@ -152,8 +158,9 @@ async def post(player_name: str, token: str):
     sql_select = select(dbPlayer)
     sql_select = sql_select.where(dbPlayer.name == player_name)
 
-    # transaction
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         await session.execute(sql_insert)
         await session.commit()
         data = await session.execute(sql_select)

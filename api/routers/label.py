@@ -1,4 +1,4 @@
-from api.database.database import async_session
+from api.database.database import Engine
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import Label as dbLabel
 from fastapi import APIRouter
@@ -19,7 +19,9 @@ async def get(token:str):
 
     sql = select(dbLabel)
 
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         data = await session.execute(sql)
     
     data = sqlalchemy_result(data)
@@ -46,7 +48,9 @@ async def post(token:str, label:label):
     sql_select = select(dbLabel)
     sql_select = sql_select.where(dbLabel.label == label_name)
 
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         await session.execute(sql_insert)
         await session.commit()
         data = await session.execute(sql_select)
