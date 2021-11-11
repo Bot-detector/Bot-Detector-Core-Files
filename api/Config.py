@@ -18,12 +18,14 @@ graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
 
+uvlog = logging.getLogger("uvicorn.error")
+uvlog.propagate = False
+
 # create application
 app = FastAPI()
 
 # setup logging
 logger = logging.getLogger()
-# logger.setLevel(logging.DEBUG)
 
 file_handler = logging.FileHandler(filename="error.log", mode='a')
 stream_handler = logging.StreamHandler(sys.stdout)
@@ -45,6 +47,8 @@ logging.getLogger("urllib3").setLevel(logging.DEBUG)
 logging.getLogger("apscheduler").setLevel(logging.DEBUG)
 logging.getLogger('flask_cors').setLevel(logging.DEBUG)
 logging.getLogger('uvicorn').setLevel(logging.DEBUG)
+
+logging.getLogger("apscheduler.scheduler").setLevel(logging.DEBUG)
 
 # for machine learning
 n_pca=2
