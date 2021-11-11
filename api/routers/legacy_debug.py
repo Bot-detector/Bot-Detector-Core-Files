@@ -213,6 +213,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     contributions = await sql_get_contributions(contributors)
 
     df = pd.DataFrame(contributions)
+    print(df)
     df.drop_duplicates(inplace=True, subset=["reported_ids", "detect"], keep="last")
 
     try:
@@ -260,19 +261,22 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
         return total_dict
 
     if add_patron_stats:
-        banned_df = df[df["confirmed_ban"] == 1]
-        banned_ids = banned_df["reported_ids"].tolist()
+        if df.empty:
+            total_dict["total_xp_removed"] = 0
+        else:
+            banned_df = df[df["confirmed_ban"] == 1]
+            banned_ids = banned_df["reported_ids"].tolist()
 
-        total_xp_sql = '''
-            SELECT
-                SUM(total) as total_xp
-            FROM playerHiscoreDataLatest
-            WHERE Player_id IN :banned_ids
-        '''
+            total_xp_sql = '''
+                SELECT
+                    SUM(total) as total_xp
+                FROM playerHiscoreDataLatest
+                WHERE Player_id IN :banned_ids
+            '''
 
-        total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
-        total_xp = total_xp_data.rows2dict()[0].get("total_xp") or 0 #eeewwww
-        total_dict["total_xp_removed"] = total_xp
+            total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
+            total_xp = total_xp_data.rows2dict()[0].get("total_xp") or 0 #eeewwww
+            total_dict["total_xp_removed"] = total_xp
 
     return_dict = {
         "passive": passive_dict,
