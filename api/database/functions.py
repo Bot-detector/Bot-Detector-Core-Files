@@ -96,7 +96,9 @@ async def verify_token(token:str, verifcation:str) -> bool:
     sql = sql.where(Token.token==token)
 
     # transaction
-    async with async_session() as session:
+    Session = Engine().session
+
+    async with Session() as session:
         data = await session.execute(sql)
     
     # parse data
