@@ -43,11 +43,10 @@ class detection(BaseModel):
     equip_ge_value: Optional[int]
 
 async def is_valid_rsn(rsn: str) -> bool:
-    #return True
-    return re.fullmatch('[\w\d\s_-]{1,12}', rsn)
+    return re.fullmatch('[\w\d\s_-]{1,13}', rsn)
 
 async def to_jagex_name(name: str) -> str:
-    return name
+    return name.lower().replace('_', ' ').replace('-',' ').strip()
 
 async def sql_select_players(names: List) -> dict:
     names = [n.lower() for n in names]

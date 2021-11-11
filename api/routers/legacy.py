@@ -772,8 +772,13 @@ async def get_player_labels():
 async def receive_plugin_feedback(feedback: Feedback, version: str = None):
  
     feedback_params = feedback.dict()
+    player_name = feedback_params.pop("player_name")
 
-    voter_data = await execute_sql(sql=f"select * from Players where name = :player_name", param={"player_name": feedback_params.pop("player_name")})
+    voter_data = await execute_sql(sql=f"select * from Players where name = :player_name", param={"player_name": player_name})
+
+    if voter_data is None:
+        voter_data = await sql_insert_player(player_name)
+
     voter_data = voter_data.rows2dict()[0]
 
     feedback_params["voter_id"] = voter_data.get("id")
