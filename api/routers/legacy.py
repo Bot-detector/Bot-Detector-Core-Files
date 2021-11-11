@@ -106,8 +106,6 @@ async def sql_get_player(player_name):
     player = await execute_sql(sql_player_id, param=param, debug=False)
     player = player.rows2dict()
 
-    print(player)
-
     return None if len(player) == 0 else player[0]
 
 
@@ -211,24 +209,24 @@ async def sql_get_feedback_submissions(voters: List):
     }
 
     data = await execute_sql(sql, param=params, debug=False, row_count=100_000_000)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 async def sql_get_number_tracked_players():
     sql = 'SELECT COUNT(*) count FROM Players'
     data = await execute_sql(sql, param={}, debug=False)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def sql_get_report_stats():
     sql = "SELECT * FROM playerdata.xx_stats"
     data = await execute_sql(sql, param={}, debug=False, )
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def sql_get_player_labels():
     sql = 'select * from Labels'
     data = await execute_sql(sql, param={}, debug=False)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def sql_update_player(player: dict):
@@ -251,7 +249,7 @@ async def sql_update_player(player: dict):
 
     await execute_sql(sql, param)
     data = await execute_sql(select, param)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def sql_get_latest_xp_gain(player_id: int):
@@ -316,7 +314,7 @@ async def sql_get_discord_linked_accounts(discord_id: int):
     }
 
     data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def sql_get_user_latest_sighting(player_id: int):
@@ -332,7 +330,7 @@ async def sql_get_user_latest_sighting(player_id: int):
     }
 
     data = await execute_sql(sql, param, row_count=1)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def sql_get_report_data_heatmap(region_id: int):
@@ -351,7 +349,7 @@ async def sql_get_report_data_heatmap(region_id: int):
     }
 
     data = await execute_sql(sql, param, row_count=100_000)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def sql_region_search(region_name: str):
@@ -364,7 +362,7 @@ async def sql_region_search(region_name: str):
     }
 
     data = await execute_sql(sql, param)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def get_ban_spreadsheet_data(player_name: str):
@@ -389,7 +387,7 @@ async def get_ban_spreadsheet_data(player_name: str):
     param = {'player_name': player_name}
 
     data = await execute_sql(sql, param, row_count=500_000)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def insert_export_link(export_info: dict):
@@ -412,7 +410,7 @@ async def get_export_link(url_text: str):
 
     data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
 
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def update_export_link(update_export: dict):
@@ -829,7 +827,7 @@ async def get_highscores(
         )
 
     data = await execute_sql(sql, row_count=row_count, page=page)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 @router.get('site/players/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
@@ -843,7 +841,7 @@ async def get_players(token:str, ofInterest:int=None, row_count:int=100_000, pag
         sql = 'select * from playersOfInterest'
 
     data = await execute_sql(sql, row_count=row_count, page=page)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 @router.get('/site/labels/{tokens}', tags=['legacy'])
@@ -852,7 +850,7 @@ async def get_labels(token):
 
     sql = 'select * from Labels'
     data = await execute_sql(sql)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 @router.post('/site/verify/{token}', tags=['legacy'])
@@ -914,7 +912,7 @@ async def sql_get_token(token):
         'token': token
     }
     data = await execute_sql(sql, param=param)
-    return data.rows2dict()
+    return data.rows2dict() if data is not None else {}
 
 
 async def set_discord_verification(id, token):
