@@ -54,7 +54,7 @@ async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDA
         await engine.engine.dispose()
 
     except Exception as e:
-        logging.error(e)
+        logging.error(e.__traceback__)
         records = None
     
     return records
