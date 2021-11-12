@@ -50,7 +50,7 @@ async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDA
             records = sql_cursor(rows) if has_return else None
             # commit session
             await session.commit()
-        #await engine.engine.dispose() does this close other threads?
+        await engine.engine.dispose()
 
     except Exception as e:
         logging.error(traceback.print_exc())
