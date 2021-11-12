@@ -49,7 +49,7 @@ async def to_jagex_name(name: str) -> str:
     return name.lower().replace('_', ' ').replace('-',' ').strip()
 
 async def sql_select_players(names: List) -> dict:
-    names = [to_jagex_name(n)for n in names]
+    names = [await to_jagex_name(n)for n in names]
     sql = "SELECT * FROM Players WHERE normalized_name in :names"
     param = {"names": names}
     data = await execute_sql(sql, param)
