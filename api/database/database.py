@@ -3,7 +3,7 @@ from enum import Enum, auto
 from api import Config
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import QueuePool
 from asyncio import current_task
 from sqlalchemy.ext.asyncio import async_scoped_session
 
@@ -23,7 +23,7 @@ class Engine():
         else:
             raise ValueError(f"Engine type {engine_type} not valid.")
 
-        self.engine = create_async_engine(connection_string, poolclass=NullPool)
+        self.engine = create_async_engine(connection_string, poolclass=QueuePool)
         self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
         # self.session = async_scoped_session(self.session_maker, scopefunc=current_task)
 
