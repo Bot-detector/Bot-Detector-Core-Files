@@ -34,8 +34,6 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
     # parsing
     sql = text(sql)
 
-    logger.debug(f"SQL query: {sql}")
-
     # debugging
     if debug:
         logger.debug(f'{has_return=}')
