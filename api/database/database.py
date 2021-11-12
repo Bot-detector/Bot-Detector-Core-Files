@@ -23,7 +23,7 @@ class Engine():
         else:
             raise ValueError(f"Engine type {engine_type} not valid.")
 
-        self.engine = create_async_engine(connection_string, poolclass=QueuePool)
+        self.engine = create_async_engine(connection_string, poolclass=QueuePool, pool_size=100)
         self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
         # self.session = async_scoped_session(self.session_maker, scopefunc=current_task)
 

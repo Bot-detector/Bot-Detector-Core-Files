@@ -603,19 +603,20 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     routes
 '''
 
-async def sql_select_players(names: List) -> dict:
+async def sql_select_players(names: List):
     names = [n.lower() for n in names]
     sql = "SELECT * FROM Players WHERE normalized_name in :names"
     param = {"names": names}
     data = await execute_sql(sql, param)
-    return data.rows2dict()
 
-async def parse_detection(data:dict) ->dict:
+    return [] if not data else data.rows2dict()
+
+
+async def parse_detection(data:dict) -> dict:
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
     equipment = data.get('equipment')
-
     param = {
         'reportedID': data.get('id'),
         'reportingID': data.get('reporter_id'),

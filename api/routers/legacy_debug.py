@@ -48,12 +48,14 @@ async def is_valid_rsn(rsn: str) -> bool:
 async def to_jagex_name(name: str) -> str:
     return name.lower().replace('_', ' ').replace('-',' ').strip()
 
-async def sql_select_players(names: List) -> dict:
+async def sql_select_players(names: List):
     names = [await to_jagex_name(n)for n in names]
     sql = "SELECT * FROM Players WHERE normalized_name in :names"
     param = {"names": names}
     data = await execute_sql(sql, param)
-    return data.rows2dict()
+    
+    return [] if not data else data.rows2dict()
+
 
 async def parse_detection(data:dict) -> dict:
     gmt = time.gmtime(data['ts'])
