@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import os
 import pathlib
 import random
@@ -16,6 +15,9 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm.exc import NoResultFound
+
+import logging
+logger = logging.getLogger(__name__)
 
 '''
 This file will have all legacy routes from the Flask api.
@@ -104,7 +106,7 @@ async def sql_get_player(player_name):
     }
 
     # returns a list of players
-    player = await execute_sql(sql_player_id, param=param, debug=False)
+    player = await execute_sql(sql_player_id, param=param)
     player = player.rows2dict()
 
     return None if len(player) == 0 else player[0]
@@ -117,7 +119,7 @@ async def sql_insert_player(player_name):
         'player_name': player_name
     }
 
-    await execute_sql(sql_insert, param=param, debug=False)
+    await execute_sql(sql_insert, param=param)
     player = await sql_get_player(player_name)
     return player
 
@@ -496,7 +498,7 @@ async def custom_hiscore(detection):
 
 
 async def insync_detect(detections, manual_detect):
-    logging.debug("insync detect test")
+    logger.debug("insync detect test")
     total_creates = 0
     for idx, detection in enumerate(detections):
         detection['manual_detect'] = manual_detect
@@ -504,13 +506,13 @@ async def insync_detect(detections, manual_detect):
         total_creates += await custom_hiscore(detection)
 
         if len(detection) > 1000 and total_creates/len(detections) > .75:
-            logging.debug(f'    Malicious: sender: {detection["reporter"]}')
+            logger.debug(f'    Malicious: sender: {detection["reporter"]}')
             break
 
         if idx % 500 == 0 and idx != 0:
-            logging.debug(f'      Completed {idx + 1}/{len(detections)}')
+            logger.debug(f'      Completed {idx + 1}/{len(detections)}')
 
-    logging.debug(f'      Done: Completed {idx + 1} detections')
+    logger.debug(f'      Done: Completed {idx + 1} detections')
     return
 
 
@@ -533,7 +535,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
         manual_dict["possible_bans"] = manual_dict["possible_bans"] - manual_dict["bans"]
 
     except KeyError as e:
-        logging.debug(e)
+        logger.debug(e)
         manual_dict = {
             "reports": 0,
             "bans": 0,
@@ -553,7 +555,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
         passive_dict["possible_bans"] = passive_dict["possible_bans"] - passive_dict["bans"]
 
     except KeyError as e:
-        logging.debug(e)
+        logger.debug(e)
         passive_dict = {
             "reports": 0,
             "bans": 0,
@@ -652,10 +654,10 @@ async def detect(detections, manual_detect):
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logging.debug('to many reports')
+        logger.debug('to many reports')
         return {'NOK': 'NOK'}, 400
 
-    logging.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
+    logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
     # 1) Get a list of unqiue reported names and reporter name 
     names = list(df['reported'].unique())

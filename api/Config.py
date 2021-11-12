@@ -18,37 +18,32 @@ graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
 
-# uvlog = logging.getLogger("uvicorn.error")
-# uvlog.propagate = False
-
 # create application
 app = FastAPI()
 
 # setup logging
-logger = logging.getLogger()
-
-file_handler = logging.FileHandler(filename="error.log", mode='a')
+file_handler = logging.FileHandler(filename="logs/error.log", mode='a')
 stream_handler = logging.StreamHandler(sys.stdout)
-
-#logging.basicConfig(filename='error.log', level=logging.DEBUG)
-
-# log formatting
+# # log formatting
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
 
-# add handler
-logger.addHandler(file_handler)
-logger.addHandler(stream_handler)
+handlers = [
+    file_handler,
+    stream_handler
+]
+
+logging.basicConfig(level=logging.DEBUG, handlers=handlers)
 
 # set imported loggers to warning
 logging.getLogger("requests").setLevel(logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.DEBUG)
-logging.getLogger("apscheduler").setLevel(logging.DEBUG)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.DEBUG)
 logging.getLogger('uvicorn').setLevel(logging.DEBUG)
 
-logging.getLogger("apscheduler.scheduler").setLevel(logging.DEBUG)
+logging.getLogger("uvicorn.error").propagate = False
 
 # for machine learning
 n_pca=2

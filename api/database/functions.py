@@ -8,11 +8,13 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.sql.expression import select
 
+logger = logging.getLogger(__name__)
+
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
     
-async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1):
+async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1):
     has_return = True if sql.strip().lower().startswith('select') else False
     
     engine = Engine(engine_type)
@@ -32,13 +34,13 @@ async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDA
     # parsing
     sql = text(sql)
 
-    logging.info(f"SQL query: {sql}")
+    logger.debug(f"SQL query: {sql}")
 
     # debugging
     if debug:
-        logging.debug(f'{has_return=}')
-        logging.debug(f'sql={sql.compile(engine.engine)}')
-        logging.debug(f'{param=}')
+        logger.debug(f'{has_return=}')
+        logger.debug(f'sql={sql.compile(engine.engine)}')
+        logger.debug(f'{param=}')
     
     try:
         async with engine.session() as session:
@@ -51,7 +53,7 @@ async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDA
         await engine.engine.dispose()
 
     except Exception as e:
-        logging.error(traceback.print_exc())
+        logger.error(traceback.print_exc())
         records = None
     
     return records
