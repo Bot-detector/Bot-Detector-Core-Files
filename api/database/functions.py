@@ -1,13 +1,12 @@
 import logging
+import traceback
 from collections import namedtuple
-
-from fastapi import HTTPException
-from sqlalchemy import text
-
-from sqlalchemy.sql.expression import select
 
 from api.database.database import Engine, EngineType
 from api.database.models import Token
+from fastapi import HTTPException
+from sqlalchemy import text
+from sqlalchemy.sql.expression import select
 
 engines = [Engine(EngineType.PLAYERDATA), Engine(EngineType.DISCORD)]
 
@@ -54,7 +53,7 @@ async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDA
         await engine.engine.dispose()
 
     except Exception as e:
-        logging.error(e.__traceback__)
+        logging.error(traceback.print_exc())
         records = None
     
     return records
