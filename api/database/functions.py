@@ -50,7 +50,7 @@ async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDA
             records = sql_cursor(rows) if has_return else None
             # commit session
             await session.commit()
-        await engine.engine.dispose()
+        #await engine.engine.dispose() does this close other threads?
 
     except Exception as e:
         logging.error(traceback.print_exc())
@@ -87,6 +87,8 @@ async def verify_token(token:str, verifcation:str) -> bool:
     sql = sql.where(Token.token==token)
 
     engine = [e for e in engines if e.type == EngineType.PLAYERDATA][0]
+
+    #engine = Engine(EngineType.PLAYERDATA)
     # transaction
     async with engine.session() as session:
         data = await session.execute(sql)

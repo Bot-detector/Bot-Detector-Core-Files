@@ -24,9 +24,6 @@ class Engine():
             raise ValueError(f"Engine type {engine_type} not valid.")
 
         self.engine = create_async_engine(connection_string, poolclass=NullPool)
-        self.session = sessionmaker(self.engine, class_= AsyncSession, expire_on_commit=True)
+        self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
         # self.session = async_scoped_session(self.session_maker, scopefunc=current_task)
 
-
-engine = Engine(EngineType.PLAYERDATA)
-discord_engine = Engine(EngineType.DISCORD)
