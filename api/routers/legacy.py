@@ -96,6 +96,7 @@ class DiscordVerifyInfo(BaseModel):
     sql
 '''
 async def sql_get_player(player_name):
+    """Attempts to get data for a player whose names matches player_name."""
     sql_player_id = 'select * from Players where name = :player_name'
 
     param = {

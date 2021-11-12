@@ -8,16 +8,14 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.sql.expression import select
 
-engines = [Engine(EngineType.PLAYERDATA), Engine(EngineType.DISCORD)]
-
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
     
 async def execute_sql(sql, param={}, debug=True, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1):
     has_return = True if sql.strip().lower().startswith('select') else False
-
-    engine = [e for e in engines if e.type == engine_type][0]
+    
+    engine = Engine(engine_type)
 
     if has_return:
         # add pagination to every query
@@ -86,15 +84,15 @@ async def verify_token(token:str, verifcation:str) -> bool:
     sql = select(Token)
     sql = sql.where(Token.token==token)
 
-    engine = [e for e in engines if e.type == EngineType.PLAYERDATA][0]
+    engine = Engine(EngineType.PLAYERDATA)
 
-    #engine = Engine(EngineType.PLAYERDATA)
     # transaction
     async with engine.session() as session:
         data = await session.execute(sql)
     
     # parse data
     data = sqlalchemy_result(data)
+
     if len(data.rows) == 0:
         raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
 
