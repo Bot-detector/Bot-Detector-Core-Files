@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import re
 from typing import List, Optional
 
@@ -9,6 +8,8 @@ from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter
 from pydantic import BaseModel
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -97,10 +98,10 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logging.debug('to many reports')
+        logger.debug('to many reports')
         return {'NOK': 'NOK'}, 400
 
-    logging.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
+    logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
     # 1) Get a list of unqiue reported names and reporter name 
     names = list(df['reported'].unique())
@@ -227,7 +228,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
             "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
         }
     except KeyError as e:
-        logging.debug(e)
+        logger.debug(e)
         manual_dict = {
             "reports": 0,
             "bans": 0,
@@ -244,7 +245,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
             "possible_bans": int(df_detect_passive['possible_ban'].sum())
         }
     except KeyError as e:
-        logging.debug(e)
+        logger.debug(e)
         passive_dict = {
             "reports": 0,
             "bans": 0,
