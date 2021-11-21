@@ -152,6 +152,30 @@ def get_player(player_name):
     return player_id
 
 
+def get_normalized_player(normalized_name: str):
+    """Same thing as get_player, but we use the normalized name. The FastAPI port already does this. This is just for compatibility."""
+    sql_player_id = 'select * from Players where normalized_name LIKE :normalized_name;'
+    param = {
+        'normalized_name': normalized_name
+    }
+
+    # returns a list of players
+    player = execute_sql(
+        sql=sql_player_id,
+        param=param,
+        debug=False,
+        has_return=True
+    )
+
+    if len(player) == 0:
+        player_id = None
+    else:
+        player_id = player[0]
+
+    return player_id
+
+
+
 def get_players_by_names(names: List[str]):
     sql = f"SELECT * FROM Players WHERE name IN ({','.join(names)})"
     return execute_sql(sql=sql, has_return=True)
