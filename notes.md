@@ -39,5 +39,5 @@ if your branch gets out of sync and for some reason you have many pushes and pul
 ```
 git fetch origin
 git reset --hard origin/{branchname}
-git clean -f
+git clean -f -d
 ```

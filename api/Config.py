@@ -13,7 +13,6 @@ sql_uri = os.environ.get('sql_uri')
 discord_sql_uri = os.environ.get('discord_sql_uri')
 proxy_http = os.environ.get('proxy_http')
 proxy_https = os.environ.get('proxy_https')
-flask_port = os.environ.get('flask_port')
 graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
@@ -39,9 +38,10 @@ logging.basicConfig(level=logging.DEBUG, handlers=handlers)
 # set imported loggers to warning
 logging.getLogger("requests").setLevel(logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.DEBUG)
+logging.getLogger("uvicorn").setLevel(logging.DEBUG)
+
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger('flask_cors').setLevel(logging.DEBUG)
-logging.getLogger('uvicorn').setLevel(logging.DEBUG)
+logging.getLogger("aiomysql").setLevel(logging.WARNING)
 
 logging.getLogger("uvicorn.error").propagate = False
 
