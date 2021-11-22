@@ -227,6 +227,9 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
             "possible_bans": int(df_detect_manual['possible_ban'].sum()),
             "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
         }
+
+        manual_dict["possible_bans"] = manual_dict["possible_bans"] - manual_dict["bans"]
+
     except KeyError as e:
         logger.debug(e)
         manual_dict = {
@@ -244,6 +247,9 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
             "bans": int(df_detect_passive['confirmed_ban'].sum()),
             "possible_bans": int(df_detect_passive['possible_ban'].sum())
         }
+
+        passive_dict["possible_bans"] = passive_dict["possible_bans"] - passive_dict["bans"]
+
     except KeyError as e:
         logger.debug(e)
         passive_dict = {
