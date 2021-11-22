@@ -7,7 +7,7 @@ from api.database.models import Token
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.sql.expression import select
-from aiomysql import OperationalError
+from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
 
