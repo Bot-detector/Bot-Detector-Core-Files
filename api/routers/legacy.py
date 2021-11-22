@@ -1020,7 +1020,7 @@ async def get_prediction(player_name, version=None, token=None):
 
     except NoResultFound:
         return_dict = {
-            "player_id": "null",
+            "player_id": -1,
             "player_name": player_name,
             "prediction_label": "No Prediction Yet",
             "prediction_confidence": 0
