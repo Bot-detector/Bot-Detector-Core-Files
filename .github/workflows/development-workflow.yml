@@ -4,11 +4,8 @@ on:
     branches: [ develop ]
 
 jobs:
-
-  build:
-
+  setup:
     runs-on: self-hosted
-
     steps:
     - uses: actions/checkout@v2
     - name: Set Up ENV
@@ -22,8 +19,11 @@ jobs:
           echo "${{ secrets.FEEDBACK_WEBHOOK_URL }}" >> .env
           echo dev_mode=0 >> .env
 
+  build-image:
+    runs-on: self-hosted
+    steps:
     - name: Build the Docker image
-      run: docker build . --file Dockerfile -t bot-detector/bd-api:latest
+      run: docker build . --file Dockerfile-Dev -t bot-detector/bd-api:latest
 
     - name: Tag Image
       run: docker tag bot-detector/bd-api:latest hub.osrsbotdetector.com/bot-detector/bd-api:latest
@@ -34,6 +34,9 @@ jobs:
     - name: Push Image to Registry
       run: docker push hub.osrsbotdetector.com/bot-detector/bd-api:latest
 
+  deploy:
+    runs-on: self-hosted
+    steps:
     - name: Apply Possible Deployment Changes
       run: kubectl apply -f bd-dev-api-deploy.yaml
 
