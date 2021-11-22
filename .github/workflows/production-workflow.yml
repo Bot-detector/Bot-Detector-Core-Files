@@ -20,6 +20,7 @@ jobs:
           echo dev_mode=0 >> .env
 
   build-image:
+    needs: setup
     runs-on: self-hosted
     steps:
     - name: Build the Docker image
@@ -35,6 +36,7 @@ jobs:
       run: docker push hub.osrsbotdetector.com/bot-detector/bd-api:production
 
   deploy:
+    needs: build-image
     runs-on: self-hosted
     steps:
     - name: Apply Possible Deployment Changes
