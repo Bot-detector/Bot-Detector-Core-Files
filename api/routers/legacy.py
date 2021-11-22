@@ -99,14 +99,20 @@ class DiscordVerifyInfo(BaseModel):
 '''
 async def sql_get_player(player_name):
     """Attempts to get data for a player whose names matches player_name."""
-    sql_player_id = 'select * from Players where name = :player_name'
+    sql_player_id = 'select * from Players where normalized_name LIKE :normalized_name'
 
     param = {
-        'player_name': player_name
+        'normalized_name': await to_jagex_name(player_name)
     }
+
+    print(param)
 
     # returns a list of players
     player = await execute_sql(sql_player_id, param=param)
+
+
+    print(player)
+
     player = player.rows2dict()
 
     return None if len(player) == 0 else player[0]
@@ -454,7 +460,7 @@ async def is_valid_rsn(rsn):
 
 # TODO: normalize name
 async def to_jagex_name(name: str) -> str:
-    return name
+    return name.lower().replace('_', ' ').replace('-',' ').strip()
     
 
 async def custom_hiscore(detection):
