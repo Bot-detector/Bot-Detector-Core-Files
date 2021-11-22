@@ -69,3 +69,4 @@ call pip install -r requirements.txt --upgrade
 call pip freeze > requirements.txt
 powershell "(Get-Content requirements.txt) | ForEach-Object { $_ -replace '>=', '==' } | Set-Content requirements.txt"
 ```
+ 
