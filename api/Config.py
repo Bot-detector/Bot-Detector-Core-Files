@@ -39,9 +39,11 @@ logging.basicConfig(level=logging.DEBUG, handlers=handlers)
 # set imported loggers to warning
 logging.getLogger("requests").setLevel(logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.DEBUG)
-logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger('flask_cors').setLevel(logging.DEBUG)
 logging.getLogger('uvicorn').setLevel(logging.DEBUG)
+
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
+logging.getLogger("aiomysql").setLevel(logging.WARNING)
 
 logging.getLogger("uvicorn.error").propagate = False
 
