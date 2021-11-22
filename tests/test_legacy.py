@@ -5,6 +5,8 @@ https://fastapi.tiangolo.com/tutorial/testing/
 import os
 import sys
 
+from numpy import double
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api import app
@@ -59,9 +61,20 @@ def test_get_prediction():
 
     for name in player_names:
         response = client.get(f"/{version}/site/prediction/{name[0]}")
-        assert isinstance(response.json(), dict), f'invalid response return type: {type(response.json())}'
+
+        response_body = response.json()
+        print(response_body)
+
+        assert isinstance(response_body, dict), f'invalid response return type: {type(response.json())}'
         assert response.status_code == name[1], f'invalid response {response.status_code }'
 
+        if response.status_code == 200:
+            #Assert the field value types are valid
+            assert isinstance(response_body.get('player_id'), int), f'player_id field is not an integer. it is a type: {type(response_body.get("player_id"))}'
+            assert isinstance(response_body.get('player_name'), str), f'player_name field is not a string. it is a type: {type(response_body.get("player_name"))}'
+            assert isinstance(response_body.get('prediction_label'), str), f'prediction_label field is not a string. it is a type: {type(response_body.get("prediction_label"))}'
+            assert isinstance(response_body.get('prediction_confidence'), float), f'prediction_confidence field is not a float. it is a type: {type(response_body.get("prediction_confidence"))}'
+        
 
 if __name__ == "__main__":
     test_get_prediction()
