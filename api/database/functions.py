@@ -7,6 +7,7 @@ from api.database.models import Token
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.sql.expression import select
+from aiomysql import OperationalError
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,9 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
             # commit session
             await session.commit()
         await engine.engine.dispose()
+
+    except OperationalError:
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page)
 
     except Exception as e:
         logger.error(traceback.print_exc())
