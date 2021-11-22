@@ -26,14 +26,16 @@ spec:
     spec:
       affinity:
         podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - bd-dev-api
-            topologyKey: kubernetes.io/hostname
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - bd-prod-api
+              topologyKey: kubernetes.io/hostname
       volumes:
         - name: nfs-volume-exports
           nfs: 
@@ -45,9 +47,8 @@ spec:
         imagePullPolicy: Always
         resources:
           limits:
-            cpu: "3000m"
-          requests:
-            cpu: "1000m"
+            cpu: "1500m"
+            memory: "2000Mi"
         ports:
         - containerPort: 5000
         volumeMounts:
