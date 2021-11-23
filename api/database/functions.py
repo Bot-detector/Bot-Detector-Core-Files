@@ -51,6 +51,7 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
             records = sql_cursor(rows) if has_return else None
             # commit session
             await session.commit()
+            await session.close()
         await engine.engine.dispose()
 
     #Deadlock mitigation. Perhaps consider adding a delay before retrying.
