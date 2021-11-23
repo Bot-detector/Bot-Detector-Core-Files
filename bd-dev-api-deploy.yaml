@@ -34,7 +34,7 @@ spec:
                 - key: app
                   operator: In
                   values:
-                  - bd-prod-api
+                  - bd-dev-api
               topologyKey: kubernetes.io/hostname
       volumes:
         - name: nfs-volume-exports
