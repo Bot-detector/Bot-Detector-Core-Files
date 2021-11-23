@@ -265,8 +265,12 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
             '''
 
             total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
-            total_xp = total_xp_data.rows2dict()[0].get("total_xp") or 0 #eeewwww
-            total_dict["total_xp_removed"] = total_xp
+            
+            if total_xp_data:
+                total_xp = total_xp_data.rows2dict()[0].get("total_xp", 0)
+                total_dict["total_xp_removed"] = total_xp
+            else:
+                total_dict["total_xp_removed"] = 0
 
     return_dict = {
         "passive": passive_dict,
