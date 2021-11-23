@@ -3,6 +3,7 @@ import re
 from typing import List, Optional
 
 import pandas as pd
+from pandas.core.frame import DataFrame
 from api.Config import app
 from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter
@@ -192,6 +193,10 @@ async def sql_get_contributions(contributors: List):
             break
         page += 1
 
+
+    print(output)
+    print("hi")
+
     return output
 
 async def sql_get_feedback_submissions(voters: List):
@@ -217,46 +222,27 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     df = pd.DataFrame(contributions)
 
     df.drop_duplicates(inplace=True, subset=["reported_ids", "detect"], keep="last")
+    df.replace({"detect": {None:0}}, inplace=True)
 
-    try:
-        df_detect_manual = df.loc[df['detect'] == 1]
 
-        manual_dict = {
-            "reports": len(df_detect_manual.index),
-            "bans": int(df_detect_manual['confirmed_ban'].sum()),
-            "possible_bans": int(df_detect_manual['possible_ban'].sum()),
-            "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
-        }
+    df_detect_manual = df.loc[df['detect'] == 1]
+    manual_dict = {
+        "reports": len(df_detect_manual.index),
+        "bans": int(df_detect_manual['confirmed_ban'].sum()),
+        "possible_bans": int(df_detect_manual['possible_ban'].sum()),
+        "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
+    }
+    manual_dict["possible_bans"] = manual_dict["possible_bans"] - manual_dict["bans"]
 
-        manual_dict["possible_bans"] = manual_dict["possible_bans"] - manual_dict["bans"]
+    df_detect_passive = df.loc[df['detect'] == 0]
 
-    except KeyError as e:
-        logger.debug(e)
-        manual_dict = {
-            "reports": 0,
-            "bans": 0,
-            "possible_bans": 0,
-            "incorrect_reports": 0
-        }
+    passive_dict = {
+        "reports": len(df_detect_passive.index),
+        "bans": int(df_detect_passive['confirmed_ban'].sum()),
+        "possible_bans": int(df_detect_passive['possible_ban'].sum())
+    }
+    passive_dict["possible_bans"] = passive_dict["possible_bans"] - passive_dict["bans"]
 
-    try:
-        df_detect_passive = df.loc[df['detect'] == 0]
-
-        passive_dict = {
-            "reports": len(df_detect_passive.index),
-            "bans": int(df_detect_passive['confirmed_ban'].sum()),
-            "possible_bans": int(df_detect_passive['possible_ban'].sum())
-        }
-
-        passive_dict["possible_bans"] = passive_dict["possible_bans"] - passive_dict["bans"]
-
-    except KeyError as e:
-        logger.debug(e)
-        passive_dict = {
-            "reports": 0,
-            "bans": 0,
-            "possible_bans": 0
-        }
 
     total_dict = {
         "reports": passive_dict['reports'] + manual_dict['reports'],
