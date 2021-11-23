@@ -193,10 +193,6 @@ async def sql_get_contributions(contributors: List):
             break
         page += 1
 
-
-    print(output)
-    print("hi")
-
     return output
 
 async def sql_get_feedback_submissions(voters: List):
