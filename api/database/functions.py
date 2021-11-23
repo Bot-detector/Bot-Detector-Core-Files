@@ -7,7 +7,7 @@ from api.database.models import Token
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.sql.expression import select
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import InternalError, OperationalError
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,12 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
             await session.commit()
         await engine.engine.dispose()
 
+    #Deadlock mitigation. Perhaps consider adding a delay before retrying.
     except OperationalError:
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page)
+
+    #Lock timeout error mitigation.
+    except InternalError:
         records = await execute_sql(sql, param, debug, engine_type, row_count, page)
 
     except Exception as e:
