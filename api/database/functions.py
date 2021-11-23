@@ -1,5 +1,7 @@
 import logging
+import random
 import traceback
+import time
 from collections import namedtuple
 
 from api.database.database import Engine, EngineType
@@ -57,11 +59,13 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
     #Deadlock mitigation. Perhaps consider adding a delay before retrying.
     except OperationalError:
         logger.error(traceback.print_exc())
+        time.sleep(random.uniform(0.1,1.1))
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
 
     #Lock timeout error mitigation.
     except InternalError:
         logger.error(traceback.print_exc())
+        time.sleep(random.uniform(0.1,1.1))
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
 
     except Exception as e:
