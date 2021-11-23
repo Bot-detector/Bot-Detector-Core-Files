@@ -15,25 +15,27 @@ def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
     
-async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1):
-    has_return = True if sql.strip().lower().startswith('select') else False
-    
+async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None):
+
     engine = Engine(engine_type)
 
-    if has_return:
-        # add pagination to every query
-        # max number of rows = 100k
-        row_count = row_count if row_count <= 100_000 else 100_000
-        page = page if page >= 1 else 1
-        offset = (page - 1)*row_count
-        # add limit to sql
-        sql = f'{sql} limit :offset, :row_count;'
-        # add the param
-        param['offset'] = offset
-        param['row_count'] = row_count
+    if not is_retry:
+        has_return = True if sql.strip().lower().startswith('select') else False
     
-    # parsing
-    sql = text(sql)
+        if has_return:
+            # add pagination to every query
+            # max number of rows = 100k
+            row_count = row_count if row_count <= 100_000 else 100_000
+            page = page if page >= 1 else 1
+            offset = (page - 1)*row_count
+            # add limit to sql
+            sql = f'{sql} limit :offset, :row_count;'
+            # add the param
+            param['offset'] = offset
+            param['row_count'] = row_count
+        
+        # parsing
+        sql = text(sql)
 
     # debugging
     if debug:
@@ -53,11 +55,13 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
 
     #Deadlock mitigation. Perhaps consider adding a delay before retrying.
     except OperationalError:
-        records = await execute_sql(sql, param, debug, engine_type, row_count, page)
+        logger.error(traceback.print_exc())
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
 
     #Lock timeout error mitigation.
     except InternalError:
-        records = await execute_sql(sql, param, debug, engine_type, row_count, page)
+        logger.error(traceback.print_exc())
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
 
     except Exception as e:
         logger.error(traceback.print_exc())
