@@ -1,15 +1,16 @@
+import asyncio
 import logging
 import random
-import traceback
 import time
+import traceback
 from collections import namedtuple
 
 from api.database.database import Engine, EngineType
 from api.database.models import Token
 from fastapi import HTTPException
 from sqlalchemy import text
-from sqlalchemy.sql.expression import select
 from sqlalchemy.exc import InternalError, OperationalError
+from sqlalchemy.sql.expression import select
 
 logger = logging.getLogger(__name__)
 
@@ -53,23 +54,20 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
             records = sql_cursor(rows) if has_return else None
             # commit session
             await session.commit()
-            await session.close()
+        # clean up connection
         await engine.engine.dispose()
 
-    #Deadlock mitigation. Perhaps consider adding a delay before retrying.
-    except OperationalError:
-        logger.error(traceback.print_exc())
-        time.sleep(random.uniform(0.1,1.1))
-        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
+    # OperationalError = Deadlock, InternalError = lock timeout
+    except OperationalError or InternalError as e:
+        logger.debug('Deadlock, retrying')
+        await asyncio.sleep(random.uniform(0.1,1.1))
 
-    #Lock timeout error mitigation.
-    except InternalError:
-        logger.error(traceback.print_exc())
-        time.sleep(random.uniform(0.1,1.1))
+        await engine.engine.dispose()
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
 
     except Exception as e:
         logger.error(traceback.print_exc())
+        await engine.engine.dispose()
         records = None
     
     return records
