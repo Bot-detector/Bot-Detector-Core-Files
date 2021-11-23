@@ -3,7 +3,6 @@ import re
 from typing import List, Optional
 
 import pandas as pd
-from pandas.core.frame import DataFrame
 from api.Config import app
 from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter
@@ -250,34 +249,40 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     if version in ['1.3','1.3.1'] or None:
         return total_dict
 
-    if add_patron_stats:
-        if df.empty:
-            total_dict["total_xp_removed"] = 0
-        else:
-            banned_df = df[df["confirmed_ban"] == 1]
-            banned_ids = banned_df["reported_ids"].tolist()
-
-            total_xp_sql = '''
-                SELECT
-                    SUM(total) as total_xp
-                FROM playerHiscoreDataLatest
-                WHERE Player_id IN :banned_ids
-            '''
-
-            total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
-            
-            if total_xp_data:
-                total_xp = total_xp_data.rows2dict()[0].get("total_xp", 0)
-                total_dict["total_xp_removed"] = total_xp
-            else:
-                total_dict["total_xp_removed"] = 0
-
     return_dict = {
         "passive": passive_dict,
         "manual": manual_dict,
         "total": total_dict
     }
 
+    if not add_patron_stats:
+        return return_dict
+    
+    total_dict["total_xp_removed"] = 0
+    
+    if df.empty:
+        return_dict['total'] = total_dict
+        return return_dict
+ 
+    banned_df = df[df["confirmed_ban"] == 1]
+    banned_ids = banned_df["reported_ids"].tolist()
+
+    total_xp_sql = '''
+        SELECT
+            SUM(total) as total_xp
+        FROM playerHiscoreDataLatest
+        WHERE Player_id IN :banned_ids
+    '''
+
+    total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
+    
+    if not total_xp_data:
+        return_dict['total'] = total_dict
+        return return_dict
+
+    total_xp = total_xp_data.rows2dict()[0].get("total_xp", 0)
+    total_dict["total_xp_removed"] = total_xp
+    return_dict['total'] = total_dict
     return return_dict
 
 @router.post('/stats/contributions/', tags=['legacy'])
