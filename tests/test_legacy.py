@@ -63,7 +63,6 @@ def test_get_prediction():
         response = client.get(f"/{version}/site/prediction/{name[0]}")
 
         response_body = response.json()
-        print(response_body)
 
         assert isinstance(response_body, dict), f'invalid response return type: {type(response.json())}'
         assert response.status_code == name[1], f'invalid response {response.status_code }'
