@@ -51,6 +51,6 @@ async def post(feedback: Feedback, token:str):
         values ({values}) 
     ''')
 
-    await execute_sql(sql, param=feedback_params, debug=True)
+    await execute_sql(sql, param=feedback_params)
     
     return {"OK": "OK"}
