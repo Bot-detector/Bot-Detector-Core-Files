@@ -166,7 +166,7 @@ class contributor(BaseModel):
 async def sql_get_contributions(contributors: List):
     query = ("""
         SELECT
-            rs.manual_detect as detect,
+            ifnull(rs.manual_detect,0) as detect,
             rs.reportedID as reported_ids,
             ban.confirmed_ban as confirmed_ban,
             ban.possible_ban as possible_ban,
@@ -218,8 +218,6 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     df = pd.DataFrame(contributions)
 
     df.drop_duplicates(inplace=True, subset=["reported_ids", "detect"], keep="last")
-    df.replace({"detect": {None:0}}, inplace=True)
-
 
     df_detect_manual = df.loc[df['detect'] == 1]
     manual_dict = {
