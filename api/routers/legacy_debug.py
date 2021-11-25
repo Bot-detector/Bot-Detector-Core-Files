@@ -132,6 +132,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     df = df.merge(df_names, left_on="reported", right_on="name")
 
     df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
+    df['manual_detect'] = manual_detect
     # 4.2) parse data to param
     data = df.to_dict('records')
     param = [await parse_detection(d) for d in data]
