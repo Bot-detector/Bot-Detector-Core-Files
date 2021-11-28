@@ -19,15 +19,15 @@ async def run_in_process(fn, *args):
 
 '''DETECT ROUTE'''
 class equipment(BaseModel):
-    equip_head_id: Optional[int]
-    equip_amulet_id: Optional[int]
-    equip_torso_id: Optional[int]
-    equip_legs_id: Optional[int]
-    equip_boots_id: Optional[int]
-    equip_cape_id: Optional[int]
-    equip_hands_id: Optional[int]
-    equip_weapon_id: Optional[int]
-    equip_shield_id: Optional[int]
+    HEAD: Optional[int]
+    AMULET: Optional[int]
+    TORSO: Optional[int]
+    LEGS: Optional[int]
+    BOOTS: Optional[int]
+    CAPE: Optional[int]
+    HANDS: Optional[int]
+    WEAPON: Optional[int]
+    SHIELD: Optional[int]
 
 class detection(BaseModel):
     reporter: str
@@ -41,7 +41,7 @@ class detection(BaseModel):
     on_pvp_world: int
     world_number: int
     equipment: Optional[equipment]
-    equip_ge_value: Optional[int]
+    equipment_ge: Optional[int]
 
 async def is_valid_rsn(rsn: str) -> bool:
     return re.fullmatch('[\w\d\s_-]{1,13}', rsn)
