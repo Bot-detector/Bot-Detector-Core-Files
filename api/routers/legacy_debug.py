@@ -3,7 +3,6 @@ import re
 from typing import List, Optional
 
 import pandas as pd
-from pandas.core.frame import DataFrame
 from api.Config import app
 from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter
@@ -20,15 +19,15 @@ async def run_in_process(fn, *args):
 
 '''DETECT ROUTE'''
 class equipment(BaseModel):
-    equip_head_id: Optional[int]
-    equip_amulet_id: Optional[int]
-    equip_torso_id: Optional[int]
-    equip_legs_id: Optional[int]
-    equip_boots_id: Optional[int]
-    equip_cape_id: Optional[int]
-    equip_hands_id: Optional[int]
-    equip_weapon_id: Optional[int]
-    equip_shield_id: Optional[int]
+    HEAD: Optional[int]
+    AMULET: Optional[int]
+    TORSO: Optional[int]
+    LEGS: Optional[int]
+    BOOTS: Optional[int]
+    CAPE: Optional[int]
+    HANDS: Optional[int]
+    WEAPON: Optional[int]
+    SHIELD: Optional[int]
 
 class detection(BaseModel):
     reporter: str
@@ -42,7 +41,7 @@ class detection(BaseModel):
     on_pvp_world: int
     world_number: int
     equipment: Optional[equipment]
-    equip_ge_value: Optional[int]
+    equipment_ge: Optional[int]
 
 async def is_valid_rsn(rsn: str) -> bool:
     return re.fullmatch('[\w\d\s_-]{1,13}', rsn)
@@ -133,6 +132,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     df = df.merge(df_names, left_on="reported", right_on="name")
 
     df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
+    df['manual_detect'] = manual_detect
     # 4.2) parse data to param
     data = df.to_dict('records')
     param = [await parse_detection(d) for d in data]
@@ -166,7 +166,7 @@ class contributor(BaseModel):
 async def sql_get_contributions(contributors: List):
     query = ("""
         SELECT
-            rs.manual_detect as detect,
+            ifnull(rs.manual_detect,0) as detect,
             rs.reportedID as reported_ids,
             ban.confirmed_ban as confirmed_ban,
             ban.possible_ban as possible_ban,
@@ -218,8 +218,6 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     df = pd.DataFrame(contributions)
 
     df.drop_duplicates(inplace=True, subset=["reported_ids", "detect"], keep="last")
-    df.replace({"detect": {None:0}}, inplace=True)
-
 
     df_detect_manual = df.loc[df['detect'] == 1]
     manual_dict = {
@@ -250,34 +248,40 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     if version in ['1.3','1.3.1'] or None:
         return total_dict
 
-    if add_patron_stats:
-        if df.empty:
-            total_dict["total_xp_removed"] = 0
-        else:
-            banned_df = df[df["confirmed_ban"] == 1]
-            banned_ids = banned_df["reported_ids"].tolist()
-
-            total_xp_sql = '''
-                SELECT
-                    SUM(total) as total_xp
-                FROM playerHiscoreDataLatest
-                WHERE Player_id IN :banned_ids
-            '''
-
-            total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
-            
-            if total_xp_data:
-                total_xp = total_xp_data.rows2dict()[0].get("total_xp", 0)
-                total_dict["total_xp_removed"] = total_xp
-            else:
-                total_dict["total_xp_removed"] = 0
-
     return_dict = {
         "passive": passive_dict,
         "manual": manual_dict,
         "total": total_dict
     }
 
+    if not add_patron_stats:
+        return return_dict
+    
+    total_dict["total_xp_removed"] = 0
+    
+    if df.empty:
+        return_dict['total'] = total_dict
+        return return_dict
+ 
+    banned_df = df[df["confirmed_ban"] == 1]
+    banned_ids = banned_df["reported_ids"].tolist()
+
+    total_xp_sql = '''
+        SELECT
+            SUM(total) as total_xp
+        FROM playerHiscoreDataLatest
+        WHERE Player_id IN :banned_ids
+    '''
+
+    total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
+    
+    if not total_xp_data:
+        return_dict['total'] = total_dict
+        return return_dict
+
+    total_xp = total_xp_data.rows2dict()[0].get("total_xp", 0)
+    total_dict["total_xp_removed"] = total_xp
+    return_dict['total'] = total_dict
     return return_dict
 
 @router.post('/stats/contributions/', tags=['legacy'])

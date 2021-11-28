@@ -105,13 +105,8 @@ async def sql_get_player(player_name):
         'normalized_name': await to_jagex_name(player_name)
     }
 
-    print(param)
-
     # returns a list of players
     player = await execute_sql(sql_player_id, param=param)
-
-
-    print(player)
 
     player = player.rows2dict()
 
@@ -802,7 +797,7 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
         values ({values}) 
     ''')
 
-    await execute_sql(sql, param=feedback_params, debug=True)
+    await execute_sql(sql, param=feedback_params)
     
     return {"OK": "OK"}
 

@@ -1,4 +1,7 @@
+import asyncio
 import logging
+import random
+import time
 import traceback
 from collections import namedtuple
 
@@ -6,6 +9,7 @@ from api.database.database import Engine, EngineType
 from api.database.models import Token
 from fastapi import HTTPException
 from sqlalchemy import text
+from sqlalchemy.exc import InternalError, OperationalError
 from sqlalchemy.sql.expression import select
 
 logger = logging.getLogger(__name__)
@@ -14,25 +18,27 @@ def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
     
-async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1):
-    has_return = True if sql.strip().lower().startswith('select') else False
-    
+async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None):
+
     engine = Engine(engine_type)
 
-    if has_return:
-        # add pagination to every query
-        # max number of rows = 100k
-        row_count = row_count if row_count <= 100_000 else 100_000
-        page = page if page >= 1 else 1
-        offset = (page - 1)*row_count
-        # add limit to sql
-        sql = f'{sql} limit :offset, :row_count;'
-        # add the param
-        param['offset'] = offset
-        param['row_count'] = row_count
+    if not is_retry:
+        has_return = True if sql.strip().lower().startswith('select') else False
     
-    # parsing
-    sql = text(sql)
+        if has_return:
+            # add pagination to every query
+            # max number of rows = 100k
+            row_count = row_count if row_count <= 100_000 else 100_000
+            page = page if page >= 1 else 1
+            offset = (page - 1)*row_count
+            # add limit to sql
+            sql = f'{sql} limit :offset, :row_count;'
+            # add the param
+            param['offset'] = offset
+            param['row_count'] = row_count
+        
+        # parsing
+        sql = text(sql)
 
     # debugging
     if debug:
@@ -48,10 +54,20 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
             records = sql_cursor(rows) if has_return else None
             # commit session
             await session.commit()
+        # clean up connection
         await engine.engine.dispose()
+
+    # OperationalError = Deadlock, InternalError = lock timeout
+    except OperationalError or InternalError as e:
+        logger.debug('Deadlock, retrying')
+        await asyncio.sleep(random.uniform(0.1,1.1))
+
+        await engine.engine.dispose()
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
 
     except Exception as e:
         logger.error(traceback.print_exc())
+        await engine.engine.dispose()
         records = None
     
     return records
