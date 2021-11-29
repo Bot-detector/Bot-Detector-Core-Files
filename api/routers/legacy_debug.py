@@ -219,31 +219,52 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
 
     df.drop_duplicates(inplace=True, subset=["reported_ids", "detect"], keep="last")
 
-    df_detect_manual = df.loc[df['detect'] == 1]
-    manual_dict = {
-        "reports": len(df_detect_manual.index),
-        "bans": int(df_detect_manual['confirmed_ban'].sum()),
-        "possible_bans": int(df_detect_manual['possible_ban'].sum()),
-        "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
-    }
-    manual_dict["possible_bans"] = manual_dict["possible_bans"] - manual_dict["bans"]
+    if df.empty:
+        manual_dict = {
+            "reports": 0,
+            "bans": 0,
+            "possible_bans": 0,
+            "incorrect_reports": 0
+        }
 
-    df_detect_passive = df.loc[df['detect'] == 0]
+        passive_dict = {
+            "reports": 0,
+            "bans": 0,
+            "possible_bans": 0
+        }
 
-    passive_dict = {
-        "reports": len(df_detect_passive.index),
-        "bans": int(df_detect_passive['confirmed_ban'].sum()),
-        "possible_bans": int(df_detect_passive['possible_ban'].sum())
-    }
-    passive_dict["possible_bans"] = passive_dict["possible_bans"] - passive_dict["bans"]
+        total_dict = {
+            "reports": 0,
+            "bans": 0,
+            "possible_bans": 0,
+            'feedback': 0
+        }
 
+    else:
+        df_detect_manual = df.loc[df['detect'] == 1]
+        manual_dict = {
+            "reports": len(df_detect_manual.index),
+            "bans": int(df_detect_manual['confirmed_ban'].sum()),
+            "possible_bans": int(df_detect_manual['possible_ban'].sum()),
+            "incorrect_reports": int(df_detect_manual['confirmed_player'].sum())
+        }
+        manual_dict["possible_bans"] = manual_dict["possible_bans"] - manual_dict["bans"]
 
-    total_dict = {
-        "reports": passive_dict['reports'] + manual_dict['reports'],
-        "bans": passive_dict['bans'] + manual_dict['bans'],
-        "possible_bans": passive_dict['possible_bans'] + manual_dict['possible_bans'],
-        'feedback': len(await sql_get_feedback_submissions(contributors))
-    }
+        df_detect_passive = df.loc[df['detect'] == 0]
+
+        passive_dict = {
+            "reports": len(df_detect_passive.index),
+            "bans": int(df_detect_passive['confirmed_ban'].sum()),
+            "possible_bans": int(df_detect_passive['possible_ban'].sum())
+        }
+        passive_dict["possible_bans"] = passive_dict["possible_bans"] - passive_dict["bans"]
+
+        total_dict = {
+            "reports": passive_dict['reports'] + manual_dict['reports'],
+            "bans": passive_dict['bans'] + manual_dict['bans'],
+            "possible_bans": passive_dict['possible_bans'] + manual_dict['possible_bans'],
+            'feedback': len(await sql_get_feedback_submissions(contributors))
+        }
 
     if version in ['1.3','1.3.1'] or None:
         return total_dict
@@ -284,6 +305,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     return_dict['total'] = total_dict
     return return_dict
 
+
 @router.post('/stats/contributions/', tags=['legacy'])
 async def get_contributions(contributors: List[contributor], token:str=None):
     add_patron_stats = False
@@ -295,6 +317,7 @@ async def get_contributions(contributors: List[contributor], token:str=None):
     
     data = await parse_contributors(contributors, version=None, add_patron_stats=add_patron_stats)
     return data
+
 
 @router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
 async def get_contributions_url(contributor: str, version: str):
