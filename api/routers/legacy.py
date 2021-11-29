@@ -988,7 +988,7 @@ async def get_prediction(player_name, version=None, token=None):
     player_name, bad_name = await name_check(player_name)
 
     if bad_name or player_name is None:
-        raise HTTPException(status_code=400, detail={"Not a valid RSN."})
+        raise HTTPException(status_code=400, detail="Not a valid RSN.")
     
     player = await sql_get_player(player_name)
 
