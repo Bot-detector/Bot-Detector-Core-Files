@@ -59,7 +59,7 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
 
     # OperationalError = Deadlock, InternalError = lock timeout
     except OperationalError or InternalError as e:
-        logger.debug('Deadlock, retrying')
+        logger.debug(f'Deadlock, retrying: {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
 
         await engine.engine.dispose()
