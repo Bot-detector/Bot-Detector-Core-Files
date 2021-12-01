@@ -45,10 +45,6 @@ spec:
       - name: bd-prod-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:production
         imagePullPolicy: Always
-        resources:
-          limits:
-            cpu: "1500m"
-            memory: "2500Mi"
         ports:
         - containerPort: 4000
         volumeMounts:
