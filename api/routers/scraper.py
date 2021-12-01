@@ -1,7 +1,7 @@
 import time
 from typing import List, Optional
 
-from api.database.functions import execute_sql, list_to_string, verify_token
+from api.database.functions import execute_sql, list_to_string, verify_token, batch_function
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -130,12 +130,6 @@ async def sql_insert_hiscores(hiscores):
     await execute_sql(sql, hiscores)
     return
 
-async def batch_function(function, data, batch_size=10):
-    for i in range(0, len(data), batch_size):
-        logger.debug(f'batch: {function.__name__}, {i}/{len(data)}')
-        batch = data[i:i+batch_size]
-        await function(batch)
-    return
 
 @router.post("/scraper/hiscores/{token}", tags=["scraper"])
 async def post_hiscores_to_db(token, data: List[scraper]):

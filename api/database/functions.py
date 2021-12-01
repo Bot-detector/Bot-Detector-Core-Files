@@ -137,3 +137,10 @@ async def verify_token(token:str, verifcation:str) -> bool:
         return True
 
     raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
+
+async def batch_function(function, data, batch_size=10):
+    for i in range(0, len(data), batch_size):
+        logger.debug(f'batch: {function.__name__}, {i}/{len(data)}')
+        batch = data[i:i+batch_size]
+        await function(batch)
+    return
