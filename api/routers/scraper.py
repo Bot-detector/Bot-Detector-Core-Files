@@ -4,7 +4,8 @@ from typing import List, Optional
 from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter
 from pydantic import BaseModel
-
+import logging
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 class hiscore(BaseModel):
@@ -154,14 +155,16 @@ async def post_hiscores_to_db(token, data: List[scraper]):
 
         players.append(player_dict)
         hiscores.append(hiscore_dict)
-    
+        
+    logger.debug(f'updating: {len(players)=}')
     # update many into players
     await sql_update_players(players)
 
     # stop if there are no hiscores to insert
     if not hiscores:
         return {'ok':'ok'}
-    
+
+    logger.debug(f'inserting: {len(hiscores)=}')
     # insert many into hiscores
     await sql_insert_hiscores(hiscores)
     return {'ok':'ok'}
