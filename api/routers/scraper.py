@@ -130,6 +130,13 @@ async def sql_insert_hiscores(hiscores):
     await execute_sql(sql, hiscores)
     return
 
+async def batch_function(function, data, batch_size=10):
+    for i in range(0, len(data), batch_size):
+        logger.debug(f'batch: {function.__name__}, {i}/{len(data)}')
+        batch = data[i:i+batch_size]
+        await function(batch)
+    return
+
 @router.post("/scraper/hiscores/{token}", tags=["scraper"])
 async def post_hiscores_to_db(token, data: List[scraper]):
     await verify_token(token, verifcation='ban')
@@ -156,13 +163,13 @@ async def post_hiscores_to_db(token, data: List[scraper]):
         hiscores.append(hiscore_dict)
     
     # update many into players
-    await sql_update_players(players)
+    await batch_function(sql_update_players, players, batch_size=500)
 
     # stop if there are no hiscores to insert
     if not hiscores:
         return {'ok':'ok'}
     
     # insert many into hiscores
-    await sql_insert_hiscores(hiscores)
+    await batch_function(sql_insert_hiscores, hiscores, batch_size=500)
     return {'ok':'ok'}
     

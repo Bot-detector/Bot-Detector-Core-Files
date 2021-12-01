@@ -58,14 +58,20 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
         await engine.engine.dispose()
 
     # OperationalError = Deadlock, InternalError = lock timeout
-    except OperationalError or InternalError as e:
-        logger.debug('Deadlock, retrying')
+    except OperationalError as e:
+        e = '' if debug else e
+        logger.debug(f'Deadlock, retrying {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
-
         await engine.engine.dispose()
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
-
+    except InternalError as e:
+        e = '' if debug else e
+        logger.debug(f'Deadlock, retrying: {e}')
+        await asyncio.sleep(random.uniform(0.1,1.1))
+        await engine.engine.dispose()
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
     except Exception as e:
+        logger.error('got an unkown error')
         logger.error(traceback.print_exc())
         await engine.engine.dispose()
         records = None
