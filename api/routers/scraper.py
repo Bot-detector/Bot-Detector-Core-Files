@@ -1,15 +1,23 @@
+import asyncio
+import logging
+import random
 import time
 from typing import List, Optional
 
-from api.database.functions import execute_sql, list_to_string, verify_token, batch_function
+from api.database.database import Engine
+from api.database.functions import (batch_function, execute_sql, verify_token)
+from api.database.models import Player as dbPlayer
+from api.database.models import playerHiscoreData
 from fastapi import APIRouter
 from pydantic import BaseModel
-import logging
+from sqlalchemy.exc import InternalError
+from sqlalchemy.sql.expression import insert, update
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 class hiscore(BaseModel):
-    player_id: Optional[int]
+    Player_id: int
     total: int
     Attack: int
     Defence: int
@@ -107,7 +115,7 @@ class scraper(BaseModel):
     player: Player
 
 async def sql_get_players_to_scrape(page=1, amount=100_000):
-    sql = 'select * from playersToScrape WHERE length(name) <= 12 ORDER BY RAND()'
+    sql = 'select * from playersToScrape WHERE 1 ORDER BY RAND()'
     data = await execute_sql(sql, page=page, row_count=amount)
     return data.rows2dict()
 
@@ -116,21 +124,29 @@ async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
     await verify_token(token, verifcation='ban')
     return await sql_get_players_to_scrape(page=page, amount=amount)
 
-async def sql_update_players(players):
-    values = [f'{c}=:{c}' for c in players[0].keys()]
-    values = list_to_string(values)
-    sql = f'update Players set {values} where id = :id'
-    await execute_sql(sql, players)
+async def sqla_update_player(players):
+    Session = Engine().session
+    async with Session() as session:
+        for player in players:
+            player_id = player.pop('id')
+            sql = update(dbPlayer).where(id==player_id)
+            await session.execute(sql, player)
+        await session.commit()
     return
 
-async def sql_insert_hiscores(hiscores):
-    values = [f'{c}=:{c}' for c in hiscores[0].keys()]
-    values = list_to_string(values)
-    columns = list_to_string(hiscores[0].keys())
-    sql = f'insert ignore into playerHiscoreData ({columns}) values ({values})'
-    await execute_sql(sql, hiscores)
-    return
+async def sqla_insert_hiscore(hiscores):
+    sql = insert(playerHiscoreData).prefix_with('ignore')
 
+    Session = Engine().session
+    try:
+        async with Session() as session:
+            await session.execute(sql, hiscores)
+            await session.commit()
+    except InternalError:
+        logger.debug('Lock wait timeout exceeded')
+        await asyncio.sleep(random.uniform(1,5.1))
+        await sqla_insert_hiscore(hiscores)
+    return
 
 @router.post("/scraper/hiscores/{token}", tags=["scraper"])
 async def post_hiscores_to_db(token, data: List[scraper]):
@@ -148,25 +164,12 @@ async def post_hiscores_to_db(token, data: List[scraper]):
         time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
         player_dict['updated_at'] = time_now
         
-        if not hiscore_dict:
-            players.append(player_dict)
-            continue
-        
-        hiscore_dict['player_id'] = player_dict['id']
-
         players.append(player_dict)
-        hiscores.append(hiscore_dict)
-        
-    logger.debug(f'updating: {len(players)=}')
-    # update many into players
-    await batch_function(sql_update_players, players, batch_size=500)
 
-    # stop if there are no hiscores to insert
-    if not hiscores:
-        return {'ok':'ok'}
-
-    logger.debug(f'inserting: {len(hiscores)=}')
-    # insert many into hiscores
-    await batch_function(sql_insert_hiscores, hiscores, batch_size=500)
+        if hiscore_dict:
+            hiscores.append(hiscore_dict)
+    # batchwise insert & update
+    await batch_function(sqla_insert_hiscore, hiscores, batch_size=500)
+    await batch_function(sqla_update_player, players, batch_size=500)
     return {'ok':'ok'}
     
