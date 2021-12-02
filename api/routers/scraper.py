@@ -10,7 +10,7 @@ from api.database.models import Player as dbPlayer
 from api.database.models import playerHiscoreData
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlalchemy.exc import InternalError
+from sqlalchemy.exc import InternalError, OperationalError
 from sqlalchemy.sql.expression import insert, update
 
 logger = logging.getLogger(__name__)
@@ -126,14 +126,19 @@ async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
 
 async def sqla_update_player(players):
     Session = Engine().session
-    async with Session() as session:
-        for player in players:
-            player_id = player.pop('id')
-            sql = update(dbPlayer)
-            sql = sql.values(player)
-            sql = sql.where(dbPlayer.id==player_id)
-            await session.execute(sql, player)
-        await session.commit()
+    try:
+        async with Session() as session:
+            for player in players:
+                player_id = player.pop('id')
+                sql = update(dbPlayer)
+                sql = sql.values(player)
+                sql = sql.where(dbPlayer.id==player_id)
+                await session.execute(sql, player)
+            await session.commit()
+    except (InternalError, OperationalError):
+        logger.debug('Lock wait timeout exceeded')
+        await asyncio.sleep(random.uniform(1,5.1))
+        await sqla_update_player(players)
     return
 
 async def sqla_insert_hiscore(hiscores):
@@ -144,7 +149,7 @@ async def sqla_insert_hiscore(hiscores):
         async with Session() as session:
             await session.execute(sql, hiscores)
             await session.commit()
-    except InternalError:
+    except (InternalError, OperationalError):
         logger.debug('Lock wait timeout exceeded')
         await asyncio.sleep(random.uniform(1,5.1))
         await sqla_insert_hiscore(hiscores)
