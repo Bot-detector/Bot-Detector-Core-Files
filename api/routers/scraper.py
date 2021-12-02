@@ -19,29 +19,29 @@ router = APIRouter()
 class hiscore(BaseModel):
     Player_id: int
     total: int
-    Attack: int
-    Defence: int
-    Strength: int
-    Hitpoints: int
-    Ranged: int
-    Prayer: int
-    Magic: int
-    Cooking: int
-    Woodcutting: int
-    Fletching: int
-    Fishing: int
-    Firemaking: int
-    Crafting: int
-    Smithing: int
-    Mining: int
-    Herblore: int
-    Agility: int
-    Thieving: int
-    Slayer: int
-    Farming: int
-    Runecraft: int
-    Hunter: int
-    Construction: int
+    attack: int
+    defence: int
+    strength: int
+    hitpoints: int
+    ranged: int
+    prayer: int
+    magic: int
+    cooking: int
+    woodcutting: int
+    fletching: int
+    fishing: int
+    firemaking: int
+    crafting: int
+    smithing: int
+    mining: int
+    herblore: int
+    agility: int
+    thieving: int
+    slayer: int
+    farming: int
+    runecraft: int
+    hunter: int
+    construction: int
     league: int
     bounty_hunter_hunter: int
     bounty_hunter_rogue: int
