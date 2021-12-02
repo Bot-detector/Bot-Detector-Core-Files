@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import random
-import time
 import traceback
 from collections import namedtuple
 
@@ -58,14 +57,20 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
         await engine.engine.dispose()
 
     # OperationalError = Deadlock, InternalError = lock timeout
-    except OperationalError or InternalError as e:
-        logger.debug('Deadlock, retrying')
+    except OperationalError as e:
+        e = '' if debug else e
+        logger.debug(f'Deadlock, retrying {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
-
         await engine.engine.dispose()
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
-
+    except InternalError as e:
+        e = '' if debug else e
+        logger.debug(f'Deadlock, retrying: {e}')
+        await asyncio.sleep(random.uniform(0.1,1.1))
+        await engine.engine.dispose()
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
     except Exception as e:
+        logger.error('got an unkown error')
         logger.error(traceback.print_exc())
         await engine.engine.dispose()
         records = None
@@ -131,3 +136,10 @@ async def verify_token(token:str, verifcation:str) -> bool:
         return True
 
     raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
+
+async def batch_function(function, data, batch_size=10):
+    for i in range(0, len(data), batch_size):
+        logger.debug(f'batch: {function.__name__}, {i}/{len(data)}')
+        batch = data[i:i+batch_size]
+        await function(batch)
+    return

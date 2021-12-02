@@ -4,7 +4,7 @@ from typing import List, Optional
 
 import pandas as pd
 from api.Config import app
-from api.database.functions import execute_sql, list_to_string, verify_token
+from api.database.functions import execute_sql, list_to_string, verify_token, batch_function
 from fastapi import APIRouter
 from pydantic import BaseModel
 import time
@@ -57,7 +57,6 @@ async def sql_select_players(names: List):
     
     return [] if not data else data.rows2dict()
 
-
 async def parse_detection(data:dict) -> dict:
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
@@ -89,6 +88,18 @@ async def parse_detection(data:dict) -> dict:
     }
     return param
 
+async def sql_insert_player(param):
+    sql = "insert ignore into Players (name, normalized_name) values (:name, :nname)"
+    await execute_sql(sql, param)
+
+async def sql_insert_report(param):
+    params = list(param[0].keys())
+    columns = list_to_string(params)
+    values = list_to_string([f':{column}' for column in params])
+
+    sql = f'insert ignore into Reports ({columns}) values ({values})'
+    await execute_sql(sql, param)
+
 async def detect(detections:List[detection], manual_detect:int) -> None:
     manual_detect = 0 if int(manual_detect) == 0 else 1
 
@@ -119,10 +130,8 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     
     # 3.1) Get those players' IDs from step 3
     if new_names:
-        sql = "insert ignore into Players (name, normalized_name) values (:name, :nname)"
         param = [{"name": name, "nname":name} for name in new_names]
-
-        await execute_sql(sql, param)
+        await batch_function(sql_insert_player, param)
 
         data.extend(await sql_select_players(new_names))
 
@@ -138,12 +147,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     param = [await parse_detection(d) for d in data]
 
     # 4.3) parse query
-    params = list(param[0].keys())
-    columns = list_to_string(params)
-    values = list_to_string([f':{column}' for column in params])
-
-    sql = f'insert ignore into Reports ({columns}) values ({values})'
-    await execute_sql(sql, param)
+    await batch_function(sql_insert_report, param)
 
 async def offload_detect(detections:List[detection], manual_detect:int) -> None:
     await run_in_process(detect, detections, manual_detect)
