@@ -129,7 +129,9 @@ async def sqla_update_player(players):
     async with Session() as session:
         for player in players:
             player_id = player.pop('id')
-            sql = update(dbPlayer).where(id==player_id)
+            sql = update(dbPlayer)
+            sql = sql.values(player)
+            sql = sql.where(dbPlayer.id==player_id)
             await session.execute(sql, player)
         await session.commit()
     return

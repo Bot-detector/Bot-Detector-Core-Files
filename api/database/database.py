@@ -24,3 +24,6 @@ class Engine():
 
         self.engine = create_async_engine(connection_string, poolclass=QueuePool, pool_size=100)
         self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
+
+playerdata = Engine(EngineType.PLAYERDATA)
+discord = Engine(EngineType.DISCORD)
