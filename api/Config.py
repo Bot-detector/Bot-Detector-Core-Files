@@ -41,7 +41,7 @@ logging.getLogger("urllib3").setLevel(logging.DEBUG)
 logging.getLogger("uvicorn").setLevel(logging.DEBUG)
 
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger("aiomysql").setLevel(logging.WARNING)
+logging.getLogger("aiomysql").setLevel(logging.ERROR)
 
 logging.getLogger("uvicorn.error").propagate = False
 
