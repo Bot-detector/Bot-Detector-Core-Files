@@ -128,6 +128,7 @@ async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
 
 async def handle_lock(function, data):
     sleep = random.uniform(0.1,1.1)
+
     logger.debug(f'{function.__name__=} Lock wait timeout exceeded, {sleep=}')
     await asyncio.sleep(sleep)
     await function(data)
@@ -178,12 +179,13 @@ async def sample():
         session.execute()
         session.commit()
     # closes the session
-
-
+    return
+  
+  
 @router.post("/scraper/hiscores/{token}", tags=["scraper"])
 async def receive_scraper_data(token, data: List[scraper], hiscores_tasks: BackgroundTasks):
     await verify_token(token, verifcation='ban')
-
+    # background task will cause lots of duplicates
     hiscores_tasks.add_task(post_hiscores_to_db, data)
 
     return {'ok': f'{len(data)} records to be inserted.'}
