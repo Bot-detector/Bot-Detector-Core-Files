@@ -1,10 +1,11 @@
 import asyncio
+from asyncio.tasks import create_task
 import logging
 import random
 import traceback
 from collections import namedtuple
 
-from api.database.database import Engine, EngineType
+from api.database.database import Engine, EngineType, playerdata
 from api.database.models import Token
 from fastapi import HTTPException
 from sqlalchemy import text
@@ -138,10 +139,13 @@ async def verify_token(token:str, verifcation:str) -> bool:
     raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
 
 async def batch_function(function, data, batch_size=10):
-    tasks = []
+    batches = []
     for i in range(0, len(data), batch_size):
         logger.debug(f'batch: {function.__name__}, {i}/{len(data)}')
         batch = data[i:i+batch_size]
-        tasks.append(function(batch))
-    await asyncio.gather(*tasks)
+        batches.append(batch)
+
+    await asyncio.gather(*[
+        create_task(function(batch)) for batch in batches
+    ])
     return

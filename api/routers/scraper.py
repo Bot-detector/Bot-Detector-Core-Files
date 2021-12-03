@@ -4,14 +4,16 @@ import random
 import time
 from typing import List, Optional
 
-from api.database.database import Engine, get_sessionmaker, playerdata
+from sqlalchemy.orm.session import sessionmaker
+
+from api.database.database import Engine, get_sessionmaker, playerdata, playerdata_engine
 from api.database.functions import (batch_function, execute_sql, verify_token)
 from api.database.models import Player as dbPlayer
 from api.database.models import playerHiscoreData
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy.exc import InternalError, OperationalError
-from sqlalchemy.sql.expression import insert, update
+from sqlalchemy.sql.expression import update, insert
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -130,45 +132,38 @@ async def handle_lock(function, data):
     await asyncio.sleep(sleep)
     await function(data)
 
+
 async def sqla_update_player(players):
+    engine = Engine()
+    Session = engine.get_sessionmaker()
     logger.debug(f'update players: {len(players)=}')
-    Session = playerdata.get_sessionmaker()
 
     async with Session() as session:
-        await session.begin()
         try:
             for player in players:
                 player_id = player.get('id')
-                if player_id is None:
-                    logger.debug(f'missing id: {player=}')
-                    continue
-                sql = update(dbPlayer)
-                sql = sql.values(player)
-                sql = sql.where(dbPlayer.id==player_id)
+                sql = update(dbPlayer).values(player).where(dbPlayer.id==player_id)
                 await session.execute(sql, player)
-        except (InternalError, OperationalError) as e:
-            logger.debug(e)
-            await session.rollback()
+        except (OperationalError) as e:
             await handle_lock(sqla_update_player, players)
-        else:
-            await session.commit()
+
+    await engine.engine.dispose()
     return
 
-async def sqla_insert_hiscore(hiscores):
+async def sqla_insert_hiscore(hiscores:List):
+    engine = Engine()
+    Session = engine.get_sessionmaker()
     logger.debug(f'insert hiscores: {len(hiscores)=}')
-    Session = playerdata.get_sessionmaker()
-    sql = insert(playerHiscoreData).prefix_with('ignore')
 
+    sql = insert(playerHiscoreData).prefix_with('ignore')
+    
     async with Session() as session:
-        await session.begin()
         try:
             await session.execute(sql, hiscores)
-        except (InternalError, OperationalError) as e:
-            logger.error(e)
-            await session.rollback()
-            await handle_lock(sqla_insert_hiscore, hiscores)
-        else:
             await session.commit()
+        except (OperationalError) as e:
+            await handle_lock(sqla_insert_hiscore, hiscores)
+    await engine.engine.dispose()
     return
 
 async def sample():
@@ -188,8 +183,8 @@ async def post_hiscores_to_db(token, data: List[scraper]):
 
     # get all players & all hiscores
     data = [d.dict() for d in data]
-    players = []
-    hiscores = []
+    players, hiscores = [], []
+
     for d in data:
         player_dict = d['player']
         hiscore_dict = d['hiscores']
@@ -202,6 +197,7 @@ async def post_hiscores_to_db(token, data: List[scraper]):
 
         if hiscore_dict:
             hiscores.append(hiscore_dict)
+    
     # batchwise insert & update
     await batch_function(sqla_insert_hiscore, hiscores, batch_size=10)
     await batch_function(sqla_update_player, players, batch_size=10)

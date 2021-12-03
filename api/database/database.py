@@ -27,10 +27,8 @@ class Engine():
 
         self.engine = create_async_engine(
             connection_string, 
-            poolclass=QueuePool, 
-            pool_size=10, 
-            max_overflow=100,
-            pool_recycle=50
+            poolclass=QueuePool,
+            pool_pre_ping=True
         )
         self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
 
