@@ -147,8 +147,6 @@ async def sqla_update_player(players):
             await session.commit()
         except (OperationalError) as e:
             await handle_lock(sqla_update_player, players)
-
-    await engine.engine.dispose()
     return
 
 async def sqla_insert_hiscore(hiscores:List):
@@ -207,7 +205,7 @@ async def post_hiscores_to_db(data: List[scraper]):
             hiscores.append(hiscore_dict)
     
     # batchwise insert & update
-    await batch_function(sqla_insert_hiscore, hiscores, batch_size=10)
-    await batch_function(sqla_update_player, players, batch_size=10)
+    await batch_function(sqla_insert_hiscore, hiscores, batch_size=1000)
+    await batch_function(sqla_update_player, players, batch_size=1000)
     return {'ok':'ok'}
     

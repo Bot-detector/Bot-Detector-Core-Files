@@ -29,6 +29,7 @@ class Engine():
             connection_string, 
             poolclass=QueuePool,
             pool_pre_ping=True
+
         )
         self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
 

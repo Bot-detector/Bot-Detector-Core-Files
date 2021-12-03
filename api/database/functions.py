@@ -148,4 +148,5 @@ async def batch_function(function, data, batch_size=10):
     await asyncio.gather(*[
         create_task(function(batch)) for batch in batches
     ])
+
     return
