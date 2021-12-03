@@ -147,8 +147,6 @@ async def sqla_update_player(players):
             await session.commit()
         except (OperationalError) as e:
             await handle_lock(sqla_update_player, players)
-
-    await engine.engine.dispose()
     return
 
 async def sqla_insert_hiscore(hiscores:List):
