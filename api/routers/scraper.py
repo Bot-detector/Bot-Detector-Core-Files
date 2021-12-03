@@ -127,7 +127,7 @@ async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
     return await sql_get_players_to_scrape(page=page, amount=amount)
 
 async def handle_lock(function, data):
-    sleep = random.uniform(1,5.1)
+    sleep = random.uniform(0.1,1.1)
     logger.debug(f'{function.__name__=} Lock wait timeout exceeded, {sleep=}')
     await asyncio.sleep(sleep)
     await function(data)
@@ -145,8 +145,10 @@ async def sqla_update_player(players):
                 sql = update(dbPlayer).values(player).where(dbPlayer.id==player_id)
                 await session.execute(sql, player)
             await session.commit()
-        except (OperationalError) as e:
+        except (OperationalError, InternalError) as e:
             await handle_lock(sqla_update_player, players)
+    # closing idle db connections (or they will get closed by the db (sleep timeout 60))
+    await engine.engine.dispose() 
     return
 
 async def sqla_insert_hiscore(hiscores:List):
@@ -160,8 +162,9 @@ async def sqla_insert_hiscore(hiscores:List):
         try:
             await session.execute(sql, hiscores)
             await session.commit()
-        except (OperationalError) as e:
+        except (OperationalError, InternalError) as e:
             await handle_lock(sqla_insert_hiscore, hiscores)
+    # closing idle db connections (or they will get closed by the db (sleep timeout 60))
     await engine.engine.dispose()
     return
 
@@ -205,7 +208,7 @@ async def post_hiscores_to_db(data: List[scraper]):
             hiscores.append(hiscore_dict)
     
     # batchwise insert & update
-    await batch_function(sqla_insert_hiscore, hiscores, batch_size=1000)
-    await batch_function(sqla_update_player, players, batch_size=1000)
+    await batch_function(sqla_insert_hiscore, hiscores, batch_size=10)
+    await batch_function(sqla_update_player, players, batch_size=10)
     return {'ok':'ok'}
     
