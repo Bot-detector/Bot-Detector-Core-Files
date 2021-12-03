@@ -4,7 +4,7 @@ import random
 import time
 from typing import List, Optional
 
-from api.database.database import Engine
+from api.database.database import Engine, get_sessionmaker, playerdata
 from api.database.functions import (batch_function, execute_sql, verify_token)
 from api.database.models import Player as dbPlayer
 from api.database.models import playerHiscoreData
@@ -124,10 +124,19 @@ async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
     await verify_token(token, verifcation='ban')
     return await sql_get_players_to_scrape(page=page, amount=amount)
 
+async def handle_lock(function, data):
+    sleep = random.uniform(1,5.1)
+    logger.debug(f'{function.__name__=} Lock wait timeout exceeded, {sleep=}')
+    await asyncio.sleep(sleep)
+    await function(data)
+
 async def sqla_update_player(players):
-    Session = Engine().session
-    try:
-        async with Session() as session:
+    logger.debug(f'update players: {len(players)=}')
+    Session = playerdata.get_sessionmaker()
+
+    async with Session() as session:
+        await session.begin()
+        try:
             for player in players:
                 player_id = player.get('id')
                 if player_id is None:
@@ -137,28 +146,41 @@ async def sqla_update_player(players):
                 sql = sql.values(player)
                 sql = sql.where(dbPlayer.id==player_id)
                 await session.execute(sql, player)
+        except (InternalError, OperationalError) as e:
+            logger.debug(e)
+            await session.rollback()
+            await handle_lock(sqla_update_player, players)
+        else:
             await session.commit()
-    except (InternalError, OperationalError):
-        sleep = random.uniform(1,5.1)
-        logger.debug(f'Lock wait timeout exceeded, {sleep=}')
-        await asyncio.sleep(sleep)
-        await sqla_update_player(players)
     return
 
 async def sqla_insert_hiscore(hiscores):
+    logger.debug(f'insert hiscores: {len(hiscores)=}')
+    Session = playerdata.get_sessionmaker()
     sql = insert(playerHiscoreData).prefix_with('ignore')
 
-    Session = Engine().session
-    try:
-        async with Session() as session:
+    async with Session() as session:
+        await session.begin()
+        try:
             await session.execute(sql, hiscores)
+        except (InternalError, OperationalError) as e:
+            logger.error(e)
+            await session.rollback()
+            await handle_lock(sqla_insert_hiscore, hiscores)
+        else:
             await session.commit()
-    except (InternalError, OperationalError):
-        sleep = random.uniform(1,5.1)
-        logger.debug(f'Lock wait timeout exceeded, {sleep=}')
-        await asyncio.sleep(sleep)
-        await sqla_insert_hiscore(hiscores)
     return
+
+async def sample():
+    # a sessionmaker(), also in the same scope as the engine
+    Session = playerdata.session
+
+    # we can now construct a Session() without needing to pass the
+    # engine each time
+    with Session() as session:
+        session.execute()
+        session.commit()
+    # closes the session
 
 @router.post("/scraper/hiscores/{token}", tags=["scraper"])
 async def post_hiscores_to_db(token, data: List[scraper]):
@@ -181,7 +203,7 @@ async def post_hiscores_to_db(token, data: List[scraper]):
         if hiscore_dict:
             hiscores.append(hiscore_dict)
     # batchwise insert & update
-    await batch_function(sqla_insert_hiscore, hiscores, batch_size=500)
-    await batch_function(sqla_update_player, players, batch_size=500)
+    await batch_function(sqla_insert_hiscore, hiscores, batch_size=10)
+    await batch_function(sqla_update_player, players, batch_size=10)
     return {'ok':'ok'}
     
