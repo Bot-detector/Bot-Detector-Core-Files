@@ -1,9 +1,10 @@
+from asyncio.tasks import current_task
 from enum import Enum, auto
 
-from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from sqlalchemy.ext.asyncio.engine import AsyncConnection, AsyncEngine
 
 from api import Config
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_scoped_session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 
@@ -35,9 +36,15 @@ class Engine():
 
     def get_engine(self) -> AsyncEngine:
         return self.engine
+    
+    def get_connection(self) -> AsyncConnection:
+        return self.engine.connect()
         
     def get_sessionmaker(self) -> sessionmaker:
         return self.session
+    
+    def get_scoped_session(self) -> async_scoped_session:
+        return async_scoped_session(self.session, scopefunc=current_task)
 
 playerdata = Engine(EngineType.PLAYERDATA)
 discord = Engine(EngineType.DISCORD)
@@ -58,4 +65,4 @@ discord_engine = create_async_engine(
     pool_recycle=50
 )
 def get_sessionmaker(engine: AsyncEngine) -> sessionmaker:
-    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=True)
