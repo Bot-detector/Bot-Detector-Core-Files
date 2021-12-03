@@ -22,7 +22,13 @@ class Engine():
         else:
             raise ValueError(f"Engine type {engine_type} not valid.")
 
-        self.engine = create_async_engine(connection_string, poolclass=QueuePool, pool_size=100)
+        self.engine = create_async_engine(
+            connection_string, 
+            poolclass=QueuePool, 
+            pool_size=10, 
+            max_overflow=100,
+            pool_recycle=50
+        )
         self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
 
 playerdata = Engine(EngineType.PLAYERDATA)
