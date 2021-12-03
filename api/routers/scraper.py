@@ -144,6 +144,7 @@ async def sqla_update_player(players):
                 player_id = player.get('id')
                 sql = update(dbPlayer).values(player).where(dbPlayer.id==player_id)
                 await session.execute(sql, player)
+            await session.commit()
         except (OperationalError) as e:
             await handle_lock(sqla_update_player, players)
 
