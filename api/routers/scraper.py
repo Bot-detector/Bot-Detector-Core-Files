@@ -10,7 +10,7 @@ from api.database.database import Engine, get_sessionmaker, playerdata, playerda
 from api.database.functions import (batch_function, execute_sql, verify_token)
 from api.database.models import Player as dbPlayer
 from api.database.models import playerHiscoreData
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.exc import InternalError, OperationalError
 from sqlalchemy.sql.expression import update, insert
@@ -178,10 +178,17 @@ async def sample():
         session.commit()
     # closes the session
 
+
 @router.post("/scraper/hiscores/{token}", tags=["scraper"])
-async def post_hiscores_to_db(token, data: List[scraper]):
+async def receive_scraper_data(token, data: List[scraper], hiscores_tasks: BackgroundTasks):
     await verify_token(token, verifcation='ban')
 
+    hiscores_tasks.add_task(post_hiscores_to_db, data)
+
+    return {'ok': f'{len(data)} records to be inserted.'}
+
+
+async def post_hiscores_to_db(data: List[scraper]):
     # get all players & all hiscores
     data = [d.dict() for d in data]
     players, hiscores = [], []
