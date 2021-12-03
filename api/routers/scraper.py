@@ -129,15 +129,19 @@ async def sqla_update_player(players):
     try:
         async with Session() as session:
             for player in players:
-                player_id = player.pop('id')
+                player_id = player.get('id')
+                if player_id is None:
+                    logger.debug(f'missing id: {player=}')
+                    continue
                 sql = update(dbPlayer)
                 sql = sql.values(player)
                 sql = sql.where(dbPlayer.id==player_id)
                 await session.execute(sql, player)
             await session.commit()
     except (InternalError, OperationalError):
-        logger.debug('Lock wait timeout exceeded')
-        await asyncio.sleep(random.uniform(1,5.1))
+        sleep = random.uniform(1,5.1)
+        logger.debug(f'Lock wait timeout exceeded, {sleep=}')
+        await asyncio.sleep(sleep)
         await sqla_update_player(players)
     return
 
@@ -150,8 +154,9 @@ async def sqla_insert_hiscore(hiscores):
             await session.execute(sql, hiscores)
             await session.commit()
     except (InternalError, OperationalError):
-        logger.debug('Lock wait timeout exceeded')
-        await asyncio.sleep(random.uniform(1,5.1))
+        sleep = random.uniform(1,5.1)
+        logger.debug(f'Lock wait timeout exceeded, {sleep=}')
+        await asyncio.sleep(sleep)
         await sqla_insert_hiscore(hiscores)
     return
 
