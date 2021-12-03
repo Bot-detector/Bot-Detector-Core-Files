@@ -208,7 +208,8 @@ async def post_hiscores_to_db(data: List[scraper]):
             hiscores.append(hiscore_dict)
     
     # batchwise insert & update
-    await batch_function(sqla_insert_hiscore, hiscores, batch_size=10)
-    await batch_function(sqla_update_player, players, batch_size=10)
+    await batch_function(sqla_insert_hiscore, hiscores, batch_size=1000)
+    await batch_function(sqla_update_player, players, batch_size=1000)
+    logger.debug('done')
     return {'ok':'ok'}
     
