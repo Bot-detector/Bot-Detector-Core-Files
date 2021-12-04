@@ -102,16 +102,20 @@ class sqlalchemy_result:
         return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in self.rows]
 
 async def verify_token(token:str, verifcation:str) -> bool:
+    engine = Engine()
+    Session = engine.get_sessionmaker()
+
     # query
     sql = select(Token)
     sql = sql.where(Token.token==token)
 
-    engine = Engine(EngineType.PLAYERDATA)
-
     # transaction
-    async with engine.session() as session:
+    async with Session() as session:
         data = await session.execute(sql)
-    
+        
+    # cleanup connection
+    engine.engine.dispose()
+
     # parse data
     data = sqlalchemy_result(data)
 
@@ -133,10 +137,11 @@ async def verify_token(token:str, verifcation:str) -> bool:
     }
 
     # get permission, default: 0
-    if permissions.get(verifcation, 0) == 1:
-        return True
+    if not permissions.get(verifcation, 0) == 1:
+        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
+    return True
 
-    raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
+    
 
 async def batch_function(function, data, batch_size=10):
     batches = []
