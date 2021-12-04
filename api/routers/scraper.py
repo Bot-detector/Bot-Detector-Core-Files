@@ -187,7 +187,6 @@ async def receive_scraper_data(token, data: List[scraper], hiscores_tasks: Backg
     await verify_token(token, verifcation='ban')
     # background task will cause lots of duplicates
     hiscores_tasks.add_task(post_hiscores_to_db, data)
-
     return {'ok': f'{len(data)} records to be inserted.'}
 
 
@@ -211,7 +210,7 @@ async def post_hiscores_to_db(data: List[scraper]):
     
     # batchwise insert & update
     await batch_function(sqla_insert_hiscore, hiscores, batch_size=1000)
-    await batch_function(sqla_update_player, players, batch_size=1000)
+    await sqla_update_player(players)
     logger.debug('done')
     return {'ok':'ok'}
     
