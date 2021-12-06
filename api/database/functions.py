@@ -118,7 +118,7 @@ async def verify_token(token:str, verifcation:str) -> bool:
         data = await session.execute(sql)
         
     # cleanup connection
-    engine.engine.dispose()
+    await engine.engine.dispose()
 
     # parse data
     data = sqlalchemy_result(data)
