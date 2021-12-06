@@ -19,9 +19,9 @@ def list_to_string(l):
     return string_list
     
 async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None, retry_attempt=0):
-
-    #After 3 tries just give up..
-    if retry_attempt > 2:
+    # retry breakout
+    if retry_attempt >= 5:
+        logger.debug(f'To many retries')
         return None
 
     engine = Engine(engine_type)
@@ -70,7 +70,7 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except InternalError as e:
         e = e if debug else ''
-        logger.debug(f'Deadlock, retrying: {e}')
+        logger.debug(f'Lock, retrying: {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
         await engine.engine.dispose()
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
