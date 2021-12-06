@@ -54,9 +54,3 @@ sched.start()
 
 bsched = BackgroundScheduler()
 bsched.start()
-
-
-# https://github.com/aio-libs/aiomysql/issues/103
-import warnings
-# Suppress warnings only for aiomysql, all other modules can send warnings
-warnings.filterwarnings('ignore', module=r"aiomysql")
