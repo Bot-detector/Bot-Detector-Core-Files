@@ -17,7 +17,7 @@ spec:
   selector:
     matchLabels:
       app: bd-prod-api
-  replicas: 3
+  replicas: 5
   template:
     metadata:
       name: bl-prod-api-app
