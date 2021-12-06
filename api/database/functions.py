@@ -18,7 +18,11 @@ def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
     
-async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None):
+async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None, retry_attempt=0):
+
+    #After 3 tries just give up..
+    if retry_attempt > 2:
+        return None
 
     engine = Engine(engine_type)
 
@@ -63,13 +67,13 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
         logger.debug(f'Deadlock, retrying {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
         await engine.engine.dispose()
-        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except InternalError as e:
         e = e if debug else ''
         logger.debug(f'Deadlock, retrying: {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
         await engine.engine.dispose()
-        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except Exception as e:
         logger.error('got an unkown error')
         logger.error(traceback.print_exc())
