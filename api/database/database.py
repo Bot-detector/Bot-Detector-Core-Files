@@ -1,18 +1,17 @@
-from asyncio.tasks import current_task
 from enum import Enum, auto
-
-from sqlalchemy.ext.asyncio.engine import AsyncConnection, AsyncEngine
+from typing import AsyncGenerator
 
 from api import Config
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_scoped_session
+from contextlib import asynccontextmanager
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 
 
 class EngineType(Enum):
-    """"""
     PLAYERDATA = auto()
     DISCORD = auto()
+
 
 class Engine():
     def __init__(self, engine_type: EngineType = EngineType.PLAYERDATA):
@@ -26,43 +25,36 @@ class Engine():
             raise ValueError(f"Engine type {engine_type} not valid.")
 
         self.engine = create_async_engine(
-            connection_string, 
-            poolclass=QueuePool,
-            pool_pre_ping=True
-
+            connection_string, poolclass=QueuePool,
+            pool_size=100, max_overflow=10, 
+            pool_recycle=900, pool_timeout=60
         )
-  
-        self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
+        self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=True)
 
-    def get_engine(self) -> AsyncEngine:
-        return self.engine
-    
-    def get_connection(self) -> AsyncConnection:
-        return self.engine.connect()
-        
-    def get_sessionmaker(self) -> sessionmaker:
-        return self.session
-    
-    def get_scoped_session(self) -> async_scoped_session:
-        return async_scoped_session(self.session, scopefunc=current_task)
 
-playerdata = Engine(EngineType.PLAYERDATA)
-discord = Engine(EngineType.DISCORD)
+"""Our Database Engines"""
+PLAYERDATA_ENGINE = Engine(EngineType.PLAYERDATA)
+DISCORD_ENGINE = Engine(EngineType.DISCORD)
 
-playerdata_engine = create_async_engine(
-    Config.sql_uri, 
-    poolclass=QueuePool, 
-    pool_size=10, 
-    max_overflow=100,
-    pool_recycle=50,
-    echo="debug"
-)
-discord_engine = create_async_engine(
-    Config.discord_sql_uri, 
-    poolclass=QueuePool, 
-    pool_size=10, 
-    max_overflow=100,
-    pool_recycle=50
-)
-def get_sessionmaker(engine: AsyncEngine) -> sessionmaker:
-    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=True)
+
+async def get_engine(type: EngineType):
+    """Returns a COPY of a globally defined database engine. Don't use the returned copy for actual transactions."""
+    if type == EngineType.PLAYERDATA:
+        return PLAYERDATA_ENGINE.engine
+    elif type == EngineType.DISCORD:
+        return DISCORD_ENGINE.engine
+    else:
+        raise ValueError(f"Engine type {type} not valid.")
+
+
+@asynccontextmanager
+async def get_session(type: EngineType) -> AsyncGenerator[AsyncSession, None]:
+    """Provides an AsyncGenerator to allow creation of a database session."""
+    if type == EngineType.PLAYERDATA:
+        async with PLAYERDATA_ENGINE.session() as session:
+            yield session
+    elif type == EngineType.DISCORD:
+        async with DISCORD_ENGINE.session() as session:
+            yield session
+    else:
+        raise ValueError(f"Engine type {type} not valid.")

@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm.session import sessionmaker
 
-from api.database.database import Engine, get_sessionmaker, playerdata, playerdata_engine
+from api.database.database import Engine, EngineType, get_session
 from api.database.functions import (batch_function, execute_sql, verify_token)
 from api.database.models import Player as dbPlayer
 from api.database.models import playerHiscoreData
@@ -135,11 +135,9 @@ async def handle_lock(function, data):
 
 
 async def sqla_update_player(players):
-    engine = Engine()
-    Session = engine.get_sessionmaker()
     logger.debug(f'update players: {len(players)=}')
 
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         try:
             for player in players:
                 player_id = player.get('id')
@@ -148,36 +146,31 @@ async def sqla_update_player(players):
             await session.commit()
         except (OperationalError, InternalError) as e:
             await handle_lock(sqla_update_player, players)
-    # closing idle db connections (or they will get closed by the db (sleep timeout 60))
-    await engine.engine.dispose() 
+        finally:
+            await session.close()
     return
 
 async def sqla_insert_hiscore(hiscores:List):
-    engine = Engine()
-    Session = engine.get_sessionmaker()
     logger.debug(f'insert hiscores: {len(hiscores)=}')
 
     sql = insert(playerHiscoreData).prefix_with('ignore')
     
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         try:
             await session.execute(sql, hiscores)
             await session.commit()
         except (OperationalError, InternalError) as e:
             await handle_lock(sqla_insert_hiscore, hiscores)
-    # closing idle db connections (or they will get closed by the db (sleep timeout 60))
-    await engine.engine.dispose()
+        finally:
+            await session.close()
     return
 
 async def sample():
-    # a sessionmaker(), also in the same scope as the engine
-    Session = playerdata.session
-
     # we can now construct a Session() without needing to pass the
     # engine each time
-    with Session() as session:
-        session.execute()
-        session.commit()
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(1)
+        await session.commit()
     # closes the session
     return
   
