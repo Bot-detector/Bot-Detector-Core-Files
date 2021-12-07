@@ -111,11 +111,7 @@ async def verify_token(token:str, verifcation:str) -> bool:
 
     # transaction
     async with get_session(EngineType.PLAYERDATA) as session:
-        try:
-            data = await session.execute(sql)
-        finally:
-            await session.close()
-        
+        data = await session.execute(sql)
 
     # parse data
     data = sqlalchemy_result(data)
