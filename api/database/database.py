@@ -31,6 +31,7 @@ class Engine():
             pool_pre_ping=True
 
         )
+  
         self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
 
     def get_engine(self) -> AsyncEngine:

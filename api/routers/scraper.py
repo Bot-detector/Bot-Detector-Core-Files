@@ -213,4 +213,4 @@ async def post_hiscores_to_db(data: List[scraper]):
     await sqla_update_player(players)
     logger.debug('done')
     return {'ok':'ok'}
-    
+  
