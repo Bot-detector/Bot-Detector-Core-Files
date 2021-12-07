@@ -260,7 +260,7 @@ class playerHiscoreData(Base):
         Index('Unique_player_date', 'Player_id', 'ts_date', unique=True)
     )
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     ts_date = Column(Date)
     Player_id = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False)

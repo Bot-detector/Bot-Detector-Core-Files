@@ -1,11 +1,11 @@
 import asyncio
+from asyncio.tasks import create_task
 import logging
 import random
-import time
 import traceback
 from collections import namedtuple
 
-from api.database.database import Engine, EngineType
+from api.database.database import Engine, EngineType, playerdata
 from api.database.models import Token
 from fastapi import HTTPException
 from sqlalchemy import text
@@ -18,7 +18,11 @@ def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
     
-async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None):
+async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None, retry_attempt=0):
+    # retry breakout
+    if retry_attempt >= 5:
+        logger.debug(f'To many retries')
+        return None
 
     engine = Engine(engine_type)
 
@@ -58,14 +62,20 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
         await engine.engine.dispose()
 
     # OperationalError = Deadlock, InternalError = lock timeout
-    except OperationalError or InternalError as e:
-        logger.debug(f'Deadlock, retrying: {e}')
+    except OperationalError as e:
+        e = e if debug else ''
+        logger.debug(f'Deadlock, retrying {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
-
         await engine.engine.dispose()
-        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return)
-
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
+    except InternalError as e:
+        e = e if debug else ''
+        logger.debug(f'Lock, retrying: {e}')
+        await asyncio.sleep(random.uniform(0.1,1.1))
+        await engine.engine.dispose()
+        records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except Exception as e:
+        logger.error('got an unkown error')
         logger.error(traceback.print_exc())
         await engine.engine.dispose()
         records = None
@@ -96,27 +106,31 @@ class sqlalchemy_result:
         return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in self.rows]
 
 async def verify_token(token:str, verifcation:str) -> bool:
+    engine = Engine()
+    Session = engine.get_sessionmaker()
+
     # query
     sql = select(Token)
     sql = sql.where(Token.token==token)
 
-    engine = Engine(EngineType.PLAYERDATA)
-
     # transaction
-    async with engine.session() as session:
+    async with Session() as session:
         data = await session.execute(sql)
-    
+        
+    # cleanup connection
+    await engine.engine.dispose()
+
     # parse data
     data = sqlalchemy_result(data)
 
     if len(data.rows) == 0:
-        raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
+        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
 
     player_token = data.rows2tuple()
 
     # check if token exists (empty list if token does not exist)
     if not player_token:
-        raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
+        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
 
     # all possible checks
     permissions = {
@@ -127,7 +141,21 @@ async def verify_token(token:str, verifcation:str) -> bool:
     }
 
     # get permission, default: 0
-    if permissions.get(verifcation, 0) == 1:
-        return True
+    if not permissions.get(verifcation, 0) == 1:
+        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
+    return True
 
-    raise HTTPException(status_code=404, detail=f"insufficient permissions: {verifcation}")
+    
+
+async def batch_function(function, data, batch_size=100):
+    batches = []
+    for i in range(0, len(data), batch_size):
+        logger.debug(f'batch: {function.__name__}, {i}/{len(data)}')
+        batch = data[i:i+batch_size]
+        batches.append(batch)
+
+    await asyncio.gather(*[
+        create_task(function(batch)) for batch in batches
+    ])
+
+    return

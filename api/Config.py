@@ -41,7 +41,7 @@ logging.getLogger("urllib3").setLevel(logging.DEBUG)
 logging.getLogger("uvicorn").setLevel(logging.DEBUG)
 
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger("aiomysql").setLevel(logging.WARNING)
+logging.getLogger("aiomysql").setLevel(logging.ERROR)
 
 logging.getLogger("uvicorn.error").propagate = False
 
@@ -54,3 +54,9 @@ sched.start()
 
 bsched = BackgroundScheduler()
 bsched.start()
+
+
+# https://github.com/aio-libs/aiomysql/issues/103
+import warnings
+# Suppress warnings only for aiomysql, all other modules can send warnings
+warnings.filterwarnings('ignore', module=r"aiomysql")
