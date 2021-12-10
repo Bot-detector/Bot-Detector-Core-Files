@@ -1,8 +1,12 @@
+from datetime import datetime
 from typing import Optional
 
-from api.database.functions import execute_sql, list_to_string, verify_token
-from fastapi import APIRouter, status
+from api.database.database import Engine
+from api.database.functions import execute_sql, list_to_string, verify_token, sqlalchemy_result
+from fastapi import APIRouter, status, HTTPException
 from pydantic import BaseModel
+from api.database.models import PredictionsFeedback as dbFeedback
+from sqlalchemy.sql.expression import insert, select
 
 
 class Feedback(BaseModel):
@@ -18,12 +22,58 @@ class Feedback(BaseModel):
 router = APIRouter()
 
 @router.get("/v1/feedback/", tags=["feedback"])
-async def get(token:str):
+async def get(
+    token:str, 
+    since_id:int=None, 
+    since_date:datetime=None, 
+    voter_id:int=None, 
+    subject_id:int=None,
+    has_text:bool=None, 
+    row_count:int=100_000, 
+    page:int=1
+):
     '''
     select data from database
     '''
-    await verify_token(token, verifcation='ban')
-    pass
+    await verify_token(token, verifcation='hiscore')
+
+    # return exception if no param are given
+    if None == since_id == since_date == voter_id == subject_id == has_text:
+        raise HTTPException(
+            status_code=400, detail="No valid parameters given")
+
+    # create query
+    sql = select(dbFeedback)
+
+    # filters
+    if not since_id == None:
+        sql = sql.where(dbFeedback.id > since_id)
+
+    if not since_date == None:
+        sql = sql.where(dbFeedback.ts > since_date)
+
+    if not voter_id == None:
+        sql = sql.where(dbFeedback.voter_id == voter_id)
+
+    if not subject_id == None:
+        sql = sql.where(dbFeedback.subject_id == voter_id)
+
+    if not has_text == None:
+        sql = sql.where(dbFeedback.feedback_text != None)
+
+    # query pagination
+    sql = sql.limit(row_count).offset(row_count*(page-1))
+
+
+    # transaction
+    Session = Engine().session
+
+    async with Session() as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
+
+    return data.rows2dict()
 
 
 @router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["feedback"])
