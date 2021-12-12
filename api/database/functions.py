@@ -9,7 +9,7 @@ from collections import namedtuple
 # to these entities to prevent the
 # garbage collector from trying to dispose of our engines.
 from api.database.database import PLAYERDATA_ENGINE, DISCORD_ENGINE
-from api.database.database import Engine, EngineType, get_session, get_engine
+from api.database.database import Engine, EngineType, get_session
 from api.database.models import Token
 from fastapi import HTTPException
 from sqlalchemy import text
@@ -50,7 +50,7 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
     # debugging
     if debug:
         logger.debug(f'{has_return=}')
-        logger.debug(f'sql={sql.compile(get_engine(engine_type))}')
+        logger.debug(f'sql={sql.compile(Engine(engine_type))}')
         logger.debug(f'{param=}')
     
     try:
