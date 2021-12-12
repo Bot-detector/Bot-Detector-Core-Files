@@ -49,9 +49,12 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
 
     # debugging
     if debug:
+        engine = Engine(engine_type)
         logger.debug(f'{has_return=}')
-        logger.debug(f'sql={sql.compile(Engine(engine_type))}')
+        logger.debug(f'sql={sql.compile(engine)}')
         logger.debug(f'{param=}')
+
+        await engine.engine.dispose()
     
     try:
         async with get_session(engine_type) as session:
