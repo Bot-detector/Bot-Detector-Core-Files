@@ -30,9 +30,7 @@ class Engine():
             pool_pre_ping=True,
             pool_size=10, 
             max_overflow=100,
-            pool_recycle=3600,
-            echo="debug"
-
+            pool_recycle=3600
         )
         
         self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=True)
