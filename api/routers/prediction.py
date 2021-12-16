@@ -1,14 +1,14 @@
 from operator import or_
 from typing import List, Optional
 
-from api.database.database import Engine
-from api.database.functions import  (list_to_string,
-                                    sqlalchemy_result, verify_token)
+from api.database.database import EngineType, get_session
+from api.database.functions import (list_to_string, sqlalchemy_result,
+                                    verify_token)
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlalchemy.sql.expression import delete, select, text
+from sqlalchemy.sql.expression import select, text
 from sqlalchemy.sql.functions import func
 
 router = APIRouter()
@@ -56,15 +56,11 @@ async def get(token: str, name: str):
     sql = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
     
-    Session = Engine().session
-
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
-
-
 
 @router.post("/v1/prediction", tags=["prediction"])
 async def post(token: str, prediction: List[Prediction]):
@@ -81,9 +77,7 @@ async def post(token: str, prediction: List[Prediction]):
     sql = f'''replace into Predictions ({columns}) values ({values})'''
     sql = text(sql)
 
-    Session = Engine().session
-
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         await session.execute(sql, data)
         await session.commit()
     
@@ -108,9 +102,7 @@ async def get(token: str, limit: int = 50_000):
     sql = sql.limit(limit).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
     
-    Session = Engine().session
-
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
 
     names, objs, output = [], [], []

@@ -4,16 +4,14 @@ import random
 import time
 from typing import List, Optional
 
-from sqlalchemy.orm.session import sessionmaker
-
-from api.database.database import Engine, EngineType, get_session
-from api.database.functions import (batch_function, execute_sql, verify_token)
+from api.database.database import EngineType, get_session
+from api.database.functions import batch_function, execute_sql, verify_token
 from api.database.models import Player as dbPlayer
 from api.database.models import playerHiscoreData
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.exc import InternalError, OperationalError
-from sqlalchemy.sql.expression import update, insert
+from sqlalchemy.sql.expression import insert, update
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -165,16 +163,6 @@ async def sqla_insert_hiscore(hiscores:List):
             await session.close()
     return
 
-async def sample():
-    # we can now construct a Session() without needing to pass the
-    # engine each time
-    async with get_session(EngineType.PLAYERDATA) as session:
-        await session.execute(1)
-        await session.commit()
-    # closes the session
-    return
-  
-  
 @router.post("/scraper/hiscores/{token}", tags=["scraper"])
 async def receive_scraper_data(token, data: List[scraper], hiscores_tasks: BackgroundTasks):
     await verify_token(token, verifcation='ban')
