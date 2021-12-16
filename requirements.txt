@@ -2,6 +2,7 @@ aiofiles>=0.7.0
 aiomysql>=0.0.21
 APScheduler>=3.8.0
 asgiref>=3.4.1
+asyncmy>=0.2.3
 atomicwrites>=1.4.0
 attrs>=21.2.0
 certifi>=2021.5.30
