@@ -5,7 +5,11 @@ import random
 import traceback
 from collections import namedtuple
 
-from api.database.database import Engine, EngineType, playerdata
+# Although never directly used, the engines are imported to add a permanent reference 
+# to these entities to prevent the
+# garbage collector from trying to dispose of our engines.
+from api.database.database import PLAYERDATA_ENGINE, DISCORD_ENGINE
+from api.database.database import Engine, EngineType, get_session
 from api.database.models import Token
 from fastapi import HTTPException
 from sqlalchemy import text
@@ -24,7 +28,6 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
         logger.debug(f'To many retries')
         return None
 
-    engine = Engine(engine_type)
 
     if not is_retry:
         has_return = True if sql.strip().lower().startswith('select') else False
@@ -46,38 +49,37 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
 
     # debugging
     if debug:
+        engine = Engine(engine_type)
         logger.debug(f'{has_return=}')
-        logger.debug(f'sql={sql.compile(engine.engine)}')
+        logger.debug(f'sql={sql.compile(engine)}')
         logger.debug(f'{param=}')
+
+        await engine.engine.dispose()
     
     try:
-        async with engine.session() as session:
+        async with get_session(engine_type) as session:
             # execute session
             rows = await session.execute(sql, param)
             # parse data
             records = sql_cursor(rows) if has_return else None
             # commit session
             await session.commit()
-        # clean up connection
-        await engine.engine.dispose()
+
 
     # OperationalError = Deadlock, InternalError = lock timeout
     except OperationalError as e:
         e = e if debug else ''
         logger.debug(f'Deadlock, retrying {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
-        await engine.engine.dispose()
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except InternalError as e:
         e = e if debug else ''
         logger.debug(f'Lock, retrying: {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
-        await engine.engine.dispose()
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except Exception as e:
         logger.error('got an unkown error')
         logger.error(traceback.print_exc())
-        await engine.engine.dispose()
         records = None
     
     return records
@@ -106,19 +108,13 @@ class sqlalchemy_result:
         return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in self.rows]
 
 async def verify_token(token:str, verifcation:str) -> bool:
-    engine = Engine()
-    Session = engine.get_sessionmaker()
-
     # query
     sql = select(Token)
     sql = sql.where(Token.token==token)
 
     # transaction
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
-        
-    # cleanup connection
-    await engine.engine.dispose()
 
     # parse data
     data = sqlalchemy_result(data)

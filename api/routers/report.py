@@ -1,9 +1,10 @@
+import logging
 from typing import List
 
 from api.database.functions import execute_sql, verify_token
 from fastapi import APIRouter
 from pydantic import BaseModel
-import logging
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 

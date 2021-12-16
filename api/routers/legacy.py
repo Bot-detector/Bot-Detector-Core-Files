@@ -1,4 +1,4 @@
-import asyncio
+import logging
 import os
 import pathlib
 import random
@@ -11,12 +11,11 @@ import pandas as pd
 from api import Config
 from api.database.database import EngineType
 from api.database.functions import execute_sql, list_to_string, verify_token
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm.exc import NoResultFound
 
-import logging
 logger = logging.getLogger(__name__)
 
 '''
