@@ -13,7 +13,7 @@ class Feedback(BaseModel):
     vote: int
     prediction: str
     confidence: float
-    subject_id: int
+    subject_id: int # are they sending a subject id?
     feedback_text: Optional[str] = None
     proposed_label: Optional[str] = None
 
@@ -30,11 +30,10 @@ async def get(token:str):
 
 
 @router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["feedback"])
-async def post(feedback: Feedback, token:str):
+async def post(feedback: Feedback):
     '''
-    insert data into database
+    insert feedback into database
     '''
-    await verify_token(token, verifcation='ban')
     feedback = feedback.dict()
 
     sql_player = select(Player)
@@ -50,5 +49,5 @@ async def post(feedback: Feedback, token:str):
         sql_insert = sql_insert.values(feedback)
         print(sql_insert)
         await session.execute(sql_insert)
-        
+
     return {"OK": "OK"}
