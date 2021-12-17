@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       app: bd-dev-api
-  replicas: 5
+  replicas: 1
   template:
     metadata:
       name: bl-dev-api-app
@@ -31,21 +31,25 @@ spec:
             server: 51.68.207.197
             path: /cluster/exports
       containers:
-      - name: bd-dev-api
+        - name: bd-dev-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
+        resources:
+          requests:
+            cpu: "250m"
+          limits:
+            cpu: "1000m"
         volumeMounts:
         - name: nfs-volume-exports
           mountPath: /code/exports
         livenessProbe:
-          exec:
-            command:
-              - curl
-              - --fail
-              - http://localhost:5000/
+          httpGet:
+            path: /
+            port: 5000
           failureThreshold: 3
           periodSeconds: 30
       imagePullSecrets:
       - name: regcred
+
