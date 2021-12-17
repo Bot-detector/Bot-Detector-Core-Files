@@ -18,7 +18,7 @@ behavior:
     policies:
     - type: Pods
       value: 1
-      periodSeconds: 15
+      periodSeconds: 60
   scaleUp:
 	# default
     stabilizationWindowSeconds: 0
