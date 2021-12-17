@@ -6,7 +6,7 @@ from api.database.functions import (list_to_string, sqlalchemy_result,
                                     verify_token)
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import select, text
 from sqlalchemy.sql.functions import func
@@ -55,12 +55,13 @@ async def get(token: str, name: str):
 
     sql = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
-    
+
     async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
+
 
 @router.post("/v1/prediction", tags=["prediction"])
 async def post(token: str, prediction: List[Prediction]):
@@ -80,8 +81,9 @@ async def post(token: str, prediction: List[Prediction]):
     async with get_session(EngineType.PLAYERDATA) as session:
         await session.execute(sql, data)
         await session.commit()
-    
-    return {'ok':'ok'}
+
+    return {'ok': 'ok'}
+
 
 @router.get("/v1/prediction/data", tags=["prediction", "business-logic"])
 async def get(token: str, limit: int = 50_000):
@@ -101,7 +103,7 @@ async def get(token: str, limit: int = 50_000):
     sql = sql.order_by(func.rand())
     sql = sql.limit(limit).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
-    
+
     async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
 
@@ -109,7 +111,7 @@ async def get(token: str, limit: int = 50_000):
     for d in data:
         objs.append((d[0],))
         names.append(d[1])
-    
+
     data = sqlalchemy_result(objs).rows2dict()
 
     for d, n in zip(data, names):
@@ -117,3 +119,51 @@ async def get(token: str, limit: int = 50_000):
         output.append(d)
 
     return output
+
+
+@router.get("/v1/prediction/bulk", tags=["prediction"])
+async def get_prediction(
+    token: str,
+    row_count: int = 100_000,
+    page: int = 1,
+    possible_ban: Optional[int] = None,
+    confirmed_ban: Optional[int] = None,
+    confirmed_player: Optional[int] = None,
+    label_id: Optional[int] = None,
+    label_jagex: Optional[int] = None,
+):
+    await verify_token(token, verifcation='hiscore')
+
+    if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
+        raise HTTPException(status_code=404, detail="No param given")
+    # query
+    sql = select(Prediction)
+
+    # filters
+    if not possible_ban is None:
+        sql = sql.where(Player.possible_ban == possible_ban)
+
+    if not confirmed_ban is None:
+        sql = sql.where(Player.confirmed_ban == confirmed_ban)
+
+    if not confirmed_player is None:
+        sql = sql.where(Player.confirmed_player == confirmed_player)
+
+    if not label_id is None:
+        sql = sql.where(Player.label_id == label_id)
+
+    if not label_jagex is None:
+        sql = sql.where(Player.label_jagex == label_jagex)
+
+    # paging
+    sql = sql.limit(row_count).offset(row_count*(page-1))
+
+    # join
+    sql = sql.join(Player)
+
+    # execute query
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
+    return data.rows2dict()
