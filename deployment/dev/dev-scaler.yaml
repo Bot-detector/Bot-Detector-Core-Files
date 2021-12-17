@@ -1,32 +1,12 @@
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: bd-dev-api
+  name: dev-api-hpa
 spec:
+  maxReplicas: 3 # define max replica count
+  minReplicas: 1  # define min replica count
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: bd-dev-api
-  minReplicas: 1
-  maxReplicas: 3
-  targetCPUUtilizationPercentage: 50
-behavior:
-  scaleDown:
-	# considers last 5 minutes to avoid frequent scaling
-    stabilizationWindowSeconds: 300
-	# allows at most 1 replicas to be scaled down in one minute
-    policies:
-    - type: Pods
-      value: 1
-      periodSeconds: 60
-  scaleUp:
-	# default
-    stabilizationWindowSeconds: 0
-    policies:
-    - type: Percent
-      value: 100
-      periodSeconds: 15
-    - type: Pods
-      value: 4
-      periodSeconds: 15
-    selectPolicy: Max
+  targetCPUUtilizationPercentage: 80 # target CPU utilization
