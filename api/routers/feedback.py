@@ -1,6 +1,9 @@
 from typing import Optional
 
-from api.database.functions import execute_sql, list_to_string, verify_token
+from sqlalchemy.sql.expression import insert, select
+
+from api.database.functions import verify_token, get_session, EngineType, sqlalchemy_result
+from api.database.models import PredictionsFeedback, Player
 from fastapi import APIRouter, status
 from pydantic import BaseModel
 
@@ -32,25 +35,20 @@ async def post(feedback: Feedback, token:str):
     insert data into database
     '''
     await verify_token(token, verifcation='ban')
-    feedback_params = feedback.dict()
+    feedback = feedback.dict()
 
-    voter_data = await execute_sql(sql=f"select * from Players where name = :player_name", param={"player_name": feedback_params.pop("player_name")})
-    voter_data = voter_data.rows2dict()[0]
+    sql_player = select(Player)
+    sql_player = sql_player.where(Player.name == feedback.pop('player_name'))
 
-    feedback_params["voter_id"] = voter_data.get("id")
-    exclude = ["player_name"]
+    sql_insert = insert(PredictionsFeedback).prefix_with('ignore')
 
-    columns = [k for k,v in feedback_params.items() if v is not None and k not in exclude]
-    columns = list_to_string(columns)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        player = session.execute(sql_player)
+        player = sqlalchemy_result(player).rows2dict()
 
-    values = [f':{k}' for k,v in feedback_params.items() if v is not None and k not in exclude]
-    values = list_to_string(values)
-
-    sql = (f'''
-        insert ignore into PredictionsFeedback ({columns})
-        values ({values}) 
-    ''')
-
-    await execute_sql(sql, param=feedback_params)
-    
+        feedback["voter_id"] = player[0]['id']
+        sql_insert = sql_insert.values(feedback)
+        print(sql_insert)
+        await session.execute(sql_insert)
+        
     return {"OK": "OK"}
