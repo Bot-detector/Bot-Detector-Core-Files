@@ -6,17 +6,18 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
-
 # generated with sqlacodegen
 Base = declarative_base()
 metadata = Base.metadata
+
 
 class Prediction(Base):
     __tablename__ = 'Predictions'
 
     name = Column(String(50), primary_key=True)
     Prediction = Column(String(50))
-    id = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'))
+    id = Column(ForeignKey(
+        'Players.id', ondelete='RESTRICT', onupdate='RESTRICT'))
     created = Column(TIMESTAMP)
 
     Predicted_confidence = Column(Float)
@@ -45,7 +46,6 @@ class Prediction(Base):
     Barrows_bot = Column(Float)
     Herblore_bot = Column(Float)
 
-    
 
 class Clan(Base):
     __tablename__ = 'Clan'
@@ -73,11 +73,13 @@ class Label(Base):
 class PlayerBotConfirmation(Base):
     __tablename__ = 'PlayerBotConfirmation'
     __table_args__ = (
-        Index('Unique_player_label_bot', 'player_id', 'label_id', 'bot', unique=True),
+        Index('Unique_player_label_bot', 'player_id',
+              'label_id', 'bot', unique=True),
     )
 
     id = Column(Integer, primary_key=True)
-    ts = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    ts = Column(TIMESTAMP, nullable=False,
+                server_default=text("CURRENT_TIMESTAMP"))
     player_id = Column(Integer, nullable=False)
     label_id = Column(Integer, nullable=False)
     bot = Column(TINYINT(1), nullable=False)
@@ -87,15 +89,20 @@ class PlayersChange(Base):
     __tablename__ = 'PlayersChanges'
 
     id = Column(Integer, primary_key=True)
-    ChangeDate = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    ChangeDate = Column(TIMESTAMP, nullable=False,
+                        server_default=text("CURRENT_TIMESTAMP"))
     player_id = Column(Integer, nullable=False)
     name = Column(String(15), nullable=False)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime)
-    possible_ban = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    confirmed_ban = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    confirmed_player = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    label_id = Column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    possible_ban = Column(TINYINT(1), nullable=False,
+                          server_default=text("'0'"))
+    confirmed_ban = Column(TINYINT(1), nullable=False,
+                           server_default=text("'0'"))
+    confirmed_player = Column(
+        TINYINT(1), nullable=False, server_default=text("'0'"))
+    label_id = Column(Integer, nullable=False, index=True,
+                      server_default=text("'0'"))
     label_jagex = Column(Integer, nullable=False, server_default=text("'0'"))
 
 
@@ -105,11 +112,15 @@ class Token(Base):
     id = Column(Integer, primary_key=True)
     player_name = Column(VARCHAR(50), nullable=False)
     token = Column(String(50), nullable=False)
-    request_highscores = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    request_highscores = Column(
+        TINYINT(1), nullable=False, server_default=text("'0'"))
     verify_ban = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    create_token = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    verify_players = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    discord_general = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
+    create_token = Column(TINYINT(1), nullable=False,
+                          server_default=text("'0'"))
+    verify_players = Column(TINYINT(1), nullable=False,
+                            server_default=text("'0'"))
+    discord_general = Column(TINYINT(1), nullable=False,
+                             server_default=text("'0'"))
 
 
 class PlayerHiscoreDataChange(Base):
@@ -121,7 +132,8 @@ class PlayerHiscoreDataChange(Base):
     new_player_id = Column(Integer, nullable=False)
     old_total = Column(Integer, nullable=False)
     new_total = Column(Integer, nullable=False)
-    change_at = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    change_at = Column(TIMESTAMP, nullable=False,
+                       server_default=text("CURRENT_TIMESTAMP"))
 
 
 class RegionIDName(Base):
@@ -169,11 +181,15 @@ class LabelSubGroup(Base):
     __tablename__ = 'LabelSubGroup'
 
     id = Column(Integer, primary_key=True)
-    parent_label = Column(ForeignKey('Labels.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
-    child_label = Column(ForeignKey('Labels.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+    parent_label = Column(ForeignKey(
+        'Labels.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+    child_label = Column(ForeignKey('Labels.id', ondelete='RESTRICT',
+                         onupdate='RESTRICT'), nullable=False, index=True)
 
-    Label = relationship('Label', primaryjoin='LabelSubGroup.child_label == Label.id')
-    Label1 = relationship('Label', primaryjoin='LabelSubGroup.parent_label == Label.id')
+    Label = relationship(
+        'Label', primaryjoin='LabelSubGroup.child_label == Label.id')
+    Label1 = relationship(
+        'Label', primaryjoin='LabelSubGroup.parent_label == Label.id')
 
 
 class Player(Base):
@@ -181,12 +197,17 @@ class Player(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, unique=True)
-    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    created_at = Column(DateTime, nullable=False,
+                        server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime)
-    possible_ban = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    confirmed_ban = Column(TINYINT(1), nullable=False, index=True, server_default=text("'0'"))
-    confirmed_player = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    label_id = Column(ForeignKey('Labels.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True, server_default=text("'0'"))
+    possible_ban = Column(TINYINT(1), nullable=False,
+                          server_default=text("'0'"))
+    confirmed_ban = Column(TINYINT(1), nullable=False,
+                           index=True, server_default=text("'0'"))
+    confirmed_player = Column(
+        TINYINT(1), nullable=False, server_default=text("'0'"))
+    label_id = Column(ForeignKey('Labels.id', ondelete='RESTRICT', onupdate='RESTRICT'),
+                      nullable=False, index=True, server_default=text("'0'"))
     label_jagex = Column(Integer, nullable=False, server_default=text("'0'"))
     ironman = Column(TINYINT)
     hardcore_ironman = Column(TINYINT)
@@ -194,46 +215,59 @@ class Player(Base):
 
     label = relationship('Label')
 
+
 class PredictionsFeedback(Base):
     __tablename__ = 'PredictionsFeedback'
     __table_args__ = (
-        Index('Unique_Vote', 'prediction', 'subject_id', 'voter_id', unique=True),
+        Index('Unique_Vote', 'prediction',
+              'subject_id', 'voter_id', unique=True),
     )
 
     id = Column(Integer, primary_key=True)
-    ts = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    voter_id = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
-    subject_id = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+    ts = Column(TIMESTAMP, nullable=False,
+                server_default=text("CURRENT_TIMESTAMP"))
+    voter_id = Column(ForeignKey('Players.id', ondelete='RESTRICT',
+                      onupdate='RESTRICT'), nullable=False, index=True)
+    subject_id = Column(ForeignKey('Players.id', ondelete='RESTRICT',
+                        onupdate='RESTRICT'), nullable=False, index=True)
     prediction = Column(String(50), nullable=False)
     confidence = Column(Float, nullable=False)
     vote = Column(Integer, nullable=False, server_default=text("'0'"))
     feedback_text = Column(TEXT)
     reviewed = Column(TINYINT, nullable=False, server_default=text("'0'"))
-    reviewer_id = Column(ForeignKey('Tokens.id', ondelete='RESTRICT', onupdate='RESTRICT'), index=True)
+    reviewer_id = Column(ForeignKey(
+        'Tokens.id', ondelete='RESTRICT', onupdate='RESTRICT'), index=True)
     user_notified = Column(TINYINT, nullable=False, server_default=text("'0'"))
     proposed_label = Column(String(50))
 
     reviewer = relationship('Token')
-    subject = relationship('Player', primaryjoin='PredictionsFeedback.subject_id == Player.id')
-    voter = relationship('Player', primaryjoin='PredictionsFeedback.voter_id == Player.id')
+    subject = relationship(
+        'Player', primaryjoin='PredictionsFeedback.subject_id == Player.id')
+    voter = relationship(
+        'Player', primaryjoin='PredictionsFeedback.voter_id == Player.id')
 
 
 class Report(Base):
     __tablename__ = 'Reports'
     __table_args__ = (
-        Index('Unique_Report', 'reportedID', 'reportingID', 'region_id', 'manual_detect', unique=True),
+        Index('Unique_Report', 'reportedID', 'reportingID',
+              'region_id', 'manual_detect', unique=True),
         Index('reportedID', 'reportedID', 'region_id')
     )
 
     ID = Column(BigInteger, primary_key=True)
-    created_at = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    reportedID = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
-    reportingID = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+    created_at = Column(TIMESTAMP, nullable=False,
+                        server_default=text("CURRENT_TIMESTAMP"))
+    reportedID = Column(ForeignKey('Players.id', ondelete='RESTRICT',
+                        onupdate='RESTRICT'), nullable=False, index=True)
+    reportingID = Column(ForeignKey('Players.id', ondelete='RESTRICT',
+                         onupdate='RESTRICT'), nullable=False, index=True)
     region_id = Column(Integer, nullable=False)
     x_coord = Column(Integer, nullable=False)
     y_coord = Column(Integer, nullable=False)
     z_coord = Column(Integer, nullable=False)
-    timestamp = Column(TIMESTAMP, nullable=False, index=True, server_default=text("CURRENT_TIMESTAMP"))
+    timestamp = Column(TIMESTAMP, nullable=False, index=True,
+                       server_default=text("CURRENT_TIMESTAMP"))
     manual_detect = Column(TINYINT(1))
     on_members_world = Column(Integer)
     on_pvp_world = Column(TINYINT)
@@ -249,8 +283,10 @@ class Report(Base):
     equip_shield_id = Column(Integer)
     equip_ge_value = Column(BigInteger)
 
-    Player = relationship('Player', primaryjoin='Report.reportedID == Player.id')
-    Player1 = relationship('Player', primaryjoin='Report.reportingID == Player.id')
+    Player = relationship(
+        'Player', primaryjoin='Report.reportedID == Player.id')
+    Player1 = relationship(
+        'Player', primaryjoin='Report.reportingID == Player.id')
 
 
 class playerHiscoreData(Base):
@@ -261,9 +297,11 @@ class playerHiscoreData(Base):
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    timestamp = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    timestamp = Column(DateTime, nullable=False,
+                       server_default=text("CURRENT_TIMESTAMP"))
     ts_date = Column(Date)
-    Player_id = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False)
+    Player_id = Column(ForeignKey(
+        'Players.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False)
     total = Column(BigInteger)
     attack = Column(Integer)
     defence = Column(Integer)
@@ -355,9 +393,11 @@ class PlayerHiscoreDataLatest(Base):
     __tablename__ = 'playerHiscoreDataLatest'
 
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    timestamp = Column(DateTime, nullable=False,
+                       server_default=text("CURRENT_TIMESTAMP"))
     ts_date = Column(Date)
-    Player_id = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, unique=True)
+    Player_id = Column(ForeignKey('Players.id', ondelete='RESTRICT',
+                       onupdate='RESTRICT'), nullable=False, unique=True)
     total = Column(BigInteger)
     attack = Column(Integer)
     defence = Column(Integer)
@@ -449,9 +489,11 @@ class PlayerHiscoreDataXPChange(Base):
     __tablename__ = 'playerHiscoreDataXPChange'
 
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    timestamp = Column(DateTime, nullable=False,
+                       server_default=text("CURRENT_TIMESTAMP"))
     ts_date = Column(Date)
-    Player_id = Column(ForeignKey('Players.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+    Player_id = Column(ForeignKey('Players.id', ondelete='RESTRICT',
+                       onupdate='RESTRICT'), nullable=False, index=True)
     total = Column(BigInteger)
     attack = Column(Integer)
     defence = Column(Integer)
