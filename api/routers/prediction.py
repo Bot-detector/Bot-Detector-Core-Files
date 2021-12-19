@@ -44,6 +44,7 @@ class Prediction(BaseModel):
     Vorkath_bot: Optional[float] = 0
     Barrows_bot: Optional[float] = 0
     Herblore_bot: Optional[float] = 0
+    Zulrah_bot: Optional[float] = 0
 
 
 @router.get("/v1/prediction", tags=["prediction"])
