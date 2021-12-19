@@ -1,10 +1,10 @@
-from typing import List, Optional
+from typing import Optional
 
 from api.database.database import EngineType, get_session
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import (PlayerHiscoreDataLatest,
-                                 PlayerHiscoreDataXPChange, playerHiscoreData)
-from fastapi import APIRouter
+                                 PlayerHiscoreDataXPChange, playerHiscoreData, Player)
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
 
@@ -84,7 +84,7 @@ class hiscore(BaseModel):
     sarachnis: int
     scorpia: int
     skotizo: int
-    tempoross:int
+    tempoross: int
     the_gauntlet: int
     the_corrupted_gauntlet: int
     theatre_of_blood: int
@@ -98,7 +98,7 @@ class hiscore(BaseModel):
     wintertodt: int
     zalcano: int
     zulrah: int
-    
+
 
 @router.get("/v1/hiscore/", tags=["hiscore"])
 async def get(
@@ -106,9 +106,9 @@ async def get(
     player_id: int,
     row_count: int = 100_000,
     page: int = 1
-    ):
+):
     '''
-        select data from database
+        select hiscore data of a player
     '''
     # verify token
     await verify_token(token, verifcation='ban')
@@ -116,11 +116,11 @@ async def get(
     # query
     table = playerHiscoreData
     sql = select(table)
-    
+
     # filters
     if not player_id == None:
         sql = sql.where(table.Player_id == player_id)
-    
+
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
@@ -129,16 +129,15 @@ async def get(
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
+
 
 @router.get("/v1/hiscore/Latest", tags=["hiscore"])
 async def get(
     token: str,
-    player_id: int,
-    row_count: int = 100_000,
-    page: int = 1
-    ):
+    player_id: int
+):
     '''
-        select data from database
+        select the latest hiscore of a player
     '''
     # verify token
     await verify_token(token, verifcation='ban')
@@ -146,13 +145,10 @@ async def get(
     # query
     table = PlayerHiscoreDataLatest
     sql = select(table)
-    
+
     # filters
     if not player_id == None:
         sql = sql.where(table.Player_id == player_id)
-    
-    # paging
-    sql = sql.limit(row_count).offset(row_count*(page-1))
 
     async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
@@ -160,36 +156,59 @@ async def get(
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.post("/v1/hiscore/Latest/bulk", tags=["hiscore"])
+
+@router.get("/v1/hiscore/Latest/bulk", tags=["hiscore"])
 async def get_hiscore_latest_bulk(
     token: str,
-    player_id: List[int],
-    nothing: Optional[List[int]]= None,
     row_count: int = 100_000,
-    page: int = 1
-    ):
+    page: int = 1,
+    possible_ban: Optional[int] = None,
+    confirmed_ban: Optional[int] = None,
+    confirmed_player: Optional[int] = None,
+    label_id: Optional[int] = None,
+    label_jagex: Optional[int] = None,
+):
     '''
-        select data from database
+        select the latest hiscore data in bulk
     '''
     # verify token
     await verify_token(token, verifcation='ban')
 
+    if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
+        raise HTTPException(status_code=404, detail="No param given")
+
     # query
-    table = PlayerHiscoreDataLatest
-    sql = select(table)
-    
+    sql = select(PlayerHiscoreDataLatest)
+
     # filters
-    if not player_id == None:
-        sql = sql.where(table.Player_id.in_(player_id))
-    
+    if not possible_ban is None:
+        sql = sql.where(Player.possible_ban == possible_ban)
+
+    if not confirmed_ban is None:
+        sql = sql.where(Player.confirmed_ban == confirmed_ban)
+
+    if not confirmed_player is None:
+        sql = sql.where(Player.confirmed_player == confirmed_player)
+
+    if not label_id is None:
+        sql = sql.where(Player.label_id == label_id)
+
+    if not label_jagex is None:
+        sql = sql.where(Player.label_jagex == label_jagex)
+
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
+    # join
+    sql = sql.join(Player)
+
+    # execute query
     async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
+
 
 @router.get("/v1/hiscore/XPChange", tags=["hiscore"])
 async def get(
@@ -197,7 +216,7 @@ async def get(
     player_id: int,
     row_count: int = 100_000,
     page: int = 1
-    ):
+):
     '''
         select data from database
     '''
@@ -207,11 +226,11 @@ async def get(
     # query
     table = PlayerHiscoreDataXPChange
     sql = select(table)
-    
+
     # filters
     if not player_id == None:
         sql = sql.where(table.Player_id == player_id)
-    
+
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
@@ -220,6 +239,7 @@ async def get(
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
+
 
 @router.post("/v1/hiscore", tags=["hiscore"])
 async def post(hiscores: hiscore, token: str):
@@ -238,5 +258,5 @@ async def post(hiscores: hiscore, token: str):
     async with get_session(EngineType.PLAYERDATA) as session:
         await session.execute(sql_insert)
         await session.commit()
-    
-    return {'ok':'ok'}
+
+    return {'ok': 'ok'}
