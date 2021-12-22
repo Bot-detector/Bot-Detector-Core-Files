@@ -1,9 +1,13 @@
 import logging
 from typing import List
 
-from api.database.functions import execute_sql, verify_token
+from sqlalchemy.sql.expression import insert
+
+from api.database.functions import execute_sql, verify_token, get_session, EngineType
+from api.database.models import Report
 from fastapi import APIRouter
 from pydantic import BaseModel
+from sqlalchemy import update
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -46,40 +50,30 @@ async def get(token: str):
     pass
 
 
-@router.put("v1/report", tags=["report"])
+@router.put("/v1/report", tags=["report"])
 async def put(old_user_id: int, new_user_id: int, token: str):
     '''
-    update data into database
+    update the reporting userID
     '''
     await verify_token(token, verifcation='ban')
     # can be used for name change
-    sql = ('''
-    UPDATE Reports
-    SET
-        reportingID = :NewUser
-    where 
-        reportingID = :OldUser
 
-    ''')
-    param = {}
-    param['NewUser'] = new_user_id
-    param['OldUser'] = old_user_id
+    sql = update(Report)
+    sql = sql.values(Report.reportingID == new_user_id)
+    sql = sql.where(Report.reportingID == old_user_id)
 
-    await execute_sql(sql, param)
-    return {'OK':'OK'}
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(sql)
+
+    return {'OK': 'OK'}
 
 
-@router.post("v1/report", tags=["report"])
-async def post(token:str,detections: List[detection]):
+@router.post("/v1/report", tags=["report"])
+async def post(token: str, detections: List[detection]):
     '''
     insert data into database
     '''
     await verify_token(token, verifcation='ban')
-    sql = ('''
-        insert ignore into Reports
-    ''')
 
-    if len(detections) > 5000:
-        return {'OK':'OK'}
-        
+    sql = insert(Report)
     pass
