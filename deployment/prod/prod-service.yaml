@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bd-prod-api-service
+spec:
+  selector:
+    app: bd-prod-api
+  ports:
+  - protocol: "TCP"
+    port: 4000
