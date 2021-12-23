@@ -1,9 +1,19 @@
-import logging
-from typing import List
 
-from api.database.functions import execute_sql, verify_token
-from fastapi import APIRouter
+from datetime import datetime, date
+import logging
+from typing import List, Optional
+
+from sqlalchemy.sql.selectable import FromClause
+
+from api.database.functions import (EngineType, get_session, sql_cursor,
+                                    verify_token, sqlalchemy_result)
+from api.database.models import Player, Prediction, Report
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import update
+from sqlalchemy.sql.expression import insert, select
+from sqlalchemy import Date
+from sqlalchemy.sql import func
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -37,49 +47,126 @@ class detection(BaseModel):
     equip_ge_value: int
 
 
-@router.get("v1/report", tags=["report"])
-async def get(token: str):
+@router.get("/v1/report", tags=["report"])
+async def get_reports(
+    token: str,
+    reportedID: Optional[int]=None,
+    reportingID: Optional[int]=None,
+    timestamp: Optional[date]=None,
+    regionID: Optional[int]=None
+    ):
     '''
     select data from database
     '''
     await verify_token(token, verifcation='hiscore')
-    pass
+
+    if None == reportedID == reportingID:
+        raise HTTPException(status_code=404, detail="reportedID or reportingID must be given")
+
+    sql = select(Report)
+
+    if not reportedID is None:
+        sql = sql.where(Report.reportedID == reportedID)
+
+    if not reportingID is None:
+        sql = sql.where(Report.reportingID == reportingID)
+
+    if not timestamp is None:
+        sql = sql.where(func.date(Report.timestamp) == timestamp)
+
+    if not regionID is None:
+        sql = sql.where(Report.region_id == regionID)
+    
+    # execute query
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
+    return data.rows2dict()
 
 
-@router.put("v1/report", tags=["report"])
-async def put(old_user_id: int, new_user_id: int, token: str):
+@router.put("/v1/report", tags=["report"])
+async def update_report(old_user_id: int, new_user_id: int, token: str):
     '''
-    update data into database
+    update the reporting userID
     '''
     await verify_token(token, verifcation='ban')
     # can be used for name change
-    sql = ('''
-    UPDATE Reports
-    SET
-        reportingID = :NewUser
-    where 
-        reportingID = :OldUser
 
-    ''')
-    param = {}
-    param['NewUser'] = new_user_id
-    param['OldUser'] = old_user_id
+    sql = update(Report)
+    sql = sql.values(Report.reportingID == new_user_id)
+    sql = sql.where(Report.reportingID == old_user_id)
 
-    await execute_sql(sql, param)
-    return {'OK':'OK'}
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(sql)
+
+    return {'OK': 'OK'}
 
 
-@router.post("v1/report", tags=["report"])
-async def post(token:str,detections: List[detection]):
+@router.post("/v1/report", tags=["report"])
+async def insert_report(token: str, detections: List[detection]):
     '''
     insert data into database
     '''
     await verify_token(token, verifcation='ban')
-    sql = ('''
-        insert ignore into Reports
-    ''')
 
-    if len(detections) > 5000:
-        return {'OK':'OK'}
-        
+    sql = insert(Report)
     pass
+
+@router.get("/v1/report/prediction", tags=["report"])
+async def get_report_by_prediction(
+    token: str,
+    label_jagex: int,
+    predicted_confidence: int,
+    prediction: Optional[str]=None,
+    real_player: Optional[int]=None,
+    crafting_bot: Optional[int]=None,
+    timestamp: Optional[date]=None,
+    region_id: Optional[int]=None
+    ):
+    '''
+    get users based on prediction
+    '''
+    await verify_token(token, verifcation='ban')
+    
+    
+    sql = select(   
+        Player.id, 
+        Prediction.Prediction, 
+        Prediction.Predicted_confidence
+    ).distinct()
+
+    sql = sql.where(Prediction.Predicted_confidence >= predicted_confidence)
+    sql = sql.where(Player.label_jagex == label_jagex)
+
+    if not prediction is None:
+        sql = sql.where(Prediction.Prediction == prediction)
+
+    if not real_player is None:
+        sql = sql.where(Prediction.Real_Player < real_player)
+
+    if not crafting_bot is None:
+        sql = sql.where(Prediction.Crafting_bot > crafting_bot)
+
+    if not timestamp is None:
+        sql = sql.where(func.date(Report.timestamp) == timestamp)
+    
+    if not region_id is None:
+        sql = sql.where(Report.region_id == region_id)
+    
+    sql = sql.join(Report, Player.id == Report.reportedID)
+    sql = sql.join(Prediction, Player.id == Prediction.id)
+
+    # execute query
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+
+    output = []
+    for row in data:
+        mydata = {}
+        mydata['id'] = row[0]
+        mydata['prediction'] = row[1]
+        mydata['Predicted_confidence'] = row[2]
+        output.append(mydata)
+
+    return output
