@@ -31,11 +31,6 @@ spec:
             server: 51.68.207.197
             path: /cluster/exports
       containers:
-        resources:
-          requests:
-            cpu: "250m"
-          limits:
-            cpu: "1000m"
       - name: bd-prod-api
         image: hub.osrsbotdetector.com/bot-detector/bd-api:production
         imagePullPolicy: Always
