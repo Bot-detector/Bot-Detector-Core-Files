@@ -121,7 +121,6 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
         Checks to see if the token has achieved its ratelimit, if so return, if not: increment.
         Update the token's last-used field with the current time.
         Attempt the request.
-        Can be performed in one call [GET], **can be performed with the same call [POST], ***Returns True.
     """
     
     sql = select(ApiUser)
@@ -132,7 +131,7 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
     
     sql_usage = select(ApiUsage)
     sql_usage = sql_usage.join(ApiUser, ApiUser.id == ApiUsage.user_id)
-    sql_usage = sql_usage.where(ApiUsage.timestamp >= datetime.now() - timedelta(hours=1))
+    sql_usage = sql_usage.where(ApiUsage.timestamp >= datetime.utcnow() - timedelta(hours=1))
     
     async with get_session(EngineType.PLAYERDATA) as session:
         api_user = await session.execute(sql)
@@ -155,15 +154,15 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
         
     # If len api_user == 0; user does not have necessary permissions
     if len(api_user) == 0:
-        raise HTTPException(status_code=403, detail=f"Insufficent Permissions.")
+        raise HTTPException(status_code=401, detail=f"Insufficent Permissions: Either the token does not exist or you don't have sufficent permissions to access this content.")
     
     api_user = api_user[0]
     
-    if (len(usage_data) > api_user['ratelimit']) and (api_user['ratelimit'] != -1):
-        raise HTTPException(status_code=429, detail=f"Ratelimit has been reached.") 
-    
     if api_user['is_active'] != 1:
-        raise HTTPException(status_code=403, detail=f"User token is disabled. Please contact a developer.")
+        raise HTTPException(status_code=403, detail=f"User token has been disabled. Please contact a developer.\nThis could be due to having an inactive token (>30d) or a manual shutdown by a developer.")
+    
+    if (len(usage_data) > api_user['ratelimit']) and (api_user['ratelimit'] != -1):
+        raise HTTPException(status_code=429, detail=f"Your Ratelimit has been reached. Calls: {len(usage_data)}/{api_user['ratelimit']}") 
     
     return True
 

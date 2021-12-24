@@ -17,20 +17,21 @@ class Feedback(BaseModel):
 
 router = APIRouter()
 
-@router.get("/v1/feedback/", tags=["feedback"])
-async def get(token:str):
+@router.get("/v1/feedback/", tags=["Feedback Routes","Discord Routes"])
+async def gets_feedback_from_plugin_database(token:str):
     '''
-    Placeholder: Will get player feedback from the database.
+    Placeholder: Will get player feedback from the database.\n
+    Use: This can be used to obtain prediction feedback for routes accessible to the plugin database, this can be used as a method of displaying predictions in the plugin discord, or on the plugin website.
     '''
     await verify_token(token, verification='verify_ban', route='[GET]/v1/feedback')
     pass
 
 
-@router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["feedback"])
-async def post(feedback: Feedback, token:str):
+@router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["Feedback Routes","Plugin Routes"])
+async def posts_new_feedback_to_plugin_database(feedback: Feedback, token:str):
     '''
-    Inserts player's plugin prediction feedback into the database. 
-    This route is usually accessed from the plugin which a user clicks on a player's text box and submits the correction or confirmation. 
+    Inserts player's plugin prediction feedback into the database.\n
+    Use: This route is usually accessed from the plugin which a user clicks on a player's text box and submits the correction or confirmation. The primary use of this route is through the Bot Detector Plugin itself.
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/feedback')
     feedback_params = feedback.dict()
