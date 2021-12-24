@@ -81,6 +81,7 @@ class hiscore(BaseModel):
     mimic: int
     nightmare: int
     obor: int
+    phosanis_nightmare : int
     sarachnis: int
     scorpia: int
     skotizo: int

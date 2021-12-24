@@ -603,6 +603,7 @@ class PlayerHiscoreDataXPChange(Base):
     mimic = Column(Integer)
     nightmare = Column(Integer)
     obor = Column(Integer)
+    phosanis_nightmare = Column(Integer)
     sarachnis = Column(Integer)
     scorpia = Column(Integer)
     skotizo = Column(Integer)
