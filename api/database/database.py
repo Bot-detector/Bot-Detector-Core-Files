@@ -28,8 +28,8 @@ class Engine():
             connection_string, 
             poolclass=QueuePool,
             pool_pre_ping=True,
-            pool_size=10, 
-            max_overflow=100,
+            pool_size=100, 
+            max_overflow=500,
             pool_recycle=3600
         )
         
