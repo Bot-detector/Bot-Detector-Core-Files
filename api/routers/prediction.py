@@ -50,7 +50,7 @@ class Prediction(BaseModel):
 @router.get("/v1/prediction", tags=["prediction"])
 async def get(token: str, name: str):
     '''
-        select predictionf from database
+        Selects a player's prediction from the plugin database. 
     '''
     await verify_token(token, verifcation='hiscore')
 
@@ -67,7 +67,7 @@ async def get(token: str, name: str):
 @router.post("/v1/prediction", tags=["prediction"])
 async def post(token: str, prediction: List[Prediction]):
     '''
-        replace into prediction table
+        Posts a new prediction into the plugin database.
     '''
     await verify_token(token, verifcation='ban')
 
@@ -89,7 +89,7 @@ async def post(token: str, prediction: List[Prediction]):
 @router.get("/v1/prediction/data", tags=["prediction", "business-logic"])
 async def get(token: str, limit: int = 50_000):
     '''
-        GET: the hiscore data where prediction is not from today
+        Gets old predictions, where the prediction is not from the current date.
     '''
     await verify_token(token, verifcation='hiscore')
 
@@ -133,6 +133,9 @@ async def get_prediction(
     label_id: Optional[int] = None,
     label_jagex: Optional[int] = None,
 ):
+    """
+        Gets bulk prediction data for multiple accounts in the database.
+    """
     await verify_token(token, verifcation='hiscore')
 
     if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
