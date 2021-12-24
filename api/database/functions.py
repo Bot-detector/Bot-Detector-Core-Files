@@ -134,9 +134,6 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
     sql_usage = sql_usage.join(ApiUser, ApiUser.id == ApiUsage.user_id)
     sql_usage = sql_usage.where(ApiUsage.timestamp >= datetime.now() - timedelta(hours=1))
     
-    print(sql_usage)
-    
-    # active, ratelimit
     async with get_session(EngineType.PLAYERDATA) as session:
         api_user = await session.execute(sql)
         usage_data = await session.execute(sql_usage)
@@ -161,7 +158,6 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
         raise HTTPException(status_code=403, detail=f"Insufficent Permissions.")
     
     api_user = api_user[0]
-    print(len(usage_data))
     
     if (len(usage_data) > api_user['ratelimit']) and (api_user['ratelimit'] != -1):
         raise HTTPException(status_code=429, detail=f"Ratelimit has been reached.") 
