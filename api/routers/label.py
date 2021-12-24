@@ -13,7 +13,7 @@ class label(BaseModel):
 @router.get("/v1/label/", tags=["label"])
 async def get(token:str):
     '''
-        select a label from db
+        Selects a label from the plugin database. 
     '''
     await verify_token(token, verification='request_highscores', route='[GET]/v1/label/')
 
@@ -28,7 +28,7 @@ async def get(token:str):
 @router.post("/v1/label/", tags=["label"])
 async def post(token:str, label:label):
     '''
-        insert a label into the db
+        Creates a new label, and inserts it into the database.
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/label/')
 
@@ -55,7 +55,7 @@ async def post(token:str, label:label):
 @router.put("/v1/label/", tags=["label"])
 async def put(token:str):
     '''
-        update a label into the datase
+        Updates an existing label in the database.
     '''
     await verify_token(token, verification='verify_ban', route='[PUT]/v1/label/')
     return

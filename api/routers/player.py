@@ -31,7 +31,7 @@ async def get(
     page: int = 1
 ):
     '''
-    select data from database
+    Selects player data from the plugin database. 
     '''
     await verify_token(token, verification='request_highscores', route='[GET]/v1/player')
 
@@ -64,8 +64,8 @@ async def get(
     return data.rows2dict()
 
 
-@router.post("/v1/player/bulk", tags=["player"])
-async def post_bulk(
+@router.get("/v1/player/bulk", tags=["player"])
+async def get_bulk(
     token: str,
     player_name: Optional[List[str]] = None,
     player_id: Optional[List[int]] = None,
@@ -74,7 +74,7 @@ async def post_bulk(
     page: int = 1
     ):
     '''
-        select data from database
+        Selects bulk player data from the plugin database.
     '''
     await verify_token(token, verification='request_highscores', route='[POST]/v1/player')
 
@@ -110,7 +110,7 @@ async def post_bulk(
 @router.put("/v1/player", tags=["player"])
 async def put(player: Player, token: str):
     '''
-    update data into database
+        Updates existing player data in the plugin database.
     '''
     await verify_token(token, verification='verify_ban')
 
@@ -141,7 +141,7 @@ async def put(player: Player, token: str):
 @router.post("/v1/player", tags=["player"])
 async def post(player_name: str, token: str):
     '''
-    insert data into database
+        Inserts new player data into the plugin database.
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/player')
 

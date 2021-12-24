@@ -108,7 +108,7 @@ async def get(
     page: int = 1
 ):
     '''
-        select hiscore data of a player
+        Selects stored hiscore data for a player.
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore')
@@ -137,7 +137,7 @@ async def get(
     player_id: int
 ):
     '''
-        select the latest hiscore of a player
+        Select the latest hiscore of a player.
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest')
@@ -169,7 +169,7 @@ async def get_hiscore_latest_bulk(
     label_jagex: Optional[int] = None,
 ):
     '''
-        select the latest hiscore data in bulk
+        Select latest bulk hiscore data.
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest/bulk')
@@ -218,7 +218,7 @@ async def get(
     page: int = 1
 ):
     '''
-        select data from database
+        Selects player's XP change data.
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/XPChange')
@@ -244,7 +244,7 @@ async def get(
 @router.post("/v1/hiscore", tags=["hiscore"])
 async def post(hiscores: hiscore, token: str):
     '''
-        Insert hiscores into table: hiscore
+        Inserts hiscore data from the OSRS hiscores API to the Database.
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/hiscore')
 

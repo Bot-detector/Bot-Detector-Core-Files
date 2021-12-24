@@ -20,7 +20,7 @@ router = APIRouter()
 @router.get("/v1/feedback/", tags=["feedback"])
 async def get(token:str):
     '''
-    select data from database
+    Placeholder: Will get player feedback from the database.
     '''
     await verify_token(token, verification='verify_ban', route='[GET]/v1/feedback')
     pass
@@ -29,7 +29,8 @@ async def get(token:str):
 @router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["feedback"])
 async def post(feedback: Feedback, token:str):
     '''
-    insert data into database
+    Inserts player's plugin prediction feedback into the database. 
+    This route is usually accessed from the plugin which a user clicks on a player's text box and submits the correction or confirmation. 
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/feedback')
     feedback_params = feedback.dict()
