@@ -11,6 +11,7 @@ from collections import namedtuple
 from api.database.database import PLAYERDATA_ENGINE, DISCORD_ENGINE
 from api.database.database import Engine, EngineType, get_session
 from api.database.models import Token
+from api.database.models import api_permissions, api_route_logging, api_user_perms, api_user_token
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import InternalError, OperationalError
