@@ -111,7 +111,7 @@ async def get(
         Selects stored hiscore data for a player.
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore')
 
     # query
     table = playerHiscoreData
@@ -140,7 +140,7 @@ async def get(
         Select the latest hiscore of a player.
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest')
 
     # query
     table = PlayerHiscoreDataLatest
@@ -172,7 +172,7 @@ async def get_hiscore_latest_bulk(
         Select latest bulk hiscore data.
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest/bulk')
 
     if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
         raise HTTPException(status_code=404, detail="No param given")
@@ -221,7 +221,7 @@ async def get(
         Selects player's XP change data.
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/XPChange')
 
     # query
     table = PlayerHiscoreDataXPChange
@@ -246,7 +246,7 @@ async def post(hiscores: hiscore, token: str):
     '''
         Inserts hiscore data from the OSRS hiscores API to the Database.
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/v1/hiscore')
 
     values = hiscores.dict()
 

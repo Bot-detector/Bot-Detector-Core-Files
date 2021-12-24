@@ -1,9 +1,11 @@
 # coding: utf-8
+from datetime import datetime
 from sqlalchemy import BigInteger, Column, Date, DateTime, Float, ForeignKey, Index, Integer, String, TIMESTAMP, Text, text
 from sqlalchemy.dialects.mysql import TEXT, TINYINT, VARCHAR
-from sqlalchemy.dialects.mysql.types import DECIMAL
+from sqlalchemy.dialects.mysql.types import DECIMAL, TINYTEXT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql.sqltypes import BIGINT
 
 
 # generated with sqlacodegen
@@ -121,7 +123,49 @@ class Token(Base):
                             server_default=text("'0'"))
     discord_general = Column(TINYINT(1), nullable=False,
                              server_default=text("'0'"))
+    
+"""
+    API token handling
+"""
+class ApiPermission(Base):
+    __tablename__ = 'apiPermissions'
 
+    id = Column(Integer, primary_key=True)
+    permission = Column(Text, nullable=False)
+
+
+class ApiUser(Base):
+    __tablename__ = 'apiUser'
+
+    id = Column(Integer, primary_key=True)
+    username = Column(TINYTEXT, nullable=False)
+    token = Column(TINYTEXT, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    last_used = Column(DateTime)
+    ratelimit = Column(Integer, nullable=False, server_default=text("'100'"))
+    is_active = Column(TINYINT(1), nullable=False, server_default=text("'1'"))
+    
+class ApiUsage(Base):
+    __tablename__ = 'apiUsage'
+
+    id = Column(BigInteger, primary_key=True)
+    user_id = Column(ForeignKey('apiUser.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+    timestamp = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    route = Column(Text, nullable=False)
+
+    user = relationship('ApiUser')
+
+
+class ApiUserPerm(Base):
+    __tablename__ = 'apiUserPerms'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey('apiUser.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+    permission_id = Column(ForeignKey('apiPermissions.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+
+    permission = relationship('ApiPermission')
+    user = relationship('ApiUser')
+    
 
 class PlayerHiscoreDataChange(Base):
     __tablename__ = 'playerHiscoreDataChanges'

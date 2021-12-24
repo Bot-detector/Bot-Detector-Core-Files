@@ -5,16 +5,20 @@ import random
 import traceback
 from collections import namedtuple
 
+from sqlalchemy.sql.sqltypes import TIMESTAMP
+
 # Although never directly used, the engines are imported to add a permanent reference 
 # to these entities to prevent the
 # garbage collector from trying to dispose of our engines.
 from api.database.database import PLAYERDATA_ENGINE, DISCORD_ENGINE
 from api.database.database import Engine, EngineType, get_session
 from api.database.models import Token
+from api.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import InternalError, OperationalError
-from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.expression import select, insert
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -107,38 +111,60 @@ class sqlalchemy_result:
         Record = namedtuple('Record', columns)
         return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in self.rows]
 
-async def verify_token(token:str, verifcation:str) -> bool:
-    # query
-    sql = select(Token)
-    sql = sql.where(Token.token==token)
-
-    # transaction
+async def verify_token(token:str, verification:str, route:str=None) -> bool:
+    """
+        Checks the following:
+        Requests the token from the server.
+        Checks to see if the token has the necessary permissions in order to fufill the request.
+        Checks to see if the token exists.
+        hecks to see if the token is active.
+        Checks to see if the token has achieved its ratelimit, if so return, if not: increment.
+        Update the token's last-used field with the current time.
+        Attempt the request.
+        Can be performed in one call [GET], **can be performed with the same call [POST], ***Returns True.
+    """
+    
+    sql = select(ApiUser)
+    sql = sql.where(ApiUser.token == token)
+    sql = sql.where(ApiPermission.permission == verification)
+    sql = sql.join(ApiUserPerm, ApiUser.id == ApiUserPerm.user_id)
+    sql = sql.join(ApiPermission, ApiUserPerm.permission_id == ApiPermission.id)
+    
+    sql_usage = select(ApiUsage)
+    sql_usage = sql_usage.join(ApiUser, ApiUser.id == ApiUsage.user_id)
+    sql_usage = sql_usage.where(ApiUsage.timestamp >= datetime.now() - timedelta(hours=1))
+    
     async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+        api_user = await session.execute(sql)
+        usage_data = await session.execute(sql_usage)
+        
+        api_user = sqlalchemy_result(api_user)
+        usage_data = sqlalchemy_result(usage_data)
 
-    # parse data
-    data = sqlalchemy_result(data)
-
-    if len(data.rows) == 0:
-        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
-
-    player_token = data.rows2tuple()
-
-    # check if token exists (empty list if token does not exist)
-    if not player_token:
-        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
-
-    # all possible checks
-    permissions = {
-        'hiscore':          player_token[0].request_highscores,
-        'ban':              player_token[0].verify_ban,
-        'create_token':     player_token[0].create_token,
-        'verify_players':   player_token[0].verify_players
-    }
-
-    # get permission, default: 0
-    if not permissions.get(verifcation, 0) == 1:
-        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
+        api_user = api_user.rows2dict()
+        usage_data = usage_data.rows2dict()
+        
+        # Checks to see if there is a user ID
+        if not len(api_user) == 0:
+            insert_values = {}
+            insert_values['route'] = route
+            insert_values['user_id'] = api_user[0]['id']
+            insert_usage = insert(ApiUsage).values(insert_values)
+            await session.execute(insert_usage)
+            await session.commit()
+        
+    # If len api_user == 0; user does not have necessary permissions
+    if len(api_user) == 0:
+        raise HTTPException(status_code=403, detail=f"Insufficent Permissions.")
+    
+    api_user = api_user[0]
+    
+    if (len(usage_data) > api_user['ratelimit']) and (api_user['ratelimit'] != -1):
+        raise HTTPException(status_code=429, detail=f"Ratelimit has been reached.") 
+    
+    if api_user['is_active'] != 1:
+        raise HTTPException(status_code=403, detail=f"User token is disabled. Please contact a developer.")
+    
     return True
 
     

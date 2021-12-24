@@ -22,7 +22,7 @@ async def get(token:str):
     '''
     Placeholder: Will get player feedback from the database.
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/feedback')
     pass
 
 
@@ -32,7 +32,7 @@ async def post(feedback: Feedback, token:str):
     Inserts player's plugin prediction feedback into the database. 
     This route is usually accessed from the plugin which a user clicks on a player's text box and submits the correction or confirmation. 
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/v1/feedback')
     feedback_params = feedback.dict()
 
     voter_data = await execute_sql(sql=f"select * from Players where name = :player_name", param={"player_name": feedback_params.pop("player_name")})

@@ -33,7 +33,7 @@ async def get(
     '''
     Selects player data from the plugin database. 
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores', route='[GET]/v1/player')
 
     # return exception if no param are given
     if None == player_name == player_id == label_id:
@@ -76,7 +76,7 @@ async def get_bulk(
     '''
         Selects bulk player data from the plugin database.
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores', route='[POST]/v1/player')
 
     # return exception if no param are given
     if None == player_name == player_id == label_id:
@@ -112,7 +112,7 @@ async def put(player: Player, token: str):
     '''
         Updates existing player data in the plugin database.
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban')
 
     # param
     param = player.dict()
@@ -143,7 +143,7 @@ async def post(player_name: str, token: str):
     '''
         Inserts new player data into the plugin database.
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/v1/player')
 
     sql_insert = insert(dbPlayer)
     sql_insert = sql_insert.values(name=player_name)

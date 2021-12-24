@@ -52,7 +52,7 @@ async def get(token: str, name: str):
     '''
         Selects a player's prediction from the plugin database. 
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores', route='[GET]/v1/prediction/')
 
     sql = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
@@ -69,7 +69,7 @@ async def post(token: str, prediction: List[Prediction]):
     '''
         Posts a new prediction into the plugin database.
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/v1/prediction/')
 
     data = [d.dict() for d in prediction]
 
@@ -91,7 +91,7 @@ async def get(token: str, limit: int = 50_000):
     '''
         Gets old predictions, where the prediction is not from the current date.
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores')
 
     # query
     sql = select(columns=[PlayerHiscoreDataLatest, Player.name])
@@ -133,10 +133,10 @@ async def get_prediction(
     label_id: Optional[int] = None,
     label_jagex: Optional[int] = None,
 ):
+    await verify_token(token, verification='request_highscores', route='[GET]/v1/prediction/bulk')
     """
         Gets bulk prediction data for multiple accounts in the database.
     """
-    await verify_token(token, verifcation='hiscore')
 
     if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
         raise HTTPException(status_code=404, detail="No param given")
