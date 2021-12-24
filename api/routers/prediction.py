@@ -47,7 +47,7 @@ class Prediction(BaseModel):
     Zulrah_bot: Optional[float] = 0
 
 
-@router.get("/v1/prediction", tags=["Prediction Routes"])
+@router.get("/v1/prediction", tags=["Prediction"])
 async def get_account_prediction_result(token: str, name: str):
     '''
         Selects a player's prediction from the plugin database.\n
@@ -65,7 +65,7 @@ async def get_account_prediction_result(token: str, name: str):
     return data.rows2dict()
 
 
-@router.post("/v1/prediction", tags=["Prediction Routes"])
+@router.post("/v1/prediction", tags=["Prediction"])
 async def insert_prediction_into_plugin_database(token: str, prediction: List[Prediction]):
     '''
         Posts a new prediction into the plugin database.\n
@@ -88,11 +88,11 @@ async def insert_prediction_into_plugin_database(token: str, prediction: List[Pr
     return {'ok': 'ok'}
 
 
-@router.get("/v1/prediction/data", tags=["Business Routes"])
+@router.get("/v1/prediction/data", tags=["Business"])
 async def gets_expired_predictions_for_renewal(token: str, limit: int = 50_000):
     '''
-        Gets old predictions, where the prediction is not from the current date.\n
-        Use: Can be used to update old predictions in favor of new ones, by doing so this allows for predictions to easily be renewed.
+        Select predictions where prediction data is not from today or null.
+        Business service: ML
     '''
     await verify_token(token, verification='request_highscores')
 
@@ -125,8 +125,8 @@ async def gets_expired_predictions_for_renewal(token: str, limit: int = 50_000):
     return output
 
 
-@router.get("/v1/prediction/bulk", tags=["Prediction Routes"])
-async def gets_bulk_predictions_for_multiple_accounts_from_the_plugin_database(
+@router.get("/v1/prediction/bulk", tags=["Prediction"])
+async def gets_predictions_by_player_features(
     token: str,
     row_count: int = 100_000,
     page: int = 1,
@@ -136,11 +136,10 @@ async def gets_bulk_predictions_for_multiple_accounts_from_the_plugin_database(
     label_id: Optional[int] = None,
     label_jagex: Optional[int] = None,
 ):
+    """
+        Get predictions by player features
+    """
     await verify_token(token, verification='request_highscores', route='[GET]/v1/prediction/bulk')
-    """
-        Gets bulk prediction data for multiple accounts in the database.\n
-        Use: Used for getting a bulk number of predictions from the plugin database.
-    """
 
     if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
         raise HTTPException(status_code=404, detail="No param given")

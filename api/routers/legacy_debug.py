@@ -154,7 +154,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 async def offload_detect(detections:List[detection], manual_detect:int) -> None:
     await run_in_process(detect, detections, manual_detect)
 
-@router.post('/{version}/plugin/detect/{manual_detect}', tags=["Legacy Routes"])
+@router.post('/{version}/plugin/detect/{manual_detect}', tags=["Legacy"])
 async def post_detect(
         detections:List[detection],
         version:str=None, 
@@ -312,7 +312,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     return return_dict
 
 
-@router.post('/stats/contributions/', tags=["Legacy Routes"])
+@router.post('/stats/contributions/', tags=["Legacy"])
 async def get_contributions(contributors: List[contributor], token:str=None):
     add_patron_stats = False
     if token:
@@ -325,7 +325,7 @@ async def get_contributions(contributors: List[contributor], token:str=None):
     return data
 
 
-@router.get('/{version}/stats/contributions/{contributor}', tags=["Legacy Routes"])
+@router.get('/{version}/stats/contributions/{contributor}', tags=["Legacy"])
 async def get_contributions_url(contributor: str, version: str):
     data = await parse_contributors([contributor], version=version)
     return data

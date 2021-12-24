@@ -47,7 +47,7 @@ class detection(BaseModel):
     equip_ge_value: int
 
 
-@router.get("/v1/report", tags=["Report Routes"])
+@router.get("/v1/report", tags=["Report"])
 async def get_reports_from_plugin_database(
     token: str,
     reportedID: Optional[int]=None,
@@ -56,10 +56,9 @@ async def get_reports_from_plugin_database(
     regionID: Optional[int]=None
     ):
     '''
-        Selects report data from the plugin database for an account.\n
-        Use: Can be used to look up an individual report sent to the plugin database by filters of a player, timestamp, and region ID.
+        Select report data.
     '''
-    await verify_token(token, verification='request_highscores', route='[GET]/v1/report/')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/report/')
 
     if None == reportedID == reportingID:
         raise HTTPException(status_code=404, detail="reportedID or reportingID must be given")
@@ -86,11 +85,10 @@ async def get_reports_from_plugin_database(
     return data.rows2dict()
 
 
-@router.put("/v1/report", tags=["Report Routes"])
-async def update_reporter_ID_for_transfering_KC(old_user_id: int, new_user_id: int, token: str):
+@router.put("/v1/report", tags=["Report"])
+async def update_reports(old_user_id: int, new_user_id: int, token: str):
     '''
-        Updates a user's new user ID from an old user ID. This can be used to transfer report data from one RSN to another RSN.\n
-        Use: Primarily an administrator/developer tool that is used for users that change their RSNs.
+        Update the reports from one reporting user to another.
     '''
     await verify_token(token, verification='verify_ban', route='[PUT]/v1/report/')
     # can be used for name change
@@ -105,18 +103,18 @@ async def update_reporter_ID_for_transfering_KC(old_user_id: int, new_user_id: i
     return {'OK': 'OK'}
 
 
-@router.post("/v1/report", tags=["Report Routes","Plugin Routes"])
-async def insert_report_into_plugin_database(token: str, detections: List[detection]):
+@router.post("/v1/report", tags=["Report"])
+async def insert_report(token: str, detections: List[detection]):
     '''
-        Inserts report data from the Bot Detector Plugin into the database.\n
-        Use: Primarily used by the plugin to insert data into the plugin database.
+        Work in progress 
+        Insert report.
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/report/')
 
     sql = insert(Report)
     pass
 
-@router.get("/v1/report/prediction", tags=["Report Routes"])
+@router.get("/v1/report/prediction", tags=["Report", "Bussiness"])
 async def get_report_by_prediction(
     token: str,
     label_jagex: int,
@@ -128,7 +126,8 @@ async def get_report_by_prediction(
     region_id: Optional[int]=None
     ):
     '''
-        Gets account based upon the prediction, confidence, and region id.
+        Gets account based upon the prediction features.
+        Business service: Twitter
     '''
     await verify_token(token, verification='verify_ban', route='[GET]/v1/report/prediction')
     
