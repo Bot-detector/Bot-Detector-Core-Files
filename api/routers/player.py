@@ -21,23 +21,21 @@ class Player(BaseModel):
     label_jagex: Optional[int]
 
 
-@router.get("/v1/player", tags=["Player Routes"])
+@router.get("/v1/player", tags=["Player"])
 async def get_player_information(
     token: str,
     player_name: Optional[str] = None,
     player_id: Optional[int] = None,
-    label_id: Optional[int] = None,
     row_count: int = 100_000,
     page: int = 1
 ):
     '''
-        Selects player data from the plugin database.\n
-        Use: Can be used to determine the user status in the Bot Detector Plugin Database, including the label of the account and internal player ID.
+        Select a player by name or id.
     '''
     await verify_token(token, verification='request_highscores', route='[GET]/v1/player')
 
     # return exception if no param are given
-    if None == player_name == player_id == label_id:
+    if None == player_name == player_id:
         raise HTTPException(
             status_code=404, detail="No valid parameters given")
 
@@ -51,8 +49,8 @@ async def get_player_information(
     if not player_id == None:
         sql = sql.where(dbPlayer.id == player_id)
 
-    if not label_id == None:
-        sql = sql.where(dbPlayer.label_id == label_id)
+    # if not label_id == None:
+    #     sql = sql.where(dbPlayer.label_id == label_id)
 
     # query pagination
     sql = sql.limit(row_count).offset(row_count*(page-1))
@@ -65,7 +63,7 @@ async def get_player_information(
     return data.rows2dict()
 
 
-@router.get("/v1/player/bulk", tags=["Player Routes"])
+@router.get("/v1/player/bulk", tags=["Player"])
 async def get_bulk_player_data_from_the_plugin_database(
     token: str,
     player_name: Optional[List[str]] = None,
@@ -75,8 +73,7 @@ async def get_bulk_player_data_from_the_plugin_database(
     page: int = 1
     ):
     '''
-        Selects bulk player data from the plugin database.\n
-        Use: Can be used to select a bulk amount of players from the bot detector plugin database.
+        Selects bulk player data from the plugin database.
     '''
     await verify_token(token, verification='request_highscores', route='[POST]/v1/player')
 
@@ -109,11 +106,10 @@ async def get_bulk_player_data_from_the_plugin_database(
     return data.rows2dict()
 
 
-@router.put("/v1/player", tags=["Player Routes"])
+@router.put("/v1/player", tags=["Player"])
 async def update_existing_player_data(player: Player, token: str):
     '''
-        Updates existing player data in the plugin database.\n
-        Use: Can be used to update an existing player in the bot detector plugin database.
+        Update player & return updated player.
     '''
     await verify_token(token, verification='verify_ban')
 
@@ -141,11 +137,10 @@ async def update_existing_player_data(player: Player, token: str):
     return data.rows2dict()
 
 
-@router.post("/v1/player", tags=["Player Routes"])
+@router.post("/v1/player", tags=["Player"])
 async def insert_new_player_data_into_plugin_database(player_name: str, token: str):
     '''
-        Inserts new player data into the plugin database.\n
-        Use: Route used by developers and admins for inserting new players into the plugin database.
+        Insert new player & return player.
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/player')
 
