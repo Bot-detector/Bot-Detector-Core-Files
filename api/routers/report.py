@@ -56,7 +56,7 @@ async def get_reports(
     regionID: Optional[int]=None
     ):
     '''
-    select data from database
+        Selects report data from the plugin database for an account.
     '''
     await verify_token(token, verifcation='hiscore')
 
@@ -88,7 +88,7 @@ async def get_reports(
 @router.put("/v1/report", tags=["report"])
 async def update_report(old_user_id: int, new_user_id: int, token: str):
     '''
-    update the reporting userID
+        Updates a user's new user ID from an old user ID. This can be used to transfer report data from one RSN to another RSN.
     '''
     await verify_token(token, verifcation='ban')
     # can be used for name change
@@ -106,7 +106,7 @@ async def update_report(old_user_id: int, new_user_id: int, token: str):
 @router.post("/v1/report", tags=["report"])
 async def insert_report(token: str, detections: List[detection]):
     '''
-    insert data into database
+        Inserts report data from the Bot Detector Plugin into the database. 
     '''
     await verify_token(token, verifcation='ban')
 
@@ -125,7 +125,7 @@ async def get_report_by_prediction(
     region_id: Optional[int]=None
     ):
     '''
-    get users based on prediction
+        Gets account based upon the prediction, confidence, and region id.
     '''
     await verify_token(token, verifcation='ban')
     
