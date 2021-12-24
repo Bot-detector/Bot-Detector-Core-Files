@@ -15,7 +15,7 @@ async def get(token:str):
     '''
         select a label from db
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores', route='[GET]/v1/label/')
 
     sql = select(dbLabel)
 
@@ -30,7 +30,7 @@ async def post(token:str, label:label):
     '''
         insert a label into the db
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/v1/label/')
 
     label_name = label.dict()
     label_name = label_name['label_name']
@@ -57,5 +57,5 @@ async def put(token:str):
     '''
         update a label into the datase
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[PUT]/v1/label/')
     return

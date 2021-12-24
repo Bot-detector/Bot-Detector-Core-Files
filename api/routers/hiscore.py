@@ -111,7 +111,7 @@ async def get(
         select hiscore data of a player
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore')
 
     # query
     table = playerHiscoreData
@@ -140,7 +140,7 @@ async def get(
         select the latest hiscore of a player
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest')
 
     # query
     table = PlayerHiscoreDataLatest
@@ -172,7 +172,7 @@ async def get_hiscore_latest_bulk(
         select the latest hiscore data in bulk
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest/bulk')
 
     if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
         raise HTTPException(status_code=404, detail="No param given")
@@ -221,7 +221,7 @@ async def get(
         select data from database
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/XPChange')
 
     # query
     table = PlayerHiscoreDataXPChange
@@ -246,7 +246,7 @@ async def post(hiscores: hiscore, token: str):
     '''
         Insert hiscores into table: hiscore
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/v1/hiscore')
 
     values = hiscores.dict()
 

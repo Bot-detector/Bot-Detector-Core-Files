@@ -58,7 +58,7 @@ async def get_reports(
     '''
     select data from database
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores', route='[GET]/v1/report/')
 
     if None == reportedID == reportingID:
         raise HTTPException(status_code=404, detail="reportedID or reportingID must be given")
@@ -90,7 +90,7 @@ async def update_report(old_user_id: int, new_user_id: int, token: str):
     '''
     update the reporting userID
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[PUT]/v1/report/')
     # can be used for name change
 
     sql = update(Report)
@@ -108,7 +108,7 @@ async def insert_report(token: str, detections: List[detection]):
     '''
     insert data into database
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/v1/report/')
 
     sql = insert(Report)
     pass
@@ -127,7 +127,7 @@ async def get_report_by_prediction(
     '''
     get users based on prediction
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/report/prediction')
     
     
     sql = select(   

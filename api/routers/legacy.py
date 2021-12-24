@@ -714,7 +714,7 @@ async def detect(detections, manual_detect):
 # @router.post('/stats/contributions/', tags=['legacy'])
 # async def get_contributions(contributors: List[contributor], token: str = None):
 #     if token:
-#         await verify_token(token, verifcation='hiscore')
+#         await verify_token(token, verification='request_highscores')
 
 #         add_patron_stats = True
 #     else:
@@ -809,7 +809,7 @@ async def get_highscores(
         row_count: Optional[int] = 100_000, 
         page: Optional[int] = 1
     ):
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores')
 
     if ofInterest is None:
         sql = ('''
@@ -835,7 +835,7 @@ async def get_highscores(
 
 @router.get('site/players/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
 async def get_players(token:str, ofInterest:int=None, row_count:int=100_000, page:int=1):
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores')
 
     # get data
     if ofInterest is None:
@@ -849,7 +849,7 @@ async def get_players(token:str, ofInterest:int=None, row_count:int=100_000, pag
 
 @router.get('/site/labels/{tokens}', tags=['legacy'])
 async def get_labels(token):
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores')
 
     sql = 'select * from Labels'
     data = await execute_sql(sql)
@@ -858,7 +858,7 @@ async def get_labels(token):
 
 @router.post('/site/verify/{token}', tags=['legacy'])
 async def verify_bot(token:str, bots:bots):
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban')
 
     bots = bots.__dict__
     playerNames = bots['names']
@@ -938,7 +938,7 @@ async def set_discord_verification(id, token):
 
 @router.post('/{version}/site/discord_user/{token}', tags=['legacy'])
 async def verify_discord_user(token:str, discord:discord, version:str=None):
-    await verify_token(token, verifcation='verify_players') 
+    await verify_token(token, verification='verify_players') 
     
     verify_data = discord.dict()
     player = await sql_get_player(verify_data["player_name"])
@@ -1028,7 +1028,7 @@ async def get_prediction(player_name, version=None, token=None):
 ##
 @router.post('/discord/get_xp_gains/{token}', tags=['legacy'])
 async def get_latest_xp_gains(player_info:PlayerName, token:str):
-    await verify_token(token, verifcation='verify_players')
+    await verify_token(token, verification='verify_players')
 
     player = player_info.dict()
     player_name = player.get('player_name')
@@ -1069,7 +1069,7 @@ async def get_latest_xp_gains(player_info:PlayerName, token:str):
 
 @router.get('/discord/verify/player_rsn_discord_account_status/{token}/{player_name}', tags=['legacy'])
 async def get_discord_verification_status_by_name(token: str, player_name: str):
-    await verify_token(token, verifcation='verify_players')
+    await verify_token(token, verification='verify_players')
 
     status_info = await sql_get_discord_verification_status(player_name)
 
@@ -1078,7 +1078,7 @@ async def get_discord_verification_status_by_name(token: str, player_name: str):
 
 @router.get('/discord/verify/get_verification_attempts/{token}/{player_name}', tags=['legacy'])
 async def get_discord_verification_attempts(token: str, player_name: str):
-    await verify_token(token, verifcation='verify_players')
+    await verify_token(token, verification='verify_players')
 
     player = await sql_get_player(player_name)
 
@@ -1094,7 +1094,7 @@ async def get_discord_verification_attempts(token: str, player_name: str):
 
 @router.post('/discord/verify/insert_player_dpc/{token}', tags=['legacy'])
 async def post_verification_request_information(token: str, verify_info: DiscordVerifyInfo):
-    await verify_token(token, verifcation='verify_players')
+    await verify_token(token, verification='verify_players')
 
     info = verify_info.dict()
 
@@ -1119,7 +1119,7 @@ async def post_verification_request_information(token: str, verify_info: Discord
 
 @router.get('/discord/get_linked_accounts/{token}/{discord_id}', tags=['legacy'])
 async def get_discord_linked_accounts(token: str, discord_id: int):
-    await verify_token(token, verifcation='verify_players')
+    await verify_token(token, verification='verify_players')
 
     linked_accounts = await sql_get_discord_linked_accounts(discord_id)
 
@@ -1128,7 +1128,7 @@ async def get_discord_linked_accounts(token: str, discord_id: int):
 
 @router.post('/discord/get_latest_sighting/{token}', tags=['legacy'])
 async def get_latest_sighting(token: str, player_info: PlayerName):
-    await verify_token(token, verifcation='verify_players')
+    await verify_token(token, verification='verify_players')
 
     player = player_info.dict()
     player_name = player.get('player_name')
@@ -1161,7 +1161,7 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
 
 @router.post('/discord/region/{token}', tags=['legacy', 'maps'])
 async def get_region(token:str, region: RegionName):
-    await verify_token(token, verifcation='verify_players')
+    await verify_token(token, verification='verify_players')
 
     region_info = region.dict()
     region_name = region_info.get('region_name')
@@ -1173,7 +1173,7 @@ async def get_region(token:str, region: RegionName):
 
 @router.post('/discord/heatmap/{token}', tags=['legacy', 'maps'])
 async def get_heatmap_data(token: str, region_id: RegionID):
-    await verify_token(token, verifcation='verify_players')
+    await verify_token(token, verification='verify_players')
 
     region_data = region_id.dict()
     id = region_data.get('region_id')
@@ -1196,7 +1196,7 @@ async def get_heatmap_data(token: str, region_id: RegionID):
 
 @router.post('/discord/player_bans/{token}', tags=['legacy'])
 async def generate_excel_export(token: str, export_info: ExportInfo):
-    await verify_token(token, verifcation='verify_players')
+    await verify_token(token, verification='verify_players')
     #get_ban_spreadsheet_data
 
     req_data = export_info.dict()

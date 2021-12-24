@@ -127,37 +127,44 @@ class Token(Base):
 """
     API token handling
 """
-class api_user_token(Base):
-    __tablename__ = 'api_user_token'
-    
-    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    ratelimit = Column(Integer, server_default=text("'100'"), nullable=False)
-    is_active = Column(TINYINT(1), nullable=False)
-    token = Column(TINYTEXT, nullable=False)
-    username = Column(TINYTEXT, nullable=False)
-    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    last_used = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    
-class api_user_perms(Base):
-    __tablename__ = 'api_user_perms'
-    
-    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    user_id = Column(Integer, nullable=False)
-    perm_id = Column(Integer, nullable=False)
-    
-class api_route_logging(Base):
-    __tablename__ = 'api_route_logging'
-    
-    id = Column(BIGINT, primary_key=True, nullable=False, autoincrement=True)
-    route = Column(Text, nullable=False)
-    timestamp = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"), nullable=False)
-    user_id = Column(Integer, nullable=False)
-    
-class api_permissions(Base):
-    __tablename__ = 'api_permissions'
-    
-    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+class ApiPermission(Base):
+    __tablename__ = 'apiPermissions'
+
+    id = Column(Integer, primary_key=True)
     permission = Column(Text, nullable=False)
+
+
+class ApiUser(Base):
+    __tablename__ = 'apiUser'
+
+    id = Column(Integer, primary_key=True)
+    username = Column(TINYTEXT, nullable=False)
+    token = Column(TINYTEXT, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    last_used = Column(DateTime)
+    ratelimit = Column(Integer, nullable=False, server_default=text("'100'"))
+    is_active = Column(TINYINT(1), nullable=False, server_default=text("'1'"))
+    
+class ApiUsage(Base):
+    __tablename__ = 'apiUsage'
+
+    id = Column(BigInteger, primary_key=True)
+    user_id = Column(ForeignKey('apiUser.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+    timestamp = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    route = Column(Text, nullable=False)
+
+    user = relationship('ApiUser')
+
+
+class ApiUserPerm(Base):
+    __tablename__ = 'apiUserPerms'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey('apiUser.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+    permission_id = Column(ForeignKey('apiPermissions.id', ondelete='RESTRICT', onupdate='RESTRICT'), nullable=False, index=True)
+
+    permission = relationship('ApiPermission')
+    user = relationship('ApiUser')
     
 
 class PlayerHiscoreDataChange(Base):

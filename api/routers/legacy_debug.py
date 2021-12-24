@@ -316,7 +316,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
 async def get_contributions(contributors: List[contributor], token:str=None):
     add_patron_stats = False
     if token:
-        await verify_token(token, verifcation='verify_players')
+        await verify_token(token, verification='verify_players')
         add_patron_stats = True
         
     contributors = [d.__dict__['name'] for d in contributors]
