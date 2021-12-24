@@ -10,10 +10,11 @@ router = APIRouter()
 class label(BaseModel):
     label_name:str
 
-@router.get("/v1/label/", tags=["label"])
-async def get(token:str):
+@router.get("/v1/label/", tags=["Label Routes"])
+async def get_labels_from_plugin_database(token:str):
     '''
-        Selects a label from the plugin database. 
+        Selects all labels from the plugin database.\n
+        Use: This can be used to determine what labels are currently present in the plugin database. 
     '''
     await verify_token(token, verification='request_highscores', route='[GET]/v1/label/')
 
@@ -25,10 +26,11 @@ async def get(token:str):
     data = sqlalchemy_result(data)
     return data.rows2dict()
     
-@router.post("/v1/label/", tags=["label"])
-async def post(token:str, label:label):
+@router.post("/v1/label/", tags=["Label Routes"])
+async def insert_label_into_plugin_database(token:str, label:label):
     '''
-        Creates a new label, and inserts it into the database.
+        Creates a new label, and inserts it into the database.\n
+        Use: This is primarily used for developers or machine learning developers, to create and implement new labels for plugin users.
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/label/')
 
@@ -52,10 +54,11 @@ async def post(token:str, label:label):
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.put("/v1/label/", tags=["label"])
-async def put(token:str):
+@router.put("/v1/label/", tags=["Label Routes"])
+async def update_a_currently_existing_label(token:str):
     '''
-        Updates an existing label in the database.
+        Updates an existing label in the database.\n
+        Use: If an existing label fits, but needs to be modified in some way, this is the route to use.
     '''
     await verify_token(token, verification='verify_ban', route='[PUT]/v1/label/')
     return

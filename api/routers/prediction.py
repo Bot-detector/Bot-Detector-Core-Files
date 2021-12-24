@@ -47,10 +47,11 @@ class Prediction(BaseModel):
     Zulrah_bot: Optional[float] = 0
 
 
-@router.get("/v1/prediction", tags=["prediction"])
-async def get(token: str, name: str):
+@router.get("/v1/prediction", tags=["Prediction Routes"])
+async def get_account_prediction_result(token: str, name: str):
     '''
-        Selects a player's prediction from the plugin database. 
+        Selects a player's prediction from the plugin database.\n
+        Use: Used to determine the prediction of a player according to the prediction found in the prediction table.
     '''
     await verify_token(token, verification='request_highscores', route='[GET]/v1/prediction/')
 
@@ -64,10 +65,11 @@ async def get(token: str, name: str):
     return data.rows2dict()
 
 
-@router.post("/v1/prediction", tags=["prediction"])
-async def post(token: str, prediction: List[Prediction]):
+@router.post("/v1/prediction", tags=["Prediction Routes"])
+async def insert_prediction_into_plugin_database(token: str, prediction: List[Prediction]):
     '''
-        Posts a new prediction into the plugin database.
+        Posts a new prediction into the plugin database.\n
+        Use: Can be used to insert a new prediction into the plugin database.
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/prediction/')
 
@@ -86,10 +88,11 @@ async def post(token: str, prediction: List[Prediction]):
     return {'ok': 'ok'}
 
 
-@router.get("/v1/prediction/data", tags=["prediction", "business-logic"])
-async def get(token: str, limit: int = 50_000):
+@router.get("/v1/prediction/data", tags=["Business Routes"])
+async def gets_expired_predictions_for_renewal(token: str, limit: int = 50_000):
     '''
-        Gets old predictions, where the prediction is not from the current date.
+        Gets old predictions, where the prediction is not from the current date.\n
+        Use: Can be used to update old predictions in favor of new ones, by doing so this allows for predictions to easily be renewed.
     '''
     await verify_token(token, verification='request_highscores')
 
@@ -122,8 +125,8 @@ async def get(token: str, limit: int = 50_000):
     return output
 
 
-@router.get("/v1/prediction/bulk", tags=["prediction"])
-async def get_prediction(
+@router.get("/v1/prediction/bulk", tags=["Prediction Routes"])
+async def gets_bulk_predictions_for_multiple_accounts_from_the_plugin_database(
     token: str,
     row_count: int = 100_000,
     page: int = 1,
@@ -135,7 +138,8 @@ async def get_prediction(
 ):
     await verify_token(token, verification='request_highscores', route='[GET]/v1/prediction/bulk')
     """
-        Gets bulk prediction data for multiple accounts in the database.
+        Gets bulk prediction data for multiple accounts in the database.\n
+        Use: Used for getting a bulk number of predictions from the plugin database.
     """
 
     if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:

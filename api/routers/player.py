@@ -21,8 +21,8 @@ class Player(BaseModel):
     label_jagex: Optional[int]
 
 
-@router.get("/v1/player", tags=["player"])
-async def get(
+@router.get("/v1/player", tags=["Player Routes"])
+async def get_player_information(
     token: str,
     player_name: Optional[str] = None,
     player_id: Optional[int] = None,
@@ -31,7 +31,8 @@ async def get(
     page: int = 1
 ):
     '''
-    Selects player data from the plugin database. 
+        Selects player data from the plugin database.\n
+        Use: Can be used to determine the user status in the Bot Detector Plugin Database, including the label of the account and internal player ID.
     '''
     await verify_token(token, verification='request_highscores', route='[GET]/v1/player')
 
@@ -64,8 +65,8 @@ async def get(
     return data.rows2dict()
 
 
-@router.get("/v1/player/bulk", tags=["player"])
-async def get_bulk(
+@router.get("/v1/player/bulk", tags=["Player Routes"])
+async def get_bulk_player_data_from_the_plugin_database(
     token: str,
     player_name: Optional[List[str]] = None,
     player_id: Optional[List[int]] = None,
@@ -74,7 +75,8 @@ async def get_bulk(
     page: int = 1
     ):
     '''
-        Selects bulk player data from the plugin database.
+        Selects bulk player data from the plugin database.\n
+        Use: Can be used to select a bulk amount of players from the bot detector plugin database.
     '''
     await verify_token(token, verification='request_highscores', route='[POST]/v1/player')
 
@@ -107,10 +109,11 @@ async def get_bulk(
     return data.rows2dict()
 
 
-@router.put("/v1/player", tags=["player"])
-async def put(player: Player, token: str):
+@router.put("/v1/player", tags=["Player Routes"])
+async def update_existing_player_data(player: Player, token: str):
     '''
-        Updates existing player data in the plugin database.
+        Updates existing player data in the plugin database.\n
+        Use: Can be used to update an existing player in the bot detector plugin database.
     '''
     await verify_token(token, verification='verify_ban')
 
@@ -138,10 +141,11 @@ async def put(player: Player, token: str):
     return data.rows2dict()
 
 
-@router.post("/v1/player", tags=["player"])
-async def post(player_name: str, token: str):
+@router.post("/v1/player", tags=["Player Routes"])
+async def insert_new_player_data_into_plugin_database(player_name: str, token: str):
     '''
-        Inserts new player data into the plugin database.
+        Inserts new player data into the plugin database.\n
+        Use: Route used by developers and admins for inserting new players into the plugin database.
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/player')
 

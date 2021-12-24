@@ -13,7 +13,7 @@ router = APIRouter()
 
 class hiscore(BaseModel):
     '''
-    all the hiscore stuf
+        Hiscore entry data
     '''
     player_id: int
     total: int
@@ -100,15 +100,16 @@ class hiscore(BaseModel):
     zulrah: int
 
 
-@router.get("/v1/hiscore/", tags=["hiscore"])
-async def get(
+@router.get("/v1/hiscore/", tags=["Hiscore Routes"])
+async def get_player_hiscore_data(
     token: str,
     player_id: int,
     row_count: int = 100_000,
     page: int = 1
 ):
     '''
-        Selects stored hiscore data for a player.
+        Selects stored hiscore data for a player.\n
+        Use: This can be used to examine the hiscore data history of a player. All players in the bot detector plugin database are scraped daily, which can give an ample history for machine learning predictions, as well as for xp gains per day or per week. 
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore')
@@ -131,13 +132,14 @@ async def get(
     return data.rows2dict()
 
 
-@router.get("/v1/hiscore/Latest", tags=["hiscore"])
-async def get(
+@router.get("/v1/hiscore/Latest", tags=["Hiscore Routes"])
+async def get_latest_hiscore_data_for_an_account(
     token: str,
     player_id: int
 ):
     '''
-        Select the latest hiscore of a player.
+        Select the latest hiscore of a player.\n
+        Use: This route should be used when you only want the latest hiscore history of a player, without regard for the other dates.
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest')
@@ -157,8 +159,8 @@ async def get(
     return data.rows2dict()
 
 
-@router.get("/v1/hiscore/Latest/bulk", tags=["hiscore"])
-async def get_hiscore_latest_bulk(
+@router.get("/v1/hiscore/Latest/bulk", tags=["Hiscore Routes"])
+async def get_latest_bulk_hiscore_data_for_multiple_accounts(
     token: str,
     row_count: int = 100_000,
     page: int = 1,
@@ -169,7 +171,8 @@ async def get_hiscore_latest_bulk(
     label_jagex: Optional[int] = None,
 ):
     '''
-        Select latest bulk hiscore data.
+        Select latest bulk hiscore data.\n
+        Use: This route is used for selecting the most recent hiscore data for multiple accounts, it can be used to help train the ML platform.
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest/bulk')
@@ -210,15 +213,16 @@ async def get_hiscore_latest_bulk(
     return data.rows2dict()
 
 
-@router.get("/v1/hiscore/XPChange", tags=["hiscore"])
-async def get(
+@router.get("/v1/hiscore/XPChange", tags=["Hiscore Routes","Discord Routes"])
+async def get_account_hiscore_xp_change(
     token: str,
     player_id: int,
     row_count: int = 100_000,
     page: int = 1
 ):
     '''
-        Selects player's XP change data.
+        Selects player's XP change data.\n
+        Use: This route is used to see the XP change for a player, from the time between two scrapes. This is primarily used in the Bot Detector Plugin database.
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/XPChange')
@@ -241,10 +245,11 @@ async def get(
     return data.rows2dict()
 
 
-@router.post("/v1/hiscore", tags=["hiscore"])
-async def post(hiscores: hiscore, token: str):
+@router.post("/v1/hiscore", tags=["Hiscore Routes","Business Routes"])
+async def post_hiscore_data_to_database(hiscores: hiscore, token: str):
     '''
-        Inserts hiscore data from the OSRS hiscores API to the Database.
+        Inserts hiscore data from the OSRS hiscores API to the Database.\n
+        Use: This is used for updating the the hiscore entries of players in the database. This is primarily a buisness feature. 
     '''
     await verify_token(token, verification='verify_ban', route='[POST]/v1/hiscore')
 
