@@ -12,7 +12,7 @@ client = TestClient(app.app)
 
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_label_get():
-    response = client.get(f"http://127.0.0.1:8000/v1/label/?token={token}") 
+    response = client.get(f"/v1/label/?token={token}") 
     assert response.status_code == 200, f'invalid response {response.status_code }'
     assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
