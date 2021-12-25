@@ -22,13 +22,50 @@ router = APIRouter()
 
 
 @router.get("/v1/feedback/", tags=["Feedback"])
-async def get_feedback(token: str):
+async def get_feedback(
+    token: str,
+    voter_id: Optional[int] = None,
+    subject_id: Optional[int] = None ,
+    vote:  Optional[int] = None,
+    prediction: Optional[str] = None,
+    confidence:  Optional[float] = None,
+    proposed_label: Optional[str] = None,
+    feedback_text: Optional[str] = None):
     '''
-    Work in progress.
-    Get player feedback of a player
+        Get player feedback of a player
     '''
+    # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/feedback')
-    pass
+
+    if None == voter_id == subject_id == vote == prediction == confidence == proposed_label == feedback_text:
+        raise HTTPException(status_code=404, detail="No param given")
+
+    # query
+    table = PredictionsFeedback
+    sql = select(table)
+
+    # filters
+    if not voter_id is None:
+        sql = sql.where(table.voter_id == voter_id)
+    if not subject_id is None:
+        sql = sql.where(table.subject_id == subject_id)
+    if not vote is None:
+        sql = sql.where(table.vote == vote)
+    if not prediction is None:
+        sql = sql.where(table.prediction == prediction)
+    if not confidence is None:
+        sql = sql.where(table.confidence == confidence)
+    if not proposed_label is None:
+        sql = sql.where(table.proposed_label == proposed_label)
+    if not feedback_text is None:
+        sql = sql.where(table.feedback_text == feedback_text)
+    
+    # execute query
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
+    return data.rows2dict()
 
 
 @router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["Feedback"])
