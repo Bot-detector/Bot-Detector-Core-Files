@@ -31,23 +31,21 @@ async def get_feedback(token: str):
     pass
 
 
-@router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["feedback"])
+@router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["Feedback"])
 async def post(feedback: Feedback):
     '''
-    insert feedback into database
+        insert feedback into database
     '''
     feedback = feedback.dict()
 
     sql_player = select(Player)
     sql_player = sql_player.where(Player.name == feedback.pop('player_name'))
 
-
     sql_insert = insert(PredictionsFeedback).prefix_with('ignore')
 
     async with get_session(EngineType.PLAYERDATA) as session:
         player = session.execute(sql_player)
         player = sqlalchemy_result(player).rows2dict()
-
 
         feedback["voter_id"] = player[0]['id']
         sql_insert = sql_insert.values(feedback)
