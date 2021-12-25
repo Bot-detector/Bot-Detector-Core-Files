@@ -18,7 +18,7 @@ class Feedback(BaseModel):
 router = APIRouter()
 
 
-@router.get("/v1/feedback/", tags=["Feedback Routes", "Discord Routes"])
+@router.get("/v1/feedback/", tags=["Feedback"])
 async def get_feedback(token: str):
     '''
     Work in progress.
@@ -28,7 +28,7 @@ async def get_feedback(token: str):
     pass
 
 
-@router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["Feedback Routes", "Plugin Routes"])
+@router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["Feedback"])
 async def insert_feedback(feedback: Feedback, token: str):
     '''
     Insert prediction feedback into database.

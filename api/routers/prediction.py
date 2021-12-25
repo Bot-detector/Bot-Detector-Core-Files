@@ -89,7 +89,7 @@ async def insert_prediction_into_plugin_database(token: str, prediction: List[Pr
 
 
 @router.get("/v1/prediction/data", tags=["Business"])
-async def gets_expired_predictions_for_renewal(token: str, limit: int = 50_000):
+async def get_expired_predictions(token: str, limit: int = 50_000):
     '''
         Select predictions where prediction data is not from today or null.
         Business service: ML

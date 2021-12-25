@@ -114,7 +114,7 @@ async def insert_report(token: str, detections: List[detection]):
     sql = insert(Report)
     pass
 
-@router.get("/v1/report/prediction", tags=["Report", "Bussiness"])
+@router.get("/v1/report/prediction", tags=["Report", "Business"])
 async def get_report_by_prediction(
     token: str,
     label_jagex: int,
