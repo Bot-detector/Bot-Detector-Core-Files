@@ -100,6 +100,7 @@ class hiscore(BaseModel):
     wintertodt: int
     zalcano: int
     zulrah: int
+    phosanis_nightmare:Optional[int]=None
 
 class Player(BaseModel):
     id: int
