@@ -20,12 +20,14 @@ class Feedback(BaseModel):
 
 router = APIRouter()
 
-@router.get("/v1/feedback/", tags=["feedback"])
-async def get(token:str):
+
+@router.get("/v1/feedback/", tags=["Feedback"])
+async def get_feedback(token: str):
     '''
-    select data from database
+    Work in progress.
+    Get player feedback of a player
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/feedback')
     pass
 
 
@@ -39,11 +41,13 @@ async def post(feedback: Feedback):
     sql_player = select(Player)
     sql_player = sql_player.where(Player.name == feedback.pop('player_name'))
 
+
     sql_insert = insert(PredictionsFeedback).prefix_with('ignore')
 
     async with get_session(EngineType.PLAYERDATA) as session:
         player = session.execute(sql_player)
         player = sqlalchemy_result(player).rows2dict()
+
 
         feedback["voter_id"] = player[0]['id']
         sql_insert = sql_insert.values(feedback)

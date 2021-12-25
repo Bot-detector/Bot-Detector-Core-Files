@@ -100,6 +100,7 @@ class hiscore(BaseModel):
     wintertodt: int
     zalcano: int
     zulrah: int
+    phosanis_nightmare:Optional[int]=None
 
 class Player(BaseModel):
     id: int
@@ -119,9 +120,9 @@ async def sql_get_players_to_scrape(page=1, amount=100_000):
     data = await execute_sql(sql, page=page, row_count=amount)
     return data.rows2dict()
 
-@router.get("/scraper/players/{page}/{amount}/{token}", tags=["scraper"])
+@router.get("/scraper/players/{page}/{amount}/{token}", tags=["Business"])
 async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban')
     return await sql_get_players_to_scrape(page=page, amount=amount)
 
 async def handle_lock(function, data):
@@ -163,9 +164,9 @@ async def sqla_insert_hiscore(hiscores:List):
             await session.close()
     return
 
-@router.post("/scraper/hiscores/{token}", tags=["scraper"])
+@router.post("/scraper/hiscores/{token}", tags=["Business"])
 async def receive_scraper_data(token, data: List[scraper], hiscores_tasks: BackgroundTasks):
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/scraper/hiscores/token')
     # background task will cause lots of duplicates
     hiscores_tasks.add_task(post_hiscores_to_db, data)
     return {'ok': f'{len(data)} records to be inserted.'}
