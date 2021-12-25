@@ -121,7 +121,6 @@ async def get_report_by_prediction(
     predicted_confidence: int,
     prediction: Optional[str]=None,
     real_player: Optional[int]=None,
-    crafting_bot: Optional[int]=None,
     timestamp: Optional[date]=None,
     region_id: Optional[int]=None
     ):
@@ -146,9 +145,6 @@ async def get_report_by_prediction(
 
     if not real_player is None:
         sql = sql.where(Prediction.Real_Player < real_player)
-
-    if not crafting_bot is None:
-        sql = sql.where(Prediction.Crafting_bot > crafting_bot)
 
     if not timestamp is None:
         sql = sql.where(func.date(Report.timestamp) == timestamp)

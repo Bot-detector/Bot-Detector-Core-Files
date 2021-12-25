@@ -50,7 +50,7 @@ async def get_feedback(
 
     # filters
     if voter_id == subject_id == prediction == confidence == vote == feedback_text == None:
-        return {'None':'Please enter in one field for filtering.'}
+        raise HTTPException(status_code=404, detail="No param given")
     
     if not voter_id == None:
         sql = sql.where(PredictionsFeedback.voter_id == voter_id)
