@@ -847,7 +847,7 @@ async def get_players(token:str, ofInterest:int=None, row_count:int=100_000, pag
     return data.rows2dict() if data is not None else {}
 
 
-@router.get('/site/labels/{tokens}', tags=["Legacy","Label"])
+@router.get('/site/labels/{tokens}', tags=["Legacy"])
 async def get_labels(token):
     await verify_token(token, verification='request_highscores')
 
@@ -1159,7 +1159,7 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
     return filtered_sighting
 
 
-@router.post('/discord/region/{token}', tags=["Legacy", "Patreon","Map"])
+@router.post('/discord/region/{token}', tags=["Legacy"])
 async def get_region(token:str, region: RegionName):
     await verify_token(token, verification='verify_players')
 
@@ -1171,7 +1171,7 @@ async def get_region(token:str, region: RegionName):
     return regions
 
 
-@router.post('/discord/heatmap/{token}', tags=["Legacy", "Patreon","Map"])
+@router.post('/discord/heatmap/{token}', tags=["Legacy"])
 async def get_heatmap_data(token: str, region_id: RegionID):
     await verify_token(token, verification='verify_players')
 

@@ -211,7 +211,7 @@ async def get_latest_hiscore_data_by_player_features(
     return data.rows2dict()
 
 
-@router.get("/v1/hiscore/XPChange", tags=["Hiscore","Discord"])
+@router.get("/v1/hiscore/XPChange", tags=["Hiscore"])
 async def get_account_hiscore_xp_change(
     token: str,
     player_id: int,
