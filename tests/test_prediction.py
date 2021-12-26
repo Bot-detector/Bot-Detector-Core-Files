@@ -38,6 +38,16 @@ def test_gets_predictions_by_player_features():
   test_case = (
     (1,1,0,0,2, 200), # banned account
     (0,0,0,0,0, 200), # normal player
+    (-1,0,0,0,0, 422), # invalid value
+    (0,-1,0,0,0, 422), # invalid value
+    (0,0,-1,0,0, 422), # invalid value
+    (0,0,0,-1,0, 422), # invalid value
+    (0,0,0,0,-1, 422), # invalid value
+    (2,0,0,0,0, 422), # invalid value
+    (0,2,0,0,0, 422), # invalid value
+    (0,0,2,0,0, 422), # invalid value
+    (0,0,0,2,0, 422), # invalid value
+    (0,0,0,0,2, 422), # invalid value
     ('shoe','shoe','shoe','shoe','shoe', 422), # nonsense
     (None, None, None, None, None, 422), # None entry
     )
@@ -51,8 +61,8 @@ def test_gets_predictions_by_player_features():
 def test_get_expired_predictions():
   
     test_case = (
-      (-1, 500), # invalid limit
-      (0, 200), # zero limit
+      (-1, 422), # invalid limit
+      (0, 422), # zero limit
       (1, 200), # valid limit
       (None, 422), # None entry
     )

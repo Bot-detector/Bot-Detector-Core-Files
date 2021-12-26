@@ -6,7 +6,7 @@ from api.database.functions import (list_to_string, sqlalchemy_result,
                                     verify_token)
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import select, text
 from sqlalchemy.sql.functions import func
@@ -89,7 +89,7 @@ async def insert_prediction_into_plugin_database(token: str, prediction: List[Pr
 
 
 @router.get("/v1/prediction/data", tags=["Business"])
-async def get_expired_predictions(token: str, limit: int = 50_000):
+async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     '''
         Select predictions where prediction data is not from today or null.
         Business service: ML
@@ -128,13 +128,13 @@ async def get_expired_predictions(token: str, limit: int = 50_000):
 @router.get("/v1/prediction/bulk", tags=["Prediction"])
 async def gets_predictions_by_player_features(
     token: str,
-    row_count: int = 100_000,
-    page: int = 1,
-    possible_ban: Optional[int] = None,
-    confirmed_ban: Optional[int] = None,
-    confirmed_player: Optional[int] = None,
-    label_id: Optional[int] = None,
-    label_jagex: Optional[int] = None,
+    row_count: int = Query(100_000, ge=1),
+    page: int = Query(1, ge=1),
+    possible_ban: Optional[int] = Query(None, ge=0, le=1),
+    confirmed_ban: Optional[int] = Query(None, ge=0, le=1),
+    confirmed_player: Optional[int] = Query(None, ge=0, le=1),
+    label_id: Optional[int] = Query(None, ge=0),
+    label_jagex: Optional[int] = Query(None, ge=0, le=5),
 ):
     """
         Get predictions by player features

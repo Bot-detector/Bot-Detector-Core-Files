@@ -15,16 +15,15 @@ client = TestClient(app.app)
 """
 
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
-def test_get_player_information():
+def test_get_reports_from_plugin_database():
   
     test_case = (
       (1, 8, 12598, 200), # correct
       ('ferrariic', 8, 12598, 422), # malformed entry
       (1, 'ferrariic', 12598, 422), # malformed entry
-      #(1, 8, 2309824308942308923408234098, 500), # overflow error --> 500 error
-      (1, 8, -1, 200), # -1 region
-      (-1, 8, -1, 200), # -1 value
-      (1, -8, -1, 200), # -1 value
+      (1, 8, -1, 422), # -1 region
+      (-1, 8, -1, 422), # -1 value
+      (1, -8, -1, 422), # -1 value
       (0, 0, 12598, 200), # same reporter id (invalid)
       (8, 8, 12598, 200), # same reporter id (valid)
       (1, 8, 'varrock', 422), # malformed entry
@@ -39,4 +38,4 @@ def test_get_player_information():
             assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
 if __name__ == "__main__":
-  test_get_player_information()
+  test_get_reports_from_plugin_database()

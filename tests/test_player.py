@@ -18,7 +18,7 @@ client = TestClient(app.app)
 def test_get_player_information():
     test_case = (
       ('ferrariic', 8, 200), # correct name, and correct ID 
-      ('ferrariic', 8, 200), # correct name, incorrect ID
+      ('ferrariic', -8, 422), # correct name, incorrect ID
       (1,'ferrariic', 422), #juxtaposed player_id and player_name
       ('shoe','shoe', 422), #invalid phrasing
       (None, None, 422), # None entry

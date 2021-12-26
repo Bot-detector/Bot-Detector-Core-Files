@@ -4,7 +4,7 @@ from api.database.database import EngineType, get_session
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import (PlayerHiscoreDataLatest,
                                  PlayerHiscoreDataXPChange, playerHiscoreData, Player)
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
 
@@ -104,9 +104,9 @@ class hiscore(BaseModel):
 @router.get("/v1/hiscore/", tags=["Hiscore"])
 async def get_player_hiscore_data(
     token: str,
-    player_id: int,
-    row_count: int = 100_000,
-    page: int = 1
+    player_id: int = Query(..., ge=0),
+    row_count: int = Query(100_000, ge=1),
+    page: int = Query(1, ge=1)
 ):
     '''
         Select daily scraped hiscore data, by player_id
@@ -135,14 +135,14 @@ async def get_player_hiscore_data(
 @router.get("/v1/hiscore/Latest", tags=["Hiscore"])
 async def get_latest_hiscore_data_for_an_account(
     token: str,
-    player_id: int
+    player_id: int = Query(..., ge=0)
 ):
     '''
         Select the latest hiscore of a player.
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest')
-
+    
     # query
     table = PlayerHiscoreDataLatest
     sql = select(table)
@@ -161,13 +161,13 @@ async def get_latest_hiscore_data_for_an_account(
 @router.get("/v1/hiscore/Latest/bulk", tags=["Hiscore"])
 async def get_latest_hiscore_data_by_player_features(
     token: str,
-    row_count: int = 100_000,
-    page: int = 1,
-    possible_ban: Optional[int] = None,
-    confirmed_ban: Optional[int] = None,
-    confirmed_player: Optional[int] = None,
-    label_id: Optional[int] = None,
-    label_jagex: Optional[int] = None,
+    row_count: int = Query(100_000, ge=1),
+    page: int = Query(1, ge=1),
+    possible_ban: Optional[int] = Query(None, ge=0, le=1),
+    confirmed_ban: Optional[int] = Query(None, ge=0, le=1),
+    confirmed_player: Optional[int] = Query(None, ge=0, le=1),
+    label_id: Optional[int] = Query(None, ge=0),
+    label_jagex: Optional[int] = Query(None, ge=0, le=5),
 ):
     '''
         Select the latest hiscore data of multiple players by filtering on the player features.
@@ -214,9 +214,9 @@ async def get_latest_hiscore_data_by_player_features(
 @router.get("/v1/hiscore/XPChange", tags=["Hiscore"])
 async def get_account_hiscore_xp_change(
     token: str,
-    player_id: int,
-    row_count: int = 100_000,
-    page: int = 1
+    player_id: int = Query(..., ge=0),
+    row_count: int = Query(100_000, ge=1),
+    page: int = Query(1, ge=1)
 ):
     '''
         Select daily scraped differential in hiscore data, by player_id

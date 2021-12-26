@@ -4,7 +4,7 @@ from typing import List, Optional
 from api.database.database import Engine, EngineType, get_session
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import Player as dbPlayer
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select, update
 
@@ -25,9 +25,9 @@ class Player(BaseModel):
 async def get_player_information(
     token: str,
     player_name: Optional[str] = None,
-    player_id: Optional[int] = None,
-    row_count: int = 100_000,
-    page: int = 1
+    player_id: Optional[int] = Query(None, ge=0),
+    row_count: int = Query(100_000, ge=1),
+    page: int = Query(1, ge=1)
 ):
     '''
         Select a player by name or id.
@@ -36,8 +36,7 @@ async def get_player_information(
 
     # return exception if no param are given
     if None == player_name == player_id:
-        raise HTTPException(
-            status_code=404, detail="No valid parameters given")
+        raise HTTPException(status_code=404, detail="No valid parameters given")
 
     # create query
     sql = select(dbPlayer)
@@ -45,12 +44,8 @@ async def get_player_information(
     # filters
     if not player_name == None:
         sql = sql.where(dbPlayer.name == player_name)
-
     if not player_id == None:
         sql = sql.where(dbPlayer.id == player_id)
-
-    # if not label_id == None:
-    #     sql = sql.where(dbPlayer.label_id == label_id)
 
     # query pagination
     sql = sql.limit(row_count).offset(row_count*(page-1))
@@ -69,8 +64,8 @@ async def get_bulk_player_data_from_the_plugin_database(
     player_name: Optional[List[str]] = None,
     player_id: Optional[List[int]] = None,
     label_id: Optional[List[int]] = None,
-    row_count: int = 100_000,
-    page: int = 1
+    row_count: int = Query(100_000, ge=1),
+    page: int = Query(1, ge=1)
     ):
     '''
         Selects bulk player data from the plugin database.
@@ -79,8 +74,7 @@ async def get_bulk_player_data_from_the_plugin_database(
 
     # return exception if no param are given
     if None == player_name == player_id == label_id:
-        raise HTTPException(
-            status_code=404, detail="No valid parameters given")
+        raise HTTPException(status_code=404, detail="No valid parameters given")
 
     # create query
     sql = select(dbPlayer)

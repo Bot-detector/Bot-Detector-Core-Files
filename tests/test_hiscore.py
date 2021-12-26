@@ -17,7 +17,7 @@ client = TestClient(app.app)
 def test_get_player_hiscore_data():
   
     test_case = (
-      (-1, 200), # invalid player id
+      (-1, 422), # invalid player id
       (1, 200), # valid player id
       (8, 200), # valid player id
       ('shoe', 422), # invalid entry type
@@ -34,7 +34,7 @@ def test_get_player_hiscore_data():
 def test_get_latest_hiscore_data_for_an_account():
   
     test_case = (
-      (-1, 200), # invalid player id
+      (-1, 422), # invalid player id
       (1, 200), # valid player id
       (8, 200), # valid player id
       ('shoe', 422), # invalid entry type
@@ -68,7 +68,7 @@ def test_get_account_hiscore_xp_change():
   response = client.get(f"")
   
   test_case = (
-    (-1, 200), # invalid player id
+    (-1, 422), # invalid player id
     (1, 200), # valid player id
     (8, 200), # valid player id
     ('shoe', 422), # invalid entry type
