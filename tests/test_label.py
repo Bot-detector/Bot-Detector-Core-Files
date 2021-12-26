@@ -1,5 +1,6 @@
 import os
 import sys
+from json_post_test_cases import post_label_test_case
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -30,5 +31,19 @@ def test_get_labels_from_plugin_database():
         if response.status_code == 200:
             assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
+
+"""
+  Labels post routes
+"""
+def test_post_label():
+    for payload, response_code in post_label_test_case:
+        route_attempt = f'/v1/label/?token={token}'
+        response = client.post(url=route_attempt, json=payload)
+        assert response.status_code == response_code, f'{payload} | Invalid response {response.status_code}'
+        
 if __name__ == "__main__":
+  '''get tests'''
   test_get_labels_from_plugin_database()
+
+  '''post tests'''
+  test_post_label()

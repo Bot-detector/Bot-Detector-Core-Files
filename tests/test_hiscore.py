@@ -1,5 +1,6 @@
 import os
 import sys
+from json_post_test_cases import post_hiscore_test_case
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -80,11 +81,21 @@ def test_get_account_hiscore_xp_change():
     if response.status_code == 200:
       assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
+"""
+  Hiscore post routes
+"""
+def test_post_hiscore():
+    for payload, response_code in post_hiscore_test_case:
+        route_attempt = f'/v1/hiscore?token={token}'
+        response = client.post(url=route_attempt, json=payload)
+        assert response.status_code == response_code, f'{payload} | Invalid response {response.status_code}'
+
 if __name__ == '__main__':
-  """
-    Hiscore get tests
-  """
+  '''get tests'''
   test_get_player_hiscore_data()
   test_get_latest_hiscore_data_for_an_account()
   test_get_latest_hiscore_data_by_player_features()
   test_get_account_hiscore_xp_change()
+  
+  '''post tests'''
+  test_post_hiscore()
