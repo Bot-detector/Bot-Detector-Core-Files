@@ -1,8 +1,11 @@
 from typing import Optional
 
-from api.database.functions import execute_sql, list_to_string, verify_token
+from api.database.functions import (EngineType, get_session, sqlalchemy_result,
+                                    verify_token)
+from api.database.models import Player, PredictionsFeedback
 from fastapi import APIRouter, status
 from pydantic import BaseModel
+from sqlalchemy.sql.expression import insert, select
 
 
 class Feedback(BaseModel):
@@ -19,42 +22,69 @@ router = APIRouter()
 
 
 @router.get("/v1/feedback/", tags=["Feedback"])
-async def get_feedback(token: str):
+async def get_feedback(
+        token: str,
+        voter_id: Optional[int] = None,
+        subject_id: Optional[int] = None,
+        vote: Optional[int] = None,
+        prediction: Optional[str] = None,
+        confidence: Optional[float] = None,
+        proposed_label: Optional[str] = None,
+        feedback_text: Optional[str] = None):
     '''
-    Work in progress.
-    Get player feedback of a player
+        Get player feedback of a player
     '''
+    # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/feedback')
-    pass
+
+    if None == voter_id == subject_id == vote == prediction == confidence == proposed_label == feedback_text:
+        raise HTTPException(status_code=404, detail="No param given")
+
+    # query
+    table = PredictionsFeedback
+    sql = select(table)
+
+    # filters
+    if not voter_id is None:
+        sql = sql.where(table.voter_id == voter_id)
+    if not subject_id is None:
+        sql = sql.where(table.subject_id == subject_id)
+    if not vote is None:
+        sql = sql.where(table.vote == vote)
+    if not prediction is None:
+        sql = sql.where(table.prediction == prediction)
+    if not confidence is None:
+        sql = sql.where(table.confidence == confidence)
+    if not proposed_label is None:
+        sql = sql.where(table.proposed_label == proposed_label)
+    if not feedback_text is None:
+        sql = sql.where(table.feedback_text == feedback_text)
+
+    # execute query
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
+    return data.rows2dict()
 
 
 @router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["Feedback"])
-async def insert_feedback(feedback: Feedback, token: str):
+async def post_feedback(feedback: Feedback):
     '''
-    Insert prediction feedback into database.
+        Insert feedback into database
     '''
-    await verify_token(token, verification='verify_ban', route='[POST]/v1/feedback')
-    feedback_params = feedback.dict()
+    feedback = feedback.dict()
 
-    voter_data = await execute_sql(sql=f"select * from Players where name = :player_name", param={"player_name": feedback_params.pop("player_name")})
-    voter_data = voter_data.rows2dict()[0]
+    sql_player = select(Player)
+    sql_player = sql_player.where(Player.name == feedback.pop('player_name'))
+    sql_insert = insert(PredictionsFeedback).prefix_with('ignore')
 
-    feedback_params["voter_id"] = voter_data.get("id")
-    exclude = ["player_name"]
+    async with get_session(EngineType.PLAYERDATA) as session:
+        player = await session.execute(sql_player)
+        player = sqlalchemy_result(player).rows2dict()
 
-    columns = [k for k, v in feedback_params.items(
-    ) if v is not None and k not in exclude]
-    columns = list_to_string(columns)
-
-    values = [f':{k}' for k, v in feedback_params.items(
-    ) if v is not None and k not in exclude]
-    values = list_to_string(values)
-
-    sql = (f'''
-        insert ignore into PredictionsFeedback ({columns})
-        values ({values}) 
-    ''')
-
-    await execute_sql(sql, param=feedback_params)
+        feedback["voter_id"] = player[0]['id']
+        sql_insert = sql_insert.values(feedback)
+        await session.execute(sql_insert)
 
     return {"OK": "OK"}

@@ -32,7 +32,7 @@ class Engine():
             max_overflow=500,
             pool_recycle=3600
         )
-        
+        # self.engine.echo = True
         self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=True)
 
 
