@@ -219,7 +219,7 @@ async def get_account_hiscore_xp_change(
     page: int = Query(1, ge=1)
 ):
     '''
-        Select daily scraped differential in hiscore data, by player_id
+        Select daily scraped differential in hiscore data by Player ID
     '''
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/XPChange')
