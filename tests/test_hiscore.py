@@ -15,6 +15,7 @@ client = TestClient(app.app)
 """
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_get_player_hiscore_data():
+  
     test_case = (
       (-1, 200), # invalid player id
       (1, 200), # valid player id
@@ -22,6 +23,7 @@ def test_get_player_hiscore_data():
       ('shoe', 422), # invalid entry type
       (None, 422), # none entry type
       )
+    
     for player_id, response_code in test_case:
       route_attempt = f"/v1/hiscore/?player_id={player_id}&token={token}"
       response = client.get(route_attempt)
@@ -30,6 +32,7 @@ def test_get_player_hiscore_data():
         assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
 def test_get_latest_hiscore_data_for_an_account():
+  
     test_case = (
       (-1, 200), # invalid player id
       (1, 200), # valid player id
@@ -37,6 +40,7 @@ def test_get_latest_hiscore_data_for_an_account():
       ('shoe', 422), # invalid entry type
       (None, 422), # none entry type
       )
+    
     for player_id, response_code in test_case:
       route_attempt = f"/v1/hiscore/Latest?token={token}&player_id={player_id}"
       response = client.get(route_attempt)
@@ -45,12 +49,14 @@ def test_get_latest_hiscore_data_for_an_account():
         assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
     
 def test_get_latest_hiscore_data_by_player_features():
+  
   test_case = (
     (1,1,0,0,2, 200), # banned account
     (0,0,0,0,0, 200), # normal player
     ('shoe','shoe','shoe','shoe','shoe', 422), # nonsense
     (None, None, None, None, None, 422), # None nonsense
     )
+  
   for possible_ban, confirmed_ban, confirmed_player, label_id, label_jagex, response_code in test_case:
     route_attempt = f"/v1/hiscore/Latest/bulk?token={token}&row_count=10&page=1&possible_ban={possible_ban}&confirmed_ban={confirmed_ban}&confirmed_player={confirmed_player}&label_id={label_id}&label_jagex={label_jagex}"
     response = client.get(route_attempt)
@@ -60,6 +66,7 @@ def test_get_latest_hiscore_data_by_player_features():
   
 def test_get_account_hiscore_xp_change():
   response = client.get(f"")
+  
   test_case = (
     (-1, 200), # invalid player id
     (1, 200), # valid player id
