@@ -16,13 +16,14 @@ client = TestClient(app.app)
 
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_get_account_prediction_result():
+  
     test_case = (
       ('ferrariic', 200), # correct name, and correct ID 
-      (';a;jj', 422), # nonsense
-      (';a;jjaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 422), # nonsense
-      (';a;jj$$@##@#@', 422), # nonsense
-      ('', 422), # nonsense
-      (None, 422), # None entry
+      (';a;jj', 200), # nonsense
+      (';a;jjaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 200), # nonsense
+      (';a;jj$$@##@#@', 200), # nonsense
+      ('', 200), # nonsense
+      (None, 200), # None entry
     )
     
     for player_name, response_code in test_case:
@@ -32,8 +33,8 @@ def test_get_account_prediction_result():
       if response.status_code == 200:
         assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
-
 def test_gets_predictions_by_player_features():
+  
   test_case = (
     (1,1,0,0,2, 200), # banned account
     (0,0,0,0,0, 200), # normal player
@@ -48,6 +49,7 @@ def test_gets_predictions_by_player_features():
         assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
 def test_get_expired_predictions():
+  
     test_case = (
       (-1, 500), # invalid limit
       (0, 200), # zero limit
