@@ -38,4 +38,8 @@ def test_get_reports_from_plugin_database():
             assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
 if __name__ == "__main__":
+  '''get route'''
   test_get_reports_from_plugin_database()
+
+  '''post route'''
+  # TODO add post route

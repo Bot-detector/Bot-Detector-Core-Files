@@ -74,8 +74,16 @@ def test_get_expired_predictions():
         if response.status_code == 200:
             assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
+
+"""
+  Prediction post routes
+"""
+
 if __name__ == "__main__":
-    test_get_account_prediction_result()
-    test_gets_predictions_by_player_features()
-    test_get_expired_predictions()
+  '''get routes'''
+  test_get_account_prediction_result()
+  test_gets_predictions_by_player_features()
+  test_get_expired_predictions()
+  
+  '''post routes'''
 
