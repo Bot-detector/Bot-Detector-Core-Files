@@ -16,6 +16,7 @@ client = TestClient(app.app)
 
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_get_player_information():
+  
     test_case = (
       (1, 8, 12598, 200), # correct
       ('ferrariic', 8, 12598, 422), # malformed entry
@@ -27,7 +28,7 @@ def test_get_player_information():
       (0, 0, 12598, 200), # same reporter id (invalid)
       (8, 8, 12598, 200), # same reporter id (valid)
       (1, 8, 'varrock', 422), # malformed entry
-      (None, None, None, 422),
+      (None, None, None, 422), # none fields
     )
     
     for reported_id, reporting_id, region_id, response_code in test_case:

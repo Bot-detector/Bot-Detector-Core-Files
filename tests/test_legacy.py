@@ -51,6 +51,7 @@ def test_detect():
 
 
 def test_get_prediction():
+    
     version = "test"
     player_names = [
         ("this_is_bad", 200), 

@@ -16,6 +16,7 @@ client = TestClient(app.app)
 
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_get_labels_from_plugin_database():
+  
     test_case = (
       (None, 401), # no token
       (token, 200), # correct token

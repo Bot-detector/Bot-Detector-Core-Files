@@ -80,10 +80,6 @@ def test_get_account_hiscore_xp_change():
     if response.status_code == 200:
       assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
-"""
-  Hiscore post routes
-"""
-
 if __name__ == '__main__':
   """
     Hiscore get tests
