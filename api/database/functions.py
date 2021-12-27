@@ -152,7 +152,6 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
             await session.execute(insert_usage)
             await session.commit()
         
-    # If len api_user == 0; user does not have necessary permissions
     if len(api_user) == 0:
         raise HTTPException(status_code=401, detail=f"Insufficent Permissions: Either the token does not exist or you don't have sufficent permissions to access this content.")
     
