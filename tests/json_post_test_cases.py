@@ -20,7 +20,7 @@ post_feedback_test_case = (
                         "subject_id": 1,
                         "feedback_text": "He's a real player",
                         "proposed_label": "Real_Player"
-                    }, 500
+                    }, 201
                     ), # invalid - incorrect type for player name, should be str is typed as int
                     (
                     {

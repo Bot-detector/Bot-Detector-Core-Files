@@ -54,19 +54,19 @@ def test_get_prediction():
     
     version = "test"
     player_names = [
-        ("this_is_bad", 500), 
-        ("testing", 500), 
-        ("Seltzer Bro", 200), 
-        ("a;d;5230fadgkas", 500)
+        ("this_is_bad", 200), # correct
+        ("testing", 200),  # correct
+        ("Seltzer Bro", 200),  # correct 
+        ("a;d;5230fadgkas", 400) # not possible
     ]
 
-    for name in player_names:
+    for test, name in enumerate(player_names):
         response = client.get(f"/{version}/site/prediction/{name[0]}")
 
         response_body = response.json()
 
         assert isinstance(response_body, dict), f'invalid response return type: {type(response.json())}'
-        assert response.status_code == name[1], f'invalid response {response.status_code }'
+        assert response.status_code == name[1], f'Test: {test} |  {response.status_code }'
 
         if response.status_code == 200:
             #Assert the field value types are valid

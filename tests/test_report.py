@@ -31,10 +31,10 @@ def test_get_reports_from_plugin_database():
       (None, None, None, 422), # none fields
     )
     
-    for reported_id, reporting_id, region_id, response_code in test_case:
+    for test, (reported_id, reporting_id, region_id, response_code) in enumerate(test_case):
         route_attempt = f'/v1/report?token={token}&reportedID={reported_id}&reportingID={reporting_id}&regionID={region_id}'
         response = client.get(route_attempt)
-        assert response.status_code == response_code, f'{route_attempt} | Invalid response {response.status_code}'
+        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
         if response.status_code == 200:
             assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
             
@@ -42,15 +42,15 @@ def test_get_reports_from_plugin_database():
   Report post routes
 """
 
-def test_post_report():
-    for test, (payload, response_code) in enumerate(post_report_test_case):
-        route_attempt = f'/v1/report/?token={token}'
-        response = client.post(url=route_attempt, json=payload)
-        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
+# def test_post_report():
+#     for test, (payload, response_code) in enumerate(post_report_test_case):
+#         route_attempt = f'/v1/report/?token={token}'
+#         response = client.post(url=route_attempt, json=payload)
+#         assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
 
 if __name__ == "__main__":
   '''get route'''
   test_get_reports_from_plugin_database()
 
-  '''post route'''
-  # TODO add post route
+  # '''post route'''
+  # test_post_report()
