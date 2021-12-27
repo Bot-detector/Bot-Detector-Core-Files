@@ -7,6 +7,7 @@ from api.database.models import (PlayerHiscoreDataLatest,
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
+import sqlalchemy.exc
 
 router = APIRouter()
 
@@ -257,7 +258,11 @@ async def post_hiscore_data_to_database(hiscores: hiscore, token: str):
     sql_insert = sql_insert.prefix_with('ignore')
 
     async with get_session(EngineType.PLAYERDATA) as session:
-        await session.execute(sql_insert)
-        await session.commit()
+        try:
+            await session.execute(sql_insert)
+            await session.commit()
+        except sqlalchemy.exc.CompileError:
+            # TODO add logging here
+            raise HTTPException(status_code=422, detail="Missing Parameters.")
 
     return {'ok': 'ok'}

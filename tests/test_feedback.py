@@ -31,10 +31,10 @@ def test_get_feedback():
       (8, 1, 1, 'Real_Player', 1000,'testing', 422), # invalid confidence range
     )
     
-    for voter_id, subject_id, vote, prediction, confidence, feedback_text, response_code in test_case:
+    for test, (voter_id, subject_id, vote, prediction, confidence, feedback_text, response_code) in enumerate(test_case):
         route_attempt = f'/v1/feedback/?token={token}&voter_id={voter_id}&subject_id={subject_id}&vote={vote}&prediction={prediction}&confidence={confidence}&feedback_text={feedback_text}'
         response = client.get(route_attempt)
-        assert response.status_code == response_code, f'{route_attempt}| Invalid response {response.status_code}'
+        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
         if response.status_code == 200:
             assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
@@ -42,11 +42,10 @@ def test_get_feedback():
     Feedback Post Routes
 """
 def test_post_feedback():
-    for payload, response_code in post_feedback_test_case:
+    for test, (payload, response_code) in enumerate(post_feedback_test_case):
         route_attempt = f'/v1/feedback/'
         response = client.post(url=route_attempt,json=payload)
-        assert response.status_code == response_code, f'{payload} | Invalid response {response.status_code}'
-
+        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
 
 if __name__ == "__main__":
     '''get tests'''

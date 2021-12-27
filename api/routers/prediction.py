@@ -144,7 +144,7 @@ async def gets_predictions_by_player_features(
     if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
         raise HTTPException(status_code=404, detail="No param given")
     # query
-    sql = select(Prediction)
+    sql = select(dbPrediction)
 
     # filters
     if not possible_ban is None:

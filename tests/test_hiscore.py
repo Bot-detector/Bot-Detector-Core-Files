@@ -25,10 +25,10 @@ def test_get_player_hiscore_data():
       (None, 422), # none entry type
       )
     
-    for player_id, response_code in test_case:
+    for test, (player_id, response_code) in enumerate(test_case):
       route_attempt = f"/v1/hiscore/?player_id={player_id}&token={token}"
       response = client.get(route_attempt)
-      assert response.status_code == response_code, f'{route_attempt} | Invalid response {response.status_code}'
+      assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
       if response.status_code == 200:
         assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
@@ -42,15 +42,14 @@ def test_get_latest_hiscore_data_for_an_account():
       (None, 422), # none entry type
       )
     
-    for player_id, response_code in test_case:
+    for test, (player_id, response_code) in enumerate(test_case):
       route_attempt = f"/v1/hiscore/Latest?token={token}&player_id={player_id}"
       response = client.get(route_attempt)
-      assert response.status_code == response_code, f'{route_attempt} | Invalid response {response.status_code}'
+      assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
       if response.status_code == 200:
         assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
     
 def test_get_latest_hiscore_data_by_player_features():
-  
   test_case = (
     (1,1,0,0,2, 200), # banned account
     (0,0,0,0,0, 200), # normal player
@@ -58,16 +57,14 @@ def test_get_latest_hiscore_data_by_player_features():
     (None, None, None, None, None, 422), # None nonsense
     )
   
-  for possible_ban, confirmed_ban, confirmed_player, label_id, label_jagex, response_code in test_case:
+  for test, (possible_ban, confirmed_ban, confirmed_player, label_id, label_jagex, response_code) in enumerate(test_case):
     route_attempt = f"/v1/hiscore/Latest/bulk?token={token}&row_count=10&page=1&possible_ban={possible_ban}&confirmed_ban={confirmed_ban}&confirmed_player={confirmed_player}&label_id={label_id}&label_jagex={label_jagex}"
     response = client.get(route_attempt)
-    assert response.status_code == response_code, f'{route_attempt} | Invalid response {response.status_code}'
+    assert response.status_code == response_code, f'Test: {test}| Invalid response {response.status_code}'
     if response.status_code == 200:
       assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
   
 def test_get_account_hiscore_xp_change():
-  response = client.get(f"")
-  
   test_case = (
     (-1, 422), # invalid player id
     (1, 200), # valid player id
@@ -75,9 +72,9 @@ def test_get_account_hiscore_xp_change():
     ('shoe', 422), # invalid entry type
     (None, 422), # none entry type
     )
-  for player_id, response_code in test_case:
+  for test, (player_id, response_code) in enumerate(test_case):
     response = client.get(f"/v1/hiscore/XPChange?token={token}&player_id={player_id}&row_count=1&page=1")
-    assert response.status_code == response_code, f'invalid response {response.status_code}'
+    assert response.status_code == response_code, f'Test: {test} | invalid response {response.status_code}'
     if response.status_code == 200:
       assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
@@ -85,10 +82,10 @@ def test_get_account_hiscore_xp_change():
   Hiscore post routes
 """
 def test_post_hiscore():
-    for payload, response_code in post_hiscore_test_case:
+    for test, (payload, response_code) in enumerate(post_hiscore_test_case):
         route_attempt = f'/v1/hiscore?token={token}'
         response = client.post(url=route_attempt, json=payload)
-        assert response.status_code == response_code, f'{payload} | Invalid response {response.status_code}'
+        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
 
 if __name__ == '__main__':
   '''get tests'''

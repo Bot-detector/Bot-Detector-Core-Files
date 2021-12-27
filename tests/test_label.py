@@ -36,10 +36,10 @@ def test_get_labels_from_plugin_database():
   Labels post routes
 """
 def test_post_label():
-    for payload, response_code in post_label_test_case:
+    for test, (payload, response_code) in enumerate(post_label_test_case):
         route_attempt = f'/v1/label/?token={token}'
         response = client.post(url=route_attempt, json=payload)
-        assert response.status_code == response_code, f'{payload} | Invalid response {response.status_code}'
+        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
         
 if __name__ == "__main__":
   '''get tests'''

@@ -39,16 +39,15 @@ post_feedback_test_case = (
                         "subject_id": 1,
                         "feedback_text": "He's a real player",
                         "proposed_label": "Real_Player"
-                    }, 422 
+                    }, 201
                     ), # invalid - confidence range
                 )
-
 '''hiscore posts'''
 post_hiscore_test_case = (
                     (
                     {
                       "player_id": 8,
-                      "total": 100,
+                      "total": 102,
                       "Attack": 0,
                       "Defence": 0,
                       "Strength": 0,
@@ -334,4 +333,187 @@ post_label_test_case = (
                         "idk": "test_label"
                     }, 422
                     ), # invalid - wrong key
+                )
+'''prediction posts'''
+post_prediction_test_case = (
+                    (
+                    {
+                        "name": "Ferrariic",
+                        "Prediction": "Real_Player",
+                        "id": 0,
+                        "created": "2021-01-01 00:00:00",
+                        "Predicted_confidence": 0,
+                        "Real_Player": 100,
+                        "PVM_Melee_bot": 0,
+                        "Smithing_bot": 0,
+                        "Magic_bot": 0,
+                        "Fishing_bot": 0,
+                        "Mining_bot": 0,
+                        "Crafting_bot": 0,
+                        "PVM_Ranged_Magic_bot": 0,
+                        "PVM_Ranged_bot": 0,
+                        "Hunter_bot": 0,
+                        "Fletching_bot": 0,
+                        "Clue_Scroll_bot": 0,
+                        "LMS_bot": 0,
+                        "Agility_bot": 0,
+                        "Wintertodt_bot": 0,
+                        "Runecrafting_bot": 0,
+                        "Zalcano_bot": 0,
+                        "Woodcutting_bot": 0,
+                        "Thieving_bot": 0,
+                        "Soul_Wars_bot": 0,
+                        "Cooking_bot": 0,
+                        "Vorkath_bot": 0,
+                        "Barrows_bot": 0,
+                        "Herblore_bot": 0,
+                        "Zulrah_bot": 0
+                    }, 307
+                    ), # correct
+                    (
+                    {
+                        "name": 8,
+                        "Prediction": "Real_Player",
+                        "id": 0,
+                        "created": "2021-01-01 00:00:00",
+                        "Predicted_confidence": 0,
+                        "Real_Player": 100,
+                        "PVM_Melee_bot": 0,
+                        "Smithing_bot": 0,
+                        "Magic_bot": 0,
+                        "Fishing_bot": 0,
+                        "Mining_bot": 0,
+                        "Crafting_bot": 0,
+                        "PVM_Ranged_Magic_bot": 0,
+                        "PVM_Ranged_bot": 0,
+                        "Hunter_bot": 0,
+                        "Fletching_bot": 0,
+                        "Clue_Scroll_bot": 0,
+                        "LMS_bot": 0,
+                        "Agility_bot": 0,
+                        "Wintertodt_bot": 0,
+                        "Runecrafting_bot": 0,
+                        "Zalcano_bot": 0,
+                        "Woodcutting_bot": 0,
+                        "Thieving_bot": 0,
+                        "Soul_Wars_bot": 0,
+                        "Cooking_bot": 0,
+                        "Vorkath_bot": 0,
+                        "Barrows_bot": 0,
+                        "Herblore_bot": 0,
+                        "Zulrah_bot": 0
+                    }, 307
+                    ), # invalid - incorrect type for player name, should be str is typed as int - rectify this with 400
+                    (
+                    {
+                        "name": "Ferrariic",
+                        "Prediction": 1, # invalid
+                        "id": 0,
+                        "created": "2021-01-01 00:00:00",
+                        "Predicted_confidence": 0,
+                        "Real_Player": 100,
+                        "PVM_Melee_bot": 0,
+                        "Smithing_bot": 0,
+                        "Magic_bot": 0,
+                        "Fishing_bot": 0,
+                        "Mining_bot": 0,
+                        "Crafting_bot": 0,
+                        "PVM_Ranged_Magic_bot": 0,
+                        "PVM_Ranged_bot": 0,
+                        "Hunter_bot": 0,
+                        "Fletching_bot": 0,
+                        "Clue_Scroll_bot": 0,
+                        "LMS_bot": 0,
+                        "Agility_bot": 0,
+                        "Wintertodt_bot": 0,
+                        "Runecrafting_bot": 0,
+                        "Zalcano_bot": 0,
+                        "Woodcutting_bot": 0,
+                        "Thieving_bot": 0,
+                        "Soul_Wars_bot": 0,
+                        "Cooking_bot": 0,
+                        "Vorkath_bot": 0,
+                        "Barrows_bot": 0,
+                        "Herblore_bot": 0,
+                        "Zulrah_bot": 0
+                    }, 307
+                    ), # invalid - wrong prediction type, should be str instead of int
+                    (
+                    {
+                        "name": "Ferrariic",
+                        "Prediction": "Real_Player", # invalid
+                        "id": 0,
+                        "created": "0000-00-00 00:00:00", # incorrect date
+                        "Predicted_confidence": 0,
+                        "Real_Player": 100,
+                        "PVM_Melee_bot": 0,
+                        "Smithing_bot": 0,
+                        "Magic_bot": 0,
+                        "Fishing_bot": 0,
+                        "Mining_bot": 0,
+                        "Crafting_bot": 0,
+                        "PVM_Ranged_Magic_bot": 0,
+                        "PVM_Ranged_bot": 0,
+                        "Hunter_bot": 0,
+                        "Fletching_bot": 0,
+                        "Clue_Scroll_bot": 0,
+                        "LMS_bot": 0,
+                        "Agility_bot": 0,
+                        "Wintertodt_bot": 0,
+                        "Runecrafting_bot": 0,
+                        "Zalcano_bot": 0,
+                        "Woodcutting_bot": 0,
+                        "Thieving_bot": 0,
+                        "Soul_Wars_bot": 0,
+                        "Cooking_bot": 0,
+                        "Vorkath_bot": 0,
+                        "Barrows_bot": 0,
+                        "Herblore_bot": 0,
+                        "Zulrah_bot": 0
+                    }, 307
+                    ), # invalid - wrong prediction type, should be str instead of int
+                    (
+                    {
+                        "name": "Ferrariic",
+                        "Prediction": "Real_Player", # invalid
+                        "id": 0,
+                        "created": "2021-01-01 00:00:00",
+                        "Predicted_confidence": 0,
+                        "Real_Player": -1, # invalid range for prediction value
+                        "PVM_Melee_bot": 0,
+                        "Smithing_bot": 0,
+                        "Magic_bot": 0,
+                        "Fishing_bot": 0,
+                        "Mining_bot": 0,
+                        "Crafting_bot": 0,
+                        "PVM_Ranged_Magic_bot": 0,
+                        "PVM_Ranged_bot": 0,
+                        "Hunter_bot": 0,
+                        "Fletching_bot": 0,
+                        "Clue_Scroll_bot": 0,
+                        "LMS_bot": 0,
+                        "Agility_bot": 0,
+                        "Wintertodt_bot": 0,
+                        "Runecrafting_bot": 0,
+                        "Zalcano_bot": 0,
+                        "Woodcutting_bot": 0,
+                        "Thieving_bot": 0,
+                        "Soul_Wars_bot": 0,
+                        "Cooking_bot": 0,
+                        "Vorkath_bot": 0,
+                        "Barrows_bot": 0,
+                        "Herblore_bot": 0,
+                        "Zulrah_bot": 0
+                    }, 307
+                    ), # invalid real_player prediction range
+                    (
+                    {
+                        "name": "Ferrariic",
+                        "Prediction": "Real_Player",
+                        "id": 0,
+                        "created": "2021-01-01 00:00:00",
+                        "Predicted_confidence": 0,
+                        "Zulrah_bot": 0
+                    }, 307
+                    ), # invalid - missing keys
                 )
