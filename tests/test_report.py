@@ -53,4 +53,4 @@ if __name__ == "__main__":
   test_get_reports_from_plugin_database()
 
   '''post route'''
-  # TODO add post route
+  test_post_report()

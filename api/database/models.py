@@ -290,7 +290,6 @@ class PredictionsFeedback(Base):
     voter = relationship(
         'Player', primaryjoin='PredictionsFeedback.voter_id == Player.id')
 
-
 class Report(Base):
     __tablename__ = 'Reports'
     __table_args__ = (

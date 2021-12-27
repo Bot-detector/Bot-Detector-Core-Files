@@ -369,7 +369,7 @@ post_prediction_test_case = (
                         "Barrows_bot": 0,
                         "Herblore_bot": 0,
                         "Zulrah_bot": 0
-                    }, 307
+                    }, 200
                     ), # correct
                     (
                     {
@@ -545,7 +545,7 @@ post_report_test_case = (
                             "equip_shield_id": 0
                             },
                             "equip_ge_value": 123
-                        }, 307
+                        }, 201
                     ), # correct
                     (
                         {
@@ -572,7 +572,7 @@ post_report_test_case = (
                             "equip_shield_id": 0
                             },
                             "equip_ge_value": 123
-                        }, 307
+                        }, 422
                     ), # invalid - incorrect type for player name, should be str is typed as int - rectify this with 400
                     (
                         {
@@ -599,6 +599,6 @@ post_report_test_case = (
                             "equip_shield_id": 0
                             },
                             "equip_ge_value": 123
-                        }, 307
+                        }, 500
                     ), # invalid - incorrect type for player name, should be str is typed as int - rectify this with 400
                 )

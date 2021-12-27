@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
 
 
-
 class Feedback(BaseModel):
     player_name: str
     vote: int
