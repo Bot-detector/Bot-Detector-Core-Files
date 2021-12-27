@@ -2,6 +2,7 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from json_post_test_cases import post_report_test_case
 
 import pytest
 from api import app
@@ -36,6 +37,16 @@ def test_get_reports_from_plugin_database():
         assert response.status_code == response_code, f'{route_attempt} | Invalid response {response.status_code}'
         if response.status_code == 200:
             assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
+            
+"""
+  Report post routes
+"""
+
+def test_post_report():
+    for test, (payload, response_code) in enumerate(post_report_test_case):
+        route_attempt = f'/v1/report/?token={token}'
+        response = client.post(url=route_attempt, json=payload)
+        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
 
 if __name__ == "__main__":
   '''get route'''
