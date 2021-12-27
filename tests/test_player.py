@@ -39,8 +39,8 @@ def test_get_player_information():
 def test_post_player():
     test_case = (
       ('ferrariic', 200), # correct name, and correct ID 
-      (8, 422), #juxtaposed player_id and player_name
-      (None, 422), # None entry
+      (8, 200), #juxtaposed player_id and player_name
+      (None, 200), # None entry
     )
     for player_name, response_code in test_case:
         route_attempt = f'/v1/player?player_name={player_name}&token={token}'

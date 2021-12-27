@@ -83,8 +83,12 @@ async def post_feedback(feedback: Feedback):
     async with get_session(EngineType.PLAYERDATA) as session:
         player = await session.execute(sql_player)
         player = sqlalchemy_result(player).rows2dict()
-
-        feedback["voter_id"] = player[0]['id']
+        
+        try:
+            feedback["voter_id"] = player[0]['id']
+        except IndexError:
+            raise HTTPException(status_code=500, detail="Could not find voter in registry.")
+        
         sql_insert = sql_insert.values(feedback)
         await session.execute(sql_insert)
 
