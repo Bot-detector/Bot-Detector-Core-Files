@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 client = TestClient(app.app)
 
 """
-  Report get routes
+  Report Latest get routes
 """
 
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')

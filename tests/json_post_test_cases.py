@@ -130,8 +130,8 @@ post_hiscore_test_case = (
                       "wintertodt": 0,
                       "zalcano": 0,
                       "zulrah": 0
-                    }, 201
-                    ), # correct
+                    }, 422
+                    ),
                     (
                     {
                       "player_id": 'ferrariic',
@@ -218,7 +218,7 @@ post_hiscore_test_case = (
                       "wintertodt": 0,
                       "zalcano": 0,
                       "zulrah": 0
-                    }, 500
+                    }, 422
                     ), # invalid - incorrect type for player id, should be int is typed as str
                     (
                     {
@@ -313,7 +313,7 @@ post_hiscore_test_case = (
                       "wintertodt": -100000,
                       "zalcano": -100000,
                       "zulrah": -100000
-                    }, 500
+                    }, 422
                     ), # invalid - data ranges
                 )
 '''label posts'''
@@ -335,7 +335,6 @@ post_label_test_case = (
                     ), # invalid - wrong key
                 )
 '''prediction posts'''
-
 post_prediction_test_case = (
                     (
                     {
@@ -369,7 +368,7 @@ post_prediction_test_case = (
                         "Barrows_bot": 0,
                         "Herblore_bot": 0,
                         "Zulrah_bot": 0
-                    }, 200
+                    }, 307
                     ), # correct
                     (
                     {
@@ -518,7 +517,7 @@ post_prediction_test_case = (
                     }, 307
                     ), # invalid - missing keys
                 )
-
+'''report posts'''
 post_report_test_case = (
                     (
                         {
@@ -545,7 +544,7 @@ post_report_test_case = (
                             "equip_shield_id": 0
                             },
                             "equip_ge_value": 123
-                        }, 201
+                        }, 307
                     ), # correct
                     (
                         {
@@ -572,7 +571,7 @@ post_report_test_case = (
                             "equip_shield_id": 0
                             },
                             "equip_ge_value": 123
-                        }, 422
+                        }, 307
                     ), # invalid - incorrect type for player name, should be str is typed as int - rectify this with 400
                     (
                         {
@@ -599,6 +598,6 @@ post_report_test_case = (
                             "equip_shield_id": 0
                             },
                             "equip_ge_value": 123
-                        }, 500
+                        }, 307
                     ), # invalid - incorrect type for player name, should be str is typed as int - rectify this with 400
                 )

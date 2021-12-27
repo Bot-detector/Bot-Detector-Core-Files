@@ -51,13 +51,13 @@ def test_detect():
 
 
 def test_get_prediction():
-    
-    version = "test"
+    # idk
+    version = "v1"
     player_names = [
         ("this_is_bad", 500), 
         ("testing", 500), 
-        ("Seltzer Bro", 200), 
-        ("a;d;5230fadgkas", 500)
+        ("Ferrariic", 500), 
+        ("a;d;5230fadgkas", 400)
     ]
 
     for name in player_names:
