@@ -3,7 +3,7 @@ from typing import Optional
 from api.database.functions import (EngineType, get_session, sqlalchemy_result,
                                     verify_token)
 from api.database.models import Player, PredictionsFeedback
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
 
