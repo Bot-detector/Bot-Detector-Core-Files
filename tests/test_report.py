@@ -45,7 +45,7 @@ def test_get_reports_from_plugin_database():
 def test_post_report():
     for test, (payload, response_code) in enumerate(post_report_test_case):
         route_attempt = f'/v1/report/?token={token}'
-        response = client.post(url=route_attempt, json=payload)
+        response = client.post(url=route_attempt, json=payload, allow_redirects=False)
         assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
 
 if __name__ == "__main__":
