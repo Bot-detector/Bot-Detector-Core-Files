@@ -54,10 +54,10 @@ def test_get_prediction():
     
     version = "test"
     player_names = [
-        ("this_is_bad", 200), 
-        ("testing", 200), 
+        ("this_is_bad", 500), 
+        ("testing", 500), 
         ("Seltzer Bro", 200), 
-        ("a;d;5230fadgkas", 400)
+        ("a;d;5230fadgkas", 500)
     ]
 
     for name in player_names:

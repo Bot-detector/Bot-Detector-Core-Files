@@ -107,8 +107,11 @@ async def sql_get_player(player_name):
     # returns a list of players
     player = await execute_sql(sql_player_id, param=param)
 
-    player = player.rows2dict()
-
+    try:
+        player = player.rows2dict()
+    except AttributeError:
+        raise HTTPException(status_code=500, detail="Player does not exist.")
+        
     return None if len(player) == 0 else player[0]
 
 
