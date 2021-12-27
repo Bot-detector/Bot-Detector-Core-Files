@@ -16,31 +16,31 @@ class hiscore(BaseModel):
     '''
         Hiscore entry data
     '''
-    player_id: int
+    Player_id: int
     total: int
-    Attack: int
-    Defence: int
-    Strength: int
-    Hitpoints: int
-    Ranged: int
-    Prayer: int
-    Magic: int
-    Cooking: int
-    Woodcutting: int
-    Fletching: int
-    Fishing: int
-    Firemaking: int
-    Crafting: int
-    Smithing: int
-    Mining: int
-    Herblore: int
-    Agility: int
-    Thieving: int
-    Slayer: int
-    Farming: int
-    Runecraft: int
-    Hunter: int
-    Construction: int
+    attack: int
+    defence: int
+    strength: int
+    hitpoints: int
+    ranged: int
+    prayer: int
+    magic: int
+    cooking: int
+    woodcutting: int
+    fletching: int
+    fishing: int
+    firemaking: int
+    crafting: int
+    smithing: int
+    mining: int
+    herblore: int
+    agility: int
+    thieving: int
+    slayer: int
+    farming: int
+    runecraft: int
+    hunter: int
+    construction: int
     league: int
     bounty_hunter_hunter: int
     bounty_hunter_rogue: int
@@ -258,11 +258,7 @@ async def post_hiscore_data_to_database(hiscores: hiscore, token: str):
     sql_insert = sql_insert.prefix_with('ignore')
 
     async with get_session(EngineType.PLAYERDATA) as session:
-        try:
-            await session.execute(sql_insert)
-            await session.commit()
-        except sqlalchemy.exc.CompileError:
-            # TODO add logging here
-            raise HTTPException(status_code=422, detail="Missing Parameters.")
+        await session.execute(sql_insert)
+        await session.commit()
 
     return {'ok': 'ok'}
