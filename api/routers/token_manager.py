@@ -36,7 +36,7 @@ class ApiUserPerm(BaseModel):
     Token get routes for management
 """
 
-@router.get("/security/token-management/get-token-data", tags=["Token Management"])
+@router.get("/v1/apiUser", tags=["Token Management"])
 async def get_tokens(
     request : Request,
     auth_token: str,
@@ -47,7 +47,7 @@ async def get_tokens(
     '''
         Select token data
     '''
-    await verify_token(auth_token, verification='admin', route=f'[GET]/security/token-management/get-token-data', request=request)
+    await verify_token(auth_token, verification='admin', route=f'[GET]/v1/apiUser', request=request)
 
     # create query
     sql = select(dbApiUser)
@@ -67,7 +67,7 @@ async def get_tokens(
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.get("/security/token-management/get-token-usage", tags=["Token Management"])
+@router.get("/v1/apiUsage", tags=["Token Management"])
 async def get_api_usage(
     request : Request,
     auth_token: str,
@@ -78,7 +78,7 @@ async def get_api_usage(
     '''
         Select token usage and display data for panel
     '''
-    await verify_token(auth_token, verification='admin', route=f'[GET]/security/token-management/get-token-usage', request=request)
+    await verify_token(auth_token, verification='admin', route=f'[GET]/v1/apiUsage', request=request)
 
     # create query
     sql = select(dbApiUsage)
@@ -98,7 +98,7 @@ async def get_api_usage(
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.get("/security/token-management/get-permissions", tags=["Token Management"])
+@router.get("/v1/apiPermission", tags=["Token Management"])
 async def get_permissions(
     request : Request,
     auth_token: str
@@ -106,7 +106,7 @@ async def get_permissions(
     '''
         Select permissions list
     '''
-    await verify_token(auth_token, verification='admin', route=f'[GET]/security/token-management/get-permissions', request=request)
+    await verify_token(auth_token, verification='admin', route=f'[GET]/v1/apiPermission', request=request)
 
     # create query
     sql = select(dbApiPermission)
@@ -118,7 +118,7 @@ async def get_permissions(
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.get("/security/token-management/get-token-permissions", tags=["Token Management"])
+@router.get("/v1/apiUserPerm", tags=["Token Management"])
 async def get_token_permissions(
     request : Request,
     auth_token: str,
@@ -128,7 +128,7 @@ async def get_token_permissions(
     '''
         Select token-permission pairs
     '''
-    await verify_token(auth_token, verification='admin', route=f'[GET]/security/token-management/get-token-permissions', request=request)
+    await verify_token(auth_token, verification='admin', route=f'[GET]/v1/apiUserPerm', request=request)
 
     # create query
     sql = select(dbApiUserPerm)
@@ -149,7 +149,7 @@ async def get_token_permissions(
     Token post routes
 """
 
-@router.post("/security/token-management/create-token", tags=["Token Management"])
+@router.post("/v1/apiUser", tags=["Token Management"])
 async def create_token(
     request : Request,
     auth_token:str,
@@ -158,7 +158,7 @@ async def create_token(
     '''
         Create a new token
     '''
-    await verify_token(auth_token, verification='admin', route='[POST]/security/token-management/create-token', request=request)
+    await verify_token(auth_token, verification='admin', route='[POST]/v1/apiUser', request=request)
     
     create_token = create_token.dict()
     sql_insert = insert(dbApiUser)
@@ -170,14 +170,14 @@ async def create_token(
 
     return {"OK": "OK"}
 
-@router.post("/security/token-management/create-permission", tags=["Token Management"])
+@router.post("/v1/apiPermission", tags=["Token Management"])
 async def create_permission(request : Request,
                             auth_token:str,
                             create_permission: ApiPermission):
     '''
         Create a new permission
     '''
-    await verify_token(auth_token, verification='admin', route='[POST]/security/token-management/create-permission', request=request)
+    await verify_token(auth_token, verification='admin', route='[POST]/v1/apiPermission', request=request)
     
     create_permission = create_permission.dict()
     sql_insert = insert(dbApiPermission)
@@ -189,14 +189,14 @@ async def create_permission(request : Request,
 
     return {"OK": "OK"}
 
-@router.post("/security/token-management/create-user-permission", tags=["Token Management"])
+@router.post("/v1/apiUserPerm", tags=["Token Management"])
 async def create_user_permission(request : Request,
                                  auth_token:str,
                                  create_user_permission: ApiUserPerm):
     '''
         Create a new user permission
     '''
-    await verify_token(auth_token, verification='admin', route='[POST]/security/token-management/create-user-permission', request=request)
+    await verify_token(auth_token, verification='admin', route='[POST]/v1/apiUserPerm', request=request)
     
     create_user_permission = create_user_permission.dict()
     sql_insert = insert(dbApiUserPerm)
@@ -208,14 +208,14 @@ async def create_user_permission(request : Request,
 
     return {"OK": "OK"}
 
-@router.post("/security/token-management/create-user-usage", tags=["Token Management"])
+@router.post("/v1/apiUsage", tags=["Token Management"])
 async def create_user_usage(request : Request,
                             auth_token:str,
                             create_user_usage: ApiUsage):
     '''
         Create a new user usage log
     '''
-    await verify_token(auth_token, verification='admin', route='[POST]/security/token-management/create-user-usage', request=request)
+    await verify_token(auth_token, verification='admin', route='[POST]/v1/apiUsage', request=request)
     
     create_user_usage = create_user_usage.dict()
     sql_insert = insert(dbApiUsage)
@@ -234,7 +234,7 @@ async def create_user_usage(request : Request,
     in order to prevent errors from occuring with child-parent relationships in the dbApiUserPerm table. 
 """
 
-@router.put("/security/token-management/update-token", tags=["Token Management"])
+@router.put("/v1/apiUser", tags=["Token Management"])
 async def update_token(request : Request,
                         auth_token:str,
                         update_token: ApiUser
@@ -242,7 +242,7 @@ async def update_token(request : Request,
     '''
         Update a token
     '''
-    await verify_token(auth_token, verification='admin', route='[PUT]/security/token-management/update-token', request=request)
+    await verify_token(auth_token, verification='admin', route='[PUT]/v1/apiUser', request=request)
     
     update_token = update_token.dict()
     sql_update = update(dbApiUser)
@@ -259,7 +259,7 @@ async def update_token(request : Request,
     Token delete routes
 """
 
-@router.delete("/security/token-management/delete-token", tags=["Token Management"])
+@router.delete("/v1/apiUser", tags=["Token Management"])
 async def delete_token(request : Request,
                        auth_token:str,
                        id : int = Query(None, ge=0)
@@ -269,7 +269,7 @@ async def delete_token(request : Request,
         NOTE: MUST DELETE ALL LINKED USER-PERMISSIONS PRIOR TO DELETING TOKEN.\n
         WARNING: IT IS RECOMMENDED TO INSTEAD SET THE USER TOKEN TO 'INACTIVE'.
     '''
-    await verify_token(auth_token, verification='admin', route='[DELETE]/security/token-management/delete-token', request=request)
+    await verify_token(auth_token, verification='admin', route='[DELETE]/v1/apiUser', request=request)
     
     if id is None:
         raise HTTPException(status_code=422, detail="Missing ID.")
@@ -280,7 +280,7 @@ async def delete_token(request : Request,
             await session.commit()
         return {"OK": "OK"}
 
-@router.delete("/security/token-management/delete-permission", tags=["Token Management"])
+@router.delete("/v1/apiPermission", tags=["Token Management"])
 async def delete_permission(request : Request,
                             auth_token:str,
                             id : int = Query(None, ge=0)
@@ -289,7 +289,7 @@ async def delete_permission(request : Request,
         Delete a permission\n
         NOTE: MUST DELETE ALL LINKED USER-PERMISSIONS PRIOR TO DELETING PERMISSIONS.
     '''
-    await verify_token(auth_token, verification='admin', route='[DELETE]/security/token-management/delete-permission', request=request)
+    await verify_token(auth_token, verification='admin', route='[DELETE]/v1/apiPermission', request=request)
     
     if id is None:
         raise HTTPException(status_code=422, detail="Missing ID.")
@@ -300,7 +300,7 @@ async def delete_permission(request : Request,
             await session.commit()
         return {"OK": "OK"}
 
-@router.delete("/security/token-management/delete-user-permission", tags=["Token Management"])
+@router.delete("/v1/apiUserPerm", tags=["Token Management"])
 async def delete_user_permission(request : Request,
                                 auth_token:str,
                                 id : int = Query(None, ge=0)
@@ -309,7 +309,7 @@ async def delete_user_permission(request : Request,
         Delete a user permission\n
         NOTE: USUALLY THE FIRST STEP IN REMOVING TOKEN PERMISSIONS FROM A USER.
     '''
-    await verify_token(auth_token, verification='admin', route='[DELETE]/security/token-management/delete-user-permission', request=request)
+    await verify_token(auth_token, verification='admin', route='[DELETE]/v1/apiUserPerm', request=request)
     
     if id is None:
         raise HTTPException(status_code=422, detail="Missing ID.")
