@@ -124,7 +124,7 @@ async def verify_token(token:str, verification:str, route:str, request=None) -> 
     """
     incoming_ip = request.client.host
     if incoming_ip != '127.0.0.1': # TODO set this to a whitelist instead of localhost for admins.
-        raise HTTPException(status_code=401, detail=f"Insufficent Connection")
+        raise HTTPException(status_code=403, detail=f"The connection was denied. Please request for a developer whitelist.")
     
     sql = select(ApiUser)
     sql = sql.where(ApiUser.token == token)
@@ -158,12 +158,12 @@ async def verify_token(token:str, verification:str, route:str, request=None) -> 
     # If len api_user == 0; user does not have necessary permissions
     if len(api_user) == 0:
         print()
-        raise HTTPException(status_code=401, detail=f"Insufficent Permissions: Either the token does not exist or you don't have sufficent permissions to access this content.")
+        raise HTTPException(status_code=401, detail=f"Insufficent Permissions: Either the token does not exist or the token does not have sufficent permissions to access this content.")
     
     api_user = api_user[0]
     
     if api_user['is_active'] != 1:
-        raise HTTPException(status_code=403, detail=f"User token has been disabled. Please contact a developer.\nThis could be due to having an inactive token (>30d) or a manual shutdown by a developer.")
+        raise HTTPException(status_code=403, detail=f"User token has been disabled. Please contact a developer. This could be due to having an inactive token (>30d) or a manual shutdown by a developer.")
     
     if (len(usage_data) > api_user['ratelimit']) and (api_user['ratelimit'] != -1):
         raise HTTPException(status_code=429, detail=f"Your Ratelimit has been reached. Calls: {len(usage_data)}/{api_user['ratelimit']}") 
