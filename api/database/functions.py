@@ -110,9 +110,10 @@ class sqlalchemy_result:
         Record = namedtuple('Record', columns)
         return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in self.rows]
 
-async def verify_token(token:str, verification:str, route:str) -> bool:
+async def verify_token(token:str, verification:str, route:str, request=None) -> bool:
     """
         Checks the following:
+        if request is not None: checks incoming IP.
         Requests the token from the server.
         Checks to see if the token has the necessary permissions in order to fufill the request.
         Checks to see if the token exists.
@@ -121,6 +122,9 @@ async def verify_token(token:str, verification:str, route:str) -> bool:
         Update the token's last-used field with the current time.
         Attempt the request.
     """
+    incoming_ip = request.client.host
+    if incoming_ip != '127.0.0.1': # TODO set this to a whitelist instead of localhost for admins.
+        raise HTTPException(status_code=401, detail=f"Insufficent Connection")
     
     sql = select(ApiUser)
     sql = sql.where(ApiUser.token == token)

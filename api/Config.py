@@ -16,6 +16,7 @@ proxy_https = os.environ.get('proxy_https')
 graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
+host_ip = os.environ.get('host_ip')
 
 # create application
 app = FastAPI()
