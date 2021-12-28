@@ -13,7 +13,7 @@ from api.database.models import ApiPermission as dbApiPermission,\
                                 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy.sql.expression import insert, select, update
+from sqlalchemy.sql.expression import delete, insert, select, update
 
 router = APIRouter()
 
@@ -28,7 +28,6 @@ class ApiUser(BaseModel):
     
 class ApiUsage(BaseModel):
     user_id : int
-    timestamp : Optional[datetime]
     route : Optional[str]
 
 class ApiUserPerm(BaseModel):
@@ -47,7 +46,7 @@ async def get_tokens(
     examine_userID: Optional[int] = Query(None, ge=0),
     ):
     '''
-        Select tokens and display data for panel
+        Select token data
     '''
     await verify_token(auth_token, verification='admin', route=f'[GET]/v1/token-management/get-token-data')
 
@@ -218,8 +217,93 @@ async def create_user_usage(auth_token:str, create_user_usage: ApiUsage):
 
 """
     Token put routes
+    Note: Only the update-token put route is required. The put route for logging should not be accessed as logs should not be modified.
+    In addition, permissions can be added or deleted in order to be modified. Finally Permission names should be deleted, not modified,
+    in order to prevent errors from occuring with child-parent relationships in the dbApiUserPerm table. 
 """
+
+@router.put("/v1/token-management/update-token", tags=["Token Management"])
+async def update_token(
+                        auth_token:str,
+                        update_token: ApiUser
+                       ):
+    '''
+        Update a token
+    '''
+    await verify_token(auth_token, verification='admin', route='[PUT]/v1/token-management/update-token')
+    
+    update_token = update_token.dict()
+    sql_update = update(dbApiUser)
+    sql_update = sql_update.values(update_token)
+    sql_update = sql_update.where(dbApiUser.username == update_token['username'])
+
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(sql_update)
+        await session.commit()
+        
+    return {"OK": "OK"}
 
 """
     Token delete routes
 """
+
+@router.delete("/v1/token-management/delete-token", tags=["Token Management"])
+async def delete_token(
+                       auth_token:str,
+                       id : int = Query(None, ge=0)
+                       ):
+    '''
+        Delete a token\n
+        NOTE: MUST DELETE ALL LINKED USER-PERMISSIONS PRIOR TO DELETING TOKEN.\n
+        WARNING: IT IS RECOMMENDED TO INSTEAD SET THE USER TOKEN TO 'INACTIVE'.
+    '''
+    await verify_token(auth_token, verification='admin', route='[DELETE]/v1/token-management/delete-token')
+    
+    if id is None:
+        raise HTTPException(status_code=422, detail="Missing ID.")
+    else:
+        sql_delete = delete(dbApiUser).where(dbApiUser.id == id)
+        async with get_session(EngineType.PLAYERDATA) as session:
+            await session.execute(sql_delete)
+            await session.commit()
+        return {"OK": "OK"}
+
+@router.delete("/v1/token-management/delete-permission", tags=["Token Management"])
+async def delete_permission(
+                            auth_token:str,
+                            id : int = Query(None, ge=0)
+                            ):
+    '''
+        Delete a permission\n
+        NOTE: MUST DELETE ALL LINKED USER-PERMISSIONS PRIOR TO DELETING PERMISSIONS.
+    '''
+    await verify_token(auth_token, verification='admin', route='[DELETE]/v1/token-management/delete-permission')
+    
+    if id is None:
+        raise HTTPException(status_code=422, detail="Missing ID.")
+    else:
+        sql_delete = delete(dbApiPermission).where(dbApiPermission.id == id)
+        async with get_session(EngineType.PLAYERDATA) as session:
+            await session.execute(sql_delete)
+            await session.commit()
+        return {"OK": "OK"}
+
+@router.delete("/v1/token-management/delete-user-permission", tags=["Token Management"])
+async def delete_user_permission(
+                                auth_token:str,
+                                id : int = Query(None, ge=0)
+                                ):
+    '''
+        Delete a user permission\n
+        NOTE: USUALLY THE FIRST STEP IN REMOVING TOKEN PERMISSIONS FROM A USER.
+    '''
+    await verify_token(auth_token, verification='admin', route='[DELETE]/v1/token-management/delete-user-permission')
+    
+    if id is None:
+        raise HTTPException(status_code=422, detail="Missing ID.")
+    else:
+        sql_delete = delete(dbApiUserPerm).where(dbApiUserPerm.id == id)
+        async with get_session(EngineType.PLAYERDATA) as session:
+            await session.execute(sql_delete)
+            await session.commit()
+        return {"OK": "OK"}
