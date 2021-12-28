@@ -32,7 +32,6 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
         logger.debug(f'To many retries')
         return None
 
-
     if not is_retry:
         has_return = True if sql.strip().lower().startswith('select') else False
     
@@ -111,7 +110,7 @@ class sqlalchemy_result:
         Record = namedtuple('Record', columns)
         return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in self.rows]
 
-async def verify_token(token:str, verification:str, route:str=None) -> bool:
+async def verify_token(token:str, verification:str, route:str) -> bool:
     """
         Checks the following:
         Requests the token from the server.
@@ -154,6 +153,7 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
         
     # If len api_user == 0; user does not have necessary permissions
     if len(api_user) == 0:
+        print()
         raise HTTPException(status_code=401, detail=f"Insufficent Permissions: Either the token does not exist or you don't have sufficent permissions to access this content.")
     
     api_user = api_user[0]
