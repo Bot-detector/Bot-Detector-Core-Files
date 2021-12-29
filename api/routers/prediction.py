@@ -48,12 +48,14 @@ class Prediction(BaseModel):
 
 
 @router.get("/v1/prediction", tags=["Prediction"])
-async def get_account_prediction_result(token: str, name: str):
+async def get_account_prediction_result(name: str, token: Optional[str]=None):
     '''
         Selects a player's prediction from the plugin database.\n
         Use: Used to determine the prediction of a player according to the prediction found in the prediction table.
     '''
-    await verify_token(token, verification='request_highscores', route='[GET]/v1/prediction/')
+    # Made token optional, but kept this route for logging if needed.
+    if token is not None:
+        await verify_token(token, verification='request_highscores', route='[GET]/v1/prediction/')
 
     sql = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
