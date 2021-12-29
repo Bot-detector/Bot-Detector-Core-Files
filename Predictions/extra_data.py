@@ -39,6 +39,7 @@ minigames = {
     "kril_tsutsaroth": "",
     "mimic": "",
     "nightmare": "",
+    "phosanis_nightmare": "",
     "obor": "",
     "sarachnis": "",
     "scorpia": "",
