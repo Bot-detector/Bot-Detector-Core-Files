@@ -174,7 +174,7 @@ async def get_report_by_prediction(
 @router.get("/v1/report/latest", tags=["Report"])
 async def get_latest_report_of_a_user(
     token: str,
-    reported_id: int= Query(..., ge=0)
+    reported_id: int = Query(..., ge=0)
     ):
     
     '''
