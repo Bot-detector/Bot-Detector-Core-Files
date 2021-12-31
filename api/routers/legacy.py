@@ -859,7 +859,7 @@ async def get_labels(token):
     return data.rows2dict() if data is not None else {}
 
 
-@router.post('/site/verify/{token}', tags=["Legacy","Website"])
+@router.post('/site/verify/{token}', tags=["Legacy"])
 async def verify_bot(token:str, bots:bots):
     await verify_token(token, verification='verify_ban')
 
