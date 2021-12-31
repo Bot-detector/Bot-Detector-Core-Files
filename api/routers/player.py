@@ -61,9 +61,11 @@ async def get_player_information(
 @router.get("/v1/player/bulk", tags=["Player"])
 async def get_bulk_player_data_from_the_plugin_database(
     token: str,
-    player_name: Optional[List[str]] = None,
-    player_id: Optional[List[int]] = None,
-    label_id: Optional[List[int]] = None,
+    possible_ban: Optional[int] = None,
+    confirmed_ban: Optional[int] = None,
+    confirmed_player: Optional[int] = None,
+    label_id: Optional[int] = None,
+    label_jagex: Optional[int] = None,
     row_count: int = Query(100_000, ge=1),
     page: int = Query(1, ge=1)
     ):
@@ -73,21 +75,28 @@ async def get_bulk_player_data_from_the_plugin_database(
     await verify_token(token, verification='request_highscores', route='[POST]/v1/player')
 
     # return exception if no param are given
-    if None == player_name == player_id == label_id:
-        raise HTTPException(status_code=404, detail="No valid parameters given")
+    if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
+        raise HTTPException(status_code=404, detail="No param given")
 
     # create query
     sql = select(dbPlayer)
 
+    # filters    
     # filters
-    if not player_name == None:
-        sql = sql.where(dbPlayer.name.in_(player_name))
+    if not possible_ban is None:
+        sql = sql.where(dbPlayer.possible_ban == possible_ban)
 
-    if not player_id == None:
-        sql = sql.where(dbPlayer.id.in_(player_id))
-    
-    if not label_id == None:
-        sql = sql.where(dbPlayer.label_id.in_(label_id))
+    if not confirmed_ban is None:
+        sql = sql.where(dbPlayer.confirmed_ban == confirmed_ban)
+
+    if not confirmed_player is None:
+        sql = sql.where(dbPlayer.confirmed_player == confirmed_player)
+
+    if not label_id is None:
+        sql = sql.where(dbPlayer.label_id == label_id)
+
+    if not label_jagex is None:
+        sql = sql.where(dbPlayer.label_jagex == label_jagex)
 
     # query pagination
     sql = sql.limit(row_count).offset(row_count*(page-1))
