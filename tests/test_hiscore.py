@@ -81,11 +81,11 @@ def test_get_account_hiscore_xp_change():
 """
   Hiscore post routes
 """
-def test_post_hiscore():
-    for test, (payload, response_code) in enumerate(post_hiscore_test_case):
-        route_attempt = f'/v1/hiscore?token={token}'
-        response = client.post(url=route_attempt, json=payload)
-        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
+# def test_post_hiscore():
+#     for test, (payload, response_code) in enumerate(post_hiscore_test_case):
+#         route_attempt = f'/v1/hiscore?token={token}'
+#         response = client.post(url=route_attempt, json=payload)
+#         assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
 
 if __name__ == '__main__':
   '''get tests'''
@@ -95,4 +95,4 @@ if __name__ == '__main__':
   test_get_account_hiscore_xp_change()
   
   '''post tests'''
-  test_post_hiscore()
+  # test_post_hiscore()

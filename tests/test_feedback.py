@@ -41,15 +41,15 @@ def test_get_feedback():
 """
     Feedback Post Routes
 """
-def test_post_feedback():
-    for test, (payload, response_code) in enumerate(post_feedback_test_case):
-        route_attempt = f'/v1/feedback/'
-        response = client.post(url=route_attempt,json=payload)
-        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
+# def test_post_feedback():
+#     for test, (payload, response_code) in enumerate(post_feedback_test_case):
+#         route_attempt = f'/v1/feedback/'
+#         response = client.post(url=route_attempt,json=payload)
+#         assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
 
 if __name__ == "__main__":
     '''get tests'''
     test_get_feedback()
     
     '''post tests'''
-    test_post_feedback()
+    # test_post_feedback()

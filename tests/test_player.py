@@ -35,22 +35,9 @@ def test_get_player_information():
 """
   Players post routes
 """
-## DUPLICATE ENTRIES ON DEV
-def test_post_player():
-    test_case = (
-      ('ferrariic', 200), # correct name, and correct ID 
-      (8, 200), #juxtaposed player_id and player_name
-      (None, 200), # None entry
-    )
-    for test, (player_name, response_code) in enumerate(test_case):
-        route_attempt = f'/v1/player?player_name={player_name}&token={token}'
-        response = client.get(url=route_attempt)
-        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
-        
-        
+
 if __name__ == "__main__":
   '''get route'''
   test_get_player_information()
 
   '''post route'''
-  test_post_player()

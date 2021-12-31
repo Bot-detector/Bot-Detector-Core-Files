@@ -76,11 +76,11 @@ def test_get_expired_predictions():
 """
   Prediction post routes
 """
-def test_post_prediction():
-    for test, (payload, response_code) in enumerate(post_prediction_test_case):
-        route_attempt = f'/v1/prediction/?token={token}'
-        response = client.post(url=route_attempt, json=payload)
-        assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
+# def test_post_prediction():
+#     for test, (payload, response_code) in enumerate(post_prediction_test_case):
+#         route_attempt = f'/v1/prediction/?token={token}'
+#         response = client.post(url=route_attempt, json=payload)
+#         assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
 
 if __name__ == "__main__":
   '''get routes'''
@@ -89,4 +89,4 @@ if __name__ == "__main__":
   test_get_expired_predictions()
   
   '''post routes'''
-  test_post_prediction()
+  # test_post_prediction()
