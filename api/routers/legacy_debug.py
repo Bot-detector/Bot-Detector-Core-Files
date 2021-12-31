@@ -225,7 +225,7 @@ async def sql_get_feedback_submissions(voters: List):
         FROM PredictionsFeedback 
         JOIN Players ON Players.id = PredictionsFeedback.voter_id
         WHERE 1=1
-            AND Players.name IN :voters
+            AND Players.normalized_name IN :voters
      '''
 
     params = {
