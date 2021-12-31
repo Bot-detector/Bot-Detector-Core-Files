@@ -3,9 +3,10 @@ from typing import Optional
 from api.database.functions import (EngineType, get_session, sqlalchemy_result,
                                     verify_token)
 from api.database.models import Player, PredictionsFeedback
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
+
 
 
 class Feedback(BaseModel):
@@ -24,11 +25,11 @@ router = APIRouter()
 @router.get("/v1/feedback/", tags=["Feedback"])
 async def get_feedback(
         token: str,
-        voter_id: Optional[int] = None,
-        subject_id: Optional[int] = None,
-        vote: Optional[int] = None,
+        voter_id: Optional[int] = Query(None, ge=0),
+        subject_id: Optional[int] = Query(None, ge=0),
+        vote: Optional[int] = Query(None, ge=-1, le=1),
         prediction: Optional[str] = None,
-        confidence: Optional[float] = None,
+        confidence: Optional[float] = Query(None, ge=0, le=1),
         proposed_label: Optional[str] = None,
         feedback_text: Optional[str] = None):
     '''
@@ -39,7 +40,7 @@ async def get_feedback(
 
     if None == voter_id == subject_id == vote == prediction == confidence == proposed_label == feedback_text:
         raise HTTPException(status_code=404, detail="No param given")
-
+    
     # query
     table = PredictionsFeedback
     sql = select(table)
@@ -82,8 +83,12 @@ async def post_feedback(feedback: Feedback):
     async with get_session(EngineType.PLAYERDATA) as session:
         player = await session.execute(sql_player)
         player = sqlalchemy_result(player).rows2dict()
-
-        feedback["voter_id"] = player[0]['id']
+        
+        try:
+            feedback["voter_id"] = player[0]['id']
+        except IndexError:
+            raise HTTPException(status_code=500, detail="Could not find voter in registry.")
+        
         sql_insert = sql_insert.values(feedback)
         await session.execute(sql_insert)
 

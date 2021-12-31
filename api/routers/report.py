@@ -8,7 +8,7 @@ from sqlalchemy.sql.selectable import FromClause
 from api.database.functions import (EngineType, get_session, sql_cursor,
                                     verify_token, sqlalchemy_result)
 from api.database.models import Player, Prediction, Report
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import update
 from sqlalchemy.sql.expression import insert, select
@@ -50,10 +50,10 @@ class detection(BaseModel):
 @router.get("/v1/report", tags=["Report"])
 async def get_reports_from_plugin_database(
     token: str,
-    reportedID: Optional[int]=None,
-    reportingID: Optional[int]=None,
-    timestamp: Optional[date]=None,
-    regionID: Optional[int]=None
+    reportedID: Optional[int]= Query(None, ge=0),
+    reportingID: Optional[int]= Query(None, ge=0),
+    timestamp: Optional[date]= None,
+    regionID: Optional[int]= Query(None, ge=0, le=100000)
     ):
     '''
         Select report data.
@@ -115,6 +115,7 @@ async def insert_report(token: str, detections: List[detection]):
     pass
 
 @router.get("/v1/report/prediction", tags=["Report", "Business"])
+#TODO will touch this up later, might modify this for the twitter stuff.
 async def get_report_by_prediction(
     token: str,
     label_jagex: int,
