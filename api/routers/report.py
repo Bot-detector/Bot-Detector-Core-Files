@@ -1,19 +1,17 @@
 
-from datetime import datetime, date
+from datetime import date
 import logging
 from typing import List, Optional
 
-from sqlalchemy.sql.selectable import FromClause
-
-from api.database.functions import (EngineType, get_session, sql_cursor,
+from api.database.functions import (EngineType, get_session,
                                     verify_token, sqlalchemy_result)
-from api.database.models import Player, Prediction, Report
+from api.database.models import Player, Prediction, Report, ReportLatest
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import update
 from sqlalchemy.sql.expression import insert, select
-from sqlalchemy import Date
 from sqlalchemy.sql import func
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -115,7 +113,6 @@ async def insert_report(token: str, detections: List[detection]):
     pass
 
 @router.get("/v1/report/prediction", tags=["Report", "Business"])
-#TODO will touch this up later, might modify this for the twitter stuff.
 async def get_report_by_prediction(
     token: str,
     label_jagex: int,
@@ -173,3 +170,53 @@ async def get_report_by_prediction(
         output.append(mydata)
 
     return output
+
+@router.get("/v1/report/latest", tags=["Report"])
+async def get_latest_report_of_a_user(
+    token: str,
+    reported_id: int= Query(..., ge=0)
+    ):
+    
+    '''
+        Select the latest report data, by reported user
+    '''
+    
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/report/latest')
+
+    sql = select(ReportLatest)
+
+    if not reported_id is None:
+        sql = sql.where(ReportLatest.reported_id == reported_id)
+    
+    # execute query
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
+    return data.rows2dict()
+
+@router.get("/v1/report/latest/bulk", tags=["Report"])
+async def get_bulk_latest_report_data(
+    token: str,
+    region_id: Optional[int] = Query(None, ge=0, le=25000),
+    timestamp: Optional[date] = None
+    ):
+    '''
+        get the player count in bulk by region and or date
+    '''
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/report/latest/bulk')
+
+    sql = select(ReportLatest)
+
+    if not timestamp is None:
+        sql = sql.where(func.date(ReportLatest.timestamp) == timestamp)
+
+    if not region_id is None:
+        sql = sql.where(ReportLatest.region_id == region_id)
+
+    # execute query
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
+    return data.rows2dict()

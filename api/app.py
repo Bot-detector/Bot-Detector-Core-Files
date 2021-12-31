@@ -3,8 +3,10 @@ from concurrent.futures.process import ProcessPoolExecutor
 
 import api.Config
 from api.Config import app
-from api.routers import (feedback, hiscore, label, legacy, legacy_debug,
-                         player, prediction, report, reportLatest, scraper, reportLatest)
+from api.routers import (
+    feedback, hiscore, label, legacy, legacy_debug,
+    player, prediction, report, scraper
+)
 
 
 app.include_router(hiscore.router)
@@ -16,7 +18,7 @@ app.include_router(legacy.router)
 app.include_router(scraper.router)
 app.include_router(label.router)
 app.include_router(legacy_debug.router)
-app.include_router(reportLatest.router)
+
 
 
 @app.get("/")
