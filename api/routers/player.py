@@ -58,6 +58,42 @@ async def get_player_information(
     return data.rows2dict()
 
 
+@router.get("/v1/player/banned-accounts", tags=["Player"])
+async def get_banned_player_names(
+    token: str,
+    player_name: Optional[str] = None,
+    player_id: Optional[int] = Query(None, ge=0),
+    row_count: int = Query(200, ge=1, le=200),
+    page: int = Query(1, ge=1)
+):
+    '''
+        Select a player by name or id.
+    '''
+    await verify_token(token, verification='request_highscores', route='[GET]/v1/player/banned-accounts')
+
+    # create query
+    sql = select(dbPlayer)
+
+    # filters
+    sql = sql.where(dbPlayer.confirmed_ban == 1)
+    
+    if not player_name == None:
+        sql = sql.where(dbPlayer.name == player_name)
+    if not player_id == None:
+        sql = sql.where(dbPlayer.id == player_id)
+
+    # query pagination
+    sql = sql.limit(row_count).offset(row_count*(page-1))
+    sql = sql.order_by(dbPlayer.name)
+    
+    # transaction
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+
+    data = sqlalchemy_result(data)
+    return data.rows2dict()
+
+
 @router.get("/v1/player/bulk", tags=["Player"])
 async def get_bulk_player_data_from_the_plugin_database(
     token: str,
