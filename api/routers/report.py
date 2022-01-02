@@ -1,5 +1,5 @@
 
-from datetime import date
+from datetime import datetime, date
 import logging
 from typing import List, Optional
 
@@ -199,10 +199,12 @@ async def get_latest_report_of_a_user(
 async def get_bulk_latest_report_data(
     token: str,
     region_id: Optional[int] = Query(None, ge=0, le=25000),
-    timestamp: Optional[date] = None
+    timestamp: Optional[date] = None,
+    count: Optional[bool] = True,
     ):
     '''
-        get the player count in bulk by region and or date
+        get the player count in bulk by region and or date.
+        Timestamp in the format of: YYYY-MM-DD
     '''
     await verify_token(token, verification='verify_ban', route='[GET]/v1/report/latest/bulk')
 
@@ -219,4 +221,12 @@ async def get_bulk_latest_report_data(
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
+    
+    if count:
+        now = datetime.utcnow()
+        data = {'region_id': region_id,
+                'count': len(data.rows2dict()),
+                'timestamp': f'{now.hour}:{now.minute}:{now.second}'}
+        return data
+        
     return data.rows2dict()
