@@ -44,7 +44,7 @@ async def get_feedback(
     # verify token
     await verify_token(token, verification='verify_ban', route='[GET]/v1/feedback')
 
-    if None == voter_id == subject_id == vote == prediction == confidence == proposed_label == feedback_text:
+    if None == voter_id == subject_id == vote == prediction == confidence == proposed_label == feedback_text==since_date==since_id==has_text:
         raise HTTPException(status_code=404, detail="No param given")
     
     # query
