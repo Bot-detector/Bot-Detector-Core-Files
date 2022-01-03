@@ -153,9 +153,6 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
 
-    print("YOOOOOOOOOOOOOOOOOOOOOOOO")
-    print(df_names.keys())
-
     df = df.merge(df_names, left_on="reported", right_on="name")
 
     reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
