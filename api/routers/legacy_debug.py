@@ -157,7 +157,11 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 
     reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
 
-    df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
+    try:
+        df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
+    except IndexError as ie:
+        raise IndexError(f"Detection Submission Error: {reporter} was not found in {df_names}.")
+
 
     df['manual_detect'] = manual_detect
     # 4.2) parse data to param
