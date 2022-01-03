@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       app: bd-prod-api
-  replicas: 5
+  replicas: 1
   template:
     metadata:
       name: bl-prod-api-app
