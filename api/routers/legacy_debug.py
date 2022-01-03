@@ -205,7 +205,7 @@ async def sql_get_contributions(contributors: List):
     """)
 
     param = {
-        "contributors": await jagexify_names_list(contributors)
+        "contributors": tuple(await jagexify_names_list(contributors))
     }
 
     output = []
@@ -233,10 +233,10 @@ async def sql_get_feedback_submissions(voters: List):
      '''
 
     params = {
-        "voters": voters
+        "voters": tuple(await(jagexify_names_list(voters)))
     }
 
-    data = await execute_sql(sql, param=params, debug=False, row_count=100_000_000)
+    data = await execute_sql(sql, param=params, row_count=100_000_000)
     return data.rows2dict()
 
 
