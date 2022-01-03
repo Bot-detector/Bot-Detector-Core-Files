@@ -111,7 +111,7 @@ async def sql_insert_report(param):
     values = list_to_string([f':{column}' for column in params])
 
     sql = f'INSERT INTO Reports ({columns}) VALUES ({values}) ON DUPLICATE KEY UPDATE reportingID = reportingID'
-    await execute_sql(sql, param, debug=True)
+    await execute_sql(sql, param)
 
 
 async def detect(detections:List[detection], manual_detect:int) -> None:
