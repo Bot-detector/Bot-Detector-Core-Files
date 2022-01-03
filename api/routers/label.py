@@ -1,4 +1,4 @@
-from api.database.database import Engine
+from api.database.database import EngineType, get_session
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import Label as dbLabel
 from fastapi import APIRouter
@@ -10,31 +10,27 @@ router = APIRouter()
 class label(BaseModel):
     label_name:str
 
-@router.get("/v1/label/", tags=["label"])
-async def get(token:str):
+@router.get("/v1/label/", tags=["Label"])
+async def get_labels_from_plugin_database(token:str):
     '''
-        select a label from db
+        Selects all labels.
     '''
-    await verify_token(token, verifcation='hiscore')
+    await verify_token(token, verification='request_highscores', route='[GET]/v1/label/')
 
     sql = select(dbLabel)
 
-    Session = Engine().session
-
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
     
     data = sqlalchemy_result(data)
     return data.rows2dict()
     
-
-
-@router.post("/v1/label/", tags=["label"])
-async def post(token:str, label:label):
+@router.post("/v1/label/", tags=["Label"])
+async def insert_label_into_plugin_database(token:str, label:label):
     '''
-        insert a label into the db
+        Insert a new label & return the new label.
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/v1/label/')
 
     label_name = label.dict()
     label_name = label_name['label_name']
@@ -48,9 +44,7 @@ async def post(token:str, label:label):
     sql_select = select(dbLabel)
     sql_select = sql_select.where(dbLabel.label == label_name)
 
-    Session = Engine().session
-
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         await session.execute(sql_insert)
         await session.commit()
         data = await session.execute(sql_select)
@@ -58,10 +52,11 @@ async def post(token:str, label:label):
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.put("/v1/label/", tags=["label"])
-async def put(token:str):
+@router.put("/v1/label/", tags=["Label"])
+async def update_a_currently_existing_label(token:str):
     '''
-        update a label into the datase
+        Work in progress
+        Update an existing label.
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[PUT]/v1/label/')
     return
