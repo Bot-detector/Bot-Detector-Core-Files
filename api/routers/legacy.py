@@ -783,7 +783,7 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
     feedback_params = feedback.dict()
     player_name = feedback_params.pop("player_name")
 
-    normalized_name = to_jagex_name(player_name)
+    normalized_name = await to_jagex_name(player_name)
 
     voter_data = await execute_sql(sql=f"select * from Players where normalized_name = :normalized_name", param={"normalized_name": normalized_name})
 

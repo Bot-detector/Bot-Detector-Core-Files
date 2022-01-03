@@ -61,9 +61,8 @@ async def jagexify_names_list(names: List[str]) -> List[str]:
 
 
 async def sql_select_players(names):
-    names = [await to_jagex_name(n)for n in names]
     sql = "SELECT * FROM Players WHERE normalized_name in :names"
-    param = {"names": names}
+    param = {"names": tuple(await jagexify_names_list(names))}
     data = await execute_sql(sql, param)
     
     return [] if not data else data.rows2dict()
@@ -153,10 +152,12 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # 4) Insert detections into Reports table with user ids 
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
+
     df = df.merge(df_names, left_on="reported", right_on="name")
 
     reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
-    df["reporter_id"] = df_names.query(f"name == {reporter}")['id'].to_list()[0]
+
+    df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
 
     df['manual_detect'] = manual_detect
     # 4.2) parse data to param
@@ -205,7 +206,7 @@ async def sql_get_contributions(contributors: List):
     """)
 
     param = {
-        "contributors": await jagexify_names_list(contributors)
+        "contributors": tuple(await jagexify_names_list(contributors))
     }
 
     output = []
@@ -233,10 +234,10 @@ async def sql_get_feedback_submissions(voters: List):
      '''
 
     params = {
-        "voters": voters
+        "voters": tuple(await(jagexify_names_list(voters)))
     }
 
-    data = await execute_sql(sql, param=params, debug=False, row_count=100_000_000)
+    data = await execute_sql(sql, param=params, row_count=100_000_000)
     return data.rows2dict()
 
 
