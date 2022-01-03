@@ -142,7 +142,6 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # 3.1) Get those players' IDs from step 3
     if new_names:
         param = [{"name": name, "nname":name} for name in new_names]
-        print(param)
         await batch_function(sql_insert_player, param)
 
         data.extend(await sql_select_players(new_names))
