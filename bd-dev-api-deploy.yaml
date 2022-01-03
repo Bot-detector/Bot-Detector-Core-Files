@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bd-dev-api-service
+spec:
+  selector:
+    app: bd-dev-api
+  ports:
+  - protocol: "TCP"
+    port: 5000
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,7 +17,7 @@ spec:
   selector:
     matchLabels:
       app: bd-dev-api
-  replicas: 1
+  replicas: 5
   template:
     metadata:
       name: bl-dev-api-app
@@ -31,24 +42,21 @@ spec:
             server: 51.68.207.197
             path: /cluster/exports
       containers:
-        - name: bd-dev-api
-          image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
-          imagePullPolicy: Always
-          ports:
-          - containerPort: 5000
-          resources:
-            requests:
-              cpu: "250m"
-            limits:
-              cpu: "1000m"
-          volumeMounts:
-            - name: nfs-volume-exports
-              mountPath: /code/exports
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 5000
-            failureThreshold: 3
-            periodSeconds: 30
+      - name: bd-dev-api
+        image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: nfs-volume-exports
+          mountPath: /code/exports
+        livenessProbe:
+          exec:
+            command:
+              - curl
+              - --fail
+              - http://localhost:5000/
+          failureThreshold: 3
+          periodSeconds: 30
       imagePullSecrets:
       - name: regcred
