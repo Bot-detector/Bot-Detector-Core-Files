@@ -55,7 +55,7 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
     if debug:
         engine = Engine(engine_type)
         logger.debug(f'{has_return=}')
-        logger.debug(f'sql={sql.compile(engine)}')
+        logger.debug(f'sql={sql.compile(engine.engine)}')
         logger.debug(f'{param=}')
 
         await engine.engine.dispose()
