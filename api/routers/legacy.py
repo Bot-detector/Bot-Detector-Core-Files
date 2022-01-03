@@ -165,6 +165,7 @@ async def sql_insert_report(data):
 
 
 async def sql_get_contributions(contributors: List):
+
     query = ("""
         SELECT
             rs.manual_detect as detect,
@@ -180,7 +181,7 @@ async def sql_get_contributions(contributors: List):
     """)
 
     param = {
-        "contributors": contributors
+        "contributors": await jagexify_names_list(contributors)
     }
 
     output = []
@@ -455,6 +456,10 @@ async def is_valid_rsn(rsn):
 # TODO: normalize name
 async def to_jagex_name(name: str) -> str:
     return name.lower().replace('_', ' ').replace('-',' ').strip()
+
+
+async def jagexify_names_list(names: List[str]) -> List[str]:
+    return  [await to_jagex_name(n) for n in names if await is_valid_rsn(n)]
     
 
 async def custom_hiscore(detection):
@@ -664,7 +669,7 @@ async def detect(detections, manual_detect):
     names.extend(df['reporter'].unique())
 
     # 1.1) Normalize and validate all names
-    clean_names = [await to_jagex_name(name) for name in names if await is_valid_rsn(name)]
+    clean_names = await jagexify_names_list(names)
 
     # 2) Get IDs for all unique names
     data = await sql_select_players(clean_names)

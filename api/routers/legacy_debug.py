@@ -56,6 +56,10 @@ async def to_jagex_name(name: str) -> str:
     return name.lower().replace('_', ' ').replace('-',' ').strip()
 
 
+async def jagexify_names_list(names: List[str]) -> List[str]:
+    return  [await to_jagex_name(n) for n in names if await is_valid_rsn(n)]
+
+
 async def sql_select_players(names):
     names = [await to_jagex_name(n)for n in names]
     sql = "SELECT * FROM Players WHERE normalized_name in :names"
@@ -185,6 +189,7 @@ class contributor(BaseModel):
 
 
 async def sql_get_contributions(contributors: List):
+
     query = ("""
         SELECT
             ifnull(rs.manual_detect,0) as detect,
@@ -200,7 +205,7 @@ async def sql_get_contributions(contributors: List):
     """)
 
     param = {
-        "contributors": contributors
+        "contributors": await jagexify_names_list(contributors)
     }
 
     output = []
