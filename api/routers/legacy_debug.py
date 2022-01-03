@@ -323,7 +323,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
         WHERE Player_id IN :banned_ids
     '''
 
-    total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
+    total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": tuple(banned_ids)})
     
     if not total_xp_data:
         return_dict['total'] = total_dict
