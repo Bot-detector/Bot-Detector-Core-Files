@@ -1,45 +1,46 @@
-from typing import List, Optional
+from typing import Optional
 
-from api.database.database import Engine
+from api.database.database import EngineType, get_session
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import (PlayerHiscoreDataLatest,
-                                 PlayerHiscoreDataXPChange, playerHiscoreData)
-from fastapi import APIRouter
+                                 PlayerHiscoreDataXPChange, playerHiscoreData, Player)
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
+import sqlalchemy.exc
 
 router = APIRouter()
 
 
 class hiscore(BaseModel):
     '''
-    all the hiscore stuf
+        Hiscore entry data
     '''
-    player_id: int
+    Player_id: int
     total: int
-    Attack: int
-    Defence: int
-    Strength: int
-    Hitpoints: int
-    Ranged: int
-    Prayer: int
-    Magic: int
-    Cooking: int
-    Woodcutting: int
-    Fletching: int
-    Fishing: int
-    Firemaking: int
-    Crafting: int
-    Smithing: int
-    Mining: int
-    Herblore: int
-    Agility: int
-    Thieving: int
-    Slayer: int
-    Farming: int
-    Runecraft: int
-    Hunter: int
-    Construction: int
+    attack: int
+    defence: int
+    strength: int
+    hitpoints: int
+    ranged: int
+    prayer: int
+    magic: int
+    cooking: int
+    woodcutting: int
+    fletching: int
+    fishing: int
+    firemaking: int
+    crafting: int
+    smithing: int
+    mining: int
+    herblore: int
+    agility: int
+    thieving: int
+    slayer: int
+    farming: int
+    runecraft: int
+    hunter: int
+    construction: int
     league: int
     bounty_hunter_hunter: int
     bounty_hunter_rogue: int
@@ -81,10 +82,11 @@ class hiscore(BaseModel):
     mimic: int
     nightmare: int
     obor: int
+    phosanis_nightmare : int
     sarachnis: int
     scorpia: int
     skotizo: int
-    tempoross:int
+    tempoross: int
     the_gauntlet: int
     the_corrupted_gauntlet: int
     theatre_of_blood: int
@@ -98,155 +100,165 @@ class hiscore(BaseModel):
     wintertodt: int
     zalcano: int
     zulrah: int
-    
 
-@router.get("/v1/hiscore/", tags=["hiscore"])
-async def get(
+
+@router.get("/v1/hiscore/", tags=["Hiscore"])
+async def get_player_hiscore_data(
     token: str,
-    player_id: int,
-    row_count: int = 100_000,
-    page: int = 1
-    ):
+    player_id: int = Query(..., ge=0),
+    row_count: int = Query(100_000, ge=1),
+    page: int = Query(1, ge=1)
+):
     '''
-        select data from database
+        Select daily scraped hiscore data, by player_id
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore')
 
     # query
     table = playerHiscoreData
     sql = select(table)
-    
+
     # filters
     if not player_id == None:
         sql = sql.where(table.Player_id == player_id)
-    
+
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
-    Session = Engine().session
-
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.get("/v1/hiscore/Latest", tags=["hiscore"])
-async def get(
+
+@router.get("/v1/hiscore/Latest", tags=["Hiscore"])
+async def get_latest_hiscore_data_for_an_account(
     token: str,
-    player_id: int,
-    row_count: int = 100_000,
-    page: int = 1
-    ):
+    player_id: int = Query(..., ge=0)
+):
     '''
-        select data from database
+        Select the latest hiscore of a player.
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
-
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest')
+    
     # query
     table = PlayerHiscoreDataLatest
     sql = select(table)
-    
+
     # filters
     if not player_id == None:
         sql = sql.where(table.Player_id == player_id)
-    
-    # paging
-    sql = sql.limit(row_count).offset(row_count*(page-1))
 
-    Session = Engine().session
-
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.post("/v1/hiscore/Latest/bulk", tags=["hiscore"])
-async def get_hiscore_latest_bulk(
+
+@router.get("/v1/hiscore/Latest/bulk", tags=["Hiscore"])
+async def get_latest_hiscore_data_by_player_features(
     token: str,
-    player_id: List[int],
-    nothing: Optional[List[int]]= None,
-    row_count: int = 100_000,
-    page: int = 1
-    ):
+    row_count: int = Query(100_000, ge=1),
+    page: int = Query(1, ge=1),
+    possible_ban: Optional[int] = Query(None, ge=0, le=1),
+    confirmed_ban: Optional[int] = Query(None, ge=0, le=1),
+    confirmed_player: Optional[int] = Query(None, ge=0, le=1),
+    label_id: Optional[int] = Query(None, ge=0),
+    label_jagex: Optional[int] = Query(None, ge=0, le=5),
+):
     '''
-        select data from database
+        Select the latest hiscore data of multiple players by filtering on the player features.
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/Latest/bulk')
+
+    if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
+        raise HTTPException(status_code=404, detail="No param given")
 
     # query
-    table = PlayerHiscoreDataLatest
-    sql = select(table)
-    
+    sql = select(PlayerHiscoreDataLatest)
+
     # filters
-    if not player_id == None:
-        sql = sql.where(table.Player_id.in_(player_id))
-    
+    if not possible_ban is None:
+        sql = sql.where(Player.possible_ban == possible_ban)
+
+    if not confirmed_ban is None:
+        sql = sql.where(Player.confirmed_ban == confirmed_ban)
+
+    if not confirmed_player is None:
+        sql = sql.where(Player.confirmed_player == confirmed_player)
+
+    if not label_id is None:
+        sql = sql.where(Player.label_id == label_id)
+
+    if not label_jagex is None:
+        sql = sql.where(Player.label_jagex == label_jagex)
+
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
-    Session = Engine().session
+    # join
+    sql = sql.join(Player)
 
-    async with Session() as session:
+    # execute query
+    async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.get("/v1/hiscore/XPChange", tags=["hiscore"])
-async def get(
+
+@router.get("/v1/hiscore/XPChange", tags=["Hiscore"])
+async def get_account_hiscore_xp_change(
     token: str,
-    player_id: int,
-    row_count: int = 100_000,
-    page: int = 1
-    ):
+    player_id: int = Query(..., ge=0),
+    row_count: int = Query(100_000, ge=1),
+    page: int = Query(1, ge=1)
+):
     '''
-        select data from database
+        Select daily scraped differential in hiscore data by Player ID
     '''
     # verify token
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[GET]/v1/hiscore/XPChange')
 
     # query
     table = PlayerHiscoreDataXPChange
     sql = select(table)
-    
+
     # filters
     if not player_id == None:
         sql = sql.where(table.Player_id == player_id)
-    
+
     # paging
     sql = sql.limit(row_count).offset(row_count*(page-1))
 
-    Session = Engine().session
-
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
-@router.post("/v1/hiscore", tags=["hiscore"])
-async def post(hiscores: hiscore, token: str):
+
+@router.post("/v1/hiscore", tags=["Hiscore"])
+async def post_hiscore_data_to_database(hiscores: hiscore, token: str):
     '''
-        Insert hiscores into table: hiscore
+        Insert hiscore data.
     '''
-    await verify_token(token, verifcation='ban')
+    await verify_token(token, verification='verify_ban', route='[POST]/v1/hiscore')
 
     values = hiscores.dict()
 
     # query
-    table = PlayerHiscoreDataXPChange
+    table = playerHiscoreData
     sql_insert = insert(table).values(values)
     sql_insert = sql_insert.prefix_with('ignore')
 
-    Session = Engine().session
-
-    async with Session() as session:
+    async with get_session(EngineType.PLAYERDATA) as session:
         await session.execute(sql_insert)
         await session.commit()
-    
-    return {'ok':'ok'}
+
+    return {'ok': 'ok'}
