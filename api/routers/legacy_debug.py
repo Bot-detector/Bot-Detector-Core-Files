@@ -101,7 +101,7 @@ async def parse_detection(data:dict) -> dict:
 
 
 async def sql_insert_player(param):
-    sql = "insert ignore into Players (name, normalized_name) values (:name, :nname)"
+    sql = "INSERT INTO Players (name, normalized_name) VALUES (:name, :nname) ON DUPLICATE KEY UPDATE name=name"
     await execute_sql(sql, param)
 
 
@@ -110,8 +110,8 @@ async def sql_insert_report(param):
     columns = list_to_string(params)
     values = list_to_string([f':{column}' for column in params])
 
-    sql = f'insert ignore into Reports ({columns}) values ({values})'
-    await execute_sql(sql, param)
+    sql = f'INSERT INTO Reports ({columns}) VALUES ({values}) ON DUPLICATE KEY UPDATE reportingID = reportingID'
+    await execute_sql(sql, param, debug=True)
 
 
 async def detect(detections:List[detection], manual_detect:int) -> None:

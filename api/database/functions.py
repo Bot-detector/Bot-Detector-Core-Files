@@ -29,7 +29,7 @@ def list_to_string(l):
 async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None, retry_attempt=0):
     # retry breakout
     if retry_attempt >= 5:
-        logger.debug(f'To many retries')
+        logger.debug(f'Too many retries')
         return None
 
 
