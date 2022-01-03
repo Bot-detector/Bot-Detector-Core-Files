@@ -1,16 +1,14 @@
 import asyncio
-import logging
 import re
-import time
 from typing import List, Optional
 
 import pandas as pd
 from api.Config import app
-from api.database.functions import (batch_function, execute_sql,
-                                    list_to_string, verify_token)
+from api.database.functions import execute_sql, list_to_string, verify_token, batch_function
 from fastapi import APIRouter
 from pydantic import BaseModel
-
+import time
+import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -18,7 +16,6 @@ router = APIRouter()
 async def run_in_process(fn, *args):
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(app.state.executor, fn, *args)
-
 
 '''DETECT ROUTE'''
 class equipment(BaseModel):
@@ -31,7 +28,6 @@ class equipment(BaseModel):
     HANDS: Optional[int]
     WEAPON: Optional[int]
     SHIELD: Optional[int]
-
 
 class detection(BaseModel):
     reporter: str
@@ -47,32 +43,25 @@ class detection(BaseModel):
     equipment: Optional[equipment]
     equipment_ge: Optional[int]
 
-
 async def is_valid_rsn(rsn: str) -> bool:
     return re.fullmatch('[\w\d\s_-]{1,13}', rsn)
-
 
 async def to_jagex_name(name: str) -> str:
     return name.lower().replace('_', ' ').replace('-',' ').strip()
 
-
-async def jagexify_names_list(names: List[str]) -> List[str]:
-    return  [await to_jagex_name(n) for n in names if await is_valid_rsn(n)]
-
-
-async def sql_select_players(names):
+async def sql_select_players(names: List):
+    names = [await to_jagex_name(n)for n in names]
     sql = "SELECT * FROM Players WHERE normalized_name in :names"
-    param = {"names": tuple(await jagexify_names_list(names))}
+    param = {"names": names}
     data = await execute_sql(sql, param)
     
     return [] if not data else data.rows2dict()
-
 
 async def parse_detection(data:dict) -> dict:
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
-    equipment = data.get('equipment', {})
+    equipment = data.get('equipment')
 
     param = {
         'reportedID': data.get('id'),
@@ -95,15 +84,13 @@ async def parse_detection(data:dict) -> dict:
         'equip_hands_id': equipment.get('HANDS'),
         'equip_weapon_id': equipment.get('WEAPON'),
         'equip_shield_id': equipment.get('SHIELD'),
-        'equip_ge_value': data.get('equipment_ge', 0)
+        'equip_ge_value': data.get('equipment_ge')
     }
     return param
-
 
 async def sql_insert_player(param):
     sql = "insert ignore into Players (name, normalized_name) values (:name, :nname)"
     await execute_sql(sql, param)
-
 
 async def sql_insert_report(param):
     params = list(param[0].keys())
@@ -112,7 +99,6 @@ async def sql_insert_report(param):
 
     sql = f'insert ignore into Reports ({columns}) values ({values})'
     await execute_sql(sql, param)
-
 
 async def detect(detections:List[detection], manual_detect:int) -> None:
     manual_detect = 0 if int(manual_detect) == 0 else 1
@@ -152,17 +138,9 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # 4) Insert detections into Reports table with user ids 
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
-
     df = df.merge(df_names, left_on="reported", right_on="name")
 
-    reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
-
-    try:
-        df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
-    except IndexError as ie:
-        raise IndexError(f"Detection Submission Error: {reporter} was not found in {df_names}.")
-
-
+    df["reporter_id"]  = df_names.query(f"name == {df['reporter'].unique()}")['id'].to_list()[0]
     df['manual_detect'] = manual_detect
     # 4.2) parse data to param
     data = df.to_dict('records')
@@ -171,12 +149,10 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # 4.3) parse query
     await batch_function(sql_insert_report, param)
 
-
 async def offload_detect(detections:List[detection], manual_detect:int) -> None:
     await run_in_process(detect, detections, manual_detect)
 
-
-@router.post('/{version}/plugin/detect/{manual_detect}', tags=["Legacy"])
+@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(
         detections:List[detection],
         version:str=None, 
@@ -187,14 +163,11 @@ async def post_detect(
     )
     return {'ok':'ok'}
 
-
 '''CONTRIBUTIONS ROUTE'''
 class contributor(BaseModel):
     name: str
 
-
 async def sql_get_contributions(contributors: List):
-
     query = ("""
         SELECT
             ifnull(rs.manual_detect,0) as detect,
@@ -206,11 +179,11 @@ async def sql_get_contributions(contributors: List):
         JOIN Players as pl on (pl.id = rs.reportingID)
         join Players as ban on (ban.id = rs.reportedID)
         WHERE 1=1
-            AND pl.normalized_name in :contributors
+            AND pl.name in :contributors
     """)
 
     param = {
-        "contributors": tuple(await jagexify_names_list(contributors))
+        "contributors": contributors
     }
 
     output = []
@@ -226,7 +199,6 @@ async def sql_get_contributions(contributors: List):
 
     return output
 
-
 async def sql_get_feedback_submissions(voters: List):
     sql = '''
         SELECT 
@@ -234,16 +206,15 @@ async def sql_get_feedback_submissions(voters: List):
         FROM PredictionsFeedback 
         JOIN Players ON Players.id = PredictionsFeedback.voter_id
         WHERE 1=1
-            AND Players.normalized_name IN :voters
+            AND Players.name IN :voters
      '''
 
     params = {
-        "voters": tuple(await(jagexify_names_list(voters)))
+        "voters": voters
     }
 
-    data = await execute_sql(sql, param=params, row_count=100_000_000)
+    data = await execute_sql(sql, param=params, debug=False, row_count=100_000_000)
     return data.rows2dict()
-
 
 async def parse_contributors(contributors, version=None, add_patron_stats:bool=False):
     contributions = await sql_get_contributions(contributors)
@@ -327,7 +298,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
         WHERE Player_id IN :banned_ids
     '''
 
-    total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": tuple(banned_ids)})
+    total_xp_data = await execute_sql(sql=total_xp_sql, param={"banned_ids": banned_ids})
     
     if not total_xp_data:
         return_dict['total'] = total_dict
@@ -339,20 +310,20 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     return return_dict
 
 
-@router.post('/stats/contributions/', tags=["Legacy"])
+@router.post('/stats/contributions/', tags=['legacy'])
 async def get_contributions(contributors: List[contributor], token:str=None):
     add_patron_stats = False
     if token:
-        await verify_token(token, verification='verify_players')
+        await verify_token(token, verifcation='verify_players')
         add_patron_stats = True
         
-    accounts = [await to_jagex_name(d.__dict__['name']) for d in contributors]
+    contributors = [d.__dict__['name'] for d in contributors]
     
-    data = await parse_contributors(accounts, version=None, add_patron_stats=add_patron_stats)
+    data = await parse_contributors(contributors, version=None, add_patron_stats=add_patron_stats)
     return data
 
 
-@router.get('/{version}/stats/contributions/{contributor}', tags=["Legacy"])
+@router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
 async def get_contributions_url(contributor: str, version: str):
-    data = await parse_contributors([await to_jagex_name(contributor)], version=version)
+    data = await parse_contributors([contributor], version=version)
     return data

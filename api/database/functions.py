@@ -5,20 +5,12 @@ import random
 import traceback
 from collections import namedtuple
 
-from sqlalchemy.sql.sqltypes import TIMESTAMP
-
-# Although never directly used, the engines are imported to add a permanent reference 
-# to these entities to prevent the
-# garbage collector from trying to dispose of our engines.
-from api.database.database import PLAYERDATA_ENGINE, DISCORD_ENGINE
-from api.database.database import Engine, EngineType, get_session
+from api.database.database import Engine, EngineType, playerdata
 from api.database.models import Token
-from api.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import InternalError, OperationalError
-from sqlalchemy.sql.expression import select, insert
-from datetime import datetime, timedelta
+from sqlalchemy.sql.expression import select
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +24,7 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
         logger.debug(f'To many retries')
         return None
 
+    engine = Engine(engine_type)
 
     if not is_retry:
         has_return = True if sql.strip().lower().startswith('select') else False
@@ -53,37 +46,38 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
 
     # debugging
     if debug:
-        engine = Engine(engine_type)
         logger.debug(f'{has_return=}')
         logger.debug(f'sql={sql.compile(engine.engine)}')
         logger.debug(f'{param=}')
-
-        await engine.engine.dispose()
     
     try:
-        async with get_session(engine_type) as session:
+        async with engine.session() as session:
             # execute session
             rows = await session.execute(sql, param)
             # parse data
             records = sql_cursor(rows) if has_return else None
             # commit session
             await session.commit()
-
+        # clean up connection
+        await engine.engine.dispose()
 
     # OperationalError = Deadlock, InternalError = lock timeout
     except OperationalError as e:
         e = e if debug else ''
         logger.debug(f'Deadlock, retrying {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
+        await engine.engine.dispose()
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except InternalError as e:
         e = e if debug else ''
         logger.debug(f'Lock, retrying: {e}')
         await asyncio.sleep(random.uniform(0.1,1.1))
+        await engine.engine.dispose()
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except Exception as e:
         logger.error('got an unkown error')
         logger.error(traceback.print_exc())
+        await engine.engine.dispose()
         records = None
     
     return records
@@ -111,59 +105,44 @@ class sqlalchemy_result:
         Record = namedtuple('Record', columns)
         return [Record(*[getattr(row, col.name) for col in row.__table__.columns]) for row in self.rows]
 
-async def verify_token(token:str, verification:str, route:str=None) -> bool:
-    """
-        Checks the following:
-        Requests the token from the server.
-        Checks to see if the token has the necessary permissions in order to fufill the request.
-        Checks to see if the token exists.
-        hecks to see if the token is active.
-        Checks to see if the token has achieved its ratelimit, if so return, if not: increment.
-        Update the token's last-used field with the current time.
-        Attempt the request.
-    """
-    
-    sql = select(ApiUser)
-    sql = sql.where(ApiUser.token == token)
-    sql = sql.where(ApiPermission.permission == verification)
-    sql = sql.join(ApiUserPerm, ApiUser.id == ApiUserPerm.user_id)
-    sql = sql.join(ApiPermission, ApiUserPerm.permission_id == ApiPermission.id)
-    
-    sql_usage = select(ApiUsage)
-    sql_usage = sql_usage.join(ApiUser, ApiUser.id == ApiUsage.user_id)
-    sql_usage = sql_usage.where(ApiUsage.timestamp >= datetime.utcnow() - timedelta(hours=1))
-    
-    async with get_session(EngineType.PLAYERDATA) as session:
-        api_user = await session.execute(sql)
-        usage_data = await session.execute(sql_usage)
-        
-        api_user = sqlalchemy_result(api_user)
-        usage_data = sqlalchemy_result(usage_data)
+async def verify_token(token:str, verifcation:str) -> bool:
+    engine = Engine()
+    Session = engine.get_sessionmaker()
 
-        api_user = api_user.rows2dict()
-        usage_data = usage_data.rows2dict()
+    # query
+    sql = select(Token)
+    sql = sql.where(Token.token==token)
+
+    # transaction
+    async with Session() as session:
+        data = await session.execute(sql)
         
-        # Checks to see if there is a user ID
-        if not len(api_user) == 0:
-            insert_values = {}
-            insert_values['route'] = route
-            insert_values['user_id'] = api_user[0]['id']
-            insert_usage = insert(ApiUsage).values(insert_values)
-            await session.execute(insert_usage)
-            await session.commit()
-        
-    # If len api_user == 0; user does not have necessary permissions
-    if len(api_user) == 0:
-        raise HTTPException(status_code=401, detail=f"Insufficent Permissions: Either the token does not exist or you don't have sufficent permissions to access this content.")
-    
-    api_user = api_user[0]
-    
-    if api_user['is_active'] != 1:
-        raise HTTPException(status_code=403, detail=f"User token has been disabled. Please contact a developer.\nThis could be due to having an inactive token (>30d) or a manual shutdown by a developer.")
-    
-    if (len(usage_data) > api_user['ratelimit']) and (api_user['ratelimit'] != -1):
-        raise HTTPException(status_code=429, detail=f"Your Ratelimit has been reached. Calls: {len(usage_data)}/{api_user['ratelimit']}") 
-    
+    # cleanup connection
+    await engine.engine.dispose()
+
+    # parse data
+    data = sqlalchemy_result(data)
+
+    if len(data.rows) == 0:
+        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
+
+    player_token = data.rows2tuple()
+
+    # check if token exists (empty list if token does not exist)
+    if not player_token:
+        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
+
+    # all possible checks
+    permissions = {
+        'hiscore':          player_token[0].request_highscores,
+        'ban':              player_token[0].verify_ban,
+        'create_token':     player_token[0].create_token,
+        'verify_players':   player_token[0].verify_players
+    }
+
+    # get permission, default: 0
+    if not permissions.get(verifcation, 0) == 1:
+        raise HTTPException(status_code=403, detail=f"insufficient permissions: {verifcation}")
     return True
 
     

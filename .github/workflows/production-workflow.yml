@@ -40,7 +40,7 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: Apply Possible Deployment Changes
-      run: kubectl apply -f deployment/prod/
+      run: kubectl apply -f bd-prod-api-deploy.yaml
 
     - name: Restart Deployment for Possible Container Changes
       run: kubectl rollout restart deploy bd-prod-api

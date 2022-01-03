@@ -4,14 +4,16 @@ import random
 import time
 from typing import List, Optional
 
-from api.database.database import EngineType, get_session
-from api.database.functions import batch_function, execute_sql, verify_token
+from sqlalchemy.orm.session import sessionmaker
+
+from api.database.database import Engine, get_sessionmaker, playerdata, playerdata_engine
+from api.database.functions import (batch_function, execute_sql, verify_token)
 from api.database.models import Player as dbPlayer
 from api.database.models import playerHiscoreData
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.exc import InternalError, OperationalError
-from sqlalchemy.sql.expression import insert, update
+from sqlalchemy.sql.expression import update, insert
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -100,7 +102,6 @@ class hiscore(BaseModel):
     wintertodt: int
     zalcano: int
     zulrah: int
-    phosanis_nightmare:Optional[int]=None
 
 class Player(BaseModel):
     id: int
@@ -120,9 +121,9 @@ async def sql_get_players_to_scrape(page=1, amount=100_000):
     data = await execute_sql(sql, page=page, row_count=amount)
     return data.rows2dict()
 
-@router.get("/scraper/players/{page}/{amount}/{token}", tags=["Business"])
+@router.get("/scraper/players/{page}/{amount}/{token}", tags=["scraper"])
 async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
-    await verify_token(token, verification='verify_ban')
+    await verify_token(token, verifcation='ban')
     return await sql_get_players_to_scrape(page=page, amount=amount)
 
 async def handle_lock(function, data):
@@ -134,9 +135,11 @@ async def handle_lock(function, data):
 
 
 async def sqla_update_player(players):
+    engine = Engine()
+    Session = engine.get_sessionmaker()
     logger.debug(f'update players: {len(players)=}')
 
-    async with get_session(EngineType.PLAYERDATA) as session:
+    async with Session() as session:
         try:
             for player in players:
                 player_id = player.get('id')
@@ -145,28 +148,43 @@ async def sqla_update_player(players):
             await session.commit()
         except (OperationalError, InternalError) as e:
             await handle_lock(sqla_update_player, players)
-        finally:
-            await session.close()
+    # closing idle db connections (or they will get closed by the db (sleep timeout 60))
+    await engine.engine.dispose() 
     return
 
 async def sqla_insert_hiscore(hiscores:List):
+    engine = Engine()
+    Session = engine.get_sessionmaker()
     logger.debug(f'insert hiscores: {len(hiscores)=}')
 
     sql = insert(playerHiscoreData).prefix_with('ignore')
     
-    async with get_session(EngineType.PLAYERDATA) as session:
+    async with Session() as session:
         try:
             await session.execute(sql, hiscores)
             await session.commit()
         except (OperationalError, InternalError) as e:
             await handle_lock(sqla_insert_hiscore, hiscores)
-        finally:
-            await session.close()
+    # closing idle db connections (or they will get closed by the db (sleep timeout 60))
+    await engine.engine.dispose()
     return
 
-@router.post("/scraper/hiscores/{token}", tags=["Business"])
+async def sample():
+    # a sessionmaker(), also in the same scope as the engine
+    Session = playerdata.session
+
+    # we can now construct a Session() without needing to pass the
+    # engine each time
+    with Session() as session:
+        session.execute()
+        session.commit()
+    # closes the session
+    return
+  
+  
+@router.post("/scraper/hiscores/{token}", tags=["scraper"])
 async def receive_scraper_data(token, data: List[scraper], hiscores_tasks: BackgroundTasks):
-    await verify_token(token, verification='verify_ban', route='[POST]/scraper/hiscores/token')
+    await verify_token(token, verifcation='ban')
     # background task will cause lots of duplicates
     hiscores_tasks.add_task(post_hiscores_to_db, data)
     return {'ok': f'{len(data)} records to be inserted.'}

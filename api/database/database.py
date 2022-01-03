@@ -1,17 +1,18 @@
+from asyncio.tasks import current_task
 from enum import Enum, auto
-from typing import AsyncGenerator
+
+from sqlalchemy.ext.asyncio.engine import AsyncConnection, AsyncEngine
 
 from api import Config
-from contextlib import asynccontextmanager
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_scoped_session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 
 
 class EngineType(Enum):
+    """"""
     PLAYERDATA = auto()
     DISCORD = auto()
-
 
 class Engine():
     def __init__(self, engine_type: EngineType = EngineType.PLAYERDATA):
@@ -27,34 +28,41 @@ class Engine():
         self.engine = create_async_engine(
             connection_string, 
             poolclass=QueuePool,
-            pool_pre_ping=True,
-            pool_size=100, 
-            max_overflow=500,
-            pool_recycle=3600
+            pool_pre_ping=True
+
         )
-        # self.engine.echo = True
-        self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=True)
+  
+        self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
 
+    def get_engine(self) -> AsyncEngine:
+        return self.engine
+    
+    def get_connection(self) -> AsyncConnection:
+        return self.engine.connect()
+        
+    def get_sessionmaker(self) -> sessionmaker:
+        return self.session
+    
+    def get_scoped_session(self) -> async_scoped_session:
+        return async_scoped_session(self.session, scopefunc=current_task)
 
-"""Our Database Engines"""
-PLAYERDATA_ENGINE = Engine(EngineType.PLAYERDATA)
-DISCORD_ENGINE = Engine(EngineType.DISCORD)
+playerdata = Engine(EngineType.PLAYERDATA)
+discord = Engine(EngineType.DISCORD)
 
-
-@asynccontextmanager
-async def get_session(type: EngineType) -> AsyncGenerator[AsyncSession, None]:
-    """Provides an AsyncGenerator to allow creation of a database session."""
-    if type == EngineType.PLAYERDATA:
-        async with PLAYERDATA_ENGINE.session() as session:
-            yield session
-
-            await session.close()
-
-    elif type == EngineType.DISCORD:
-        async with DISCORD_ENGINE.session() as session:
-            yield session
-
-            await session.close()
-
-    else:
-        raise ValueError(f"Engine type {type} not valid.")
+playerdata_engine = create_async_engine(
+    Config.sql_uri, 
+    poolclass=QueuePool, 
+    pool_size=10, 
+    max_overflow=100,
+    pool_recycle=50,
+    echo="debug"
+)
+discord_engine = create_async_engine(
+    Config.discord_sql_uri, 
+    poolclass=QueuePool, 
+    pool_size=10, 
+    max_overflow=100,
+    pool_recycle=50
+)
+def get_sessionmaker(engine: AsyncEngine) -> sessionmaker:
+    return sessionmaker(engine, class_=AsyncSession, expire_on_commit=True)
