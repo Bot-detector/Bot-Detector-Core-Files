@@ -36,8 +36,8 @@ async def get_feedback(
         proposed_label: Optional[str] = None,
         feedback_text: Optional[str] = None,
         has_text:Optional[bool]=None, 
-        row_count:Optional[int]=100_000, 
-        page:Optional[int]=1):
+        row_count:Optional[int]=Query(100_000, ge=1), 
+        page:Optional[int]=Query(1, ge=1)):
     '''
         Get player feedback of a player
     '''
