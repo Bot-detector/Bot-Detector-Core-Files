@@ -130,7 +130,7 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
     sql = sql.join(ApiPermission, ApiUserPerm.permission_id == ApiPermission.id)
     
     sql_usage = select(ApiUsage)
-    sql_usage = sql_usage.join(ApiUser, ApiUser.id == ApiUsage.user_id)
+    sql_usage = sql_usage.where(ApiUser.id == ApiUsage.user_id, ApiUser.token == token)
     sql_usage = sql_usage.where(ApiUsage.timestamp >= datetime.utcnow() - timedelta(hours=1))
     
     async with get_session(EngineType.PLAYERDATA) as session:
