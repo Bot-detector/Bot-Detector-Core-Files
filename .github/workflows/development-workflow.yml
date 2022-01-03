@@ -10,10 +10,10 @@ jobs:
     - uses: actions/checkout@v2
     - name: Set Up ENV
       run: |
-          echo "${{ secrets.ASYNCMY_URI }}" > .env
+          echo "${{ secrets.AIOMYSQL_URI }}" > .env
           echo "${{ secrets.HTTP_PROXY }}" >> .env
           echo "${{ secrets.HTTPS_PROXY }}" >> .env
-          echo "${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
+          echo "${{ secrets.DISCORD_AIOMYSQL_URI }}" >> .env
           echo "${{ secrets.FLASK_PORT }}" >> .env
           echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
           echo "${{ secrets.FEEDBACK_WEBHOOK_URL }}" >> .env
@@ -40,7 +40,7 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: Apply Possible Deployment Changes
-      run: kubectl apply -f deployment/dev/
+      run: kubectl apply -f bd-dev-api-deploy.yaml
 
     - name: Restart Deployment for Possible Container Changes
       run: kubectl rollout restart deploy bd-dev-api

@@ -1,14 +1,14 @@
 from operator import or_
 from typing import List, Optional
 
-from api.database.database import EngineType, get_session
-from api.database.functions import (list_to_string, sqlalchemy_result,
-                                    verify_token)
+from api.database.database import Engine
+from api.database.functions import  (list_to_string,
+                                    sqlalchemy_result, verify_token)
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlalchemy.sql.expression import select, text
+from sqlalchemy.sql.expression import delete, select, text
 from sqlalchemy.sql.functions import func
 
 router = APIRouter()
@@ -44,33 +44,34 @@ class Prediction(BaseModel):
     Vorkath_bot: Optional[float] = 0
     Barrows_bot: Optional[float] = 0
     Herblore_bot: Optional[float] = 0
-    Zulrah_bot: Optional[float] = 0
 
 
-@router.get("/v1/prediction", tags=["Prediction"])
-async def get_account_prediction_result(name: str):
+@router.get("/v1/prediction", tags=["prediction"])
+async def get(token: str, name: str):
     '''
-        Selects a player's prediction from the plugin database.\n
-        Use: Used to determine the prediction of a player according to the prediction found in the prediction table.
+        select predictionf from database
     '''
+    await verify_token(token, verifcation='hiscore')
 
     sql = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
+    
+    Session = Engine().session
 
-    async with get_session(EngineType.PLAYERDATA) as session:
+    async with Session() as session:
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
 
-@router.post("/v1/prediction", tags=["Prediction"])
-async def insert_prediction_into_plugin_database(token: str, prediction: List[Prediction]):
+
+@router.post("/v1/prediction", tags=["prediction"])
+async def post(token: str, prediction: List[Prediction]):
     '''
-        Posts a new prediction into the plugin database.\n
-        Use: Can be used to insert a new prediction into the plugin database.
+        replace into prediction table
     '''
-    await verify_token(token, verification='verify_ban', route='[POST]/v1/prediction/')
+    await verify_token(token, verifcation='ban')
 
     data = [d.dict() for d in prediction]
 
@@ -80,20 +81,20 @@ async def insert_prediction_into_plugin_database(token: str, prediction: List[Pr
     sql = f'''replace into Predictions ({columns}) values ({values})'''
     sql = text(sql)
 
-    async with get_session(EngineType.PLAYERDATA) as session:
+    Session = Engine().session
+
+    async with Session() as session:
         await session.execute(sql, data)
         await session.commit()
+    
+    return {'ok':'ok'}
 
-    return {'ok': 'ok'}
-
-
-@router.get("/v1/prediction/data", tags=["Business"])
-async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
+@router.get("/v1/prediction/data", tags=["prediction", "business-logic"])
+async def get(token: str, limit: int = 50_000):
     '''
-        Select predictions where prediction data is not from today or null.
-        Business service: ML
+        GET: the hiscore data where prediction is not from today
     '''
-    await verify_token(token, verification='request_highscores')
+    await verify_token(token, verifcation='hiscore')
 
     # query
     sql = select(columns=[PlayerHiscoreDataLatest, Player.name])
@@ -106,15 +107,17 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     sql = sql.order_by(func.rand())
     sql = sql.limit(limit).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
+    
+    Session = Engine().session
 
-    async with get_session(EngineType.PLAYERDATA) as session:
+    async with Session() as session:
         data = await session.execute(sql)
 
     names, objs, output = [], [], []
     for d in data:
         objs.append((d[0],))
         names.append(d[1])
-
+    
     data = sqlalchemy_result(objs).rows2dict()
 
     for d, n in zip(data, names):
@@ -122,54 +125,3 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
         output.append(d)
 
     return output
-
-
-@router.get("/v1/prediction/bulk", tags=["Prediction"])
-async def gets_predictions_by_player_features(
-    token: str,
-    row_count: int = Query(100_000, ge=1),
-    page: int = Query(1, ge=1),
-    possible_ban: Optional[int] = Query(None, ge=0, le=1),
-    confirmed_ban: Optional[int] = Query(None, ge=0, le=1),
-    confirmed_player: Optional[int] = Query(None, ge=0, le=1),
-    label_id: Optional[int] = Query(None, ge=0),
-    label_jagex: Optional[int] = Query(None, ge=0, le=5),
-):
-    """
-        Get predictions by player features
-    """
-    await verify_token(token, verification='request_highscores', route='[GET]/v1/prediction/bulk')
-
-    if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
-        raise HTTPException(status_code=404, detail="No param given")
-    # query
-    sql = select(dbPrediction)
-
-    # filters
-    if not possible_ban is None:
-        sql = sql.where(Player.possible_ban == possible_ban)
-
-    if not confirmed_ban is None:
-        sql = sql.where(Player.confirmed_ban == confirmed_ban)
-
-    if not confirmed_player is None:
-        sql = sql.where(Player.confirmed_player == confirmed_player)
-
-    if not label_id is None:
-        sql = sql.where(Player.label_id == label_id)
-
-    if not label_jagex is None:
-        sql = sql.where(Player.label_jagex == label_jagex)
-
-    # paging
-    sql = sql.limit(row_count).offset(row_count*(page-1))
-
-    # join
-    sql = sql.join(Player)
-
-    # execute query
-    async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-
-    data = sqlalchemy_result(data)
-    return data.rows2dict()
