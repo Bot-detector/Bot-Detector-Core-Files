@@ -1,4 +1,4 @@
-import logging
+import asyncio
 import os
 import pathlib
 import random
@@ -11,15 +11,16 @@ import pandas as pd
 from api import Config
 from api.database.database import EngineType
 from api.database.functions import execute_sql, list_to_string, verify_token
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm.exc import NoResultFound
 
+import logging
 logger = logging.getLogger(__name__)
 
 '''
-This file will have all legacy from the Flask api.
+This file will have all legacy routes from the Flask api.
 after everything is ported, validated & discussed route desing should be done
 '''
 
@@ -107,11 +108,8 @@ async def sql_get_player(player_name):
     # returns a list of players
     player = await execute_sql(sql_player_id, param=param)
 
-    try:
-        player = player.rows2dict()
-    except AttributeError:
-        raise HTTPException(status_code=500, detail="Player does not exist.")
-        
+    player = player.rows2dict()
+
     return None if len(player) == 0 else player[0]
 
 
@@ -606,7 +604,7 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
 
 
 '''
-   
+    routes
 '''
 
 async def sql_select_players(names: List):
@@ -704,7 +702,7 @@ async def detect(detections, manual_detect):
     await execute_sql(sql, param)
 
 
-# @router.post('/{version}/plugin/detect/{manual_detect}', tags=["Legacy"])
+# @router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 # async def post_detect(detections: List[detection], version: str = None, manual_detect: int = 0):
 #     # 
 #     asyncio.to_thread(
@@ -714,10 +712,10 @@ async def detect(detections, manual_detect):
 #     return {'OK': 'OK'}
 
 
-# @router.post('/stats/contributions/', tags=["Legacy"])
+# @router.post('/stats/contributions/', tags=['legacy'])
 # async def get_contributions(contributors: List[contributor], token: str = None):
 #     if token:
-#         await verify_token(token, verification='request_highscores')
+#         await verify_token(token, verifcation='hiscore')
 
 #         add_patron_stats = True
 #     else:
@@ -730,13 +728,13 @@ async def detect(detections, manual_detect):
 #     return data
 
 
-# @router.get('/{version}/stats/contributions/{contributor}', tags=["Legacy"])
+# @router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
 # async def get_contributions_url(contributor: str, version: str):
 #     data = await parse_contributors([contributor], version=version)
 #     return data
 
 
-@router.get('/stats/getcontributorid/{contributor}', tags=["Legacy"])
+@router.get('/stats/getcontributorid/{contributor}', tags=['legacy'])
 async def get_contributor_id(contributor: str):
     player = await sql_get_player(contributor)
 
@@ -751,7 +749,7 @@ async def get_contributor_id(contributor: str):
     return return_dict
 
 
-@router.get('/site/dashboard/projectstats', tags=["Legacy"])
+@router.get('/site/dashboard/projectstats', tags=['legacy'])
 async def get_total_reports():
     report_stats = await sql_get_report_stats()
 
@@ -765,14 +763,14 @@ async def get_total_reports():
     return output
 
 
-@router.get('/labels/get_player_labels', tags=["Legacy"])
+@router.get('/labels/get_player_labels', tags=['legacy'])
 async def get_player_labels():
     labels = await sql_get_player_labels()
     df = pd.DataFrame(labels)
     return df.to_dict('records')
 
 
-@router.post('/{version}/plugin/predictionfeedback/', tags=["Legacy"])
+@router.post('/{version}/plugin/predictionfeedback/', tags=['legacy'])
 async def receive_plugin_feedback(feedback: Feedback, version: str = None):
  
     feedback_params = feedback.dict()
@@ -804,15 +802,15 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
     return {"OK": "OK"}
 
 
-@router.get('/site/highscores/{token}/{ofInterest}', tags=["Legacy"])
-@router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=["Legacy"])
+@router.get('/site/highscores/{token}/{ofInterest}', tags=['legacy'])
+@router.get('/site/highscores/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
 async def get_highscores(
         token: str, 
         ofInterest: int = None, 
         row_count: Optional[int] = 100_000, 
         page: Optional[int] = 1
     ):
-    await verify_token(token, verification='request_highscores')
+    await verify_token(token, verifcation='hiscore')
 
     if ofInterest is None:
         sql = ('''
@@ -836,9 +834,9 @@ async def get_highscores(
     return data.rows2dict() if data is not None else {}
 
 
-@router.get('site/players/{token}/{ofInterest}/{row_count}/{page}', tags=["Legacy"])
+@router.get('site/players/{token}/{ofInterest}/{row_count}/{page}', tags=['legacy'])
 async def get_players(token:str, ofInterest:int=None, row_count:int=100_000, page:int=1):
-    await verify_token(token, verification='request_highscores')
+    await verify_token(token, verifcation='hiscore')
 
     # get data
     if ofInterest is None:
@@ -850,18 +848,18 @@ async def get_players(token:str, ofInterest:int=None, row_count:int=100_000, pag
     return data.rows2dict() if data is not None else {}
 
 
-@router.get('/site/labels/{tokens}', tags=["Legacy"])
+@router.get('/site/labels/{tokens}', tags=['legacy'])
 async def get_labels(token):
-    await verify_token(token, verification='request_highscores')
+    await verify_token(token, verifcation='hiscore')
 
     sql = 'select * from Labels'
     data = await execute_sql(sql)
     return data.rows2dict() if data is not None else {}
 
 
-@router.post('/site/verify/{token}', tags=["Legacy"])
+@router.post('/site/verify/{token}', tags=['legacy'])
 async def verify_bot(token:str, bots:bots):
-    await verify_token(token, verification='verify_ban')
+    await verify_token(token, verifcation='ban')
 
     bots = bots.__dict__
     playerNames = bots['names']
@@ -939,9 +937,9 @@ async def set_discord_verification(id, token):
     return 
 
 
-@router.post('/{version}/site/discord_user/{token}', tags=["Legacy"])
+@router.post('/{version}/site/discord_user/{token}', tags=['legacy'])
 async def verify_discord_user(token:str, discord:discord, version:str=None):
-    await verify_token(token, verification='verify_players') 
+    await verify_token(token, verifcation='verify_players') 
     
     verify_data = discord.dict()
     player = await sql_get_player(verify_data["player_name"])
@@ -985,7 +983,7 @@ async def sql_get_prediction_player(player_id):
         raise NoResultFound
     
 
-@router.get('/{version}/site/prediction/{player_name}', tags=["Legacy"])
+@router.get('/{version}/site/prediction/{player_name}', tags=['legacy'])
 async def get_prediction(player_name, version=None, token=None):
     player_name, bad_name = await name_check(player_name)
 
@@ -1027,11 +1025,11 @@ async def get_prediction(player_name, version=None, token=None):
 
 
 ###
-#  Discord
+#  Discord Routes
 ##
-@router.post('/discord/get_xp_gains/{token}', tags=["Legacy"])
+@router.post('/discord/get_xp_gains/{token}', tags=['legacy'])
 async def get_latest_xp_gains(player_info:PlayerName, token:str):
-    await verify_token(token, verification='verify_players')
+    await verify_token(token, verifcation='verify_players')
 
     player = player_info.dict()
     player_name = player.get('player_name')
@@ -1070,18 +1068,18 @@ async def get_latest_xp_gains(player_info:PlayerName, token:str):
         return "No gains found for this player.", 404
 
 
-@router.get('/discord/verify/player_rsn_discord_account_status/{token}/{player_name}', tags=["Legacy"])
+@router.get('/discord/verify/player_rsn_discord_account_status/{token}/{player_name}', tags=['legacy'])
 async def get_discord_verification_status_by_name(token: str, player_name: str):
-    await verify_token(token, verification='verify_players')
+    await verify_token(token, verifcation='verify_players')
 
     status_info = await sql_get_discord_verification_status(player_name)
 
     return status_info
 
 
-@router.get('/discord/verify/get_verification_attempts/{token}/{player_name}', tags=["Legacy"])
+@router.get('/discord/verify/get_verification_attempts/{token}/{player_name}', tags=['legacy'])
 async def get_discord_verification_attempts(token: str, player_name: str):
-    await verify_token(token, verification='verify_players')
+    await verify_token(token, verifcation='verify_players')
 
     player = await sql_get_player(player_name)
 
@@ -1095,9 +1093,9 @@ async def get_discord_verification_attempts(token: str, player_name: str):
     return attempts
 
 
-@router.post('/discord/verify/insert_player_dpc/{token}', tags=["Legacy"])
+@router.post('/discord/verify/insert_player_dpc/{token}', tags=['legacy'])
 async def post_verification_request_information(token: str, verify_info: DiscordVerifyInfo):
-    await verify_token(token, verification='verify_players')
+    await verify_token(token, verifcation='verify_players')
 
     info = verify_info.dict()
 
@@ -1120,18 +1118,18 @@ async def post_verification_request_information(token: str, verify_info: Discord
     return
 
 
-@router.get('/discord/get_linked_accounts/{token}/{discord_id}', tags=["Legacy"])
+@router.get('/discord/get_linked_accounts/{token}/{discord_id}', tags=['legacy'])
 async def get_discord_linked_accounts(token: str, discord_id: int):
-    await verify_token(token, verification='verify_players')
+    await verify_token(token, verifcation='verify_players')
 
     linked_accounts = await sql_get_discord_linked_accounts(discord_id)
 
     return linked_accounts
 
 
-@router.post('/discord/get_latest_sighting/{token}', tags=["Legacy"])
+@router.post('/discord/get_latest_sighting/{token}', tags=['legacy'])
 async def get_latest_sighting(token: str, player_info: PlayerName):
-    await verify_token(token, verification='verify_players')
+    await verify_token(token, verifcation='verify_players')
 
     player = player_info.dict()
     player_name = player.get('player_name')
@@ -1162,9 +1160,9 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
     return filtered_sighting
 
 
-@router.post('/discord/region/{token}', tags=["Legacy"])
+@router.post('/discord/region/{token}', tags=['legacy', 'maps'])
 async def get_region(token:str, region: RegionName):
-    await verify_token(token, verification='verify_players')
+    await verify_token(token, verifcation='verify_players')
 
     region_info = region.dict()
     region_name = region_info.get('region_name')
@@ -1174,9 +1172,9 @@ async def get_region(token:str, region: RegionName):
     return regions
 
 
-@router.post('/discord/heatmap/{token}', tags=["Legacy"])
+@router.post('/discord/heatmap/{token}', tags=['legacy', 'maps'])
 async def get_heatmap_data(token: str, region_id: RegionID):
-    await verify_token(token, verification='verify_players')
+    await verify_token(token, verifcation='verify_players')
 
     region_data = region_id.dict()
     id = region_data.get('region_id')
@@ -1197,9 +1195,9 @@ async def get_heatmap_data(token: str, region_id: RegionID):
     return output
 
 
-@router.post('/discord/player_bans/{token}', tags=["Legacy"])
+@router.post('/discord/player_bans/{token}', tags=['legacy'])
 async def generate_excel_export(token: str, export_info: ExportInfo):
-    await verify_token(token, verification='verify_players')
+    await verify_token(token, verifcation='verify_players')
     #get_ban_spreadsheet_data
 
     req_data = export_info.dict()
@@ -1227,7 +1225,7 @@ async def generate_excel_export(token: str, export_info: ExportInfo):
     return {"url": download_url}
 
 
-@router.get('/discord/download_export/{export_id}', tags=["Legacy"])
+@router.get('/discord/download_export/{export_id}', tags=['legacy'])
 async def download_export(export_id: str):
     
     download_data = await get_export_link(export_id)

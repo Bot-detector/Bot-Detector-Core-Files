@@ -1,16 +1,14 @@
 import asyncio
-import logging
 import re
-import time
 from typing import List, Optional
 
 import pandas as pd
 from api.Config import app
-from api.database.functions import (batch_function, execute_sql,
-                                    list_to_string, verify_token)
+from api.database.functions import execute_sql, list_to_string, verify_token, batch_function
 from fastapi import APIRouter
 from pydantic import BaseModel
-
+import time
+import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -154,7 +152,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 async def offload_detect(detections:List[detection], manual_detect:int) -> None:
     await run_in_process(detect, detections, manual_detect)
 
-@router.post('/{version}/plugin/detect/{manual_detect}', tags=["Legacy"])
+@router.post('/{version}/plugin/detect/{manual_detect}', tags=['legacy'])
 async def post_detect(
         detections:List[detection],
         version:str=None, 
@@ -312,11 +310,11 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     return return_dict
 
 
-@router.post('/stats/contributions/', tags=["Legacy"])
+@router.post('/stats/contributions/', tags=['legacy'])
 async def get_contributions(contributors: List[contributor], token:str=None):
     add_patron_stats = False
     if token:
-        await verify_token(token, verification='verify_players')
+        await verify_token(token, verifcation='verify_players')
         add_patron_stats = True
         
     contributors = [d.__dict__['name'] for d in contributors]
@@ -325,7 +323,7 @@ async def get_contributions(contributors: List[contributor], token:str=None):
     return data
 
 
-@router.get('/{version}/stats/contributions/{contributor}', tags=["Legacy"])
+@router.get('/{version}/stats/contributions/{contributor}', tags=['legacy'])
 async def get_contributions_url(contributor: str, version: str):
     data = await parse_contributors([contributor], version=version)
     return data
