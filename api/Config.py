@@ -76,3 +76,4 @@ bsched.start()
 import warnings
 # Suppress warnings only for aiomysql, all other modules can send warnings
 warnings.filterwarnings('ignore', module=r"aiomysql")
+warnings.filterwarnings('ignore', module=r"asyncmy")
