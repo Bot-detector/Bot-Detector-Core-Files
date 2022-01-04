@@ -20,7 +20,7 @@ graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
 
-loki_url = os.environ.get('logging_loki')
+loki_url = os.environ.get('loki_url')
 loki_user = os.environ.get('loki_user')
 loki_pw = os.environ.get('loki_pw')
 
