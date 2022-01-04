@@ -1,12 +1,14 @@
 import logging
 import os
 import sys
+from multiprocessing import Queue
 
+import logging_loki
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import find_dotenv, load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -17,6 +19,10 @@ proxy_https = os.environ.get('proxy_https')
 graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
+
+loki_url = os.environ.get('logging_loki')
+loki_user = os.environ.get('loki_user')
+loki_pw = os.environ.get('loki_pw')
 
 # create application
 app = FastAPI()
@@ -49,6 +55,18 @@ handlers = [
     stream_handler
 ]
 
+
+if not loki_url is None:
+    loki_handler = logging_loki.LokiQueueHandler(
+        Queue(-1),
+        url=f"{loki_url}", # https://my-loki-instance/loki/api/v1/push
+        tags={"application": "api"},
+        auth=(f"{loki_user}", f"{loki_pw}"),
+        version="1",
+    )
+    loki_handler.setFormatter(formatter)
+    handlers.append(loki_handler)
+
 logging.basicConfig(level=logging.DEBUG, handlers=handlers)
 
 # set imported loggers to warning
@@ -74,6 +92,7 @@ bsched.start()
 
 # https://github.com/aio-libs/aiomysql/issues/103
 import warnings
+
 # Suppress warnings only for aiomysql, all other modules can send warnings
 warnings.filterwarnings('ignore', module=r"aiomysql")
 warnings.filterwarnings('ignore', module=r"asyncmy")
