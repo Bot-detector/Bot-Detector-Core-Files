@@ -168,7 +168,7 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
 
     
 
-async def batch_function(function, data, batch_size=100):
+async def batch_function(function, data, batch_size=300):
     batches = []
     for i in range(0, len(data), batch_size):
         logger.debug(f'batch: {function.__name__}, {i}/{len(data)}')
