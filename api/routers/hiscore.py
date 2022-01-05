@@ -81,6 +81,7 @@ class hiscore(BaseModel):
     kril_tsutsaroth: int
     mimic: int
     nightmare: int
+    nex : int
     obor: int
     phosanis_nightmare : int
     sarachnis: int
