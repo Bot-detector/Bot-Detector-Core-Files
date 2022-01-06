@@ -31,7 +31,7 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
     if retry_attempt >= 5:
         logger.debug(f'Too many retries')
         return None
-
+    sleep = 5 * retry_attempt
 
     if not is_retry:
         has_return = True if sql.strip().lower().startswith('select') else False
