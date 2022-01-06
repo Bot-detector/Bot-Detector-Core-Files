@@ -336,16 +336,16 @@ class Report(Base):
 class stgReport(Base):
     __tablename__ = 'stgReports'
 
-    ID = Column(BigInteger, primary_key=True)
+    ID = Column(BigInteger, primary_key=True, , autoincrement=True)
     created_at = Column(TIMESTAMP, nullable=False,
                         server_default=text("CURRENT_TIMESTAMP"))
-    reportedID = Column(nullable=False, index=True)
-    reportingID = Column(nullable=False, index=True)
+    reportedID = Column(nullable=False)
+    reportingID = Column(nullable=False)
     region_id = Column(Integer, nullable=False)
     x_coord = Column(Integer, nullable=False)
     y_coord = Column(Integer, nullable=False)
     z_coord = Column(Integer, nullable=False)
-    timestamp = Column(TIMESTAMP, nullable=False, index=True,
+    timestamp = Column(TIMESTAMP, nullable=False,
                        server_default=text("CURRENT_TIMESTAMP"))
     manual_detect = Column(TINYINT(1))
     on_members_world = Column(Integer)
