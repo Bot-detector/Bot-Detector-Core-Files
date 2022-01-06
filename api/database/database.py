@@ -29,7 +29,7 @@ class Engine():
             poolclass=QueuePool,
             pool_pre_ping=True,
             pool_size=100, 
-            max_overflow=500,
+            max_overflow=5000,
             pool_recycle=3600
         )
         # self.engine.echo = True
