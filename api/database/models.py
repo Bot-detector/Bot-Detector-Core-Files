@@ -336,7 +336,7 @@ class Report(Base):
 class stgReport(Base):
     __tablename__ = 'stgReports'
 
-    ID = Column(BigInteger, primary_key=True, , autoincrement=True)
+    ID = Column(BigInteger, primary_key=True, autoincrement=True)
     created_at = Column(TIMESTAMP, nullable=False,
                         server_default=text("CURRENT_TIMESTAMP"))
     reportedID = Column(nullable=False)
