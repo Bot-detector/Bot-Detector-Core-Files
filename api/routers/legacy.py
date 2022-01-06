@@ -161,7 +161,7 @@ async def sql_insert_report(data):
     columns = list_to_string(list(param.keys()))
     values = list_to_string([f':{column}' for column in list(param.keys())])
 
-    sql = f'insert ignore into Reports ({columns}) values ({values});'
+    sql = f'insert ignore into stgReports ({columns}) values ({values});'
 
     await execute_sql(sql, param=param, debug=False)
     return
@@ -705,7 +705,7 @@ async def detect(detections, manual_detect):
     columns = list_to_string(params)
     values = list_to_string([f':{column}' for column in params])
 
-    sql = f'insert ignore into Reports ({columns}) values ({values})'
+    sql = f'insert ignore into stgReports ({columns}) values ({values})'
     await execute_sql(sql, param)
 
 
