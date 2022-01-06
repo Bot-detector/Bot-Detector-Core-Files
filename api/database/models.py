@@ -350,7 +350,7 @@ class stgReport(Base):
     manual_detect = Column(TINYINT(1))
     on_members_world = Column(Integer)
     on_pvp_world = Column(TINYINT)
-    world_number = Column(Integer, index=True)
+    world_number = Column(Integer)
     equip_head_id = Column(Integer)
     equip_amulet_id = Column(Integer)
     equip_torso_id = Column(Integer)
