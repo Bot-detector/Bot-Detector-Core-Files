@@ -331,6 +331,36 @@ class Report(Base):
         'Player', primaryjoin='Report.reportedID == Player.id')
     Player1 = relationship(
         'Player', primaryjoin='Report.reportingID == Player.id')
+    
+    
+class stgReport(Base):
+    __tablename__ = 'stgReports'
+
+    ID = Column(BigInteger, primary_key=True)
+    created_at = Column(TIMESTAMP, nullable=False,
+                        server_default=text("CURRENT_TIMESTAMP"))
+    reportedID = Column(nullable=False, index=True)
+    reportingID = Column(nullable=False, index=True)
+    region_id = Column(Integer, nullable=False)
+    x_coord = Column(Integer, nullable=False)
+    y_coord = Column(Integer, nullable=False)
+    z_coord = Column(Integer, nullable=False)
+    timestamp = Column(TIMESTAMP, nullable=False, index=True,
+                       server_default=text("CURRENT_TIMESTAMP"))
+    manual_detect = Column(TINYINT(1))
+    on_members_world = Column(Integer)
+    on_pvp_world = Column(TINYINT)
+    world_number = Column(Integer, index=True)
+    equip_head_id = Column(Integer)
+    equip_amulet_id = Column(Integer)
+    equip_torso_id = Column(Integer)
+    equip_legs_id = Column(Integer)
+    equip_boots_id = Column(Integer)
+    equip_cape_id = Column(Integer)
+    equip_hands_id = Column(Integer)
+    equip_weapon_id = Column(Integer)
+    equip_shield_id = Column(Integer)
+    equip_ge_value = Column(BigInteger)
 
 
 class playerHiscoreData(Base):
