@@ -110,7 +110,7 @@ async def sql_insert_report(param):
     columns = list_to_string(params)
     values = list_to_string([f':{column}' for column in params])
 
-    sql = f'INSERT ignore INTO Reports ({columns}) VALUES ({values})'
+    sql = f'INSERT ignore INTO stgReports ({columns}) VALUES ({values})'
     await execute_sql(sql, param)
 
 
@@ -123,7 +123,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logger.debug('to many reports')
+        logger.debug('Too many reports.')
         return {'NOK': 'NOK'}, 400
 
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
