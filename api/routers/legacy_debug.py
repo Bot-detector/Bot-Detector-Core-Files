@@ -160,7 +160,6 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
         logger.debug(f'Key Error: {df} '+f'{df.columns}')
         raise KeyError(f"There was a key error with this entry.")
 
-        
     reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
 
     try:
