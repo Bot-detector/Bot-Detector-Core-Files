@@ -29,9 +29,9 @@ def list_to_string(l):
 async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None, retry_attempt=0):
     # retry breakout
     if retry_attempt >= 5:
-        logger.debug(f'To many retries')
+        logger.debug(f'Too many retries')
         return None
-
+    sleep = 5 * retry_attempt
 
     if not is_retry:
         has_return = True if sql.strip().lower().startswith('select') else False
@@ -73,16 +73,16 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
     # OperationalError = Deadlock, InternalError = lock timeout
     except OperationalError as e:
         e = e if debug else ''
-        logger.debug(f'Deadlock, retrying {e}')
-        await asyncio.sleep(random.uniform(0.1,1.1))
+        logger.debug(f'Deadlock, Retry Attempt: {retry_attempt}, retrying {e}')
+        await asyncio.sleep(random.uniform(0.1,sleep))
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except InternalError as e:
         e = e if debug else ''
-        logger.debug(f'Lock, retrying: {e}')
-        await asyncio.sleep(random.uniform(0.1,1.1))
+        logger.debug(f'Lock, Retry Attempt: {retry_attempt}, retrying: {e}')
+        await asyncio.sleep(random.uniform(0.1,sleep))
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except Exception as e:
-        logger.error('got an unkown error')
+        logger.error('Unknown Error')
         logger.error(traceback.print_exc())
         records = None
     
@@ -130,7 +130,7 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
     sql = sql.join(ApiPermission, ApiUserPerm.permission_id == ApiPermission.id)
     
     sql_usage = select(ApiUsage)
-    sql_usage = sql_usage.join(ApiUser, ApiUser.id == ApiUsage.user_id)
+    sql_usage = sql_usage.where(ApiUser.id == ApiUsage.user_id, ApiUser.token == token)
     sql_usage = sql_usage.where(ApiUsage.timestamp >= datetime.utcnow() - timedelta(hours=1))
     
     async with get_session(EngineType.PLAYERDATA) as session:

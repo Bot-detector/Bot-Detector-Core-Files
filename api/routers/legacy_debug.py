@@ -101,7 +101,7 @@ async def parse_detection(data:dict) -> dict:
 
 
 async def sql_insert_player(param):
-    sql = "insert ignore into Players (name, normalized_name) values (:name, :nname)"
+    sql = "INSERT ignore INTO Players (name, normalized_name) VALUES (:name, :nname)"
     await execute_sql(sql, param)
 
 
@@ -110,7 +110,7 @@ async def sql_insert_report(param):
     columns = list_to_string(params)
     values = list_to_string([f':{column}' for column in params])
 
-    sql = f'insert ignore into Reports ({columns}) values ({values})'
+    sql = f'INSERT ignore INTO stgReports ({columns}) VALUES ({values})'
     await execute_sql(sql, param)
 
 
@@ -123,7 +123,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logger.debug('to many reports')
+        logger.debug('Too many reports.')
         return {'NOK': 'NOK'}, 400
 
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
@@ -152,8 +152,13 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # 4) Insert detections into Reports table with user ids 
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
-
-    df = df.merge(df_names, left_on="reported", right_on="name")
+    
+    
+    try:
+        df = df.merge(df_names, left_on="reported", right_on="name")
+    except KeyError:
+        logger.debug(f'Key Error: {df} '+f'{df.columns}')
+        raise KeyError(f"There was a key error with this entry.")
 
     reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
 
