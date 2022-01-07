@@ -6,6 +6,7 @@ import re
 import string
 import time
 from typing import List, Optional
+from numpy import record
 
 import pandas as pd
 from api import Config
@@ -96,7 +97,7 @@ class DiscordVerifyInfo(BaseModel):
 '''
     sql
 '''
-async def sql_get_player(player_name):
+async def sql_get_player(player_name: str) -> List[record] | None:
     """Attempts to get data for a player whose names matches player_name."""
     sql_player_id = 'select * from Players where normalized_name LIKE :normalized_name'
 
@@ -112,7 +113,7 @@ async def sql_get_player(player_name):
     except AttributeError:
         raise HTTPException(status_code=500, detail="Player does not exist.")
         
-    return None if len(player) == 0 else player[0]
+    return None if len(player) == 0 else player
 
 
 async def sql_insert_player(player_name):
@@ -124,7 +125,8 @@ async def sql_insert_player(player_name):
 
     await execute_sql(sql_insert, param=param)
     player = await sql_get_player(player_name)
-    return player
+
+    return player[0] if player is not None else None
 
 
 async def sql_insert_report(data):
@@ -259,17 +261,17 @@ async def sql_update_player(player: dict):
     return data.rows2dict() if data is not None else {}
 
 
-async def sql_get_latest_xp_gain(player_id: int):
+async def sql_get_latest_xp_gain(player_ids: List[int]):
     sql = '''          
         SELECT * 
         FROM playerHiscoreDataXPChange xp
         WHERE 1 = 1
-            AND xp.Player_id = :player_id
+            AND xp.Player_id in :player_ids
         ORDER BY xp.timestamp DESC
     '''
 
     param = {
-        "player_id": player_id
+        "player_ids": tuple(player_ids)
     }
 
     data = await execute_sql(sql, param, row_count=2)
@@ -324,16 +326,18 @@ async def sql_get_discord_linked_accounts(discord_id: int):
     return data.rows2dict() if data is not None else {}
 
 
-async def sql_get_user_latest_sighting(player_id: int):
+async def sql_get_user_latest_sighting(player_ids: List[int]):
+    print(player_ids)
+
     sql = '''
             SELECT *
             FROM Reports rpts
             WHERE 1 = 1
-                AND rpts.reportedID = :player_id
+                AND rpts.reportedID in :player_ids
             ORDER BY rpts.timestamp DESC
         '''
     param = {
-        "player_id": player_id
+        "player_ids": tuple(player_ids)
     }
 
     data = await execute_sql(sql, param, row_count=1)
@@ -483,8 +487,18 @@ async def custom_hiscore(detection):
         return 0
 
     # get reporter & reported
-    reporter = await sql_get_player(detection['reporter'])
-    reported = await sql_get_player(detection['reported'])
+    reporter_records = await sql_get_player(detection['reporter'])
+    reported_records = await sql_get_player(detection['reported'])
+
+    if reporter_records:
+        reporter = reporter_records[0]
+    else:
+        reporter = None
+
+    if reported_records:
+        reported = reported_records[0]
+    else:
+        reported = None
 
     create = 0
     # if reporter or reported is None (=player does not exist), create player
@@ -750,8 +764,11 @@ async def get_contributor_id(contributor: str):
 
     if player:
         return_dict = {
-            "id": player.id
+            "id": player[0].id #This might suck for a bit until duplicate norm_names are removed from the DB
         }
+
+    else:
+        raise HTTPException(status_code=404, detail=f"{contributor} not found.")
 
     return return_dict
 
@@ -880,13 +897,13 @@ async def verify_bot(token:str, bots:bots):
 
     data = []
     for name in playerNames:
-        user = await sql_get_player(name)
+        users = await sql_get_player(name)
 
-        if user == None:
+        if users == None:
             continue
 
         p = dict()
-        p['player_id'] = user.id
+        p['player_id'] = users[0].id
 
         if bot == 0 and label == 1:
             # Real player
@@ -956,7 +973,7 @@ async def verify_discord_user(token:str, discord:discord, version:str=None):
     if player == None:
         raise HTTPException(status_code=400, detail=f"Could not find player")
 
-    pending_discord = await sql_get_unverified_discord_user(player['id'])
+    pending_discord = await sql_get_unverified_discord_user(player[0]['id'])
 
     token_info = await sql_get_token(token)
     token_info = token_info[0]
@@ -1005,7 +1022,7 @@ async def get_prediction(player_name, version=None, token=None):
         if player is None:
             raise NoResultFound
 
-        prediction = dict(await sql_get_prediction_player(player['id']))
+        prediction = dict(await sql_get_prediction_player(player[0]['id']))
         prediction.pop("created")
 
         return_dict = {
@@ -1043,14 +1060,17 @@ async def get_latest_xp_gains(player_info:PlayerName, token:str):
     player = player_info.dict()
     player_name = player.get('player_name')
 
-    player = await sql_get_player(player_name)
+    if not player_name:
+        raise HTTPException(status_code=400, detail=f"player_name is a required parameter.")
 
-    if player is None:
+    players = await sql_get_player(player_name)
+
+    if players is None:
         raise HTTPException(404, detail="Player not found.")
 
-    player_id = player.get('id')
+    player_ids = [p.get('id') for p in players]
 
-    last_xp_gains = await sql_get_latest_xp_gain(player_id)
+    last_xp_gains = await sql_get_latest_xp_gain(player_ids)
 
     df = pd.DataFrame(last_xp_gains)
 
@@ -1095,7 +1115,7 @@ async def get_discord_verification_attempts(token: str, player_name: str):
     if player is None:
         return []
 
-    player_id = player.get('id')
+    player_id = player[0].get('id')
 
     attempts = await sql_get_discord_verification_attempts(player_id)
 
@@ -1112,11 +1132,15 @@ async def post_verification_request_information(token: str, verify_info: Discord
     discord_id = info.get("discord_id")
     code = info.get("code")
 
+    assert(player_name is not None)
+    assert(discord_id is not None)
+    assert(code is not None)
+
     player = await sql_get_player(player_name)
     if player is None:
         raise HTTPException(404, detail="We've never seen this account before.")
 
-    player_id = player.get('id')
+    player_id = player[0].get('id')
 
     token_info = await sql_get_token(token)
     token_info = token_info[0]
@@ -1141,15 +1165,18 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
     await verify_token(token, verification='verify_players')
 
     player = player_info.dict()
+
     player_name = player.get('player_name')
 
-    player = await sql_get_player(player_name)
-    if player is None:
+    assert(player_name is not None)
+
+    players = await sql_get_player(player_name)
+    if players is None:
         raise HTTPException(404, detail="Player not found.")
 
-    player_id = player.get('id')
+    player_ids = [p.get('id') for p in players]
 
-    last_sighting_data = await sql_get_user_latest_sighting(player_id)
+    last_sighting_data = await sql_get_user_latest_sighting(player_ids)
 
     df = pd.DataFrame(last_sighting_data)
 
@@ -1175,6 +1202,8 @@ async def get_region(token:str, region: RegionName):
 
     region_info = region.dict()
     region_name = region_info.get('region_name')
+
+    assert(region_name is not None)
 
     regions = await sql_region_search(region_name)
 
