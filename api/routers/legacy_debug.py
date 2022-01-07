@@ -152,8 +152,13 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # 4) Insert detections into Reports table with user ids 
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
-
-    df = df.merge(df_names, left_on="reported", right_on="name")
+    
+    
+    try:
+        df = df.merge(df_names, left_on="reported", right_on="name")
+    except KeyError:
+        logger.debug(f'Key Error: {df} '+f'{df.columns}')
+        raise KeyError(f"There was a key error with this entry.")
 
     reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
 
