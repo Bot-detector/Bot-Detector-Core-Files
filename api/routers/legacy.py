@@ -6,7 +6,6 @@ import re
 import string
 import time
 from typing import List, Optional
-from numpy import record
 
 import pandas as pd
 from api import Config
@@ -97,7 +96,7 @@ class DiscordVerifyInfo(BaseModel):
 '''
     sql
 '''
-async def sql_get_player(player_name: str) -> List[record] | None:
+async def sql_get_player(player_name: str):
     """Attempts to get data for a player whose names matches player_name."""
     sql_player_id = 'select * from Players where normalized_name LIKE :normalized_name'
 
