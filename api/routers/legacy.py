@@ -1129,10 +1129,6 @@ async def post_verification_request_information(token: str, verify_info: Discord
     discord_id = info.get("discord_id")
     code = info.get("code")
 
-    assert(player_name is not None)
-    assert(discord_id is not None)
-    assert(code is not None)
-
     player = await sql_get_player(player_name)
     if player is None:
         raise HTTPException(404, detail="We've never seen this account before.")
@@ -1164,8 +1160,6 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
     player = player_info.dict()
 
     player_name = player.get('player_name')
-
-    assert(player_name is not None)
 
     players = await sql_get_player(player_name)
     if players is None:
@@ -1199,8 +1193,6 @@ async def get_region(token:str, region: RegionName):
 
     region_info = region.dict()
     region_name = region_info.get('region_name')
-
-    assert(region_name is not None)
 
     regions = await sql_region_search(region_name)
 
