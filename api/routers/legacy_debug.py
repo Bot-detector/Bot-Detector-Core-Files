@@ -124,7 +124,19 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         logger.debug('Too many reports.')
-        return {'NOK': 'NOK'}, 400
+        return {'ERROR': 'ERROR'}, 400
+    
+    # data validation, checks for correct timing
+    now = int(time.time())
+    now_upper = int(now + 3600)
+    now_lower = int(now - 3600)
+
+    df_time = df.ts
+    mask = (df_time > now_upper) | (df_time < now_lower)
+    if len(df_time[mask].values) >= 0:
+        logger.debug(f'Data contains out of bounds time. {df_time[mask].values}')
+        return {'ERROR': 'ERROR'}, 400
+
 
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
