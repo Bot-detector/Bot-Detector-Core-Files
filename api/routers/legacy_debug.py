@@ -134,7 +134,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     
     utc_upper = (utc + dt.timedelta(hours=time_buffer))
     utc_lower = (utc - dt.timedelta(hours=time_buffer))
-    df_temp = pd.to_datetime(df.timestamp)
+    df_temp = pd.to_datetime(df.ts)
     mask = (df_temp > utc_upper) | (df_temp < utc_lower)
 
     if len(df_temp[mask].values) >= 0:
