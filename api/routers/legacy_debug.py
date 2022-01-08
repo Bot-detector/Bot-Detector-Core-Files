@@ -139,7 +139,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 
     if len(df_temp[mask].values) >= 0:
         logger.debug('Data contains out of bounds time.')
-        return {'error': 'Your system clock is set incorrectly. Please adjust your system clock or contact support via the Plugin Discord.'}, 400
+        return {'ERROR': 'ERROR'}, 400
 
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
@@ -167,7 +167,6 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # 4) Insert detections into Reports table with user ids 
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
-    
     
     try:
         df = df.merge(df_names, left_on="reported", right_on="name")
