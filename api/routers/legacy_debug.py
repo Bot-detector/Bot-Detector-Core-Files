@@ -129,7 +129,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # data validation, checks for correct timing
     now = int(time.time())
     now_upper = int(now + 3600)
-    now_lower = int(now - 3600)
+    now_lower = int(now - 25200)
 
     df_time = df.ts
     mask = (df_time > now_upper) | (df_time < now_lower)
