@@ -39,8 +39,10 @@ spec:
         resources:
           requests:
             cpu: "1000m"
+            memory: "500m"
           limits:
             cpu: "2000m"
+            memory: "3000m"
         volumeMounts:
         - name: nfs-volume
           mountPath: /code/exports
