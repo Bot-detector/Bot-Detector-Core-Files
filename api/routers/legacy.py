@@ -326,8 +326,6 @@ async def sql_get_discord_linked_accounts(discord_id: int):
 
 
 async def sql_get_user_latest_sighting(player_ids: List[int]):
-    print(player_ids)
-
     sql = '''
             SELECT *
             FROM Reports rpts
