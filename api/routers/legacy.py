@@ -473,7 +473,7 @@ async def custom_hiscore(detection):
     detection['reported'], bad_name = await name_check(detection['reported'])
 
     if bad_name:
-        Config.debug(
+        logger.debug(
             f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}")
         return 0
 
@@ -530,8 +530,9 @@ async def insync_detect(detections, manual_detect):
 
         if idx % 500 == 0 and idx != 0:
             logger.debug(f'      Completed {idx + 1}/{len(detections)}')
-
+    
     logger.debug(f'      Done: Completed {idx + 1} detections')
+
     return
 
 
@@ -638,7 +639,7 @@ async def parse_detection(data:dict) -> dict:
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
-    equipment = data.get('equipment')
+    equipment = data.get('equipment', {})
     param = {
         'reportedID': data.get('id'),
         'reportingID': data.get('reporter_id'),
@@ -660,7 +661,7 @@ async def parse_detection(data:dict) -> dict:
         'equip_hands_id': equipment.get('HANDS'),
         'equip_weapon_id': equipment.get('WEAPON'),
         'equip_shield_id': equipment.get('SHIELD'),
-        'equip_ge_value': data.get('equipment_ge')
+        'equip_ge_value': data.get('equipment_ge', 0)
     }
     return param
 
@@ -1162,6 +1163,7 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
     player_name = player.get('player_name')
 
     players = await sql_get_player(player_name)
+    
     if players is None:
         raise HTTPException(404, detail="Player not found.")
 
@@ -1193,6 +1195,10 @@ async def get_region(token:str, region: RegionName):
 
     region_info = region.dict()
     region_name = region_info.get('region_name')
+
+    if region_name is None:
+        logger.error("ERROR: /discord/region/ - missing region_name param.")
+        raise HTTPException(status_code=400, detail="region_name is required.")
 
     regions = await sql_region_search(region_name)
 
