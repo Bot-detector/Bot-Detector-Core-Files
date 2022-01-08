@@ -133,7 +133,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 
     df_time = df.ts
     mask = (df_time > now_upper) | (df_time < now_lower)
-    if len(df_time[mask].values) >= 0:
+    if len(df_time[mask].values) > 0:
         logger.debug(f'Data contains out of bounds time. {df_time[mask].values}')
         return {'ERROR': 'ERROR'}, 400
 
