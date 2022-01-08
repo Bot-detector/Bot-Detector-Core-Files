@@ -1,4 +1,5 @@
 import asyncio
+import datetime as dt
 import logging
 import re
 import time
@@ -124,7 +125,21 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         logger.debug('Too many reports.')
-        return {'NOK': 'NOK'}, 400
+        return {'ERROR': 'ERROR'}, 400
+    
+    
+    # data validation, the sender should be sending with the correct timestamp bounds, +/- 1 hour.
+    utc = dt.datetime.utcnow()
+    time_buffer = 1
+    
+    utc_upper = (utc + dt.timedelta(hours=time_buffer))
+    utc_lower = (utc - dt.timedelta(hours=time_buffer))
+    df_temp = pd.to_datetime(df.timestamp)
+    mask = (df_temp > utc_upper) | (df_temp < utc_lower)
+
+    if len(df_temp[mask].values) >= 0:
+        logger.debug('Data contains out of bounds time.')
+        return {'error': 'Your system clock is set incorrectly. Please adjust your system clock or contact support via the Plugin Discord.'}, 400
 
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
@@ -166,7 +181,6 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
         df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
     except IndexError as ie:
         raise IndexError(f"Detection Submission Error: {reporter} was not found in {df_names}.")
-
 
     df['manual_detect'] = manual_detect
     # 4.2) parse data to param
