@@ -4,15 +4,15 @@ services:
 
   mysql:
     build:
-      context: ../Bot-Detector-MySql
+      context: ../bot-detector-mysql
       dockerfile: Dockerfile
-    image: mysql:latest
+    image: bot-detector/bd-mysql:latest
     environment:
       - MYSQL_ROOT_PASSWORD=rootpassword
       - MYSQL_USER=botssuck
       - MYSQL_PASSWORD=botdetector
     volumes:
-      - '../Bot-Detector-MySql/mount:/var/lib/mysql'
+      - '../bot-detector-mysql/mount:/var/lib/mysql'
     ports:
       - "3306:3306"
     networks:
@@ -24,8 +24,8 @@ services:
       dockerfile: Dockerfile
     image: bot-detector/bd-api:latest
     environment:
-      - sql_uri=mysql+asyncmy://username:pass@ip:port/playerdata_dev
-      - discord_sql_uri=mysql+asyncmy://username:pass@ip:port/discord_dev
+      - sql_uri=mysql+asyncmy://botssuck:botdetector@mysql:3306/playerdata_dev
+      - discord_sql_uri=mysql+asyncmy://botssuck:botdetector@mysql:3306/discord_dev
       - proxy_http=''
       - proxy_https=''
       - flask_port=5000
