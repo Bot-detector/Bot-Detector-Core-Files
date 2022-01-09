@@ -1,0 +1,76 @@
+ 
+version: '3'
+services:
+
+  mysql:
+    build:
+      context: ../Bot-Detector-MySql
+      dockerfile: Dockerfile
+    image: mysql:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_USER=botssuck
+      - MYSQL_PASSWORD=botdetector
+    volumes:
+      - '../Bot-Detector-MySql/mount:/var/lib/mysql'
+    ports:
+      - "3306:3306"
+    networks:
+      - botdetector-network
+
+  api:
+    build:
+      context: ../Bot-Detector-Core-Files
+      dockerfile: Dockerfile-Dev
+    image: bot-detector/bd-api:latest
+    environment:
+      - sql_uri=mysql+asyncmy://username:pass@ip:port/playerdata_dev
+      - discord_sql_uri=mysql+asyncmy://username:pass@ip:port/discord_dev
+      - proxy_http=''
+      - proxy_https=''
+      - flask_port=5000
+      - dev_mode=1
+      - token=verify_ban
+    volumes: 
+      - '../Bot-Detector-Core-Files/api:/code/api'
+    ports:
+      - "5000:5000"
+    networks:
+      - botdetector-network
+    depends_on:
+      - mysql
+
+  machine-learning:
+    build:
+      context: ../bot-detector-ML
+      dockerfile: Dockerfile
+    image: bot-detector/bd-ml:latest
+    environment:
+      - token=verify_ban
+      - api=http://api:6532/
+      - secret_token=extremesucks
+    volumes:
+      - ../bot-detector-ML/MachineLearning/models:/MachineLearning/models
+    ports:
+      - "6532:8000"
+    networks:
+      - botdetector-network
+    depends_on:
+      - api
+
+  scraper:
+    build:
+      context: ../bot-detector-scraper
+      dockerfile: Dockerfile
+    image: bot-detector/bd-scraper:latest
+    environment:
+      - PROXY_DOWNLOAD_URL=https://proxy.webshare.io/proxy/list/download/PASSWORD/-/http/username/direct/
+      - TOKEN=verify_ban
+      - QUERY_SIZE=5000
+    depends_on:
+      - api
+    networks:
+      - botdetector-network
+
+networks:
+  botdetector-network:
