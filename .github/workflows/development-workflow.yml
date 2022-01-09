@@ -24,7 +24,7 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: Build the Docker image
-      run: docker build . --file Dockerfile-Dev -t bot-detector/bd-api:latest
+      run: docker build . --file Dockerfile --build-arg api_port=5000 --build-arg root_path=/dev -t bot-detector/bd-api:latest
 
     - name: Tag Image
       run: docker tag bot-detector/bd-api:latest hub.osrsbotdetector.com/bot-detector/bd-api:latest
