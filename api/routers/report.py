@@ -192,7 +192,7 @@ async def insert_report(
         logger.debug(f'Too Many Reports or Multiple Reporters! | {sender=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Your sightings are out of bounds. Contact plugin support on our Discord."
+            detail=f"[Bot Detector] Your sightings are out of bounds. Contact plugin support on our Discord."
         )
 
     # data validation, checks for correct timing
@@ -206,7 +206,7 @@ async def insert_report(
         logger.debug(f'Data contains out of bounds time! | {sender=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Your sightings contain out of bounds time. Contact plugin support on our Discord."
+            detail=f"[Bot Detector] Your sightings contain out of bounds time. Contact plugin support on our Discord."
         )
 
     df = df[~mask]
@@ -242,7 +242,7 @@ async def insert_report(
         logger.debug(f'Missing player data. | {names=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Your sightings are incomplete. Contact plugin support on our Discord."
+            detail="[Bot Detector] Your sightings are incomplete. Contact plugin support on our Discord."
         )
 
     # 4) Insert detections into Reports table with user ids
@@ -258,7 +258,7 @@ async def insert_report(
         logger.debug(f'User does not have a clean name.  | {sender=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="There was an error processing your name. Contact plugin support on our Discord."
+            detail="[Bot Detector] There was an error processing your name. Contact plugin support on our Discord."
         )
 
     df["reporter_id"] = reporter[0]
