@@ -1,17 +1,25 @@
 
-from datetime import date
 import logging
+import time
+from datetime import date
 from typing import List, Optional
 
-from api.database.functions import (EngineType, get_session,
-                                    verify_token, sqlalchemy_result)
-from api.database.models import Player, Prediction, Report, ReportLatest
+import pandas as pd
+from api.Config import back_time_buffer, front_time_buffer, report_maximum
+from api.database.functions import (EngineType, batch_function, create_task,
+                                    get_session, is_valid_rsn, list_to_string,
+                                    parse_detection, sql_insert_player,
+                                    sql_insert_report, sql_select_players,
+                                    sqlalchemy_result, to_jagex_name,
+                                    verify_token)
+from api.database.models import (Player, Prediction, Report, ReportLatest,
+                                 stgReport)
+from api.routers.legacy_debug import detect
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import update
-from sqlalchemy.sql.expression import insert, select
 from sqlalchemy.sql import func
-
+from sqlalchemy.sql.expression import insert, select
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -43,7 +51,22 @@ class detection(BaseModel):
     world_number: int
     equipment: equipment
     equip_ge_value: int
-
+    
+class report_detections(BaseModel):
+    reporter: str
+    reported: str
+    region_id: int
+    x_coord: int
+    y_coord: int
+    z_coord: int
+    ts: int
+    manual_detect: int
+    on_members_world: int
+    on_pvp_world: int
+    world_number: int
+    equipment: equipment
+    equip_ge_value: int
+    
 
 @router.get("/v1/report", tags=["Report"])
 async def get_reports_from_plugin_database(
@@ -102,15 +125,79 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
 
 
 @router.post("/v1/report", tags=["Report"])
-async def insert_report(token: str, detections: List[detection]):
+async def insert_report(
+    detections: List[report_detections],
+    manual_detect: int = Query(0, ge=0, le=1),
+    ):
     '''
-        Work in progress 
-        Insert report.
+        Insert reports to the Plugin 
     '''
-    await verify_token(token, verification='verify_ban', route='[POST]/v1/report/')
 
-    sql = insert(Report)
-    pass
+    # remove duplicates
+    df = pd.DataFrame([d.dict() for d in detections])
+    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
+
+    # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
+    if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
+        logger.debug('Too many reports.')
+        raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
+    
+    # data validation, checks for correct timing
+    now = int(time.time())
+    df_time = df.ts
+    mask = (df_time > int(now + int(front_time_buffer))) | (df_time < int(now - int(back_time_buffer)))
+    if len(df_time[mask].values) > 0:
+        logger.debug(f'Data contains out of bounds time {df_time[mask].values}')
+        raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
+    
+    # successful query
+    logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
+
+    # 1) Get a list of unqiue reported names and reporter name 
+    names = list(df['reported'].unique())
+    names.extend(df['reporter'].unique())
+
+    # 1.1) Normalize and validate all names
+    clean_names = [await to_jagex_name(name) for name in names if await is_valid_rsn(name)]
+
+    # 2) Get IDs for all unique names
+    data = await sql_select_players(clean_names)
+
+    # 3) Create entries for players that do not yet exist in Players table
+    existing_names = [d["normalized_name"] for d in data]
+    new_names = set([name for name in clean_names]).difference(existing_names)
+    
+    # 3.1) Insert new names and get those player IDs from step 3
+    if new_names:
+        param = [{"name": name, "normalized_name": name} for name in new_names]
+        await batch_function(sql_insert_player, param)
+        data.extend(await sql_select_players(new_names))
+
+    # 4) Insert detections into Reports table with user ids 
+    # 4.1) add reported & reporter id
+    df_names = pd.DataFrame(data)
+    
+    try:
+        df = df.merge(df_names, left_on="reported", right_on="name")
+    except KeyError:
+        logger.debug(f'Key Error: {df} '+f'{df.columns}')
+        raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
+
+    reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
+
+    try:
+        df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
+    except IndexError as ie:
+        raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
+
+    df['manual_detect'] = manual_detect
+    # 4.2) parse data to param
+    data = df.to_dict('records')
+    param = [await parse_detection(d) for d in data]
+
+    # 4.3) parse query
+    await batch_function(sql_insert_report, param)
+    return {"OK": "OK"}
 
 @router.get("/v1/report/prediction", tags=["Report", "Business"])
 async def get_report_by_prediction(

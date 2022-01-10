@@ -1,30 +1,98 @@
 import asyncio
-from asyncio.tasks import create_task
 import logging
 import random
+import re
+import time
 import traceback
+from asyncio.tasks import create_task
 from collections import namedtuple
-
-from sqlalchemy.sql.sqltypes import TIMESTAMP
+from datetime import datetime, timedelta
+from typing import List, Optional
 
 # Although never directly used, the engines are imported to add a permanent reference 
 # to these entities to prevent the
 # garbage collector from trying to dispose of our engines.
-from api.database.database import PLAYERDATA_ENGINE, DISCORD_ENGINE
-from api.database.database import Engine, EngineType, get_session
-from api.database.models import Token
-from api.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
+from api.database.database import (DISCORD_ENGINE, PLAYERDATA_ENGINE, Engine,
+                                   EngineType, get_session)
+from api.database.models import (ApiPermission, ApiUsage, ApiUser, ApiUserPerm,
+                                 Player, Prediction, Report, ReportLatest,
+                                 Token, stgReport)
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import InternalError, OperationalError
-from sqlalchemy.sql.expression import select, insert
-from datetime import datetime, timedelta
+from sqlalchemy.sql.expression import insert, select
+from sqlalchemy.sql.sqltypes import TIMESTAMP
 
 logger = logging.getLogger(__name__)
 
 def list_to_string(l):
     string_list = ', '.join(str(item) for item in l)
     return string_list
+
+async def is_valid_rsn(rsn: str) -> bool:
+    return re.fullmatch('[\w\d\s_-]{1,13}', rsn)
+
+
+async def to_jagex_name(name: str) -> str:
+    return name.lower().replace('_', ' ').replace('-',' ').strip()
+
+
+async def jagexify_names_list(names: List[str]) -> List[str]:
+    return  [await to_jagex_name(n) for n in names if await is_valid_rsn(n)]
+
+
+async def sql_select_players(names):
+    sql = select(Player)
+    sql = sql.where(Player.normalized_name.in_(tuple(await jagexify_names_list(names))))
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+    data = sqlalchemy_result(data)
+    return [] if not data else data.rows2dict()
+
+
+async def sql_insert_player(new_names):
+    sql = insert(Player)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(sql, new_names)
+        await session.commit()
+        
+
+async def sql_insert_report(param):
+    sql = insert(stgReport)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(sql, param)
+        await session.commit()
+    
+async def parse_detection(data:dict) -> dict:
+    gmt = time.gmtime(data['ts'])
+    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+
+    equipment = data.get('equipment', {})
+
+    param = {
+        'reportedID': data.get('id'),
+        'reportingID': data.get('reporter_id'),
+        'region_id': data.get('region_id'),
+        'x_coord': data.get('x_coord'),
+        'y_coord': data.get('y_coord'),
+        'z_coord': data.get('z_coord'),
+        'timestamp': human_time,
+        'manual_detect': data.get('manual_detect'),
+        'on_members_world': data.get('on_members_world'),
+        'on_pvp_world': data.get('on_pvp_world'),
+        'world_number': data.get('world_number'),
+        'equip_head_id': equipment.get('equip_head_id'),
+        'equip_amulet_id': equipment.get('equip_amulet_id'),
+        'equip_torso_id': equipment.get('equip_torso_id'),
+        'equip_legs_id': equipment.get('equip_legs_id'),
+        'equip_boots_id': equipment.get('equip_boots_id'),
+        'equip_cape_id': equipment.get('equip_cape_id'),
+        'equip_hands_id': equipment.get('equip_hands_id'),
+        'equip_weapon_id': equipment.get('equip_weapon_id'),
+        'equip_shield_id': equipment.get('equip_shield_id'),
+        'equip_ge_value': data.get('equip_ge_value', 0)
+    }
+    return param
     
 async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None, retry_attempt=0):
     # retry breakout
@@ -167,7 +235,6 @@ async def verify_token(token:str, verification:str, route:str=None) -> bool:
     return True
 
     
-
 async def batch_function(function, data, batch_size=100):
     batches = []
     for i in range(0, len(data), batch_size):

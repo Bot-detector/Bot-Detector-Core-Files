@@ -18,6 +18,11 @@ graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
 
+# reports security parameters
+report_maximum = os.environ.get('report_maximum')
+front_time_buffer = os.environ.get('front_time_buffer')
+back_time_buffer = os.environ.get('back_time_buffer')
+
 # create application
 app = FastAPI()
 
