@@ -96,7 +96,7 @@ class equipment(BaseModel):
     equip_shield_id: int = Field(None, ge=0)
 
 
-class detections(BaseModel):
+class detection(BaseModel):
     reporter: str = Field(..., min_length=1, max_length=12)
     reported: str = Field(..., min_length=1, max_length=12)
     region_id: int = Field(0, ge=0, le=100_000)
@@ -171,7 +171,7 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
 
 @router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
 async def insert_report(
-    detections: List[detections],
+    detections: List[detection],
     manual_detect: int = Query(0, ge=0, le=1),
 ):
     '''
