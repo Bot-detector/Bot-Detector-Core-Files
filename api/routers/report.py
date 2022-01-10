@@ -5,7 +5,6 @@ from datetime import date
 from typing import List, Optional
 
 import pandas as pd
-from requests.sessions import Request
 from api.Config import (back_time_buffer, front_time_buffer, report_maximum,
                         upper_gear_cost)
 from api.database.functions import (EngineType, batch_function, create_task,
@@ -18,9 +17,9 @@ from api.database.models import (Player, Prediction, Report, ReportLatest,
                                  stgReport)
 from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from requests.sessions import Request
 from sqlalchemy import update
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import insert, select
