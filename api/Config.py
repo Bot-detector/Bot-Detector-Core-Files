@@ -22,6 +22,7 @@ token = os.environ.get('token')
 report_maximum = os.environ.get('report_maximum')
 front_time_buffer = os.environ.get('front_time_buffer')
 back_time_buffer = os.environ.get('back_time_buffer')
+upper_gear_cost = os.environ.get('upper_gear_cost')
 
 # create application
 app = FastAPI()

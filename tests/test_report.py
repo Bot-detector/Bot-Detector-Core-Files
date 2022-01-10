@@ -15,7 +15,7 @@ client = TestClient(app.app)
   Report get routes
 """
 
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+
 def test_get_reports_from_plugin_database():
   
     test_case = (
@@ -41,16 +41,16 @@ def test_get_reports_from_plugin_database():
 """
   Report post routes
 """
-
-# def test_post_report():
-#     for test, (payload, response_code) in enumerate(post_report_test_case):
-#         route_attempt = f'/v1/report/?token={token}'
-#         response = client.post(url=route_attempt, json=payload)
-#         assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+def test_post_report():
+    for test, (payload, response_code) in enumerate(post_report_test_case):
+      route_attempt = f'/v1/report?manual_detect=0'
+      response = client.post(url=route_attempt, json=payload)
+      assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
 
 if __name__ == "__main__":
   '''get route'''
   test_get_reports_from_plugin_database()
 
-  # '''post route'''
-  # test_post_report()
+  '''post route'''
+  test_post_report()

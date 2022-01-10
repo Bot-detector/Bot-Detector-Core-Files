@@ -5,7 +5,8 @@ from datetime import date
 from typing import List, Optional
 
 import pandas as pd
-from api.Config import back_time_buffer, front_time_buffer, report_maximum
+from api.Config import (back_time_buffer, front_time_buffer, report_maximum,
+                        upper_gear_cost)
 from api.database.functions import (EngineType, batch_function, create_task,
                                     get_session, is_valid_rsn, list_to_string,
                                     parse_detection, sql_insert_player,
@@ -26,31 +27,31 @@ router = APIRouter()
 
 
 class equipment(BaseModel):
-    equip_head_id: int
-    equip_amulet_id: int
-    equip_torso_id: int
-    equip_legs_id: int
-    equip_boots_id: int
-    equip_cape_id: int
-    equip_hands_id: int
-    equip_weapon_id: int
-    equip_shield_id: int
+    equip_head_id: int = Query(None, ge=0)
+    equip_amulet_id: int = Query(None, ge=0)
+    equip_torso_id: int = Query(None, ge=0)
+    equip_legs_id: int = Query(None, ge=0)
+    equip_boots_id: int = Query(None, ge=0)
+    equip_cape_id: int = Query(None, ge=0)
+    equip_hands_id: int = Query(None, ge=0)
+    equip_weapon_id: int = Query(None, ge=0)
+    equip_shield_id: int = Query(None, ge=0)
 
 
 class detections(BaseModel):
-    reporter: str
-    reported: str
-    region_id: int
-    x_coord: int
-    y_coord: int
-    z_coord: int
-    ts: int
-    manual_detect: int
-    on_members_world: int
-    on_pvp_world: int
-    world_number: int
+    reporter: str = Query(..., min_length=1, max_length=12)
+    reported: str = Query(..., min_length=1, max_length=12)
+    region_id: int = Query(0, ge=0)
+    x_coord: int = Query(0, ge=0)
+    y_coord: int = Query(0, ge=0)
+    z_coord: int = Query(0, ge=0)
+    ts: int = Query(0, ge=0)
+    manual_detect: int = Query(0, ge=0, le=1)
+    on_members_world: int = Query(0, ge=0, le=1)
+    on_pvp_world: int = Query(0, ge=0, le=1)
+    world_number: int = Query(0, ge=0, le=1000)
     equipment: equipment
-    equip_ge_value: int
+    equip_ge_value: int = Query(0, ge=0, le=int(upper_gear_cost))
 
 
 @router.get("/v1/report", tags=["Report"])
@@ -114,7 +115,8 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
 async def insert_report(
     detections: List[detections],
     manual_detect: int = Query(0, ge=0, le=1),
-):
+    ):
+    
     '''
         Inserts detections to the plugin database.
     '''
@@ -127,17 +129,17 @@ async def insert_report(
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
         logger.warning('Too Many Reports or Multiple Reporters!')
-        raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
+        raise HTTPException(status_code=400, detail="{'error':'One or more of the values that you have sent are out of bounds.'}")
 
     # data validation, checks for correct timing
     now = int(time.time())
     df_time = df.ts
     mask = (df_time > int(now + int(front_time_buffer))) | (df_time < int(now - int(back_time_buffer)))
     if len(df_time[mask].values) > 0:
-        logger.info(f'Data contains out of bounds time!')
-        raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
+        logger.warning(f'Data contains out of bounds time!')
+        raise HTTPException(status_code=400, detail="{'error':'One or more of the values that you have sent are out of bounds.'}")
 
-    # successful query
+    # Successful query
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
     # 1) Get a list of unqiue reported names and reporter name
