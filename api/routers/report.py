@@ -5,6 +5,7 @@ from datetime import date
 from typing import List, Optional
 
 import pandas as pd
+from pydantic.fields import Field
 from api.database.functions import (EngineType, batch_function, get_session,
                                     jagexify_names_list, sqlalchemy_result,
                                     to_jagex_name, verify_token)
@@ -84,31 +85,31 @@ async def parse_detection(data: dict) -> dict:
 
 
 class equipment(BaseModel):
-    equip_head_id: int = Query(None, ge=0)
-    equip_amulet_id: int = Query(None, ge=0)
-    equip_torso_id: int = Query(None, ge=0)
-    equip_legs_id: int = Query(None, ge=0)
-    equip_boots_id: int = Query(None, ge=0)
-    equip_cape_id: int = Query(None, ge=0)
-    equip_hands_id: int = Query(None, ge=0)
-    equip_weapon_id: int = Query(None, ge=0)
-    equip_shield_id: int = Query(None, ge=0)
+    equip_head_id: int = Field(None, ge=0)
+    equip_amulet_id: int = Field(None, ge=0)
+    equip_torso_id: int = Field(None, ge=0)
+    equip_legs_id: int = Field(None, ge=0)
+    equip_boots_id: int = Field(None, ge=0)
+    equip_cape_id: int = Field(None, ge=0)
+    equip_hands_id: int = Field(None, ge=0)
+    equip_weapon_id: int = Field(None, ge=0)
+    equip_shield_id: int = Field(None, ge=0)
 
 
 class detections(BaseModel):
-    reporter: str = Query(..., min_length=1, max_length=12)
-    reported: str = Query(..., min_length=1, max_length=12)
-    region_id: int = Query(0, ge=0, le=100_000)
-    x_coord: int = Query(0, ge=0)
-    y_coord: int = Query(0, ge=0)
-    z_coord: int = Query(0, ge=0)
-    ts: int = Query(0, ge=0)
-    manual_detect: int = Query(0, ge=0, le=1)
-    on_members_world: int = Query(0, ge=0, le=1)
-    on_pvp_world: int = Query(0, ge=0, le=1)
-    world_number: int = Query(0, ge=300, le=1_000)
+    reporter: str = Field(..., min_length=1, max_length=12)
+    reported: str = Field(..., min_length=1, max_length=12)
+    region_id: int = Field(0, ge=0, le=100_000)
+    x_coord: int = Field(0, ge=0)
+    y_coord: int = Field(0, ge=0)
+    z_coord: int = Field(0, ge=0)
+    ts: int = Field(0, ge=0)
+    manual_detect: int = Field(0, ge=0, le=1)
+    on_members_world: int = Field(0, ge=0, le=1)
+    on_pvp_world: int = Field(0, ge=0, le=1)
+    world_number: int = Field(0, ge=300, le=1_000)
     equipment: equipment
-    equip_ge_value: int = Query(0, ge=0, le=int(upper_gear_cost))
+    equip_ge_value: int = Field(0, ge=0, le=int(upper_gear_cost))
 
 
 @router.get("/v1/report", tags=["Report"])
