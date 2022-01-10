@@ -190,18 +190,25 @@ async def insert_report(
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
         logger.debug(f'Too Many Reports or Multiple Reporters!; {sender=}')
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Too many reports, contact staff")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Too many reports, contact staff"
+        )
 
     # data validation, checks for correct timing
     now = int(time.time())
     lower_bound = (now - back_time_buffer)
     mask = (df['ts'] > now)
     mask = mask | (df['ts'] < lower_bound)
-    
+
     if len(df[~mask]) == 0:
         logger.debug(f'{lower_bound=}, {df["ts"].values}, {now=}')
         logger.debug(f'Data contains out of bounds time!; {sender=};')
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Out of bound time, contact staff")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Out of bound time, contact staff"
+        )
+
     df = df[~mask]
 
     # Successful query
@@ -233,7 +240,10 @@ async def insert_report(
 
     if len(data) == 0:
         logger.debug(f'Missing player data: {names=}')
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bad data, contact administrator")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="bad data, contact administrator"
+        )
 
     # 4) Insert detections into Reports table with user ids
     # 4.1) add reported & reporter id
@@ -246,7 +256,10 @@ async def insert_report(
 
     if len(reporter) == 0:
         logger.debug(f'User does not have a clean name: {sender=}')
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="error cleaning name, contact administrator")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="error cleaning name, contact administrator"
+        )
 
     df["reporter_id"] = reporter[0]
     df['manual_detect'] = manual_detect
