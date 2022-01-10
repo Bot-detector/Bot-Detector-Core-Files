@@ -20,4 +20,4 @@ RUN pip install --no-cache-dir -r /root/requirements.txt
 
 COPY . /root/
 
-CMD uvicorn api.app:app --proxy-headers --host 0.0.0.0 --port ${port} --root-path ${path}
+CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host 0.0.0.0", "--port ${port}", "--root-path", "${path}"]
