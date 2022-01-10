@@ -5,19 +5,12 @@ from datetime import date
 from typing import List, Optional
 
 import pandas as pd
-from api.Config import (back_time_buffer, front_time_buffer, report_maximum,
-                        upper_gear_cost)
-from api.database.functions import (EngineType, batch_function, create_task,
-                                    get_session, is_valid_rsn, list_to_string,
-                                    parse_detection, sql_insert_player,
-                                    sql_insert_report, sql_select_players,
-                                    sqlalchemy_result, to_jagex_name,
-                                    verify_token)
+from api.database.functions import (EngineType, batch_function, get_session,
+                                    jagexify_names_list, sqlalchemy_result,
+                                    to_jagex_name, verify_token)
 from api.database.models import (Player, Prediction, Report, ReportLatest,
                                  stgReport)
-from fastapi import APIRouter, HTTPException, Query, status, Request
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from sqlalchemy import update
 from sqlalchemy.sql import func
@@ -25,6 +18,70 @@ from sqlalchemy.sql.expression import insert, select
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# TODO: put these in the correct place
+report_maximum = 5000
+front_time_buffer = 3600
+back_time_buffer = 25200
+upper_gear_cost = 1_000_000_000_000
+
+# TODO: cleanup thse functions
+
+
+async def sql_select_players(names: List[str]) -> List:
+    sql = select(Player)
+    sql = sql.where(Player.normalized_name.in_(tuple(await jagexify_names_list(names))))
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+    data = sqlalchemy_result(data)
+    return [] if not data else data.rows2dict()
+
+
+async def sql_insert_player(new_names: List[dict]) -> None:
+    sql = insert(Player)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(sql, new_names)
+        await session.commit()
+
+
+async def sql_insert_report(param: dict) -> None:
+    sql = insert(stgReport)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(sql, param)
+        await session.commit()
+
+
+async def parse_detection(data: dict) -> dict:
+    gmt = time.gmtime(data['ts'])
+    human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
+
+    equipment = data.get('equipment', {})
+
+    param = {
+        'reportedID': data.get('id'),
+        'reportingID': data.get('reporter_id'),
+        'region_id': data.get('region_id'),
+        'x_coord': data.get('x_coord'),
+        'y_coord': data.get('y_coord'),
+        'z_coord': data.get('z_coord'),
+        'timestamp': human_time,
+        'manual_detect': data.get('manual_detect'),
+        'on_members_world': data.get('on_members_world'),
+        'on_pvp_world': data.get('on_pvp_world'),
+        'world_number': data.get('world_number'),
+        'equip_head_id': equipment.get('equip_head_id'),
+        'equip_amulet_id': equipment.get('equip_amulet_id'),
+        'equip_torso_id': equipment.get('equip_torso_id'),
+        'equip_legs_id': equipment.get('equip_legs_id'),
+        'equip_boots_id': equipment.get('equip_boots_id'),
+        'equip_cape_id': equipment.get('equip_cape_id'),
+        'equip_hands_id': equipment.get('equip_hands_id'),
+        'equip_weapon_id': equipment.get('equip_weapon_id'),
+        'equip_shield_id': equipment.get('equip_shield_id'),
+        'equip_ge_value': data.get('equip_ge_value', 0)
+    }
+    return param
+
 
 class equipment(BaseModel):
     equip_head_id: int = Query(None, ge=0)
@@ -52,6 +109,7 @@ class detections(BaseModel):
     world_number: int = Query(0, ge=300, le=1_000)
     equipment: equipment
     equip_ge_value: int = Query(0, ge=0, le=int(upper_gear_cost))
+
 
 @router.get("/v1/report", tags=["Report"])
 async def get_reports_from_plugin_database(
@@ -110,36 +168,40 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
     return {'OK': 'OK'}
 
 
-@router.post("/v1/report", tags=["Report"])
-async def insert_report(request : Request,
+@router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
+async def insert_report(
     detections: List[detections],
     manual_detect: int = Query(0, ge=0, le=1),
-    ):
+):
     '''
         Inserts detections to the plugin database.
     '''
-    client_host = request.client.host
-    success = JSONResponse(status_code=status.HTTP_200_OK, content=jsonable_encoder({'OK': 'OK'}))
-    bad_data = JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=jsonable_encoder({'error': 'There was an error with your request. Please contact plugin support.'}))
 
     # remove duplicates
     df = pd.DataFrame([d.dict() for d in detections])
     df.drop_duplicates(
-        subset=['reporter', 'reported', 'region_id'], inplace=True)
+        subset=['reporter', 'reported', 'region_id'],
+        inplace=True
+    )
+
+    sender = list(df["reporter"].unique())
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
-    sender = df["reporter"].values[0]
     if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
-        logger.warning(f'IP: {client_host} | Sender {sender} | Too Many Reports or Multiple Reporters!')
-        return bad_data
+        logger.debug(f'Too Many Reports or Multiple Reporters!; {sender=}')
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Too many reports, contact staff")
 
     # data validation, checks for correct timing
     now = int(time.time())
-    df_time = df.ts
-    mask = (df_time > int(now + int(front_time_buffer))) | (df_time < int(now - int(back_time_buffer)))
-    if len(df_time[mask].values) > 0:
-        logger.warning(f'IP: {client_host} | Sender {sender} | Data contains out of bounds time!')
-        return bad_data
+    lower_bound = (now - back_time_buffer)
+    mask = (df['ts'] > now)
+    mask = mask | (df['ts'] < lower_bound)
+    
+    if len(df[~mask]) == 0:
+        logger.debug(f'{lower_bound=}, {df["ts"].values}, {now=}')
+        logger.debug(f'Data contains out of bounds time!; {sender=};')
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Out of bound time, contact staff")
+    df = df[~mask]
 
     # Successful query
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
@@ -149,7 +211,7 @@ async def insert_report(request : Request,
     names.extend(df['reporter'].unique())
 
     # 1.1) Normalize and validate all names
-    clean_names = [await to_jagex_name(name) for name in names if await is_valid_rsn(name)]
+    clean_names = await jagexify_names_list(names)
 
     # 2) Get IDs for all unique names
     data = await sql_select_players(clean_names)
@@ -161,35 +223,40 @@ async def insert_report(request : Request,
     # 3.1) Insert new names and get those player IDs from step 3
     if new_names:
         param = [{"name": name, "normalized_name": name} for name in new_names]
+
+        #TODO: cleanup
+        logger.debug(f'{param=}')
+
         await batch_function(sql_insert_player, param)
         data.extend(await sql_select_players(new_names))
+
+    if len(data) == 0:
+        logger.debug(f'Missing player data: {names=}')
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bad data, contact administrator")
 
     # 4) Insert detections into Reports table with user ids
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
 
-    try:
-        df = df.merge(df_names, left_on="reported", right_on="name")
-    except KeyError as e:
-        logger.debug(f'IP: {client_host} | Sender {sender} | Key Error: {df} '+f'{df.columns}, {e}')
-        return bad_data
+    df = df.merge(df_names, left_on="reported", right_on="name")
 
     reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
+    reporter = df_names.query(f"normalized_name == {reporter}")['id'].to_list()
 
-    try:
-        df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
-    except IndexError as e:
-        logger.debug(f'IP: {client_host} | Sender {sender} | {e}')
-        return bad_data
+    if len(reporter) == 0:
+        logger.debug(f'User does not have a clean name: {sender=}')
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="error cleaning name, contact administrator")
 
+    df["reporter_id"] = reporter[0]
     df['manual_detect'] = manual_detect
+
     # 4.2) parse data to param
     data = df.to_dict('records')
     param = [await parse_detection(d) for d in data]
 
     # 4.3) parse query
     await batch_function(sql_insert_report, param)
-    return success
+    return {"ok": "ok"}
 
 
 @router.get("/v1/report/prediction", tags=["Report", "Business"])

@@ -21,19 +21,8 @@ graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
 
-report_maximum = 5000
-front_time_buffer = 3600
-back_time_buffer = 25200
-upper_gear_cost = 1_000_000_000_000
-
 # create application
 app = FastAPI()
-
-# https://www.starlette.io/requests/
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logging.info(f'IP: {request.client.host} | ROUTE: {request.url} | Unprocessable Request (422).')
-    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=jsonable_encoder({'error': 'There was an error in your request. Please contact plugin support.'}))
 
 origins = [
     "http://osrsbotdetector.com/",
