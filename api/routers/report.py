@@ -15,18 +15,16 @@ from api.database.functions import (EngineType, batch_function, create_task,
                                     verify_token)
 from api.database.models import (Player, Prediction, Report, ReportLatest,
                                  stgReport)
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from requests.sessions import Request
 from sqlalchemy import update
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import insert, select
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
 
 class equipment(BaseModel):
     equip_head_id: int = Query(None, ge=0)
@@ -54,11 +52,6 @@ class detections(BaseModel):
     world_number: int = Query(0, ge=300, le=1_000)
     equipment: equipment
     equip_ge_value: int = Query(0, ge=0, le=int(upper_gear_cost))
-    
-# add exception handling somewhere? Not sure. I don't think this can be local check for only this route unless we manually validate all of the data.
-# @router.exception_handler(RequestValidationError)
-# async def validation_exception_handler(request, exc):
-#     return JSONResponse(status_code=status.HTTP_200_OK, content=jsonable_encoder({'OK': 'OK'}))
 
 @router.get("/v1/report", tags=["Report"])
 async def get_reports_from_plugin_database(
@@ -118,15 +111,14 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
 
 
 @router.post("/v1/report", tags=["Report"])
-
-async def insert_report(
+async def insert_report(request : Request,
     detections: List[detections],
     manual_detect: int = Query(0, ge=0, le=1),
     ):
     '''
         Inserts detections to the plugin database.
     '''
-    
+    client_host = request.client.host
     success = JSONResponse(status_code=status.HTTP_200_OK, content=jsonable_encoder({'OK': 'OK'}))
     bad_data = JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=jsonable_encoder({'error': 'There was an error with your request. Please contact plugin support.'}))
 
@@ -136,8 +128,9 @@ async def insert_report(
         subset=['reporter', 'reported', 'region_id'], inplace=True)
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
+    sender = df["reporter"].values[0]
     if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
-        logger.warning('Too Many Reports or Multiple Reporters!')
+        logger.warning(f'IP: {client_host} | Sender {sender} | Too Many Reports or Multiple Reporters!')
         return bad_data
 
     # data validation, checks for correct timing
@@ -145,7 +138,7 @@ async def insert_report(
     df_time = df.ts
     mask = (df_time > int(now + int(front_time_buffer))) | (df_time < int(now - int(back_time_buffer)))
     if len(df_time[mask].values) > 0:
-        logger.warning(f'Data contains out of bounds time!')
+        logger.warning(f'IP: {client_host} | Sender {sender} | Data contains out of bounds time!')
         return bad_data
 
     # Successful query
@@ -178,7 +171,7 @@ async def insert_report(
     try:
         df = df.merge(df_names, left_on="reported", right_on="name")
     except KeyError as e:
-        logger.debug(f'Key Error: {df} '+f'{df.columns}, {e}')
+        logger.debug(f'IP: {client_host} | Sender {sender} | Key Error: {df} '+f'{df.columns}, {e}')
         return bad_data
 
     reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
@@ -186,7 +179,7 @@ async def insert_report(
     try:
         df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
     except IndexError as e:
-        logger.debug(f'{e}')
+        logger.debug(f'IP: {client_host} | Sender {sender} | {e}')
         return bad_data
 
     df['manual_detect'] = manual_detect

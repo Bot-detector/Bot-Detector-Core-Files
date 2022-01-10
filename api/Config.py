@@ -5,8 +5,11 @@ import sys
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import find_dotenv, load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -18,14 +21,19 @@ graveyard_webhook_url = os.environ.get('graveyard_webhook')
 dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
 
-# reports security parameters
-report_maximum = os.environ.get('report_maximum')
-front_time_buffer = os.environ.get('front_time_buffer')
-back_time_buffer = os.environ.get('back_time_buffer')
-upper_gear_cost = os.environ.get('upper_gear_cost')
+report_maximum = 5000
+front_time_buffer = 3600
+back_time_buffer = 25200
+upper_gear_cost = 1_000_000_000_000
 
 # create application
 app = FastAPI()
+
+# https://www.starlette.io/requests/
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logging.info(f'IP: {request.client.host} | ROUTE: {request.url} | Unprocessable Request (422).')
+    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=jsonable_encoder({'error': 'There was an error in your request. Please contact plugin support.'}))
 
 origins = [
     "http://osrsbotdetector.com/",
