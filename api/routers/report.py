@@ -37,22 +37,7 @@ class equipment(BaseModel):
     equip_shield_id: int
 
 
-class detection(BaseModel):
-    reportedID: int
-    reportingID: int
-    region_id: int
-    x_coord: int
-    y_coord: int
-    z_coord: int
-    ts: int
-    manual_detect: int
-    on_members_world: int
-    on_pvp_world: int
-    world_number: int
-    equipment: equipment
-    equip_ge_value: int
-    
-class report_detections(BaseModel):
+class detections(BaseModel):
     reporter: str
     reported: str
     region_id: int
@@ -66,23 +51,24 @@ class report_detections(BaseModel):
     world_number: int
     equipment: equipment
     equip_ge_value: int
-    
+
 
 @router.get("/v1/report", tags=["Report"])
 async def get_reports_from_plugin_database(
     token: str,
-    reportedID: Optional[int]= Query(None, ge=0),
-    reportingID: Optional[int]= Query(None, ge=0),
-    timestamp: Optional[date]= None,
-    regionID: Optional[int]= Query(None, ge=0, le=100000)
-    ):
+    reportedID: Optional[int] = Query(None, ge=0),
+    reportingID: Optional[int] = Query(None, ge=0),
+    timestamp: Optional[date] = None,
+    regionID: Optional[int] = Query(None, ge=0, le=100000)
+):
     '''
         Select report data.
     '''
     await verify_token(token, verification='verify_ban', route='[GET]/v1/report/')
 
     if None == reportedID == reportingID:
-        raise HTTPException(status_code=404, detail="reportedID or reportingID must be given")
+        raise HTTPException(
+            status_code=404, detail="reportedID or reportingID must be given")
 
     sql = select(Report)
 
@@ -97,7 +83,7 @@ async def get_reports_from_plugin_database(
 
     if not regionID is None:
         sql = sql.where(Report.region_id == regionID)
-    
+
     # execute query
     async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
@@ -126,34 +112,35 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
 
 @router.post("/v1/report", tags=["Report"])
 async def insert_report(
-    detections: List[report_detections],
+    detections: List[detections],
     manual_detect: int = Query(0, ge=0, le=1),
-    ):
+):
     '''
-        Insert reports to the Plugin 
+        Inserts detections to the plugin database.
     '''
 
     # remove duplicates
     df = pd.DataFrame([d.dict() for d in detections])
-    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
+    df.drop_duplicates(
+        subset=['reporter', 'reported', 'region_id'], inplace=True)
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
-        logger.debug('Too many reports.')
+        logger.warning('Too Many Reports or Multiple Reporters!')
         raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
-    
+
     # data validation, checks for correct timing
     now = int(time.time())
     df_time = df.ts
     mask = (df_time > int(now + int(front_time_buffer))) | (df_time < int(now - int(back_time_buffer)))
     if len(df_time[mask].values) > 0:
-        logger.debug(f'Data contains out of bounds time {df_time[mask].values}')
+        logger.info(f'Data contains out of bounds time!')
         raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
-    
+
     # successful query
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
-    # 1) Get a list of unqiue reported names and reporter name 
+    # 1) Get a list of unqiue reported names and reporter name
     names = list(df['reported'].unique())
     names.extend(df['reporter'].unique())
 
@@ -166,17 +153,17 @@ async def insert_report(
     # 3) Create entries for players that do not yet exist in Players table
     existing_names = [d["normalized_name"] for d in data]
     new_names = set([name for name in clean_names]).difference(existing_names)
-    
+
     # 3.1) Insert new names and get those player IDs from step 3
     if new_names:
         param = [{"name": name, "normalized_name": name} for name in new_names]
         await batch_function(sql_insert_player, param)
         data.extend(await sql_select_players(new_names))
 
-    # 4) Insert detections into Reports table with user ids 
+    # 4) Insert detections into Reports table with user ids
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
-    
+
     try:
         df = df.merge(df_names, left_on="reported", right_on="name")
     except KeyError:
@@ -199,27 +186,27 @@ async def insert_report(
     await batch_function(sql_insert_report, param)
     return {"OK": "OK"}
 
+
 @router.get("/v1/report/prediction", tags=["Report", "Business"])
 async def get_report_by_prediction(
     token: str,
     label_jagex: int,
     predicted_confidence: int,
-    prediction: Optional[str]=None,
-    real_player: Optional[int]=None,
-    crafting_bot: Optional[int]=None,
-    timestamp: Optional[date]=None,
-    region_id: Optional[int]=None
-    ):
+    prediction: Optional[str] = None,
+    real_player: Optional[int] = None,
+    crafting_bot: Optional[int] = None,
+    timestamp: Optional[date] = None,
+    region_id: Optional[int] = None
+):
     '''
         Gets account based upon the prediction features.
         Business service: Twitter
     '''
     await verify_token(token, verification='verify_ban', route='[GET]/v1/report/prediction')
-    
-    
-    sql = select(   
-        Player.id, 
-        Prediction.Prediction, 
+
+    sql = select(
+        Player.id,
+        Prediction.Prediction,
         Prediction.Predicted_confidence
     ).distinct()
 
@@ -237,10 +224,10 @@ async def get_report_by_prediction(
 
     if not timestamp is None:
         sql = sql.where(func.date(Report.timestamp) == timestamp)
-    
+
     if not region_id is None:
         sql = sql.where(Report.region_id == region_id)
-    
+
     sql = sql.join(Report, Player.id == Report.reportedID)
     sql = sql.join(Prediction, Player.id == Prediction.id)
 
@@ -258,23 +245,24 @@ async def get_report_by_prediction(
 
     return output
 
+
 @router.get("/v1/report/latest", tags=["Report"])
 async def get_latest_report_of_a_user(
     token: str,
     reported_id: int = Query(..., ge=0)
-    ):
-    
+):
+
     '''
         Select the latest report data, by reported user
     '''
-    
+
     await verify_token(token, verification='verify_ban', route='[GET]/v1/report/latest')
 
     sql = select(ReportLatest)
 
     if not reported_id is None:
         sql = sql.where(ReportLatest.reported_id == reported_id)
-    
+
     # execute query
     async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
@@ -282,12 +270,13 @@ async def get_latest_report_of_a_user(
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
+
 @router.get("/v1/report/latest/bulk", tags=["Report"])
 async def get_bulk_latest_report_data(
     token: str,
     region_id: Optional[int] = Query(None, ge=0, le=25000),
     timestamp: Optional[date] = None
-    ):
+):
     '''
         get the player count in bulk by region and or date
     '''
