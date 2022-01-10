@@ -5,6 +5,7 @@ from datetime import date
 from typing import List, Optional
 
 import pandas as pd
+from requests.sessions import Request
 from api.Config import (back_time_buffer, front_time_buffer, report_maximum,
                         upper_gear_cost)
 from api.database.functions import (EngineType, batch_function, create_task,
@@ -15,7 +16,10 @@ from api.database.functions import (EngineType, batch_function, create_task,
                                     verify_token)
 from api.database.models import (Player, Prediction, Report, ReportLatest,
                                  stgReport)
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import update
 from sqlalchemy.sql import func
@@ -40,7 +44,7 @@ class equipment(BaseModel):
 class detections(BaseModel):
     reporter: str = Query(..., min_length=1, max_length=12)
     reported: str = Query(..., min_length=1, max_length=12)
-    region_id: int = Query(0, ge=0)
+    region_id: int = Query(0, ge=0, le=100_000)
     x_coord: int = Query(0, ge=0)
     y_coord: int = Query(0, ge=0)
     z_coord: int = Query(0, ge=0)
@@ -48,10 +52,14 @@ class detections(BaseModel):
     manual_detect: int = Query(0, ge=0, le=1)
     on_members_world: int = Query(0, ge=0, le=1)
     on_pvp_world: int = Query(0, ge=0, le=1)
-    world_number: int = Query(0, ge=0, le=1000)
+    world_number: int = Query(0, ge=300, le=1_000)
     equipment: equipment
     equip_ge_value: int = Query(0, ge=0, le=int(upper_gear_cost))
-
+    
+# add exception handling somewhere? Not sure. I don't think this can be local check for only this route unless we manually validate all of the data.
+# @router.exception_handler(RequestValidationError)
+# async def validation_exception_handler(request, exc):
+#     return JSONResponse(status_code=status.HTTP_200_OK, content=jsonable_encoder({'OK': 'OK'}))
 
 @router.get("/v1/report", tags=["Report"])
 async def get_reports_from_plugin_database(
@@ -111,14 +119,17 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
 
 
 @router.post("/v1/report", tags=["Report"])
+
 async def insert_report(
     detections: List[detections],
     manual_detect: int = Query(0, ge=0, le=1),
     ):
-    
     '''
         Inserts detections to the plugin database.
     '''
+    
+    success = JSONResponse(status_code=status.HTTP_200_OK, content=jsonable_encoder({'OK': 'OK'}))
+    bad_data = JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=jsonable_encoder({'error': 'There was an error with your request. Please contact plugin support.'}))
 
     # remove duplicates
     df = pd.DataFrame([d.dict() for d in detections])
@@ -128,7 +139,7 @@ async def insert_report(
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
         logger.warning('Too Many Reports or Multiple Reporters!')
-        raise HTTPException(status_code=400, detail="{'error':'One or more of the values that you have sent are out of bounds.'}")
+        return bad_data
 
     # data validation, checks for correct timing
     now = int(time.time())
@@ -136,7 +147,7 @@ async def insert_report(
     mask = (df_time > int(now + int(front_time_buffer))) | (df_time < int(now - int(back_time_buffer)))
     if len(df_time[mask].values) > 0:
         logger.warning(f'Data contains out of bounds time!')
-        raise HTTPException(status_code=400, detail="{'error':'One or more of the values that you have sent are out of bounds.'}")
+        return bad_data
 
     # Successful query
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
@@ -167,16 +178,17 @@ async def insert_report(
 
     try:
         df = df.merge(df_names, left_on="reported", right_on="name")
-    except KeyError:
-        logger.debug(f'Key Error: {df} '+f'{df.columns}')
-        raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
+    except KeyError as e:
+        logger.debug(f'Key Error: {df} '+f'{df.columns}, {e}')
+        return bad_data
 
     reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
 
     try:
         df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
-    except IndexError as ie:
-        raise HTTPException(status_code=400, detail="There was an error in the data you've sent to us.")
+    except IndexError as e:
+        logger.debug(f'{e}')
+        return bad_data
 
     df['manual_detect'] = manual_detect
     # 4.2) parse data to param
@@ -185,7 +197,7 @@ async def insert_report(
 
     # 4.3) parse query
     await batch_function(sql_insert_report, param)
-    return {"OK": "OK"}
+    return success
 
 
 @router.get("/v1/report/prediction", tags=["Report", "Business"])

@@ -525,7 +525,7 @@ post_report_test_case = ((
             "manual_detect": 0,
             "on_members_world": 0,
             "on_pvp_world": 0,
-            "world_number": 0,
+            "world_number": 302,
             "equipment": {
                 "equip_head_id": 0,
                 "equip_amulet_id": 0,
@@ -550,7 +550,7 @@ post_report_test_case = ((
             "manual_detect": 0,
             "on_members_world": 0,
             "on_pvp_world": 0,
-            "world_number": 0,
+            "world_number": 302,
             "equipment": {
                 "equip_head_id": 0,
                 "equip_amulet_id": 0,
@@ -575,7 +575,7 @@ post_report_test_case = ((
             "manual_detect": 0,
             "on_members_world": 0,
             "on_pvp_world": 0,
-            "world_number": 0,
+            "world_number": 302,
             "equipment": {
                 "equip_head_id": 0,
                 "equip_amulet_id": 0,
@@ -600,7 +600,7 @@ post_report_test_case = ((
             "manual_detect": 0,
             "on_members_world": 0,
             "on_pvp_world": 0,
-            "world_number": 0,
+            "world_number": 302,
             "equipment": {
                 "equip_head_id": 0,
                 "equip_amulet_id": 0,
@@ -625,7 +625,7 @@ post_report_test_case = ((
             "manual_detect": 0,
             "on_members_world": 0,
             "on_pvp_world": 0,
-            "world_number": 0,
+            "world_number": 302,
             "equipment": {
                 "equip_head_id": 0,
                 "equip_amulet_id": 0,
@@ -650,7 +650,7 @@ post_report_test_case = ((
             "manual_detect": 0,
             "on_members_world": 0,
             "on_pvp_world": 0,
-            "world_number": 0,
+            "world_number": 302,
             "equipment": {
                 "equip_head_id": 0,
                 "equip_amulet_id": 0,

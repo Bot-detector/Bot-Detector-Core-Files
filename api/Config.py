@@ -2,11 +2,11 @@ import logging
 import os
 import sys
 
-from dotenv import find_dotenv, load_dotenv
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
+from dotenv import find_dotenv, load_dotenv
+from fastapi import FastAPI, status
+from fastapi.middleware.cors import CORSMiddleware
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
@@ -80,6 +80,7 @@ bsched.start()
 
 # https://github.com/aio-libs/aiomysql/issues/103
 import warnings
+
 # Suppress warnings only for aiomysql, all other modules can send warnings
 warnings.filterwarnings('ignore', module=r"aiomysql")
 warnings.filterwarnings('ignore', module=r"asyncmy")
