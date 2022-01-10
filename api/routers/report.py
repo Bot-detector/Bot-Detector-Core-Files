@@ -175,7 +175,7 @@ async def insert_report(
     manual_detect: int = Query(0, ge=0, le=1),
 ):
     '''
-        Inserts detections to the plugin database.
+        Inserts detections into to the plugin database.
     '''
 
     # remove duplicates
@@ -189,10 +189,10 @@ async def insert_report(
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
-        logger.debug(f'Too Many Reports or Multiple Reporters!; {sender=}')
+        logger.debug(f'Too Many Reports or Multiple Reporters! | {sender=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Too many reports, contact staff"
+            detail=f"Your sightings are out of bounds. Contact plugin support on our Discord."
         )
 
     # data validation, checks for correct timing
@@ -203,16 +203,16 @@ async def insert_report(
 
     if len(df[~mask]) == 0:
         logger.debug(f'{lower_bound=}, {df["ts"].values}, {now=}')
-        logger.debug(f'Data contains out of bounds time!; {sender=};')
+        logger.debug(f'Data contains out of bounds time! | {sender=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Out of bound time, contact staff"
+            detail=f"Your sightings contain out of bounds time. Contact plugin support on our Discord."
         )
 
     df = df[~mask]
 
     # Successful query
-    logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
+    logger.debug(f"Received: {len(df)} from {df['reporter'].unique()}")
 
     # 1) Get a list of unqiue reported names and reporter name
     names = list(df['reported'].unique())
@@ -233,16 +233,16 @@ async def insert_report(
         param = [{"name": name, "normalized_name": name} for name in new_names]
 
         #TODO: cleanup
-        logger.debug(f'{param=}')
+        logger.debug(f'New players have been found. | {param=}')
 
         await batch_function(sql_insert_player, param)
         data.extend(await sql_select_players(new_names))
 
     if len(data) == 0:
-        logger.debug(f'Missing player data: {names=}')
+        logger.debug(f'Missing player data. | {names=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="bad data, contact administrator"
+            detail="Your sightings are incomplete. Contact plugin support on our Discord."
         )
 
     # 4) Insert detections into Reports table with user ids
@@ -255,10 +255,10 @@ async def insert_report(
     reporter = df_names.query(f"normalized_name == {reporter}")['id'].to_list()
 
     if len(reporter) == 0:
-        logger.debug(f'User does not have a clean name: {sender=}')
+        logger.debug(f'User does not have a clean name.  | {sender=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="error cleaning name, contact administrator"
+            detail="There was an error processing your name. Contact plugin support on our Discord."
         )
 
     df["reporter_id"] = reporter[0]
