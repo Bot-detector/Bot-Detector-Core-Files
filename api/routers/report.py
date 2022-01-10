@@ -270,7 +270,7 @@ async def insert_report(
 
     # 4.3) parse query
     await batch_function(sql_insert_report, param)
-    return {"ok": "ok"}
+    return {"detail": "ok"}
 
 
 @router.get("/v1/report/prediction", tags=["Report", "Business"])
