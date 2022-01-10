@@ -15,7 +15,6 @@ from api.database.functions import (EngineType, batch_function, create_task,
                                     verify_token)
 from api.database.models import (Player, Prediction, Report, ReportLatest,
                                  stgReport)
-from api.routers.legacy_debug import detect
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import update
