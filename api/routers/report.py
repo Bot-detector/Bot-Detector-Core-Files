@@ -232,9 +232,6 @@ async def insert_report(
     if new_names:
         param = [{"name": name, "normalized_name": name} for name in new_names]
 
-        #TODO: cleanup
-        logger.debug(f'New players have been found. | {param=}')
-
         await batch_function(sql_insert_player, param)
         data.extend(await sql_select_players(new_names))
 
