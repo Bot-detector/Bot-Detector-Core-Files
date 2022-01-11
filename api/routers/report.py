@@ -97,7 +97,7 @@ class equipment(BaseModel):
 
 
 class detection(BaseModel):
-    reporter: str = Field(..., min_length=1, max_length=12)
+    reporter: str = Field(..., min_length=1, max_length=13)
     reported: str = Field(..., min_length=1, max_length=12)
     region_id: int = Field(0, ge=0, le=100_000)
     x_coord: int = Field(0, ge=0)
@@ -202,7 +202,6 @@ async def insert_report(
     mask = mask | (df['ts'] < lower_bound)
 
     if len(df[~mask]) == 0:
-        logger.debug(f'{lower_bound=}, {df["ts"].values}, {now=}')
         logger.debug(f'Data contains out of bounds time! | {sender=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -212,7 +211,7 @@ async def insert_report(
     df = df[~mask]
 
     # Successful query
-    logger.debug(f"Received: {len(df)} from {df['reporter'].unique()}")
+    logger.debug(f"Received: {len(df)} from {sender}")
 
     # 1) Get a list of unqiue reported names and reporter name
     names = list(df['reported'].unique())
