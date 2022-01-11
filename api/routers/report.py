@@ -195,6 +195,13 @@ async def insert_report(
             detail=f"Your sightings are out of bounds. Contact plugin support on our Discord."
         )
 
+    if len(sender[0]) > 12 and not sender[0] == 'AnonymousUser':
+        logger.debug(f'invalid username: {sender[0]}')
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid username. Contact plugin support on our Discord."
+        )
+
     # data validation, checks for correct timing
     now = int(time.time())
     lower_bound = (now - back_time_buffer)
@@ -211,7 +218,7 @@ async def insert_report(
     df = df[~mask]
 
     # Successful query
-    logger.debug(f"Received: {len(df)} from {sender}")
+    logger.debug(f"Received: {len(df)} from {sender=}")
 
     # 1) Get a list of unqiue reported names and reporter name
     names = list(df['reported'].unique())
