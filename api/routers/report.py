@@ -196,7 +196,7 @@ async def insert_report(
         )
 
     if len(sender[0]) > 12 and not sender[0] == 'AnonymousUser':
-        logger.debug(f'invalid username: {sender[0]}')
+        logger.debug(f'invalid username: {sender=}')
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid username. Contact plugin support on our Discord."
