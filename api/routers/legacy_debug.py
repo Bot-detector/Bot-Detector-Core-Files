@@ -355,7 +355,6 @@ async def parse_contributors(contributors, version=None, add_patron_stats:bool=F
     return_dict['total'] = total_dict
     return return_dict
 
-
 @router.post('/stats/contributions/', tags=["Legacy"])
 async def get_contributions(contributors: List[contributor], token:str=None):
     add_patron_stats = False
