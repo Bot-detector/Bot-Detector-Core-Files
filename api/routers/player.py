@@ -80,7 +80,7 @@ async def get_bulk_player_data_from_the_plugin_database(
 
     # create query
     sql = select(dbPlayer)
-
+ 
     # filters    
     # filters
     if not possible_ban is None:
