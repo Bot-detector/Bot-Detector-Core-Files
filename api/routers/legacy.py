@@ -1,4 +1,5 @@
 import logging
+from multiprocessing.sharedctypes import Value
 import os
 import pathlib
 import random
@@ -955,7 +956,10 @@ async def verify_discord_user(token:str, discord:discord, version:str=None):
     code = verify_data.get("code", "")
 
     if len(code) == 4:
-        provided_code = int(code)
+        try:
+            provided_code = int(code)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Please provide a 4 digit code.")
     else:
         raise HTTPException(status_code=400, detail=f"Please provide a 4 digit code.")
 
