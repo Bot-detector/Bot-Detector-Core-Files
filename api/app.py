@@ -1,7 +1,9 @@
 
 from concurrent.futures.process import ProcessPoolExecutor
+import imp
 
 import api.Config
+import api.middleware
 from api.Config import app
 from api.routers import (feedback, hiscore, label, legacy, legacy_debug,
                          player, prediction, report, scraper)
