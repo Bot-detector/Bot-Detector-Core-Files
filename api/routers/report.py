@@ -3,6 +3,7 @@ import logging
 import string
 import time
 from datetime import date
+from tkinter.tix import Select
 from typing import List, Optional
 
 import pandas as pd
@@ -34,18 +35,18 @@ upper_gear_cost = 1_000_000_000_000
 
 async def sql_select_reporter_contributions(names: List[str], is_supporter=False) -> List:
     """ Players
-SELECT
-        Count(rs.reportedID) as count,
-        ifnull(rs.manual_detect,0) as detect,
-        ban.confirmed_ban as confirmed_ban,
-        ban.possible_ban as possible_ban,
-        ban.confirmed_player as confirmed_player
-FROM Reports as rs
-JOIN Players as pl on (pl.id = rs.reportingID)
-join Players as ban on (ban.id = rs.reportedID)
-WHERE 1=1
-    AND pl.normalized_name in ('born2grindyt')
-Group by detect, confirmed_ban, possible_ban, confirmed_player;
+    SELECT
+            Count(DISTINCT rs.reportedID) as count,
+            ifnull(rs.manual_detect, 0) as detect,
+            ban.confirmed_ban as confirmed_ban,
+            ban.possible_ban as possible_ban,
+            ban.confirmed_player as confirmed_player
+    FROM Reports as rs
+    JOIN Players as pl on (pl.id = rs.reportingID)
+    join Players as ban on (ban.id = rs.reportedID)
+    WHERE 1=1
+        AND pl.name in ('Ferrariic')
+    Group by detect, confirmed_ban, possible_ban, confirmed_player;
     """
     ''' Supporters
         SELECT
@@ -66,18 +67,20 @@ Group by detect, confirmed_ban, possible_ban, confirmed_player;
     rp = alias(Report, 'rp')
     pl = alias(Player, 'pl')
     ban = alias(Player, 'ban')
-
-    sql = select(func.ifnull(rp.c.manual_detect, 0), ban.c.confirmed_ban, ban.c.possible_ban, ban.c.confirmed_player, func.count(rp.c.reportedID))
+    
+    sql = select(func.ifnull(rp.c.manual_detect, 0), ban.c.confirmed_ban, ban.c.possible_ban, ban.c.confirmed_player, func.count(rp.c.reportedID.distinct()))
     sql = sql.join(pl, pl.c.id == rp.c.reportingID)
     sql = sql.join(ban, ban.c.id == rp.c.reportedID)
     
     sql = sql.where(pl.c.normalized_name.in_(tuple(names)))
     sql = sql.group_by(rp.c.manual_detect, ban.c.confirmed_ban, ban.c.possible_ban, ban.c.confirmed_player)
+    
+    print(sql)
 
     async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
-        data = sqlalchemy_result(data)
-        print(data.rows2dict())
+    data = sqlalchemy_result(data)
+    print(data.rows2tuple())
     return 
 
 async def sql_select_players(names: List[str]) -> List:
