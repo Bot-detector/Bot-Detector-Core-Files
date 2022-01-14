@@ -951,6 +951,8 @@ async def verify_discord_user(token:str, discord:discord, version:str=None):
     await verify_token(token, verification='verify_players') 
     
     verify_data = discord.dict()
+    provided_code = str(verify_data.get("code", 0))
+
     player = await sql_get_player(verify_data["player_name"])
 
     if player == None:
@@ -964,7 +966,11 @@ async def verify_discord_user(token:str, discord:discord, version:str=None):
 
     if pending_discord:
         for record in pending_discord:
-            if str(record.Code) == str(verify_data["code"]):
+            pending_code = str(record.Code)
+            #Ensure all codes coming out of database are 4 digits in length. Some entries are truncated.
+            clean_pending_code = pending_code.zfill((4 - len(pending_code)) + len(pending_code))
+
+            if clean_pending_code == provided_code:
                 await set_discord_verification(id=record.Entry, token=token_id)
                 break
     else:
