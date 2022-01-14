@@ -951,7 +951,13 @@ async def verify_discord_user(token:str, discord:discord, version:str=None):
     await verify_token(token, verification='verify_players') 
     
     verify_data = discord.dict()
-    provided_code = str(verify_data.get("code", 0))
+    
+    code = verify_data.get("code", "")
+
+    if len(code) == 4:
+        provided_code = int(code)
+    else:
+        raise HTTPException(status_code=400, detail=f"Please provide a 4 digit code.")
 
     player = await sql_get_player(verify_data["player_name"])
 
@@ -966,11 +972,9 @@ async def verify_discord_user(token:str, discord:discord, version:str=None):
 
     if pending_discord:
         for record in pending_discord:
-            pending_code = str(record.Code)
-            #Ensure all codes coming out of database are 4 digits in length. Some entries are truncated.
-            clean_pending_code = pending_code.zfill((4 - len(pending_code)) + len(pending_code))
+            pending_code = int(record.Code)
 
-            if clean_pending_code == provided_code:
+            if pending_code == provided_code:
                 await set_discord_verification(id=record.Entry, token=token_id)
                 break
     else:
