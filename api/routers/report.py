@@ -1,20 +1,23 @@
 
 import logging
+import string
 import time
 from datetime import date
 from typing import List, Optional
 
 import pandas as pd
-from pydantic.fields import Field
 from api.database.functions import (EngineType, batch_function, get_session,
                                     jagexify_names_list, sqlalchemy_result,
                                     to_jagex_name, verify_token)
 from api.database.models import (Player, Prediction, Report, ReportLatest,
                                  stgReport)
+from attr import field
+
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
+from pydantic.fields import Field
 from sqlalchemy import update
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, alias
 from sqlalchemy.sql.expression import insert, select
 
 logger = logging.getLogger(__name__)
@@ -28,6 +31,54 @@ upper_gear_cost = 1_000_000_000_000
 
 # TODO: cleanup thse functions
 
+
+async def sql_select_reporter_contributions(names: List[str], is_supporter=False) -> List:
+    """ Players
+SELECT
+        Count(rs.reportedID) as count,
+        ifnull(rs.manual_detect,0) as detect,
+        ban.confirmed_ban as confirmed_ban,
+        ban.possible_ban as possible_ban,
+        ban.confirmed_player as confirmed_player
+FROM Reports as rs
+JOIN Players as pl on (pl.id = rs.reportingID)
+join Players as ban on (ban.id = rs.reportedID)
+WHERE 1=1
+    AND pl.normalized_name in ('born2grindyt')
+Group by detect, confirmed_ban, possible_ban, confirmed_player;
+    """
+    ''' Supporters
+        SELECT
+            SUM(total) as total_xp
+        FROM playerHiscoreDataLatest
+        WHERE Player_id IN :banned_ids
+        
+        j = user_table.join(address_table,
+                        user_table.c.id == address_table.c.user_id)
+        stmt = select(user_table).select_from(j)
+        would emit SQL along the lines of:
+
+        SELECT user.id, user.name FROM user
+        JOIN address ON user.id = address.user_id
+            '''
+            
+    '''player script'''
+    rp = alias(Report, 'rp')
+    pl = alias(Player, 'pl')
+    ban = alias(Player, 'ban')
+
+    sql = select(func.ifnull(rp.c.manual_detect, 0), ban.c.confirmed_ban, ban.c.possible_ban, ban.c.confirmed_player, func.count(rp.c.reportedID))
+    sql = sql.join(pl, pl.c.id == rp.c.reportingID)
+    sql = sql.join(ban, ban.c.id == rp.c.reportedID)
+    
+    sql = sql.where(pl.c.normalized_name.in_(tuple(names)))
+    sql = sql.group_by(rp.c.manual_detect, ban.c.confirmed_ban, ban.c.possible_ban, ban.c.confirmed_player)
+
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+        data = sqlalchemy_result(data)
+        print(data.rows2dict())
+    return 
 
 async def sql_select_players(names: List[str]) -> List:
     sql = select(Player)
@@ -111,7 +162,6 @@ class detection(BaseModel):
     equipment: equipment
     equip_ge_value: int = Field(0, ge=0, le=int(upper_gear_cost))
 
-
 @router.get("/v1/report", tags=["Report"])
 async def get_reports_from_plugin_database(
     token: str,
@@ -169,7 +219,51 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
     return {'OK': 'OK'}
 
 
-@router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
+@router.get('/v1/reporter-statistics', status_code=status.HTTP_200_OK, tags=["Plugin"])
+async def get_contributions(
+    contributors : str,
+    version : str,
+    patron_token : Optional[str] = Query(None, min_length=1, max_length=1000)
+    ):
+    """
+    Allows a player to see their plugin contributions.\n
+    \n
+    Args:\n
+        contributors (List[str]): Comma-seperated, no spaces, list of contributors to be checked and scanned. Ferrariic,Extreme4all,Seltzer Bro,Cyborger1\n
+        version (str): Version number of the plugin. Defaults to Field(None).\n
+        patron_token (Optional[str], optional): Token to be used if contributors are patreon supporters. Defaults to Field(..., min_length=1).\n
+    \n
+    Raises:\n
+        400 : Client error - Something went wrong on your side.\n
+        401 : Unauthorized Access - Unknown token used.\n
+        403 : Unauthorized Access - Known token without correct privs used.\n
+        500 : Internal server error - something went wrong on our side.\n
+    \n
+    Returns:\n
+        Dictionary : A dictionary of the contributors' bans and feedbacks.\n
+    \n
+    """
+    version_list = ['1.3.7.1','1.3.7.2']
+    is_supporter = False
+    
+    if patron_token is not None:
+        await verify_token(patron_token, verification='verify_ban', route='[GET]/v1/report/reporter-statistics')
+        is_supporter = True
+        
+    if version not in version_list:
+        logger.debug(f'Invalid Version in /report/report-statistics Used: {version}')
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Incorrect plugin version. Contact plugin support on our Discord."
+        )
+        
+    contributors = contributors.split(',')
+    contributors = await jagexify_names_list(contributors)
+    reporter_statistics = await sql_select_reporter_contributions(names=contributors, is_supporter=is_supporter)
+    
+    return reporter_statistics
+
+@router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Plugin"])
 async def insert_report(
     detections: List[detection],
     manual_detect: int = Query(0, ge=0, le=1),
