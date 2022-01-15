@@ -390,20 +390,12 @@ async def get_bulk_latest_report_data(
 async def get_contributions(
     user_name : str = Query(..., min_length=1, max_length=12),
     ):
-    """Allows for a player to see their contributions.\n
-    \n
-    Args:\n
-        user_name (str): [description]. Defaults to Query(..., min_length=1, max_length=12).\n
-    \n
-    Returns:\n
-        200 : OK - Accepted response.\n
-        400 : Client error.\n
-        422 : Unprocessable entry.\n
-        500 : Internal Server Error - Contact an administrator.\n
+    """
+        Allows for a player to see their contributions.
     """
     
     if not await is_valid_rsn(user_name):
-        logger.debug(f'Bad Name passed for [GET]/report/count  | {user_name=}')
+        logger.debug(f'Bad Name passed for v1/report/count  | {user_name=}')
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Your name could not be processed. Contact plugin support on our Discord."
@@ -439,7 +431,9 @@ async def get_contributions(
     data = [{k:v for k,v in zip(fields,d)} for d in data]
     
     if len(data) == 0:
-        data = {'detail':f'No Data found for {user_name}. Contact Plugin Support on our Discord.'}
-    
-    logging.debug(f'Contributor data sent.  | {user_name=}')
+        logger.debug(f'No Data found for {user_name=}.')
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"No Data found for {user_name}. Contact Plugin Support on our Discord."
+        )
     return data
