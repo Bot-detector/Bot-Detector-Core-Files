@@ -16,5 +16,5 @@ async def add_process_time_header(request: Request, call_next):
     process_time = time.time() - start_time
 
     url = request.url.remove_query_params('token')._url
-    logger.debug(f'{url=} | {process_time=}')
+    logger.debug(f'{url=};{process_time=}')
     return response
