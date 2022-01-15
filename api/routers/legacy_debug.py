@@ -128,7 +128,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         logger.debug('Too many reports.')
-        return {'ERROR': 'ERROR'}, 400
+        return
     
     
     # data validation, checks for correct timing
@@ -140,7 +140,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     mask = (df_time > now_upper) | (df_time < now_lower)
     if len(df_time[mask].values) > 0:
         logger.debug(f'Data contains out of bounds time {df_time[mask].values}')
-        return {'ERROR': 'ERROR'}, 400
+        return
 
 
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
@@ -173,31 +173,37 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # add reported & reporter id
     df_names = pd.DataFrame(data)
 
-    #TODO: cleanup try except
-    try:
-        df = df.merge(df_names, left_on="reported", right_on="normalized_name")
-    except KeyError:
-        logger.debug(f'df: \n {df}')
-        logger.debug(f'df_names: \n {df_names}')
-        raise HTTPException(status_code=400, detail="Issues with merge")
-        # raise KeyError(f"There was a key error with this entry.")
-
+    if (len(df) == 0) or (len(df_names) == 0):
+        logger.debug(f'1: Empty Dataframe')
+        return
+        
+    df = df.merge(df_names, left_on="reported", right_on="normalized_name")
+    
+    if (len(df) == 0):
+        logger.debug(f'2: Empty Dataframe')
+        return
+    
     reporter = df['reporter'].unique()
 
-    #TODO: cleanup try except
-    try:
-        df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
-    except IndexError:
-        logger.debug(f'{reporter=}')
-        raise HTTPException(status_code=400, detail=f"Detection Submission Error: {reporter} was not found in {df_names}.")
-
+    if len(reporter) != 1:
+        logger.debug(f'1: Multiple Reporters?')
+        return
+    
+    reporter_id = df_names.query(f"normalized_name == {reporter}")['id'].to_list()
+    
+    if len(reporter_id) == 0:
+        logger.debug(f'No Reporter')
+        return
+    
+    df["reporter_id"] = reporter_id[0]
 
     df['manual_detect'] = manual_detect
-    # 4.2) parse data to param
+    
+    # Parse data to param
     data = df.to_dict('records')
     param = [await parse_detection(d) for d in data]
 
-    # 4.3) parse query
+    # Parse query
     await batch_function(sql_insert_report, param)
 
 
