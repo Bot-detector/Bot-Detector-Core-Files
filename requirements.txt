@@ -9,7 +9,7 @@ attrs==21.2.0
 certifi==2021.10.8
 cffi==1.15.0
 charset-normalizer==2.0.9
-click==8.0.3
+click==7.1.2
 colorama==0.4.4
 cryptography==36.0.1
 fastapi==0.70.1
@@ -42,5 +42,5 @@ typing_extensions==4.0.1
 tzdata==2021.5
 tzlocal==4.1
 urllib3==1.26.7
-uvicorn==0.16.0
+uvicorn==0.13.4
 XlsxWriter==3.0.2

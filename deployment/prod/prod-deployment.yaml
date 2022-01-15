@@ -39,15 +39,17 @@ spec:
         resources:
           requests:
             cpu: "1000m"
+            memory: "100Mi"
           limits:
             cpu: "2000m"
+            memory: "3000Mi"
         volumeMounts:
         - name: nfs-volume
           mountPath: /code/exports
         livenessProbe:
           httpGet:
             path: /
-            port: 5000
+            port: 4000
           failureThreshold: 3
           periodSeconds: 30
       imagePullSecrets:
