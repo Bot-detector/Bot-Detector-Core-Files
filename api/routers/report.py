@@ -6,17 +6,18 @@ from typing import List, Optional
 
 import pandas as pd
 from api.database.functions import (EngineType, batch_function, get_session,
-                                    jagexify_names_list, sqlalchemy_result,
-                                    to_jagex_name, is_valid_rsn, verify_token)
+                                    is_valid_rsn, jagexify_names_list,
+                                    sqlalchemy_result, to_jagex_name,
+                                    verify_token)
 from api.database.models import (Player, Prediction, Report, ReportLatest,
                                  stgReport)
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 from pydantic.fields import Field
 from sqlalchemy import update
+from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import insert, select
-from sqlalchemy.orm import aliased
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -439,7 +440,8 @@ async def get_contributions(
     data = [{k:v for k,v in zip(fields,d)} for d in data]
     
     if len(data) == 0:
-        data = {'detail':f'No Data found for {user_name}. Contact Plugin Support on our Discord.'}
+        data = [{'detail':f'No Data found for {user_name}. Contact Plugin Support on our Discord.'}]
     
     logging.debug(f'Contributor data sent.  | {user_name=}')
+    print(type(data))
     return data
