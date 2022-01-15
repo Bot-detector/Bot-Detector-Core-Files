@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 from pydantic.fields import Field
 from sqlalchemy import update
-from sqlalchemy.sql import alias, func
+from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import insert, select
 from sqlalchemy.orm import aliased
 
