@@ -1,6 +1,5 @@
 
 from concurrent.futures.process import ProcessPoolExecutor
-import imp
 
 import api.Config
 import api.middleware

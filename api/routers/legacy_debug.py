@@ -186,6 +186,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 
     #TODO: cleanup try except
     try:
+        print(reporter)
         df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
     except IndexError:
         logger.debug(f'{reporter=}')
