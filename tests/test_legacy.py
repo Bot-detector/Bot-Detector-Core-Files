@@ -2,6 +2,8 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import pytest
+import time
 
 from api import app
 from fastapi.testclient import TestClient
@@ -9,66 +11,143 @@ from fastapi.testclient import TestClient
 client = TestClient(app.app)
 
 
-# def test_detect():
-#     version = "test"
-#     manual_detect = 0
+post_report_test_case = (
+        ([
+            {
+                "reporter": "Ferrariic", # correct name
+                "reported": "extreme4all", # correct name
+                "region_id": 12598,
+                "x": 10,
+                "y": 10,
+                "z": 10,
+                "ts": int(time.time()),
+                "on_members_world": 1,
+                "on_pvp_world": 0,
+                "world_number": 330,
+                "equipment": {
+                    "HEAD": 0,
+                    "AMULET": 0,
+                    "TORSO": 0,
+                    "LEGS": 0,
+                    "BOOTS": 0,
+                    "CAPE": 0,
+                    "HANDS": 0,
+                    "WEAPON": 0,
+                    "SHIELD": 0
+                },
+                "equipment_ge": 0
+            }
+        ], '1.3.7.2', 0, 200),
+        ([
+            {
+                "reporter": "ferrariic", # correct name
+                "reported": "extreme4all", # correct name
+                "region_id": 12598,
+                "x": 10,
+                "y": 10,
+                "z": 10,
+                "ts": int(time.time()),
+                "on_members_world": 1,
+                "on_pvp_world": 0,
+                "world_number": 330,
+                "equipment": {
+                    "HEAD": 0,
+                    "AMULET": 0,
+                    "TORSO": 0,
+                    "LEGS": 0,
+                    "BOOTS": 0,
+                    "CAPE": 0,
+                    "HANDS": 0,
+                    "WEAPON": 0,
+                    "SHIELD": 0
+                },
+                "equipment_ge": 0
+            }
+        ], '1.3.7.2', 0, 200),
+        ([
+            {
+                "reporter": "ferrariic", # correct name
+                "reported": "Extreme4all", # correct name
+                "region_id": 12598,
+                "x": 10,
+                "y": 10,
+                "z": 10,
+                "ts": int(time.time()),
+                "on_members_world": 1,
+                "on_pvp_world": 0,
+                "world_number": 330,
+                "equipment": {
+                    "HEAD": 0,
+                    "AMULET": 0,
+                    "TORSO": 0,
+                    "LEGS": 0,
+                    "BOOTS": 0,
+                    "CAPE": 0,
+                    "HANDS": 0,
+                    "WEAPON": 0,
+                    "SHIELD": 0
+                },
+                "equipment_ge": 0
+            }
+        ], '1.3.7.2', 0, 200),
+        ([
+            {
+                "reporter": "FERRARIIC", # correct name
+                "reported": "EXTREME4ALL", # correct name
+                "region_id": 12598,
+                "x": 10,
+                "y": 10,
+                "z": 10,
+                "ts": int(time.time()),
+                "on_members_world": 1,
+                "on_pvp_world": 0,
+                "world_number": 330,
+                "equipment": {
+                    "HEAD": 0,
+                    "AMULET": 0,
+                    "TORSO": 0,
+                    "LEGS": 0,
+                    "BOOTS": 0,
+                    "CAPE": 0,
+                    "HANDS": 0,
+                    "WEAPON": 0,
+                    "SHIELD": 0
+                },
+                "equipment_ge": 0
+            }
+        ], '1.3.7.2', 0, 200),
+    )
 
-#     formatted_detection = [{
-#         "reporter": "m5ppKBSk1lCiC",
-#         "reported": "nt7Si4pCsE0va",
-#         "region_id": 0,
-#         "x": 0,
-#         "y": 0,
-#         "z": 0,
-#         "ts": 1636478642,
-#         "on_members_world": 0,
-#         "on_pvp_world": 0,
-#         "world_number": 0,
-#         "equipment": {
-#             "equip_head_id": 0,
-#             "equip_amulet_id": 0,
-#             "equip_torso_id": 0,
-#             "equip_legs_id": 0,
-#             "equip_boots_id": 0,
-#             "equip_cape_id": 0,
-#             "equip_hands_id": 0,
-#             "equip_weapon_id": 0,
-#             "equip_shield_id": 0
-#         },
-#         "equip_ge_value": 123
-#     }]
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+def test_post_report():
+    for test, (payload, version, manual_detect, response_code) in enumerate(post_report_test_case):
+        route_attempt = f'/{version}/plugin/detect/{manual_detect}'
+        response = client.post(url=route_attempt, json=payload)
+        assert response.status_code == response_code, f'Test: {test}, Invalid response: {response.status_code}, expected: {response_code}'
 
-#     response = client.post(url=f"/{version}/plugin/detect/{manual_detect}", json=formatted_detection)
-
-#     assert response.status_code == 200, f'invalid response {response.status_code }'
-#     assert isinstance(response.json(), dict), f'invalid response return type: {type(response.json())}'
-
-
-def test_get_prediction():
+# @pytest.mark.filterwarnings('ignore::DeprecationWarning')
+# def test_get_reports_from_plugin_database():
+  
+#     test_case = (
+#       (1, 8, 12598, 200), # correct
+#       ('ferrariic', 8, 12598, 422), # malformed entry
+#       (1, 'ferrariic', 12598, 422), # malformed entry
+#       (1, 8, -1, 422), # -1 region
+#       (-1, 8, -1, 422), # -1 value
+#       (1, -8, -1, 422), # -1 value
+#       (0, 0, 12598, 200), # same reporter id (invalid)
+#       (8, 8, 12598, 200), # same reporter id (valid)
+#       (1, 8, 'varrock', 422), # malformed entry
+#       (None, None, None, 422), # none fields
+#     )
     
-    version = "test"
-    player_names = [
-        ("this_is_bad", 200), # correct
-        ("testing", 200),  # correct
-        ("Seltzer Bro", 200),  # correct 
-        ("a;d;5230fadgkas", 400) # not possible
-    ]
-
-    for test, name in enumerate(player_names):
-        response = client.get(f"/{version}/site/prediction/{name[0]}")
-
-        response_body = response.json()
-
-        assert isinstance(response_body, dict), f'invalid response return type: {type(response.json())}'
-        assert response.status_code == name[1], f'Test: {test} |  {response.status_code }'
-
-        if response.status_code == 200:
-            #Assert the field value types are valid
-            assert isinstance(response_body.get('player_id'), int), f'player_id field is not an integer. it is a type: {type(response_body.get("player_id"))}'
-            assert isinstance(response_body.get('player_name'), str), f'player_name field is not a string. it is a type: {type(response_body.get("player_name"))}'
-            assert isinstance(response_body.get('prediction_label'), str), f'prediction_label field is not a string. it is a type: {type(response_body.get("prediction_label"))}'
-            assert isinstance(response_body.get('prediction_confidence'), float), f'prediction_confidence field is not a float. it is a type: {type(response_body.get("prediction_confidence"))}'
-        
-
+#     for test, (reported_id, reporting_id, region_id, response_code) in enumerate(test_case):
+#         route_attempt = f'/v1/report?token={token}&reportedID={reported_id}&reportingID={reporting_id}&regionID={region_id}'
+#         response = client.get(route_attempt)
+#         assert response.status_code == response_code, f'Test: {test}, Invalid response {response.status_code}, expected: {response_code}'
+#         if response.status_code == 200:
+#             assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
+            
+            
 if __name__ == "__main__":
-    test_get_prediction()
+    test_post_report()

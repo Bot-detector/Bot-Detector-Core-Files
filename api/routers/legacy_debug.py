@@ -1,4 +1,5 @@
 import asyncio
+from http.client import HTTPException
 import logging
 import re
 import time
@@ -49,6 +50,9 @@ class detection(BaseModel):
 
 
 async def is_valid_rsn(rsn: str) -> bool:
+    output = re.fullmatch('[\w\d\s_-]{1,13}', rsn)
+    if output == False:
+        logger.debug(f'Invalid {rsn=}')
     return re.fullmatch('[\w\d\s_-]{1,13}', rsn)
 
 
@@ -124,56 +128,82 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
         logger.debug('Too many reports.')
-        return {'NOK': 'NOK'}, 400
+        return
+    
+    
+    # data validation, checks for correct timing
+    now = int(time.time())
+    now_upper = int(now + 3600)
+    now_lower = int(now - 25200)
+
+    df_time = df.ts
+    mask = (df_time > now_upper) | (df_time < now_lower)
+    if len(df_time[mask].values) > 0:
+        logger.debug(f'Data contains out of bounds time {df_time[mask].values}')
+        return
+
 
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
-    # 1) Get a list of unqiue reported names and reporter name 
+    # Normalize names
+    df['reporter'] = df['reporter'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
+    df['reported'] = df['reported'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
+
+    # Get a list of unqiue reported names and reporter name
     names = list(df['reported'].unique())
     names.extend(df['reporter'].unique())
 
-    # 1.1) Normalize and validate all names
-    clean_names = [await to_jagex_name(name) for name in names if await is_valid_rsn(name)]
+    # validate all names
+    valid_names = [name for name in names if await is_valid_rsn(name)]
 
-    # 2) Get IDs for all unique names
-    data = await sql_select_players(clean_names)
+    # Get IDs for all unique valid names
+    data = await sql_select_players(valid_names)
 
-    # 3) Create entries for players that do not yet exist in Players table
+    # Create entries for players that do not yet exist in Players table
     existing_names = [d["normalized_name"] for d in data]
-    new_names = set([name for name in clean_names]).difference(existing_names)
+    new_names = set([name for name in valid_names]).difference(existing_names)
     
-    # 3.1) Get those players' IDs from step 3
+    # Get new player id's
     if new_names:
         param = [{"name": name, "nname":name} for name in new_names]
         await batch_function(sql_insert_player, param)
-
         data.extend(await sql_select_players(new_names))
 
-    # 4) Insert detections into Reports table with user ids 
-    # 4.1) add reported & reporter id
+    # Insert detections into Reports table with user ids 
+    # add reported & reporter id
     df_names = pd.DataFrame(data)
+
+    if (len(df) == 0) or (len(df_names) == 0):
+        logger.debug(f'1: Empty Dataframe')
+        return
+        
+    df = df.merge(df_names, left_on="reported", right_on="normalized_name")
     
+    if (len(df) == 0):
+        logger.debug(f'2: Empty Dataframe')
+        return
     
-    try:
-        df = df.merge(df_names, left_on="reported", right_on="name")
-    except KeyError:
-        logger.debug(f'Key Error: {df} '+f'{df.columns}')
-        raise KeyError(f"There was a key error with this entry.")
+    reporter = df['reporter'].unique()
 
-    reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
-
-    try:
-        df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
-    except IndexError as ie:
-        raise IndexError(f"Detection Submission Error: {reporter} was not found in {df_names}.")
-
+    if len(reporter) != 1:
+        logger.debug(f'1: Multiple Reporters?')
+        return
+    
+    reporter_id = df_names.query(f"normalized_name == {reporter}")['id'].to_list()
+    
+    if len(reporter_id) == 0:
+        logger.debug(f'No Reporter')
+        return
+    
+    df["reporter_id"] = reporter_id[0]
 
     df['manual_detect'] = manual_detect
-    # 4.2) parse data to param
+    
+    # Parse data to param
     data = df.to_dict('records')
     param = [await parse_detection(d) for d in data]
 
-    # 4.3) parse query
+    # Parse query
     await batch_function(sql_insert_report, param)
 
 

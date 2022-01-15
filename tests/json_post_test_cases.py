@@ -1,3 +1,5 @@
+import time
+
 '''feedback posts'''
 post_feedback_test_case = (
     (
@@ -511,86 +513,3 @@ post_prediction_test_case = (
     ),  # invalid - missing keys
 )
 
-post_report_test_case = (
-    (
-        {
-            "reportedID": 8,
-            "reportingID": 1,
-            "region_id": 12598,
-            "x_coord": 0,
-            "y_coord": 0,
-            "z_coord": 0,
-            "ts": 1640571552,
-            "manual_detect": 0,
-            "on_members_world": 1,
-            "on_pvp_world": 0,
-            "world_number": 302,
-            "equipment": {
-                "equip_head_id": 0,
-                "equip_amulet_id": 0,
-                "equip_torso_id": 0,
-                "equip_legs_id": 0,
-                "equip_boots_id": 0,
-                "equip_cape_id": 0,
-                "equip_hands_id": 0,
-                "equip_weapon_id": 0,
-                "equip_shield_id": 0
-            },
-            "equip_ge_value": 123
-        }, 307
-    ),  # correct
-    (
-        {
-            "reportedID": 'ferrariic',  # invalid
-            "reportingID": 1,
-            "region_id": 12598,
-            "x_coord": 0,
-            "y_coord": 0,
-            "z_coord": 0,
-            "ts": 1640571552,
-            "manual_detect": 0,
-            "on_members_world": 1,
-            "on_pvp_world": 0,
-            "world_number": 302,
-            "equipment": {
-                "equip_head_id": 0,
-                "equip_amulet_id": 0,
-                "equip_torso_id": 0,
-                "equip_legs_id": 0,
-                "equip_boots_id": 0,
-                "equip_cape_id": 0,
-                "equip_hands_id": 0,
-                "equip_weapon_id": 0,
-                "equip_shield_id": 0
-            },
-            "equip_ge_value": 123
-        }, 307
-    ),  # invalid - incorrect type for player name, should be str is typed as int - rectify this with 400
-    (
-        {
-            "reportedID": 8,
-            "reportingID": 1,
-            "region_id": 12598,
-            "x_coord": 0,
-            "y_coord": 0,
-            "z_coord": 0,
-            "ts": -1,  # invalid timestamp
-            "manual_detect": 0,
-            "on_members_world": 1,
-            "on_pvp_world": 0,
-            "world_number": 302,
-            "equipment": {
-                "equip_head_id": 0,
-                "equip_amulet_id": 0,
-                "equip_torso_id": 0,
-                "equip_legs_id": 0,
-                "equip_boots_id": 0,
-                "equip_cape_id": 0,
-                "equip_hands_id": 0,
-                "equip_weapon_id": 0,
-                "equip_shield_id": 0
-            },
-            "equip_ge_value": 123
-        }, 307
-    ),  # invalid - incorrect type for player name, should be str is typed as int - rectify this with 400
-)
