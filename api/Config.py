@@ -1,11 +1,10 @@
+import warnings
+import json
 import logging
 import os
 import sys
-from multiprocessing import Queue
 
-import logging_loki
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.schedulers.background import BackgroundScheduler
+# import logging_loki
 from dotenv import find_dotenv, load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,11 +41,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # setup logging
 file_handler = logging.FileHandler(filename="logs/error.log", mode='a')
 stream_handler = logging.StreamHandler(sys.stdout)
 # # log formatting
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter(
+    '{ts:%(asctime)s, name:%(name)s, level:%(levelname)s, msg:%(message)s}'
+)
+
 file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
 
@@ -56,16 +59,16 @@ handlers = [
 ]
 
 
-if not loki_url is None:
-    loki_handler = logging_loki.LokiQueueHandler(
-        Queue(-1),
-        url=f"{loki_url}", # https://my-loki-instance/loki/api/v1/push
-        tags={"application": "api"},
-        auth=(f"{loki_user}", f"{loki_pw}"),
-        version="1",
-    )
-    loki_handler.setFormatter(formatter)
-    handlers.append(loki_handler)
+# if not loki_url is None:
+#     loki_handler = logging_loki.LokiQueueHandler(
+#         Queue(-1),
+#         url=f"{loki_url}",  # https://my-loki-instance/loki/api/v1/push
+#         tags={"application": "api"},
+#         auth=(f"{loki_user}", f"{loki_pw}"),
+#         version="1",
+#     )
+#     loki_handler.setFormatter(formatter)
+#     handlers.append(loki_handler)
 
 logging.basicConfig(level=logging.DEBUG, handlers=handlers)
 
@@ -79,19 +82,8 @@ logging.getLogger("aiomysql").setLevel(logging.ERROR)
 
 logging.getLogger("uvicorn.error").propagate = False
 
-# for machine learning
-n_pca=2
-use_pca=False
-
-sched = AsyncIOScheduler()
-sched.start()
-
-bsched = BackgroundScheduler()
-bsched.start()
-
 
 # https://github.com/aio-libs/aiomysql/issues/103
-import warnings
 
 # Suppress warnings only for aiomysql, all other modules can send warnings
 warnings.filterwarnings('ignore', module=r"aiomysql")

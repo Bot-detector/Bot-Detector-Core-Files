@@ -26,11 +26,11 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.on_event("startup")
-async def startup_event():
-    app.state.executor = ProcessPoolExecutor()
+# @app.on_event("startup")
+# async def startup_event():
+#     app.state.executor = ProcessPoolExecutor()
 
 
-@app.on_event("shutdown")
-async def on_shutdown():
-    app.state.executor.shutdown()
+# @app.on_event("shutdown")
+# async def on_shutdown():
+#     app.state.executor.shutdown()
