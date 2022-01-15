@@ -14,6 +14,7 @@ client = TestClient(app.app)
 """
   Report get routes
 """
+
 post_report_test_case = ((
     [{
         "reporter": "Ferrariic",
@@ -167,7 +168,7 @@ post_report_test_case = ((
     }], 400),
 )
 
-
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_get_reports_from_plugin_database():
   
     test_case = (
@@ -190,10 +191,25 @@ def test_get_reports_from_plugin_database():
         if response.status_code == 200:
             assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
             
+def test_get_contributions():
+    test_case = (
+      ('ferrariic', 200), # Test 0: correct
+      ('$', 422), # Test 1: Impossible rsn
+      ('ferrariicferrariicferrariic', 422), # Test 2: Name length out of bounds
+      ('ferrari', 200), # Test 3: name with no reports
+    )
+    
+    for test, (name, response_code) in enumerate(test_case):
+        route_attempt = f'/v1/report/count?user_name={name}'
+        response = client.get(route_attempt)
+        assert response.status_code == response_code, f'Test: {test}, Invalid response {response.status_code}, expected: {response_code}'
+        if response.status_code == 200:
+            assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
+            
 """
   Report post routes
 """
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+
 def test_post_report():
     for test, (payload, response_code) in enumerate(post_report_test_case):
       route_attempt = f'/v1/report?manual_detect=0'
@@ -202,7 +218,7 @@ def test_post_report():
 
 if __name__ == "__main__":
   '''get route'''
-  # test_get_reports_from_plugin_database()
+  test_get_reports_from_plugin_database()
 
   '''post route'''
   test_post_report()

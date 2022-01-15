@@ -6,17 +6,18 @@ from typing import List, Optional
 
 import pandas as pd
 from api.database.functions import (EngineType, batch_function, get_session,
-                                    jagexify_names_list, sqlalchemy_result,
-                                    to_jagex_name, is_valid_rsn, verify_token)
+                                    is_valid_rsn, jagexify_names_list,
+                                    sqlalchemy_result, to_jagex_name,
+                                    verify_token)
 from api.database.models import (Player, Prediction, Report, ReportLatest,
                                  stgReport)
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 from pydantic.fields import Field
 from sqlalchemy import update
+from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import insert, select
-from sqlalchemy.orm import aliased
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
