@@ -182,11 +182,10 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
         raise HTTPException(status_code=400, detail="Issues with merge")
         # raise KeyError(f"There was a key error with this entry.")
 
-    reporter = df['reporter'].unique()[0]
+    reporter = df['reporter'].unique()
 
     #TODO: cleanup try except
     try:
-        print(reporter)
         df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
     except IndexError:
         logger.debug(f'{reporter=}')
