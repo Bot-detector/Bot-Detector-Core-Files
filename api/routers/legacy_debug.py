@@ -126,6 +126,13 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
         logger.debug('Too many reports.')
         return {'ERROR': 'ERROR'}, 400
     
+    
+    # globally normalizes incoming names; a faster solution could be performed this is a hot-fix for now.
+    df['reporter'] = df['reporter'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
+    df['reported'] = df['reported'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
+    
+    print(df[['reporter','reported']])
+    
     # data validation, checks for correct timing
     now = int(time.time())
     now_upper = int(now + 3600)
@@ -158,16 +165,13 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     if new_names:
         param = [{"name": name, "nname":name} for name in new_names]
         await batch_function(sql_insert_player, param)
-
         data.extend(await sql_select_players(new_names))
 
     # 4) Insert detections into Reports table with user ids 
     # 4.1) add reported & reporter id
     df_names = pd.DataFrame(data)
-    
-    
     try:
-        df = df.merge(df_names, left_on="reported", right_on="name")
+        df = df.merge(df_names, left_on="reported", right_on="normalized_name")
     except KeyError:
         logger.debug(f'Key Error: {df} '+f'{df.columns}')
         raise KeyError(f"There was a key error with this entry.")
