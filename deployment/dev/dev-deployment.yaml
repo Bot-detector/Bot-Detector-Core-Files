@@ -38,9 +38,11 @@ spec:
           - containerPort: 5000
           resources:
             requests:
-              cpu: "250m"
-            limits:
               cpu: "1000m"
+              memory: "500Mi"
+            limits:
+              cpu: "2000m"
+              memory: "3000Mi"
           volumeMounts:
             - name: nfs-volume-exports
               mountPath: /code/exports

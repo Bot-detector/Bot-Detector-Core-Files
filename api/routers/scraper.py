@@ -81,8 +81,10 @@ class hiscore(BaseModel):
     kreearra: int
     kril_tsutsaroth: int
     mimic: int
+    nex: Optional[int]=None
     nightmare: int
     obor: int
+    phosanis_nightmare:Optional[int]=None
     sarachnis: int
     scorpia: int
     skotizo: int
@@ -100,7 +102,6 @@ class hiscore(BaseModel):
     wintertodt: int
     zalcano: int
     zulrah: int
-    phosanis_nightmare:Optional[int]=None
 
 class Player(BaseModel):
     id: int

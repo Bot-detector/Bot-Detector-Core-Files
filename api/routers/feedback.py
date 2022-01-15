@@ -19,9 +19,7 @@ class Feedback(BaseModel):
     feedback_text: Optional[str] = None
     proposed_label: Optional[str] = None
 
-
 router = APIRouter()
-
 
 @router.get("/v1/feedback/", tags=["Feedback"])
 async def get_feedback(
@@ -105,5 +103,6 @@ async def post_feedback(feedback: Feedback):
         
         sql_insert = sql_insert.values(feedback)
         await session.execute(sql_insert)
+        await session.commit()
 
     return {"OK": "OK"}

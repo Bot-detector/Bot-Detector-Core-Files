@@ -256,6 +256,7 @@ class Player(Base):
     ironman = Column(TINYINT)
     hardcore_ironman = Column(TINYINT)
     ultimate_ironman = Column(TINYINT)
+    normalized_name = Column(Text)
 
     label = relationship('Label')
 
@@ -331,6 +332,36 @@ class Report(Base):
         'Player', primaryjoin='Report.reportedID == Player.id')
     Player1 = relationship(
         'Player', primaryjoin='Report.reportingID == Player.id')
+    
+    
+class stgReport(Base):
+    __tablename__ = 'stgReports'
+
+    ID = Column(BigInteger, primary_key=True, autoincrement=True)
+    created_at = Column(TIMESTAMP, nullable=False,
+                        server_default=text("CURRENT_TIMESTAMP"))
+    reportedID = Column(nullable=False)
+    reportingID = Column(nullable=False)
+    region_id = Column(Integer, nullable=False)
+    x_coord = Column(Integer, nullable=False)
+    y_coord = Column(Integer, nullable=False)
+    z_coord = Column(Integer, nullable=False)
+    timestamp = Column(TIMESTAMP, nullable=False,
+                       server_default=text("CURRENT_TIMESTAMP"))
+    manual_detect = Column(TINYINT(1))
+    on_members_world = Column(Integer)
+    on_pvp_world = Column(TINYINT)
+    world_number = Column(Integer)
+    equip_head_id = Column(Integer)
+    equip_amulet_id = Column(Integer)
+    equip_torso_id = Column(Integer)
+    equip_legs_id = Column(Integer)
+    equip_boots_id = Column(Integer)
+    equip_cape_id = Column(Integer)
+    equip_hands_id = Column(Integer)
+    equip_weapon_id = Column(Integer)
+    equip_shield_id = Column(Integer)
+    equip_ge_value = Column(BigInteger)
 
 
 class playerHiscoreData(Base):
@@ -410,6 +441,7 @@ class playerHiscoreData(Base):
     kril_tsutsaroth = Column(Integer)
     mimic = Column(Integer)
     nightmare = Column(Integer)
+    nex = Column(Integer)
     phosanis_nightmare = Column(Integer)
     obor = Column(Integer)
     sarachnis = Column(Integer)
@@ -506,6 +538,7 @@ class PlayerHiscoreDataLatest(Base):
     kril_tsutsaroth = Column(Integer)
     mimic = Column(Integer)
     nightmare = Column(Integer)
+    nex = Column(Integer)
     phosanis_nightmare = Column(Integer)
     obor = Column(Integer)
     sarachnis = Column(Integer)
@@ -602,6 +635,7 @@ class PlayerHiscoreDataXPChange(Base):
     kril_tsutsaroth = Column(Integer)
     mimic = Column(Integer)
     nightmare = Column(Integer)
+    nex = Column(Integer)
     obor = Column(Integer)
     phosanis_nightmare = Column(Integer)
     sarachnis = Column(Integer)
