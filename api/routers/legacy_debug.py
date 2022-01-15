@@ -1,4 +1,5 @@
 import asyncio
+from http.client import HTTPException
 import logging
 import re
 import time
@@ -49,6 +50,9 @@ class detection(BaseModel):
 
 
 async def is_valid_rsn(rsn: str) -> bool:
+    output = re.fullmatch('[\w\d\s_-]{1,13}', rsn)
+    if output == False:
+        logger.debug(f'Invalid {rsn=}')
     return re.fullmatch('[\w\d\s_-]{1,13}', rsn)
 
 
@@ -127,10 +131,6 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
         return {'ERROR': 'ERROR'}, 400
     
     
-    # globally normalizes incoming names; a faster solution could be performed this is a hot-fix for now.
-    df['reporter'] = df['reporter'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
-    df['reported'] = df['reported'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
-    
     # data validation, checks for correct timing
     now = int(time.time())
     now_upper = int(now + 3600)
@@ -145,41 +145,51 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 
     logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
 
-    # 1) Get a list of unqiue reported names and reporter name 
+    # Normalize names
+    df['reporter'] = df['reporter'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
+    df['reported'] = df['reported'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
+
+    # Get a list of unqiue reported names and reporter name
     names = list(df['reported'].unique())
     names.extend(df['reporter'].unique())
 
-    # 1.1) Normalize and validate all names
-    clean_names = [await to_jagex_name(name) for name in names if await is_valid_rsn(name)]
+    # validate all names
+    valid_names = [name for name in names if await is_valid_rsn(name)]
 
-    # 2) Get IDs for all unique names
-    data = await sql_select_players(clean_names)
+    # Get IDs for all unique valid names
+    data = await sql_select_players(valid_names)
 
-    # 3) Create entries for players that do not yet exist in Players table
+    # Create entries for players that do not yet exist in Players table
     existing_names = [d["normalized_name"] for d in data]
-    new_names = set([name for name in clean_names]).difference(existing_names)
+    new_names = set([name for name in valid_names]).difference(existing_names)
     
-    # 3.1) Get those players' IDs from step 3
+    # Get new player id's
     if new_names:
         param = [{"name": name, "nname":name} for name in new_names]
         await batch_function(sql_insert_player, param)
         data.extend(await sql_select_players(new_names))
 
-    # 4) Insert detections into Reports table with user ids 
-    # 4.1) add reported & reporter id
+    # Insert detections into Reports table with user ids 
+    # add reported & reporter id
     df_names = pd.DataFrame(data)
+
+    #TODO: cleanup try except
     try:
         df = df.merge(df_names, left_on="reported", right_on="normalized_name")
     except KeyError:
-        logger.debug(f'Key Error: {df} '+f'{df.columns}')
-        raise KeyError(f"There was a key error with this entry.")
+        logger.debug(f'df: \n {df}')
+        logger.debug(f'df_names: \n {df_names}')
+        raise HTTPException(status_code=400, detail="Issues with merge")
+        # raise KeyError(f"There was a key error with this entry.")
 
-    reporter = [await to_jagex_name(n) for n in df['reporter'].unique()]
+    reporter = df['reporter'].unique()[0]
 
+    #TODO: cleanup try except
     try:
         df["reporter_id"] = df_names.query(f"normalized_name == {reporter}")['id'].to_list()[0]
-    except IndexError as ie:
-        raise IndexError(f"Detection Submission Error: {reporter} was not found in {df_names}.")
+    except IndexError:
+        logger.debug(f'{reporter=}')
+        raise HTTPException(status_code=400, detail=f"Detection Submission Error: {reporter} was not found in {df_names}.")
 
 
     df['manual_detect'] = manual_detect
