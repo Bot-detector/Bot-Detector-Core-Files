@@ -42,7 +42,7 @@ async def jagexify_names_list(names: List[str]) -> List[str]:
 async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERDATA, row_count=100_000, page=1, is_retry=False, has_return=None, retry_attempt=0):
     # retry breakout
     if retry_attempt >= 5:
-        logger.debug(f'Too many retries')
+        logger.debug({'message':'Too many retries'})
         return None
     sleep = 5 * retry_attempt
 
@@ -64,15 +64,6 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
         # parsing
         sql = text(sql)
 
-    # debugging
-    if debug:
-        engine = Engine(engine_type)
-        logger.debug(f'{has_return=}')
-        logger.debug(f'sql={sql.compile(engine.engine)}')
-        logger.debug(f'{param=}')
-
-        await engine.engine.dispose()
-
     try:
         async with get_session(engine_type) as session:
             # execute session
@@ -85,16 +76,16 @@ async def execute_sql(sql, param={}, debug=False, engine_type=EngineType.PLAYERD
     # OperationalError = Deadlock, InternalError = lock timeout
     except OperationalError as e:
         e = e if debug else ''
-        logger.debug(f'Deadlock, Retry Attempt: {retry_attempt}, retrying {e}')
+        logger.debug({"message": f'Deadlock, Retry Attempt: {retry_attempt}, retrying {e}'})
         await asyncio.sleep(random.uniform(0.1, sleep))
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except InternalError as e:
         e = e if debug else ''
-        logger.debug(f'Lock, Retry Attempt: {retry_attempt}, retrying: {e}')
+        logger.debug({"message": f'Lock, Retry Attempt: {retry_attempt}, retrying: {e}'})
         await asyncio.sleep(random.uniform(0.1, sleep))
         records = await execute_sql(sql, param, debug, engine_type, row_count, page, is_retry=True, has_return=has_return, retry_attempt=retry_attempt+1)
     except Exception as e:
-        logger.error('Unknown Error')
+        logger.error({"message":'Unknown Error', "error": e})
         logger.error(traceback.print_exc())
         records = None
 
@@ -179,7 +170,7 @@ async def verify_token(token: str, verification: str, route: str = None) -> bool
 async def batch_function(function, data, batch_size=100):
     batches = []
     for i in range(0, len(data), batch_size):
-        logger.debug(f'batch: {function.__name__}, {i}/{len(data)}')
+        logger.debug({"batch": {f'{function.__name__}':f'{i}/{len(data)}'}})
         batch = data[i:i+batch_size]
         batches.append(batch)
 

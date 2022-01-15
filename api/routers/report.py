@@ -189,14 +189,14 @@ async def insert_report(
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
-        logger.debug(f'Too Many Reports or Multiple Reporters! | {sender=}')
+        logger.debug({"message": "Too many reports", "sender": sender})
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Your sightings are out of bounds. Contact plugin support on our Discord."
         )
 
     if len(sender[0]) > 12 and not sender[0] == 'AnonymousUser':
-        logger.debug(f'invalid username: {sender=}')
+        logger.debug({"message": "invalid username", "sender": sender})
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid username. Contact plugin support on our Discord."
@@ -209,7 +209,11 @@ async def insert_report(
     mask = mask | (df['ts'] < lower_bound)
 
     if len(df[~mask]) == 0:
-        logger.debug(f'Data contains out of bounds time! | {sender=}')
+        logger.debug({
+            "message": "Data contains out of bounds time",
+            "reporter": df["reporter"].unique(),
+            "time": df[mask].values[0]
+        })
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Your sightings contain out of bounds time. Contact plugin support on our Discord."
@@ -218,7 +222,7 @@ async def insert_report(
     df = df[~mask]
 
     # Successful query
-    logger.debug(f"Received: {len(df)} from {sender=}")
+    logger.debug({"message":f"Received: {len(df)} from: {sender}"})
 
     # 1) Get a list of unqiue reported names and reporter name
     names = list(df['reported'].unique())
@@ -242,7 +246,6 @@ async def insert_report(
         data.extend(await sql_select_players(new_names))
 
     if len(data) == 0:
-        logger.debug(f'Missing player data. | {names=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Your sightings are incomplete. Contact plugin support on our Discord."
@@ -258,7 +261,6 @@ async def insert_report(
     reporter = df_names.query(f"normalized_name == {reporter}")['id'].to_list()
 
     if len(reporter) == 0:
-        logger.debug(f'User does not have a clean name.  | {sender=}')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="There was an error processing your name. Contact plugin support on our Discord."
