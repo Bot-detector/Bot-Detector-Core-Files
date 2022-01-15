@@ -131,8 +131,6 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     df['reporter'] = df['reporter'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
     df['reported'] = df['reported'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
     
-    print(df[['reporter','reported']])
-    
     # data validation, checks for correct timing
     now = int(time.time())
     now_upper = int(now + 3600)
