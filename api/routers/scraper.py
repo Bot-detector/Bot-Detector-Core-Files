@@ -128,14 +128,17 @@ async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
 
 async def handle_lock(function, data):
     sleep = random.uniform(0.1,1.1)
-
-    logger.debug(f'{function.__name__=} Lock wait timeout exceeded, {sleep=}')
+    logger.debug({
+        "message": "lock wait timeout exceeded",
+        "function": f"{function.__name__}",
+        "sleep": sleep
+    })
     await asyncio.sleep(sleep)
     await function(data)
 
 
 async def sqla_update_player(players):
-    logger.debug(f'update players: {len(players)=}')
+    logger.debug({"message":f'update players: {len(players)=}'})
 
     async with get_session(EngineType.PLAYERDATA) as session:
         try:
@@ -151,7 +154,7 @@ async def sqla_update_player(players):
     return
 
 async def sqla_insert_hiscore(hiscores:List):
-    logger.debug(f'insert hiscores: {len(hiscores)=}')
+    logger.debug({"message":f'insert hiscores: {len(hiscores)=}'})
 
     sql = insert(playerHiscoreData).prefix_with('ignore')
     
@@ -194,6 +197,5 @@ async def post_hiscores_to_db(data: List[scraper]):
     # batchwise insert & update
     await batch_function(sqla_insert_hiscore, hiscores, batch_size=1000)
     await sqla_update_player(players)
-    logger.debug('done')
     return {'ok':'ok'}
   

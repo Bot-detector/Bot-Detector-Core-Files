@@ -47,7 +47,7 @@ file_handler = logging.FileHandler(filename="logs/error.log", mode='a')
 stream_handler = logging.StreamHandler(sys.stdout)
 # # log formatting
 formatter = logging.Formatter(
-    '{ts:%(asctime)s, name:%(name)s, level:%(levelname)s, msg:%(message)s}'
+    '{"ts":"%(asctime)s", "name":"%(name)s", "function":"%(funcName)s", "level":"%(levelname)s", "msg":"%(message)s}"'
 )
 
 file_handler.setFormatter(formatter)
