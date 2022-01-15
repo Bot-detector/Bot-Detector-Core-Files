@@ -21,6 +21,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+          root_path: /
+          api_port: 5000
     image: bot-detector/bd-api:latest
     environment:
       - sql_uri=mysql+asyncmy://botssuck:botdetector@mysql:3306/playerdata_dev

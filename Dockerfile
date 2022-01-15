@@ -1,5 +1,11 @@
 FROM python:3.10-slim
 
+ARG api_port
+ENV port ${api_port}
+
+ARG root_path
+ENV path ${root_path}
+
 WORKDIR /root
 COPY ./requirements.txt /root/requirements.txt
 
@@ -14,4 +20,4 @@ RUN pip install --no-cache-dir -r /root/requirements.txt
 
 COPY . /root/
 
-CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "5000", "--root-path", "/dev"]
+CMD ["sh", "-c" , "uvicorn", "api.app:app", "--proxy-headers", "--host 0.0.0.0", "--port ${port}", "--root-path", "${path}"]
