@@ -7,7 +7,7 @@ from typing import List, Optional
 import pandas as pd
 from api.database.functions import (EngineType, batch_function, get_session,
                                     jagexify_names_list, sqlalchemy_result,
-                                    to_jagex_name, verify_token)
+                                    to_jagex_name, is_valid_rsn, verify_token)
 from api.database.models import (Player, Prediction, Report, ReportLatest,
                                  stgReport)
 from fastapi import APIRouter, HTTPException, Query, status
@@ -388,11 +388,27 @@ async def get_bulk_latest_report_data(
 
 @router.get('/v1/report/count', status_code=status.HTTP_200_OK, tags=["Report", "Business"])
 async def get_contributions(
-    user_name : str,
+    user_name : str = Query(..., min_length=1, max_length=12),
     ):
+    """Allows for a player to see their contributions.\n
+    \n
+    Args:\n
+        user_name (str): [description]. Defaults to Query(..., min_length=1, max_length=12).\n
+    \n
+    Returns:\n
+        200 : OK - Accepted response.\n
+        400 : Client error.\n
+        422 : Unprocessable entry.\n
+        500 : Internal Server Error - Contact an administrator.\n
     """
-    Allows a player to see their plugin contributions.
-    """
+    
+    if not await is_valid_rsn(user_name):
+        logger.debug(f'Bad Name passed for [GET]/report/count  | {user_name=}')
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Your name could not be processed. Contact plugin support on our Discord."
+        )
+        
     user_name = await to_jagex_name(user_name)
 
     pl = aliased(Player, name="pl")
@@ -406,7 +422,6 @@ async def get_contributions(
         func.count(Report.reportedID.distinct())
     )
 
-    
     sql = sql.where(pl.normalized_name == user_name)
     sql = sql.group_by(
         Report.manual_detect, 
@@ -422,4 +437,9 @@ async def get_contributions(
     async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
     data = [{k:v for k,v in zip(fields,d)} for d in data]
+    
+    if len(data) == 0:
+        data = {'detail':f'No Data found for {user_name}. Contact Plugin Support on our Discord.'}
+    
+    logging.debug(f'Contributor data sent.  | {user_name=}')
     return data
