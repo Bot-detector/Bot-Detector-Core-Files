@@ -61,6 +61,8 @@ async def get_player_information(
 @router.get("/v1/player/bulk", tags=["Player"])
 async def get_bulk_player_data_from_the_plugin_database(
     token: str,
+    ids: Optional[List[int]] = None,
+    names: Optional[List[str]] = None,
     possible_ban: Optional[int] = None,
     confirmed_ban: Optional[int] = None,
     confirmed_player: Optional[int] = None,
@@ -75,14 +77,19 @@ async def get_bulk_player_data_from_the_plugin_database(
     await verify_token(token, verification='request_highscores', route='[POST]/v1/player')
 
     # return exception if no param are given
-    if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
+    if None == ids == names == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
         raise HTTPException(status_code=404, detail="No param given")
 
     # create query
     sql = select(dbPlayer)
 
-    # filters    
     # filters
+    if not ids is None:
+        sql = sql.where(dbPlayer.id.in_(ids))
+
+    if not names is None:
+        sql = sql.where(dbPlayer.name.in_(names))
+
     if not possible_ban is None:
         sql = sql.where(dbPlayer.possible_ban == possible_ban)
 
