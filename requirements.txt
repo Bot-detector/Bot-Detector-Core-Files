@@ -42,5 +42,5 @@ typing_extensions==4.0.1
 tzdata==2021.5
 tzlocal==4.1
 urllib3==1.26.7
-uvicorn==0.13.4
+uvicorn==0.17.0
 XlsxWriter==3.0.2
