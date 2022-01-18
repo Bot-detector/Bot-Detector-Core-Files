@@ -52,7 +52,7 @@ formatter = logging.Formatter(json.dumps(
         'name': '%(name)s',
         'function': '%(funcName)s',
         'level':'%(levelname)s',
-        'msg': '%(message)s'
+        'msg': json.dumps('%(message)s')
     }
 ))
 
