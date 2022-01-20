@@ -168,6 +168,9 @@ async def verify_token(token: str, verification: str, route: str = None) -> bool
 
 
 async def batch_function(function, data, batch_size=100):
+    '''
+        smaller transactions, can reduce locks, but individual transaction, can cause connection pool overflow
+    '''
     batches = []
     for i in range(0, len(data), batch_size):
         logger.debug({"batch": {f'{function.__name__}':f'{i}/{len(data)}'}})

@@ -91,7 +91,5 @@ logging.getLogger("uvicorn.error").propagate = False
 
 
 # https://github.com/aio-libs/aiomysql/issues/103
-
-# Suppress warnings only for aiomysql, all other modules can send warnings
-warnings.filterwarnings('ignore', module=r"aiomysql")
-warnings.filterwarnings('ignore', module=r"asyncmy")
+# https://github.com/coleifer/peewee/issues/2229
+warnings.filterwarnings('ignore', '.*Duplicate entry.*')
