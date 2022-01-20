@@ -137,43 +137,44 @@ async def handle_lock(function, data):
     await function(data)
 
 
-async def sqla_update_player(players):
+async def sqla_update_player(players: List):
     logger.debug({"message":f'update players: {len(players)=}'})
 
-    async with get_session(EngineType.PLAYERDATA) as session:
-        try:
+    dbplayer = players.copy()
+    try:
+        async with get_session(EngineType.PLAYERDATA) as session:
             for player in players:
                 player_id = player.get('id')
                 sql = update(dbPlayer).values(player).where(dbPlayer.id==player_id)
                 await session.execute(sql, player)
-            await session.commit()
-        except (OperationalError, InternalError) as e:
-            await handle_lock(sqla_update_player, players)
-        finally:
-            await session.close()
+                await session.commit()
+                dbplayer.remove(player)
+    except (OperationalError, InternalError) as e:
+        await handle_lock(sqla_update_player, dbplayer)
     return
 
 async def sqla_insert_hiscore(hiscores:List):
     logger.debug({"message":f'insert hiscores: {len(hiscores)=}'})
 
     sql = insert(playerHiscoreData).prefix_with('ignore')
-    
-    async with get_session(EngineType.PLAYERDATA) as session:
-        try:
-            await session.execute(sql, hiscores)
-            await session.commit()
-        except (OperationalError, InternalError) as e:
-            await handle_lock(sqla_insert_hiscore, hiscores)
-        finally:
-            await session.close()
+    dbhiscores = hiscores.copy()
+    try:
+        async with get_session(EngineType.PLAYERDATA) as session:
+            for hiscore in hiscores:
+                await session.execute(sql, hiscore)
+                await session.commit()
+                dbhiscores.remove(hiscore)
+    except (OperationalError, InternalError) as e:
+        await handle_lock(sqla_insert_hiscore, dbhiscores)
+
     return
 
 @router.post("/scraper/hiscores/{token}", tags=["Business"])
-async def receive_scraper_data(token, data: List[scraper], hiscores_tasks: BackgroundTasks):
+async def receive_scraper_data(token, data: List[scraper]):
     await verify_token(token, verification='verify_ban', route='[POST]/scraper/hiscores/token')
     # background task will cause lots of duplicates
-    hiscores_tasks.add_task(post_hiscores_to_db, data)
-    return {'ok': f'{len(data)} records to be inserted.'}
+    asyncio.create_task(post_hiscores_to_db(data))
+    return {'detail': f'{len(data)} records to be inserted.'}
 
 
 async def post_hiscores_to_db(data: List[scraper]):
@@ -197,5 +198,5 @@ async def post_hiscores_to_db(data: List[scraper]):
     # batchwise insert & update
     await batch_function(sqla_insert_hiscore, hiscores, batch_size=1000)
     await sqla_update_player(players)
-    return {'ok':'ok'}
+    return
   
