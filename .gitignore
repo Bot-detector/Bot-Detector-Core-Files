@@ -444,3 +444,4 @@ $RECYCLE.BIN/
 # used to store !excelban generated CSV files
 exports/*
 !exports/.gitkeep
+.vscode/launch.json
