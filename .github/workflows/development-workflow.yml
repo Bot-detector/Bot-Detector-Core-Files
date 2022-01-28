@@ -11,13 +11,7 @@ jobs:
     - name: Set Up ENV
       run: |
           echo "${{ secrets.ASYNCMY_URI }}" > .env
-          echo "${{ secrets.HTTP_PROXY }}" >> .env
-          echo "${{ secrets.HTTPS_PROXY }}" >> .env
           echo "${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
-          echo "${{ secrets.FLASK_PORT }}" >> .env
-          echo "${{ secrets.GRAVEYARD_WEBHOOK }}" >> .env
-          echo "${{ secrets.FEEDBACK_WEBHOOK_URL }}" >> .env
-          echo dev_mode=0 >> .env
 
   build-image:
     needs: setup

@@ -22,8 +22,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-          root_path: /
-          api_port: 5000
+        root_path: /
+        api_port: 5000
     image: bot-detector/bd-api:latest
     environment:
       - sql_uri=mysql+asyncmy://botssuck:botdetector@mysql:3306/playerdata_dev
@@ -42,33 +42,36 @@ services:
     build:
       context: ../bot-detector-ML
       dockerfile: Dockerfile
+      args:
+        root_path: /
+        api_port: 8000
     image: bot-detector/bd-ml:latest
     environment:
       - token=verify_ban
-      - api=http://api:6532/
+      - api=http://api:5000/
       - secret_token=Definitely_not_a_secret
     volumes:
       - ../bot-detector-ML/MachineLearning/models:/MachineLearning/models
     ports:
-      - "6532:8000"
+      - "8000:8000"
     networks:
       - botdetector-network
     depends_on:
       - api
 
-  scraper:
-    build:
-      context: ../bot-detector-scraper
-      dockerfile: Dockerfile
-    image: bot-detector/bd-scraper:latest
-    environment:
-      - PROXY_DOWNLOAD_URL=https://proxy.webshare.io/proxy/list/download/PASSWORD/-/http/username/direct/
-      - TOKEN=verify_ban
-      - QUERY_SIZE=5000
-    networks:
-      - botdetector-network
-    depends_on:
-      - api
+  # scraper:
+  #   build:
+  #     context: ../bot-detector-scraper
+  #     dockerfile: Dockerfile
+  #   image: bot-detector/bd-scraper:latest
+  #   environment:
+  #     - PROXY_DOWNLOAD_URL=https://proxy.webshare.io/proxy/list/download/PASSWORD/-/http/username/direct/
+  #     - TOKEN=verify_ban
+  #     - QUERY_SIZE=5000
+  #   networks:
+  #     - botdetector-network
+  #   depends_on:
+  #     - api
 
 networks:
   botdetector-network:
