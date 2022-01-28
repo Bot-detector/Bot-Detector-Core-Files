@@ -18,6 +18,6 @@ RUN apt update && \
 
 RUN pip install --no-cache-dir -r /root/requirements.txt
 
-COPY . /root/
+COPY . /root
 
-CMD ["sh", "-c" , "uvicorn", "api.app:app", "--proxy-headers", "--host 0.0.0.0", "--port ${port}", "--root-path", "${path}"]
+CMD ["sh","-c", "uvicorn api.app:app --proxy-headers --host 0.0.0.0 --port ${port} --root-path ${path}"]

@@ -28,10 +28,6 @@ services:
     environment:
       - sql_uri=mysql+asyncmy://botssuck:botdetector@mysql:3306/playerdata_dev
       - discord_sql_uri=mysql+asyncmy://botssuck:botdetector@mysql:3306/discord_dev
-      - proxy_http=''
-      - proxy_https=''
-      - flask_port=5000
-      - dev_mode=1
       - token=verify_ban
     volumes: 
       - '../Bot-Detector-Core-Files/api:/code/api'
