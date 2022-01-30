@@ -182,101 +182,93 @@ async def insert_report(
     Inserts detections into to the plugin database.
     """
 
-    # remove duplicates
+       # remove duplicates
     df = pd.DataFrame([d.dict() for d in detections])
-    df.drop_duplicates(subset=["reporter", "reported", "region_id"], inplace=True)
-
-    sender = list(df["reporter"].unique())
+    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
-    if len(df) > int(report_maximum) or df["reporter"].nunique() > 1:
-        logger.debug({"message": "Too many reports", "sender": sender})
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Your sightings are out of bounds. Contact plugin support on our Discord.",
-        )
-
-    if len(sender[0]) > 12 and not sender[0] == "AnonymousUser":
-        logger.debug({"message": "invalid username", "sender": sender})
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Invalid username. Contact plugin support on our Discord.",
-        )
-
+    if len(df) > 5000 or df["reporter"].nunique() > 1:
+        logger.debug({"message":'Too many reports.'})
+        return
+    
+    
     # data validation, checks for correct timing
     now = int(time.time())
-    lower_bound = now - back_time_buffer
-    mask = df["ts"] > now
-    mask = mask | (df["ts"] < lower_bound)
+    now_upper = int(now + 3600)
+    now_lower = int(now - 25200)
 
-    if len(df[~mask]) == 0:
-        logger.debug(
-            {
-                "message": "Data contains out of bounds time",
-                "reporter": df["reporter"].unique(),
-                "time": df[mask].values[0],
-            }
-        )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Your sightings contain out of bounds time. Contact plugin support on our Discord.",
-        )
+    df_time = df.ts
+    mask = (df_time > now_upper) | (df_time < now_lower)
+    if len(df_time[mask].values) > 0:
+        logger.debug({
+            "message": "Data contains out of bounds time",
+            "reporter": df["reporter"].unique(),
+            "time": df_time[mask].values[0]
+        })
+        return
 
-    df = df[~mask]
 
-    # Successful query
-    logger.debug({"message": f"Received: {len(df)} from: {sender}"})
+    logger.debug({"message":f"Received: {len(df)} from: {df['reporter'].unique()}"})
 
-    # 1) Get a list of unqiue reported names and reporter name
-    names = list(df["reported"].unique())
-    names.extend(df["reporter"].unique())
+    # Normalize names
+    df['reporter'] = df['reporter'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
+    df['reported'] = df['reported'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
 
-    # 1.1) Normalize and validate all names
-    clean_names = await functions.jagexify_names_list(names)
+    # Get a list of unqiue reported names and reporter name
+    names = list(df['reported'].unique())
+    names.extend(df['reporter'].unique())
 
-    # 2) Get IDs for all unique names
-    data = await sql_select_players(clean_names)
+    # validate all names
+    valid_names = [name for name in names if await functions.is_valid_rsn(name)]
 
-    # 3) Create entries for players that do not yet exist in Players table
+    # Get IDs for all unique valid names
+    data = await sql_select_players(valid_names)
+
+    # Create entries for players that do not yet exist in Players table
     existing_names = [d["normalized_name"] for d in data]
-    new_names = set([name for name in clean_names]).difference(existing_names)
-
-    # 3.1) Insert new names and get those player IDs from step 3
+    new_names = set([name for name in valid_names]).difference(existing_names)
+    
+    # Get new player id's
     if new_names:
-        param = [{"name": name, "normalized_name": name} for name in new_names]
-
+        param = [{"name": name, "nname":name} for name in new_names]
         await functions.batch_function(sql_insert_player, param)
         data.extend(await sql_select_players(new_names))
 
-    if len(data) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Your sightings are incomplete. Contact plugin support on our Discord.",
-        )
-
-    # 4) Insert detections into Reports table with user ids
-    # 4.1) add reported & reporter id
+    # Insert detections into Reports table with user ids 
+    # add reported & reporter id
     df_names = pd.DataFrame(data)
 
-    df = df.merge(df_names, left_on="reported", right_on="name")
+    if (len(df) == 0) or (len(df_names) == 0):
+        logger.debug({"message": "empty dataframe, before merge","detections": detections})
+        return
+        
+    df = df.merge(df_names, left_on="reported", right_on="normalized_name")
+    
+    if (len(df) == 0):
+        logger.debug({"message": "empty dataframe, after merge","detections": detections})
+        return
+    
+    reporter = df['reporter'].unique()
 
-    reporter = [await functions.to_jagex_name(n) for n in df["reporter"].unique()]
-    reporter = df_names.query(f"normalized_name == {reporter}")["id"].to_list()
+    if len(reporter) != 1:
+        logger.debug({"message": "No reporter","detections": detections})
+        return
+    
+    reporter_id = df_names.query(f"normalized_name == {reporter}")['id'].to_list()
+    
+    if len(reporter_id) == 0:
+        logger.debug({"message": "No reporter in df_names","detections": detections})
+        return
+    
+    df["reporter_id"] = reporter_id[0]
 
-    if len(reporter) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="There was an error processing your name. Contact plugin support on our Discord.",
-        )
-
-    df["reporter_id"] = reporter[0]
-    df["manual_detect"] = manual_detect
-
-    # 4.2) parse data to param
-    data = df.to_dict("records")
+    df['manual_detect'] = manual_detect
+    
+    # Parse data to param
+    data = df.to_dict('records')
     param = [await parse_detection(d) for d in data]
 
-    # 4.3) parse query
+    # Parse query
     await functions.batch_function(sql_insert_report, param)
     return {"detail": "ok"}
 
