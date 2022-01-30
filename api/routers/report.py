@@ -182,16 +182,15 @@ async def insert_report(
     Inserts detections into to the plugin database.
     """
 
-       # remove duplicates
+    # remove duplicates
     df = pd.DataFrame([d.dict() for d in detections])
-    df.drop_duplicates(subset=['reporter', 'reported', 'region_id'], inplace=True)
+    df.drop_duplicates(subset=["reporter", "reported", "region_id"], inplace=True)
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logger.debug({"message":'Too many reports.'})
+        logger.debug({"message": "Too many reports."})
         return
-    
-    
+
     # data validation, checks for correct timing
     now = int(time.time())
     now_upper = int(now + 3600)
@@ -200,23 +199,28 @@ async def insert_report(
     df_time = df.ts
     mask = (df_time > now_upper) | (df_time < now_lower)
     if len(df_time[mask].values) > 0:
-        logger.debug({
-            "message": "Data contains out of bounds time",
-            "reporter": df["reporter"].unique(),
-            "time": df_time[mask].values[0]
-        })
+        logger.debug(
+            {
+                "message": "Data contains out of bounds time",
+                "reporter": df["reporter"].unique(),
+                "time": df_time[mask].values[0],
+            }
+        )
         return
 
-
-    logger.debug({"message":f"Received: {len(df)} from: {df['reporter'].unique()}"})
+    logger.debug({"message": f"Received: {len(df)} from: {df['reporter'].unique()}"})
 
     # Normalize names
-    df['reporter'] = df['reporter'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
-    df['reported'] = df['reported'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
+    df["reporter"] = df["reporter"].apply(
+        lambda name: name.lower().replace("_", " ").replace("-", " ").strip()
+    )
+    df["reported"] = df["reported"].apply(
+        lambda name: name.lower().replace("_", " ").replace("-", " ").strip()
+    )
 
     # Get a list of unqiue reported names and reporter name
-    names = list(df['reported'].unique())
-    names.extend(df['reporter'].unique())
+    names = list(df["reported"].unique())
+    names.extend(df["reporter"].unique())
 
     # validate all names
     valid_names = [name for name in names if await functions.is_valid_rsn(name)]
@@ -227,45 +231,49 @@ async def insert_report(
     # Create entries for players that do not yet exist in Players table
     existing_names = [d["normalized_name"] for d in data]
     new_names = set([name for name in valid_names]).difference(existing_names)
-    
+
     # Get new player id's
     if new_names:
-        param = [{"name": name, "nname":name} for name in new_names]
+        param = [{"name": name, "nname": name} for name in new_names]
         await functions.batch_function(sql_insert_player, param)
         data.extend(await sql_select_players(new_names))
 
-    # Insert detections into Reports table with user ids 
+    # Insert detections into Reports table with user ids
     # add reported & reporter id
     df_names = pd.DataFrame(data)
 
     if (len(df) == 0) or (len(df_names) == 0):
-        logger.debug({"message": "empty dataframe, before merge","detections": detections})
+        logger.debug(
+            {"message": "empty dataframe, before merge", "detections": detections}
+        )
         return
-        
+
     df = df.merge(df_names, left_on="reported", right_on="normalized_name")
-    
-    if (len(df) == 0):
-        logger.debug({"message": "empty dataframe, after merge","detections": detections})
+
+    if len(df) == 0:
+        logger.debug(
+            {"message": "empty dataframe, after merge", "detections": detections}
+        )
         return
-    
-    reporter = df['reporter'].unique()
+
+    reporter = df["reporter"].unique()
 
     if len(reporter) != 1:
-        logger.debug({"message": "No reporter","detections": detections})
+        logger.debug({"message": "No reporter", "detections": detections})
         return
-    
-    reporter_id = df_names.query(f"normalized_name == {reporter}")['id'].to_list()
-    
+
+    reporter_id = df_names.query(f"normalized_name == {reporter}")["id"].to_list()
+
     if len(reporter_id) == 0:
-        logger.debug({"message": "No reporter in df_names","detections": detections})
+        logger.debug({"message": "No reporter in df_names", "detections": detections})
         return
-    
+
     df["reporter_id"] = reporter_id[0]
 
-    df['manual_detect'] = manual_detect
-    
+    df["manual_detect"] = manual_detect
+
     # Parse data to param
-    data = df.to_dict('records')
+    data = df.to_dict("records")
     param = [await parse_detection(d) for d in data]
 
     # Parse query
