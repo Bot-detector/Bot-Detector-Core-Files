@@ -61,7 +61,15 @@ async def get_account_prediction_result(name: str):
         data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
-    return data.rows2dict()
+    data = data.rows2dict()
+    keys = ['name','Prediction','id','created']
+    data = [
+        {
+            k: int(v)/100 if k not in keys else v 
+            for k,v in d.items()
+        } for d in data
+    ]
+    return data
 
 
 @router.post("/v1/prediction", tags=["Prediction"])
