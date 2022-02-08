@@ -65,7 +65,7 @@ async def get_account_prediction_result(name: str):
     keys = ['name','Prediction','id','created']
     data = [
         {
-            k: int(v)/100 if k not in keys else v 
+            k: float(v)/100 if k not in keys else v 
             for k,v in d.items()
         } for d in data
     ]
