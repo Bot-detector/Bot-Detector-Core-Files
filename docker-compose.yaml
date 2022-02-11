@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     image: bot-detector/bd-mysql:latest
     environment:
-      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_ROOT_PASSWORD=root_bot_buster
       - MYSQL_USER=botssuck
       - MYSQL_PASSWORD=botdetector
     volumes:
