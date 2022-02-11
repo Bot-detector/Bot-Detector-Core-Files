@@ -256,6 +256,7 @@ class Player(Base):
     ironman = Column(TINYINT)
     hardcore_ironman = Column(TINYINT)
     ultimate_ironman = Column(TINYINT)
+    normalized_name = Column(Text)
 
     label = relationship('Label')
 

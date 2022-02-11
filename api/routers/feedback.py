@@ -1,27 +1,25 @@
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
 from api.database.functions import (EngineType, get_session, sqlalchemy_result,
                                     verify_token)
 from api.database.models import Player, PredictionsFeedback
-from fastapi import APIRouter, status, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
+from pydantic.fields import Field
 from sqlalchemy.sql.expression import insert, select
-
 
 
 class Feedback(BaseModel):
     player_name: str
     vote: int
     prediction: str
-    confidence: float
+    confidence: float = Field(None, ge=0, le=1)
     subject_id: int
     feedback_text: Optional[str] = None
     proposed_label: Optional[str] = None
 
-
 router = APIRouter()
-
 
 @router.get("/v1/feedback/", tags=["Feedback"])
 async def get_feedback(
@@ -105,5 +103,6 @@ async def post_feedback(feedback: Feedback):
         
         sql_insert = sql_insert.values(feedback)
         await session.execute(sql_insert)
+        await session.commit()
 
     return {"OK": "OK"}

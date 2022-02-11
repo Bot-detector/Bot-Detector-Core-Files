@@ -1,4 +1,5 @@
 .git
-.git*
+.github
+.vscode
 LICENSE
 *.md
