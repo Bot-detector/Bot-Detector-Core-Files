@@ -13,10 +13,6 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv(find_dotenv(), verbose=True)
 sql_uri = os.environ.get('sql_uri')
 discord_sql_uri = os.environ.get('discord_sql_uri')
-proxy_http = os.environ.get('proxy_http')
-proxy_https = os.environ.get('proxy_https')
-graveyard_webhook_url = os.environ.get('graveyard_webhook')
-dev_mode = os.environ.get('dev_mode')
 token = os.environ.get('token')
 
 loki_url = os.environ.get('loki_url')
