@@ -73,19 +73,27 @@ In the github project you can find the refined github issues that we would like 
     - In github desktop, on the top click "branch" or "current branch" > "new branch".
 3. Publish your branch.
     - In github desktop, blue button on the middle of your screen "Publish branch"
-4. Create your commits (changes), ideally have small commits with a defined scope, and propper message
-    - This will make the reviewing process easier
+4. Create your commits (changes).
+    - Small commits, defined scope are preferd.
+    - Commit messages are desired.
 5. Push your commits.
 6. Create a Pull Request (PR)
     - in github desktop, blue button on the middle of your screen "Create Pull Request"
     - this will open your browser, make sure the base repository: "Bot-detector/" and base:"develop"
 
 # What are the coding standards?
+During the development process it is desired to write tests.
+
 We use black for linting, in Visual Studio code (vs code), you can right click "format document".
 
-Variable & function names must be clear, we are using "snake_case".
+Naming conventions:
+- Variable: "snake_case"
+- Function: "snake_case"
+- Class: "camelCase"
+- Table: "camelCase"
+- Routes: "kebab-case"
 
-Class names must be clear, we ar using "camelCase".
+We are aware that we were not always consistent with naming, please suggest corrections.
 
 # Who approves my code?
 We have github workflows setup to assing approvers, this will be the owners of the project, with expertise in the area of the component.
