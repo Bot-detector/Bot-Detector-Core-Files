@@ -91,7 +91,7 @@ Naming conventions:
 - Function: "snake_case"
 - Class: "camelCase"
 - Table: "camelCase"
-- Routes: "kebab-case"
+- Route: "kebab-case"
 
 We are aware that we were not always consistent with naming, please suggest corrections.
 
