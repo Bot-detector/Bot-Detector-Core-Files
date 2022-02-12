@@ -1,51 +1,86 @@
-# Bot Detector
-The core files for the Bot Detector Plugin.
+# How can i request a new feature or improvment?
+If you need help you can always go to our discord: https://discord.gg/3AB58CRmYs, our moderators, developers will help you.
+To request a new feature or improvement you should make an issues, we have multiple repositories, make sure to select the correct repository before making the issue.
+A list of our repositories can be found here: https://github.com/orgs/Bot-detector/repositories
 
-Patreon: https://www.patreon.com/bot_detector
+# How is the project designed?
+The diffrent repositories are related like this:
+<!-- https://drive.google.com/file/d/16IO84vE3rJWRclbZAnOIEdKAmx5xAi3I/view?usp=sharing -->
+![image](https://user-images.githubusercontent.com/40169115/153727141-0e39c6fe-1fdb-42f4-8019-2552bd127751.png)
 
-Workflow:
+# How do i run the project?
+## requirements
+You must have an IDE installed, we recommend Visual Studio code: https://code.visualstudio.com/
+You must have docker installed: https://www.docker.com/products/docker-desktop
+We recommend using github desktop: https://desktop.github.com/
 
-![image](https://user-images.githubusercontent.com/5789682/112380944-628dc600-8cc0-11eb-8924-4e5fa7ed2c45.png)
+We recommend you create two folders:
+- bot-detector-remote
+- bot-detector-local
 
---README--
-1. The files within this repo are used in conjunction with https://github.com/Ferrariic/bot-detector on RuneLite.
+You must now download the key components (repositories), please follow this procedure: (for each key component)
+1. Go to the component (repository).
+2. Click the green "code" button, Click "Open with GitHub Desktop": ![image](https://user-images.githubusercontent.com/40169115/153727976-8196cbf1-e99c-4ac7-9d0a-d342c5e10337.png)
+3. Make sure to select the bot-detector-remote folder: ![image](https://user-images.githubusercontent.com/40169115/153728043-181404df-df13-4a78-b2e6-8f3cf6ce3cbc.png)
+4. Repeat for each component, see list below.
 
-FAQ:
+Our key components (repositories):
+- https://github.com/Bot-detector/bot-detector-mysql
+- https://github.com/Bot-detector/Bot-Detector-Core-Files
+- https://github.com/Bot-detector/bot-detector-ML
+- https://github.com/Bot-detector/bot-detector-scraper
 
-Q: "Why do you need my IP?"
+if you want to contribute, the steps are slightly diffrent:
+1. Go to the repository.
+2. Click the "fork" button: ![image](https://user-images.githubusercontent.com/40169115/153728214-cd741e4e-b036-4d48-9f47-48c4dc9e99be.png)
+3. Make sure to select the bot-detector-local folder.
+4. Repeat for each component.
 
-A: I don't, and it's not stored anywhere. But we live in the year 2021 and computers have to talk to eachother so unfortunately your IP comes along for the ride with the Data.
+## running the project
+We use docker compose to create the containers as if they were to run on our server, you can inspect the configuration, like the environment variables in the docker-compose.yaml file.
+To run the project, do the follwing:
+1. Open the Bot-Detector-Core-Files repository in your IDE
+    - In github desktop, top left, "Current repository", select "Bot-Detector-Core-Files"
+    - In github desktop, in the middel of your screeen "Open in Visual Studio Code"
+2. In the Terminal, type: `docker-compose up --build`
+3. Validate if the components are running.
+    - Check command line
+    - Check your browser: (you should see hello world)
+        - Core api: http://127.0.0.1:5000
+        - ML: http://127.0.0.1:8000
+        - (tip adding /docs will show you the swagger documentation)
+    
 
+# How do i contribute?
+If you want to contribute make sure to join our community: https://discord.gg/PK4mFgRWXE
 
-Q: "This plugin is worthless"
+## requirements
+You must have setup the project, as described in  "How do i run the project", in particular you have to fork the repositories.
 
-A: Not really a question - but hopefully it'll help Jagex a little bit in solving their botting crisis - and maybe even repair the OSRS economy.
+## What contributions are needed?
+Features, and bugs are documented as issues in each repository, the project owners, review these, and select some as part of a github project: https://github.com/orgs/Bot-detector/projects.
+In the github project you can find the refined github issues that we would like to see implemented.
 
+## Development flow:
+1. Make sure you are working in your fork. (copy of the repository)
+    - On github desktop, in the top left, you can click "Current repository", select the repository under your name.
+2. Create a branch, with a relative name, related to the issue.
+    - In github desktop, on the top click "branch" or "current branch" > "new branch".
+3. Publish your branch.
+    - In github desktop, blue button on the middle of your screen "Publish branch"
+3. Create your commits (changes), ideally have small commits with a defined scope, and propper message
+    - This will make the reviewing process easier
+4. Create a Pull Request (PR)
+    - in github desktop, blue button on the middle of your screen "Create Pull Request"
+    - this will open your browser, make sure the base repository: "Bot-detector/" and base:"develop"
 
-Q: "How can I help contribute to the plugin?"
+# What are the coding standards?
+We use black for linting, in Visual Studio code (vs code), you can right click "format document".
+Variable & function names must be clear, we are using "snake_case".
+Class names must be clear, we ar using "camelCase".
 
-A: "Fork and pull request, I'll approve if it's not malicious"
+# Who approves my code?
+We have github workflows setup to assing approvers, this will be the owners of the project, with expertise in the area of the component.
 
-
-Q: "My bots got banned because of this plugin"
-
-A: "Yay!"
-
-
-Q: "Is this plugin malicious? How can I be sure that it's not malicious?"
-
-A: The only part that connects to your RuneLite client is the RuneLite plugin which is available here: https://github.com/Ferrariic/bot-detector. The RuneLite developers won't allow anything that's even mildly suspect to enter the Plugin Hub - which is pretty great.
-
-
-Q: "I still don't understand why you need to use a RuneLite client plugin to capture OSRS names, what's the point?"
-
-A: If I could have access to the OSRS database for Hiscores - this would take far less time. However, the API for Jagex's Hiscore pulling system calls only every 1-3 seconds, which means it would take over 600 days to process every single name through the API. Basically, by the time OSRS 2 and RS4 came out we'd have only scratched the surface of processing the names into a usable format - nevermind even doing the math and other nonsense to detect who is a bot.
-
-
-Q: "So, how do you detect who is a bot?"
-
-A: Well, we could use a variety of different methods - the one that I chose was to group every player together that has similar stats, and if that group gets banned more frequently than other groups then it's probably likely that the rest of the group is pretty bot-like or suspicious. This could also include gold-farmers, RWTers, etc. Any group with a high ban rate is suspicious and would be reported to Tipoff@Jagex.com
-
-Q: "Your code looks like trash"
-
-A: I'm a medical student that's doing this as a hobby, I'm learning as I go :(
+# Who or how can i get into contact for help?
+If you need help you can always go to our discord: https://discord.gg/3AB58CRmYs, our moderators, developers will help you.
