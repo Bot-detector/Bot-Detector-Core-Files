@@ -1,6 +1,8 @@
 # How can i request a new feature or improvment?
 If you need help you can always go to our discord: https://discord.gg/3AB58CRmYs, our moderators, developers will help you.
+
 To request a new feature or improvement you should make an issues, we have multiple repositories, make sure to select the correct repository before making the issue.
+
 A list of our repositories can be found here: https://github.com/orgs/Bot-detector/repositories
 
 # How is the project designed?
@@ -10,9 +12,10 @@ The diffrent repositories are related like this:
 
 # How do i run the project?
 ## requirements
-You must have an IDE installed, we recommend Visual Studio code: https://code.visualstudio.com/
-You must have docker installed: https://www.docker.com/products/docker-desktop
-We recommend using github desktop: https://desktop.github.com/
+Required & recommended programs:
+- You must have an IDE installed, we recommend Visual Studio code: https://code.visualstudio.com/
+- You must have docker installed: https://www.docker.com/products/docker-desktop
+- We recommend using github desktop: https://desktop.github.com/
 
 We recommend you create two folders:
 - bot-detector-remote
@@ -38,7 +41,8 @@ if you want to contribute, the steps are slightly diffrent:
 
 ## running the project
 We use docker compose to create the containers as if they were to run on our server, you can inspect the configuration, like the environment variables in the docker-compose.yaml file.
-To run the project, do the follwing:
+
+To run the project, do the following:
 1. Open the Bot-Detector-Core-Files repository in your IDE
     - In github desktop, top left, "Current repository", select "Bot-Detector-Core-Files"
     - In github desktop, in the middel of your screeen "Open in Visual Studio Code"
@@ -59,6 +63,7 @@ You must have setup the project, as described in  "How do i run the project", in
 
 ## What contributions are needed?
 Features, and bugs are documented as issues in each repository, the project owners, review these, and select some as part of a github project: https://github.com/orgs/Bot-detector/projects.
+
 In the github project you can find the refined github issues that we would like to see implemented.
 
 ## Development flow:
@@ -68,15 +73,18 @@ In the github project you can find the refined github issues that we would like 
     - In github desktop, on the top click "branch" or "current branch" > "new branch".
 3. Publish your branch.
     - In github desktop, blue button on the middle of your screen "Publish branch"
-3. Create your commits (changes), ideally have small commits with a defined scope, and propper message
+4. Create your commits (changes), ideally have small commits with a defined scope, and propper message
     - This will make the reviewing process easier
-4. Create a Pull Request (PR)
+5. Push your commits.
+6. Create a Pull Request (PR)
     - in github desktop, blue button on the middle of your screen "Create Pull Request"
     - this will open your browser, make sure the base repository: "Bot-detector/" and base:"develop"
 
 # What are the coding standards?
 We use black for linting, in Visual Studio code (vs code), you can right click "format document".
+
 Variable & function names must be clear, we are using "snake_case".
+
 Class names must be clear, we ar using "camelCase".
 
 # Who approves my code?
