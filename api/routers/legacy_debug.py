@@ -52,7 +52,7 @@ class detection(BaseModel):
 async def is_valid_rsn(rsn: str) -> bool:
     output = re.fullmatch('[\w\d\s_-]{1,13}', rsn)
     if output == False:
-        logger.debug(f'Invalid {rsn=}')
+        logger.debug({"message": f'Invalid {rsn=}'})
     return re.fullmatch('[\w\d\s_-]{1,13}', rsn)
 
 
@@ -127,7 +127,7 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logger.debug('Too many reports.')
+        logger.debug({"message":'Too many reports.'})
         return
     
     
@@ -139,11 +139,15 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     df_time = df.ts
     mask = (df_time > now_upper) | (df_time < now_lower)
     if len(df_time[mask].values) > 0:
-        logger.debug(f'Data contains out of bounds time {df_time[mask].values}')
+        logger.debug({
+            "message": "Data contains out of bounds time",
+            "reporter": df["reporter"].unique(),
+            "time": df_time[mask].values[0]
+        })
         return
 
 
-    logger.debug(f"Received: {len(df)} from: {df['reporter'].unique()}")
+    logger.debug({"message":f"Received: {len(df)} from: {df['reporter'].unique()}"})
 
     # Normalize names
     df['reporter'] = df['reporter'].apply(lambda name : name.lower().replace('_', ' ').replace('-',' ').strip())
@@ -174,25 +178,25 @@ async def detect(detections:List[detection], manual_detect:int) -> None:
     df_names = pd.DataFrame(data)
 
     if (len(df) == 0) or (len(df_names) == 0):
-        logger.debug(f'1: Empty Dataframe')
+        logger.debug({"message": "empty dataframe, before merge","detections": detections})
         return
         
     df = df.merge(df_names, left_on="reported", right_on="normalized_name")
     
     if (len(df) == 0):
-        logger.debug(f'2: Empty Dataframe')
+        logger.debug({"message": "empty dataframe, after merge","detections": detections})
         return
     
     reporter = df['reporter'].unique()
 
     if len(reporter) != 1:
-        logger.debug(f'1: Multiple Reporters?')
+        logger.debug({"message": "No reporter","detections": detections})
         return
     
     reporter_id = df_names.query(f"normalized_name == {reporter}")['id'].to_list()
     
     if len(reporter_id) == 0:
-        logger.debug(f'No Reporter')
+        logger.debug({"message": "No reporter in df_names","detections": detections})
         return
     
     df["reporter_id"] = reporter_id[0]

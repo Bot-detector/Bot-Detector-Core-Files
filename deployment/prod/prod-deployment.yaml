@@ -45,7 +45,7 @@ spec:
             memory: "3000Mi"
         volumeMounts:
         - name: nfs-volume
-          mountPath: /code/exports
+          mountPath: /root/exports
         livenessProbe:
           httpGet:
             path: /
