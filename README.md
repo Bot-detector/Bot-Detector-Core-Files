@@ -13,7 +13,7 @@ The API (core files) links all components with the database.
 <!-- https://drive.google.com/file/d/16IO84vE3rJWRclbZAnOIEdKAmx5xAi3I/view?usp=sharing -->
 ![image](https://user-images.githubusercontent.com/40169115/153727141-0e39c6fe-1fdb-42f4-8019-2552bd127751.png)
 
-# How can i request a new feature or report a bug?
+# How can I request a new feature or report a bug?
 To request a new feature or report a bug you should [open an Issue](https://github.com/orgs/Bot-detector/repositories) on Github.
 
 [Our discord](https://discord.gg/3AB58CRmYs) is also a viable option, but we prefer to be able to track feature requests, so Github is preferred.  However the Discord is perfect for small questions, or just to chat.
