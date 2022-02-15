@@ -48,6 +48,8 @@ git clone https://github.com/Bot-detector/bot-detector-mysql.git
 git clone https://github.com/Bot-detector/bot-detector-ML.git
 git clone https://github.com/Bot-detector/bot-detector-scraper.git
 ```
+To add the repositories in github desktop, select `File` on the top left than click `Add local repository`, and navigate to the cloned repositories.
+
 
 Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. *Make sure docker desktop is running!
 ```powershell
