@@ -1,5 +1,5 @@
 # How does it work?
-The project is broken into 5 separate pieces:
+The project is broken into 7 separate pieces:
 * API
 * Database
 * Highscores scraper
