@@ -1,51 +1,112 @@
-# Bot Detector
-The core files for the Bot Detector Plugin.
+# How does it work?
+The project is broken into 7 separate pieces:
+* API
+* Database
+* Highscores scraper
+* Machine Learning (ML)
+* Discord/Twitter bot
+* Website
+* plugin
 
-Patreon: https://www.patreon.com/bot_detector
+The API (core files) links all components with the database.
 
-Workflow:
+<!-- https://drive.google.com/file/d/16IO84vE3rJWRclbZAnOIEdKAmx5xAi3I/view?usp=sharing -->
+![image](https://user-images.githubusercontent.com/40169115/153727141-0e39c6fe-1fdb-42f4-8019-2552bd127751.png)
 
-![image](https://user-images.githubusercontent.com/5789682/112380944-628dc600-8cc0-11eb-8924-4e5fa7ed2c45.png)
+# How can I request a new feature or report a bug?
+To request a new feature or report a bug you should [open an Issue](https://github.com/orgs/Bot-detector/repositories) on Github.
 
---README--
-1. The files within this repo are used in conjunction with https://github.com/Ferrariic/bot-detector on RuneLite.
-
-FAQ:
-
-Q: "Why do you need my IP?"
-
-A: I don't, and it's not stored anywhere. But we live in the year 2021 and computers have to talk to eachother so unfortunately your IP comes along for the ride with the Data.
-
-
-Q: "This plugin is worthless"
-
-A: Not really a question - but hopefully it'll help Jagex a little bit in solving their botting crisis - and maybe even repair the OSRS economy.
+[Our discord](https://discord.gg/3AB58CRmYs) is also a viable option, but we prefer to be able to track feature requests, so Github is preferred.  However the Discord is perfect for small questions, or just to chat.
 
 
-Q: "How can I help contribute to the plugin?"
+# Can I get involved with development?
+Yes, you can start contributing in less than 10 minutes!
 
-A: "Fork and pull request, I'll approve if it's not malicious"
+Follow this guide to start contributing to the server side components (API, (database), scraper, machine learning)
 
+For the other components, look at the relevant [repository](https://github.com/Bot-detector)
 
-Q: "My bots got banned because of this plugin"
-
-A: "Yay!"
-
-
-Q: "Is this plugin malicious? How can I be sure that it's not malicious?"
-
-A: The only part that connects to your RuneLite client is the RuneLite plugin which is available here: https://github.com/Ferrariic/bot-detector. The RuneLite developers won't allow anything that's even mildly suspect to enter the Plugin Hub - which is pretty great.
-
-
-Q: "I still don't understand why you need to use a RuneLite client plugin to capture OSRS names, what's the point?"
-
-A: If I could have access to the OSRS database for Hiscores - this would take far less time. However, the API for Jagex's Hiscore pulling system calls only every 1-3 seconds, which means it would take over 600 days to process every single name through the API. Basically, by the time OSRS 2 and RS4 came out we'd have only scratched the surface of processing the names into a usable format - nevermind even doing the math and other nonsense to detect who is a bot.
+## requirements
+* You must have [Docker](https://docs.docker.com/get-docker/) installed.
+* You must have git installed.
+    * We recommend [Github desktop](https://desktop.github.com/)
+    * [Git windows](https://gitforwindows.org),  [Git unix](https://git-scm.com/download/linux) will also work.
+* You must have an integrated development environment (IDE).
+    * We recommend [VSCode](https://code.visualstudio.com), but any IDE will work.
 
 
-Q: "So, how do you detect who is a bot?"
+Once that is installed, we can begin downloading the code.
 
-A: Well, we could use a variety of different methods - the one that I chose was to group every player together that has similar stats, and if that group gets banned more frequently than other groups then it's probably likely that the rest of the group is pretty bot-like or suspicious. This could also include gold-farmers, RWTers, etc. Any group with a high ban rate is suspicious and would be reported to Tipoff@Jagex.com
+Open up a terminal (cmd) & navigate (cd) to where you want to save our code.
 
-Q: "Your code looks like trash"
+We will create a folder `bot-detector` with two sub folders `remote` & `local`, we will download the remote repositories in the `remote` folder.
 
-A: I'm a medical student that's doing this as a hobby, I'm learning as I go :(
+```sh
+mkdir bot-detector\remote bot-detector\local && cd bot-detector\remote
+git clone https://github.com/Bot-detector/Bot-Detector-Core-Files.git
+git clone https://github.com/Bot-detector/bot-detector-mysql.git
+git clone https://github.com/Bot-detector/bot-detector-ML.git
+git clone https://github.com/Bot-detector/bot-detector-scraper.git
+```
+To add the repositories in github desktop, select `File` on the top left than click `Add local repository`, and navigate to the cloned repositories.
+
+
+Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. *Make sure docker desktop is running!
+```powershell
+cd 'Bot-Detector-Core-Files'
+docker-compose up -d
+```
+
+In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
+
+To test the api type: 
+```sh
+http://localhost:5000/
+```
+to test the ml type:
+```sh
+http://localhost:8000/
+```
+`adding /docs at the end will give return the swagger documentation for the components`
+
+## What contributions are needed?
+Features, and bugs are documented as issues in each repository, the project owners, review these, and select some as part of a [github project](https://github.com/orgs/Bot-detector/projects).
+
+## Opening Merge Requests
+Changes to the project will have to submitted through the process of Merge Requests.  Github has good [documentation](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) outlining this process and how it works, but to summarize it here briefly:
+1. Go to our repository and click `Fork`. ![image](https://user-images.githubusercontent.com/40169115/153728214-cd741e4e-b036-4d48-9f47-48c4dc9e99be.png)
+2. Clone your newly created repository to your local machine (into the `bot-detector\local` folder)
+3. Make your local changes. Test. Commit. And push to your own repo
+4. Open a Merge Request
+
+## The development workflow:
+1. Make sure you are working in your fork. (copy of the repository)
+    - On github desktop, in the top left, you can click `Current repository`, select the repository under your name.
+2. Create a branch, with a relative name, related to the issue.
+    - In github desktop, on the top click `branch` or `current branch` than `new branch`.
+3. Publish your branch.
+    - In github desktop, blue button on the middle of your screen `Publish branch`
+4. Create your commits (changes).
+    - Small commits, defined scope are preferd.
+    - Commit messages are desired.
+5. Push your commits.
+6. Create a Pull Request (PR)
+    - in github desktop, blue button on the middle of your screen `Create Pull Request`
+    - this will open your browser, make sure the base repository: `Bot-detector/` and base: `develop`
+
+# What are the coding standards?
+During the development process it is desired to write tests.
+
+We use black for linting, in Visual Studio code (vs code), you can right click "format document".
+
+Naming conventions:
+- Variable: "snake_case"
+- Function: "snake_case"
+- Class: "camelCase"
+- Table: "camelCase"
+- Route: "kebab-case"
+
+We are aware that we were not always consistent with naming, please suggest corrections.
+
+# Who approves my code?
+We have automated workflows setup for assigning approvers based on their knowledge in ths project - this person will be the owner of Issue/Merge Request.
