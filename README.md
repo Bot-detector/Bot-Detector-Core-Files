@@ -47,6 +47,8 @@ git clone https://github.com/Bot-detector/Bot-Detector-Core-Files.git
 git clone https://github.com/Bot-detector/bot-detector-mysql.git
 git clone https://github.com/Bot-detector/bot-detector-ML.git
 git clone https://github.com/Bot-detector/bot-detector-scraper.git
+git clone https://github.com/Bot-detector/bot-detector-discord-bot.git
+git clone https://github.com/Bot-detector/Bot-Detector-Web.git
 ```
 To add the repositories in github desktop, select `File` on the top left than click `Add local repository`, and navigate to the cloned repositories.
 
