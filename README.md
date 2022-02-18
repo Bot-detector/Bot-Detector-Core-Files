@@ -31,7 +31,6 @@ If you would like to join our community, get involved in development, join our c
 **Yes**. We're always welcoming new talent to the team. Many new faces like to join [our discord](https://discord.gg/3AB58CRmYs) to have a bit of guidance, however if that's not your cup of tea -- we've listed all of the steps necessary to start a development environment, and to help contribute to banning bots, below:
 
 # Core Files Setup
-
 This guide will take you through the necessary steps to start contributing to the server side components. 
 This will include the following repositories:
 * [API](https://github.com/Bot-detector/Bot-Detector-Core-Files)
@@ -65,9 +64,7 @@ git clone https://github.com/Bot-detector/bot-detector-scraper.git
 cd Bot-Detector-Core-Files
 docker-compose up -d
 ```
-
 6. In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
-
 7. Test the api's: 
     * Core api: ```http://localhost:5000/```
     * Machine learning: ```http://localhost:8000/```
@@ -100,13 +97,16 @@ Changes to the project will have to submitted through the process of Merge Reque
     - This will open your browser, make sure the base repository: `Bot-detector/` and base: `develop`
 
 # What are the coding standards?
+## General
+Code must be well-understood by those willing to review it. Please add comments where necessary, if you find that the method used may be difficult to decipher in the future.
 
-1. Code must be linted prior to merging. We use `black`.
-2. Tests are desired where applicable.
-3. Code must be well-understood by those willing to review it. Please add comments where necessary, if you find that the method used may be difficult to decipher in the future.
-4. *If you have the time*:  cProfile your code to reduce unnecessary function calls. This is not a requirement, though it may help to prevent bloat, especially if your functions may be consuming an inordinate amount of resources.
+## Linting
+Code must be linted prior to merging. We use `black`.
 
-### Naming conventions
+## Tests
+Tests must be written where applicable.
+
+## Naming conventions
 - Variable: `snake_case`
 - Function: `snake_case`
 - Class: `camelCase`
