@@ -2,7 +2,7 @@
 ![GitHub](https://img.shields.io/github/license/Bot-Detector/Bot-Detector-Core-FIles)
 ![GitHub top language](https://img.shields.io/github/languages/top/Bot-Detector/Bot-Detector-Core-Files)
 ![Website](https://img.shields.io/website?down_color=lightgrey&down_message=down&up_color=green&up_message=up&url=https%3A%2F%2Fosrsbotdetector.com%2F)
-![Discord](https://img.shields.io/discord/817916789668708384?label=discord&style=plastic)
+![Discord](https://img.shields.io/discord/817916789668708384?label=discord)
 ![Twitter Follow](https://img.shields.io/twitter/follow/osrsbotdetector?style=social)
     
 ## How does it work?
