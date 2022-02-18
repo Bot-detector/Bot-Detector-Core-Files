@@ -1,14 +1,24 @@
 # The Bot Detector Plugin Core Files
 ![GitHub labels](https://img.shields.io/github/labels/Bot-Detector/Bot-Detector-Core-Files/Help%20Wanted?color=%23&style=plastic)
+
 **Github**
+
 ![GitHub](https://img.shields.io/github/license/Bot-Detector/Bot-Detector-Core-FIles) ![GitHub Org's stars](https://img.shields.io/github/stars/Bot-Detector?style=social) ![GitHub forks](https://img.shields.io/github/forks/Bot-Detector/Bot-Detector-Core-FIles?style=social)
-![GitHub language count](https://img.shields.io/github/languages/count/Bot-Detector/Bot-Detector-Core-Files) ![GitHub top language](https://img.shields.io/github/languages/top/Bot-Detector/Bot-Detector-Core-Files) ![GitHub repo size](https://img.shields.io/github/repo-size/Bot-detector/Bot-Detector-Core-Files?style=plastic) ![Lines of code](https://img.shields.io/tokei/lines/github/Bot-detector/Bot-Detector-Core-Files?style=plastic)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/y/Bot-Detector/Bot-Detector-Core-Files?style=plastic) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Bot-Detector/Bot-Detector-Core-Files?style=plastic)
+
+![GitHub top language](https://img.shields.io/github/languages/top/Bot-Detector/Bot-Detector-Core-Files) ![GitHub repo size](https://img.shields.io/github/repo-size/Bot-detector/Bot-Detector-Core-Files?style=plastic) ![Lines of code](https://img.shields.io/tokei/lines/github/Bot-detector/Bot-Detector-Core-Files?style=plastic)
+
+![GitHub commit activity](https://img.shields.io/github/commit-activity/y/Bot-Detector/Bot-Detector-Core-Files?style=plastic)
+
 ![GitHub issues](https://img.shields.io/github/issues/Bot-Detector/Bot-Detector-Core-Files) ![GitHub closed issues](https://img.shields.io/github/issues-closed/Bot-Detector/Bot-Detector-Core-Files?color=%23)
+
  ![GitHub pull requests](https://img.shields.io/github/issues-pr/Bot-Detector/Bot-Detector-Core-Files) ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/Bot-Detector/Bot-Detector-Core-Files?color=%23)
+ 
 **Socials**
+
 ![Discord](https://img.shields.io/discord/817916789668708384?label=discord&style=plastic)   ![Twitter Follow](https://img.shields.io/twitter/follow/osrsbotdetector?style=social)
+
 **Website**
+
 ![Website](https://img.shields.io/website?down_color=lightgrey&down_message=down&up_color=green&up_message=up&url=https%3A%2F%2Fosrsbotdetector.com%2F)
     
 ## How does it work?
