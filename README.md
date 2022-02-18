@@ -32,7 +32,12 @@ If you would like to join our community, get involved in development, join our c
 
 # Core Files Setup
 
-This guide will take you through the necessary steps to start contributing to the server side components. This will include the [API](https://github.com/Bot-detector/Bot-Detector-Core-Files), [Database](https://github.com/Bot-detector/Bot-Detector-Core-Files),  [Scraper](https://github.com/Bot-detector/bot-detector-scraper), and the [Machine Learning](https://github.com/Bot-detector/bot-detector-ML) repositories.
+This guide will take you through the necessary steps to start contributing to the server side components. 
+This will include the following repositories:
+* [API](https://github.com/Bot-detector/Bot-Detector-Core-Files)
+* [Database](https://github.com/Bot-detector/Bot-Detector-Core-Files)
+* [Scraper](https://github.com/Bot-detector/bot-detector-scraper)
+* [Machine Learning](https://github.com/Bot-detector/bot-detector-ML)
 
 You can find other relevant repositories in our [organization's github](https://github.com/Bot-detector).
 
@@ -46,36 +51,28 @@ You can find other relevant repositories in our [organization's github](https://
 ### Setup:
 1. Open a terminal `cmd`
 2. Navigate `cd` to where you want to save our code.
-3. Create a folder `bot-detector` with two sub folders `remote` & `local`, we will download the remote repositories in the `remote` folder.
-
-```sh
+3. The command below will Create a folder `bot-detector` with two sub folders `remote` & `local` & download the remote repositories in the `remote` folder.
+    * To add the repositories in github desktop, select `File` on the top left than click `Add local repository`, and navigate to the cloned repositories.
+```
 mkdir bot-detector\remote bot-detector\local && cd bot-detector\remote
 git clone https://github.com/Bot-detector/Bot-Detector-Core-Files.git
 git clone https://github.com/Bot-detector/bot-detector-mysql.git
 git clone https://github.com/Bot-detector/bot-detector-ML.git
 git clone https://github.com/Bot-detector/bot-detector-scraper.git
 ```
-4. To add the repositories in github desktop, select `File` on the top left than click `Add local repository`, and navigate to the cloned repositories.
-
-5. Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. *Make sure docker desktop is running!
-```powershell
-cd 'Bot-Detector-Core-Files'
+5. Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. **Make sure docker desktop is running!**
+```
+cd Bot-Detector-Core-Files
 docker-compose up -d
 ```
 
 6. In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
 
-7. In order to test the api, type: 
-```sh
-http://localhost:5000/
-```
-8. Now to test the machine learning type:
-```sh
-http://localhost:8000/
-```
-9. adding /docs at the end will give return the swagger documentation for the components
-  
-`http://localhost:8000/docs#`
+7. Test the api's: 
+    * Core api: ```http://localhost:5000/```
+    * Machine learning: ```http://localhost:8000/```
+
+adding /docs at the end will give return the swagger documentation for the components `/docs`
 
 ## What contributions are needed?
 Features, and bugs are documented as issues in each repository. The project owners, review these, and select some as part of a [github project](https://github.com/orgs/Bot-detector/projects). 
@@ -89,7 +86,7 @@ Changes to the project will have to submitted through the process of Merge Reque
 
 ## The Development Workflow:
 1. Make sure you are working in your fork. This will be a copy of the repository.
-    - On github desktop, in the top left, you can click `Current repository`, select the repository under your name.
+    - In github desktop, in the top left, you can click `Current repository`, select the repository under your name.
 2. Create a branch, with a relative name, related to the issue.
     - In github desktop, on the top click `branch` or `current branch` than `new branch`.
 3. Publish your branch.
