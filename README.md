@@ -1,3 +1,9 @@
+![Discord](https://img.shields.io/discord/817916789668708384?label=discord&style=plastic)
+![Twitter Follow](https://img.shields.io/twitter/follow/osrsbotdetector?style=social)
+
+![GitHub repo size](https://img.shields.io/github/repo-size/Bot-detector/Bot-Detector-Core-Files?style=plastic)
+![Lines of code](https://img.shields.io/tokei/lines/github/Bot-detector/Bot-Detector-Core-Files?style=plastic)
+
 # How does it work?
 The project is broken into 7 separate pieces:
 * API
