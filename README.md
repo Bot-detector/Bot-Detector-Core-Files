@@ -52,6 +52,8 @@ You can find other relevant repositories in our [organization's github](https://
 2. Navigate `cd` to where you want to save our code.
 3. The command below will Create a folder `bot-detector` with two sub folders `remote` & `local` & download the remote repositories in the `remote` folder.
     * To add the repositories in github desktop, select `File` on the top left than click `Add local repository`, and navigate to the cloned repositories.
+
+Windows
 ```
 mkdir bot-detector\remote bot-detector\local && cd bot-detector\remote
 git clone https://github.com/Bot-detector/Bot-Detector-Core-Files.git
@@ -59,13 +61,22 @@ git clone https://github.com/Bot-detector/bot-detector-mysql.git
 git clone https://github.com/Bot-detector/bot-detector-ML.git
 git clone https://github.com/Bot-detector/bot-detector-scraper.git
 ```
-5. Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. **Make sure docker desktop is running!**
+Linux
+```
+mkdir -p bot-detector/{remote,local}
+git clone https://github.com/Bot-detector/Bot-Detector-Core-Files.git
+git clone https://github.com/Bot-detector/bot-detector-mysql.git
+git clone https://github.com/Bot-detector/bot-detector-ML.git
+git clone https://github.com/Bot-detector/bot-detector-scraper.git
+```
+
+4. Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. **Make sure docker desktop is running!**
 ```
 cd Bot-Detector-Core-Files
 docker-compose up -d
 ```
-6. In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
-7. Test the api's: 
+5. In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
+6. Test the api's: 
     * Core api: ```http://localhost:5000/```
     * Machine learning: ```http://localhost:8000/```
 
