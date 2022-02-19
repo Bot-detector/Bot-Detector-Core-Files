@@ -60,6 +60,8 @@ git clone https://github.com/Bot-detector/Bot-Detector-Core-Files.git
 git clone https://github.com/Bot-detector/bot-detector-mysql.git
 git clone https://github.com/Bot-detector/bot-detector-ML.git
 git clone https://github.com/Bot-detector/bot-detector-scraper.git
+git clone https://github.com/Bot-detector/bot-detector-discord-bot.git
+git clone https://github.com/Bot-detector/Bot-Detector-Web.git
 ```
 Linux
 ```
