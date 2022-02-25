@@ -1,6 +1,5 @@
 version: '3'
 services:
-
   mysql:
     build:
       context: ../bot-detector-mysql
@@ -12,6 +11,7 @@ services:
       - MYSQL_PASSWORD=botdetector
     volumes:
       - '../bot-detector-mysql/mount:/var/lib/mysql'
+      - '../bot-detector-mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d'
     ports:
       - "3306:3306"
     networks:
@@ -37,6 +37,6 @@ services:
       - botdetector-network
     depends_on:
       - mysql
-      
+
 networks:
   botdetector-network:
