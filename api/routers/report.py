@@ -166,6 +166,7 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
     sql = update(Report)
     sql = sql.values(reportingID = new_user_id)
     sql = sql.where(Report.reportingID == old_user_id)
+    sql = sql.prefix_with("ignore")
 
     async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
         await session.execute(sql)
