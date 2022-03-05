@@ -172,7 +172,7 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
         result = await session.execute(sql)
         await session.commit()
 
-    return {"Success": f"{result.rowcount} rows updated to reportingID = {new_user_id}."}
+    return {"detail": f"{result.rowcount} rows updated to reportingID = {new_user_id}."}
 
 
 @router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
