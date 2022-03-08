@@ -790,7 +790,13 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
     if voter_data is None:
         voter_data = await sql_insert_player(player_name)
 
-    voter_data = voter_data.rows2dict()[0]
+    voter_data = voter_data.rows2dict()
+
+    if len(voter_data) > 0:
+        voter_data = voter_data[0]
+    else:
+        logger.debug(normalized_name)
+        raise HTTPException(status_code=405, detail=f"Voter does not exist")
 
     feedback_params["voter_id"] = voter_data.get("id")
     exclude = ["player_name"]
