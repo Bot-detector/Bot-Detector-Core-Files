@@ -20,5 +20,5 @@ RUN pip install --no-cache-dir -r /project/requirements.txt
 
 COPY . /project/
 
-CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host", "0.0.0.0"] 
+CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host", "0.0.0.0", "--reload"] 
 # CMD ["sh","-c", "uvicorn api.app:app --proxy-headers --host 0.0.0.0 --port ${port} --root-path ${path}"]

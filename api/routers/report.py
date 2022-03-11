@@ -164,13 +164,15 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
     # can be used for name change
 
     sql = update(Report)
-    sql = sql.values(Report.reportingID == new_user_id)
+    sql = sql.values(reportingID = new_user_id)
     sql = sql.where(Report.reportingID == old_user_id)
+    sql = sql.prefix_with("ignore")
 
     async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        await session.execute(sql)
+        result = await session.execute(sql)
+        await session.commit()
 
-    return {"OK": "OK"}
+    return {"detail": f"{result.rowcount} rows updated to reportingID = {new_user_id}."}
 
 
 @router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Report"])

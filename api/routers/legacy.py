@@ -98,7 +98,7 @@ class DiscordVerifyInfo(BaseModel):
 '''
 async def sql_get_player(player_name):
     """Attempts to get data for a player whose names matches player_name."""
-    sql_player_id = 'select * from Players where normalized_name LIKE :normalized_name'
+    sql_player_id = 'select * from Players where normalized_name = :normalized_name'
 
     param = {
         'normalized_name': await to_jagex_name(player_name)
@@ -110,16 +110,17 @@ async def sql_get_player(player_name):
     try:
         player = player.rows2dict()
     except AttributeError:
-        raise HTTPException(status_code=500, detail="Player does not exist.")
+        raise HTTPException(status_code=405, detail="Player does not exist.")
         
     return None if len(player) == 0 else player[0]
 
 
 async def sql_insert_player(player_name):
-    sql_insert = "insert ignore into Players (name) values(:player_name);"
+    sql_insert = "insert into Players (name, normalized_name) values (:player_name, :normalized_name);"
 
     param = {
-        'player_name': player_name
+        'player_name': player_name,
+        'normalized_name': await to_jagex_name(player_name)
     }
 
     await execute_sql(sql_insert, param=param)
@@ -782,15 +783,13 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
  
     feedback_params = feedback.dict()
     player_name = feedback_params.pop("player_name")
-
-    normalized_name = await to_jagex_name(player_name)
-
-    voter_data = await execute_sql(sql=f"select * from Players where normalized_name = :normalized_name", param={"normalized_name": normalized_name})
+    voter_data = await sql_get_player(player_name)
 
     if voter_data is None:
         voter_data = await sql_insert_player(player_name)
 
-    voter_data = voter_data.rows2dict()[0]
+    if not len(voter_data) > 0:
+        raise HTTPException(status_code=405, detail=f"Voter does not exist")
 
     feedback_params["voter_id"] = voter_data.get("id")
     exclude = ["player_name"]

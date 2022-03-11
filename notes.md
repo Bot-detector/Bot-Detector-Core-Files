@@ -11,7 +11,12 @@ GET: to read data.
 PUT: to update data.
 DELETE: to delete data.
 ```
-
+# keeping fork up to date
+```
+git checkout develop
+git pull --rebase upstream develop
+git push
+```
 # setup
 creating a python venv to work in and install the project requirements
 ```
