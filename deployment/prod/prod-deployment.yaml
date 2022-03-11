@@ -16,41 +16,42 @@ spec:
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - bd-prod-api
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - bd-prod-api
+                topologyKey: kubernetes.io/hostname
       volumes:
         - name: nfs-volume
-          nfs: 
+          nfs:
             server: 51.68.207.197
             path: /cluster/exports
       containers:
-      - name: bd-prod-api
-        image: hub.osrsbotdetector.com/bot-detector/bd-api:production
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 4000
-        resources:
-          requests:
-            cpu: "1000m"
-            memory: "100Mi"
-          limits:
-            cpu: "2000m"
-            memory: "3000Mi"
-        volumeMounts:
-        - name: nfs-volume
-          mountPath: /root/exports
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 4000
-          failureThreshold: 3
-          periodSeconds: 30
+        - name: bd-prod-api
+          image: hub.osrsbotdetector.com/bot-detector/bd-api:production
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4000
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "100Mi"
+            limits:
+              cpu: "2000m"
+              memory: "3000Mi"
+          volumeMounts:
+            - name: nfs-volume
+              mountPath: /project/exports
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            failureThreshold: 3
+            periodSeconds: 3
+            initialDelaySeconds: 15
       imagePullSecrets:
-      - name: regcred
+        - name: regcred

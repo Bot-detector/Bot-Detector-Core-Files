@@ -16,18 +16,18 @@ spec:
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - bd-dev-api
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - bd-dev-api
+                topologyKey: kubernetes.io/hostname
       volumes:
         - name: nfs-volume-exports
-          nfs: 
+          nfs:
             server: 51.68.207.197
             path: /cluster/exports
       containers:
@@ -35,7 +35,7 @@ spec:
           image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
           imagePullPolicy: Always
           ports:
-          - containerPort: 5000
+            - containerPort: 5000
           resources:
             requests:
               cpu: "1000m"
@@ -45,12 +45,13 @@ spec:
               memory: "3000Mi"
           volumeMounts:
             - name: nfs-volume-exports
-              mountPath: /root/exports
+              mountPath: /project/exports
           livenessProbe:
             httpGet:
               path: /
               port: 5000
             failureThreshold: 3
-            periodSeconds: 30
+            periodSeconds: 3
+            initialDelaySeconds: 15
       imagePullSecrets:
-      - name: regcred
+        - name: regcred

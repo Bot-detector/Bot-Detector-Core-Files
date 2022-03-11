@@ -6,5 +6,5 @@ spec:
   selector:
     app: bd-dev-api
   ports:
-  - protocol: "TCP"
-    port: 5000
+    - protocol: "TCP"
+      port: 5000

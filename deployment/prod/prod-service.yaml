@@ -6,5 +6,5 @@ spec:
   selector:
     app: bd-prod-api
   ports:
-  - protocol: "TCP"
-    port: 4000
+    - protocol: "TCP"
+      port: 4000
