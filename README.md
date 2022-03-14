@@ -35,8 +35,6 @@ This guide will take you through the necessary steps to start contributing to th
 This will include the following repositories:
 * [API](https://github.com/Bot-detector/Bot-Detector-Core-Files)
 * [Database](https://github.com/Bot-detector/Bot-Detector-Core-Files)
-* [Scraper](https://github.com/Bot-detector/bot-detector-scraper)
-* [Machine Learning](https://github.com/Bot-detector/bot-detector-ML)
 
 You can find other relevant repositories in our [organization's github](https://github.com/Bot-detector).
 
@@ -58,18 +56,12 @@ Windows
 mkdir bot-detector\remote bot-detector\local && cd bot-detector\remote
 git clone https://github.com/Bot-detector/Bot-Detector-Core-Files.git
 git clone https://github.com/Bot-detector/bot-detector-mysql.git
-git clone https://github.com/Bot-detector/bot-detector-ML.git
-git clone https://github.com/Bot-detector/bot-detector-scraper.git
-git clone https://github.com/Bot-detector/bot-detector-discord-bot.git
-git clone https://github.com/Bot-detector/Bot-Detector-Web.git
 ```
 Linux
 ```
 mkdir -p bot-detector/{remote,local}
 git clone https://github.com/Bot-detector/Bot-Detector-Core-Files.git
 git clone https://github.com/Bot-detector/bot-detector-mysql.git
-git clone https://github.com/Bot-detector/bot-detector-ML.git
-git clone https://github.com/Bot-detector/bot-detector-scraper.git
 ```
 
 4. Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. **Make sure docker desktop is running!**
@@ -80,7 +72,6 @@ docker-compose up -d
 5. In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
 6. Test the api's: 
     * Core api: ```http://localhost:5000/```
-    * Machine learning: ```http://localhost:8000/```
 
 adding /docs at the end will give return the swagger documentation for the components `/docs`
 
