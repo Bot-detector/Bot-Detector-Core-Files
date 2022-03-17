@@ -11,7 +11,7 @@ import pandas as pd
 from api import Config
 from api.database.database import EngineType
 from api.database.functions import execute_sql, list_to_string, verify_token
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.orm.exc import NoResultFound
@@ -628,7 +628,7 @@ async def parse_detection(data:dict) -> dict:
     gmt = time.gmtime(data['ts'])
     human_time = time.strftime('%Y-%m-%d %H:%M:%S', gmt)
 
-    equipment = data.get('equipment')
+    equipment = data.get('equipment', {})
     param = {
         'reportedID': data.get('id'),
         'reportingID': data.get('reporter_id'),
@@ -1217,31 +1217,33 @@ async def get_heatmap_data(token: str, region_id: RegionID):
 
 
 @router.post('/discord/player_bans/{token}', tags=["Legacy"])
-async def generate_excel_export(token: str, export_info: ExportInfo):
+async def generate_excel_export(token: str, export_info: ExportInfo, tasks: BackgroundTasks):
+    '''Initiates a task to generate an excel or csv bans export for a user.'''
+
     await verify_token(token, verification='verify_players')
-    #get_ban_spreadsheet_data
 
     req_data = export_info.dict()
     discord_id = req_data.get('discord_id')
     display_name = req_data.get('display_name')
-    file_type =req_data.get('file_type')
+    file_type = req_data.get('file_type')
+
+    if file_type not in ["excel", "csv"]:
+        raise HTTPException(status_code=400, detail="File type specified is invalid.")
 
     linked_accounts = await sql_get_discord_linked_accounts(discord_id)
 
     if len(linked_accounts) == 0:
         raise HTTPException(status_code=500, detail="User doesn't have any accounts linked.")
+
+    download_url = await create_random_link()
     
-    try:
-        download_url = await create_ban_export(
-            file_type=file_type,
-            linked_accounts=linked_accounts,
-            display_name=display_name,
-            discord_id=discord_id
-        )
-    except InvalidFileType:
-        raise HTTPException(status_code=400, detail="File type specified is invalid.")
-    except NoDataAvailable:
-        raise HTTPException(status_code=500, detail="No ban data available for the linked account(s). Possibly the server timed out.")
+    tasks.add_task(create_ban_export,
+        file_type=file_type,
+        linked_accounts=linked_accounts,
+        display_name=display_name,
+        discord_id=discord_id,
+        download_url=download_url
+    )
 
     return {"url": download_url}
 
@@ -1252,7 +1254,8 @@ async def download_export(export_id: str):
     download_data = await get_export_link(export_id)
 
     if len(download_data) == 0:
-        raise HTTPException(status_code=400, detail="No export found at the URL provided.")
+        raise HTTPException(status_code=400, detail="No export found at the URL provided. \
+        Either it has not finished yet or creation never started. If you've just received this link try refreshing in maybe 5-10 minutes.")
     else:
         file_name = download_data[0].get('file_name')
         file_path = f"{os.getcwd()}/exports/{file_name}"
@@ -1273,59 +1276,42 @@ async def download_export(export_id: str):
             raise HTTPException(status_code=500, detail="File is no longer present on our system. Please use !excelban to generate a new file.")
 
 
-#
-# Excelban helper functions
-#
-
-class Error(Exception):
-    pass
-
-
-class NoDataAvailable(Error):
-    pass
-
-
-class InvalidFileType(Error):
-    pass
-
-
-async def create_ban_export(file_type, linked_accounts, display_name, discord_id):
+async def create_ban_export(file_type, linked_accounts, display_name, discord_id, download_url):
 
     pathlib.Path(f"{os.getcwd()}/exports/").mkdir(parents=True, exist_ok=True)
 
     export_data = {}
 
-    export_data["url_text"] = await create_random_link()
+    export_data["url_text"] = download_url
     export_data["discord_id"] = discord_id
 
     if file_type == "csv":
-        csv_file_name = await create_csv_export(
+        file_name = await create_csv_export(
             linked_accounts=linked_accounts,
             display_name=display_name
         )
-
-        export_data["file_name"] = csv_file_name
         export_data["is_csv"] = 1
 
-
     elif file_type == "excel":
-        excel_file_name = await create_excel_export(
+        file_name = await create_excel_export(
             linked_accounts=linked_accounts, 
             display_name=display_name
         )
 
-        export_data["file_name"] = excel_file_name
         export_data["is_excel"] = 1
 
     else:
-        raise InvalidFileType
-
-    await insert_export_link(export_data)
-
-    return export_data.get("url_text")
+        file_name = ""
 
 
-async def create_excel_export(linked_accounts, display_name):
+    if len(file_name) > 0:
+        export_data["file_name"] = file_name
+        await insert_export_link(export_data)
+
+    return
+
+
+async def create_excel_export(linked_accounts: List, display_name: str) -> str:
     sheets = []
     names = []
 
@@ -1355,7 +1341,7 @@ async def create_excel_export(linked_accounts, display_name):
         return file_name
 
     else:
-        raise NoDataAvailable
+        return ""
 
 
 async def create_csv_export(linked_accounts, display_name):
