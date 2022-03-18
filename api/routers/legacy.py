@@ -1233,11 +1233,12 @@ async def generate_excel_export(token: str, export_info: ExportInfo, tasks: Back
     linked_accounts = await sql_get_discord_linked_accounts(discord_id)
 
     if len(linked_accounts) == 0:
-        raise HTTPException(status_code=500, detail="User doesn't have any accounts linked.")
+        raise HTTPException(status_code=400, detail="User doesn't have any accounts linked.")
 
     download_url = await create_random_link()
     
-    tasks.add_task(create_ban_export,
+    tasks.add_task(
+        create_ban_export,
         file_type=file_type,
         linked_accounts=linked_accounts,
         display_name=display_name,
@@ -1255,7 +1256,8 @@ async def download_export(export_id: str):
 
     if len(download_data) == 0:
         raise HTTPException(status_code=400, detail="No export found at the URL provided. \
-        Either it has not finished yet or creation never started. If you've just received this link try refreshing in maybe 5-10 minutes.")
+            Either it has not finished yet or creation never started. \
+            If you've just received this link try refreshing in maybe 5-10 minutes.")
     else:
         file_name = download_data[0].get('file_name')
         file_path = f"{os.getcwd()}/exports/{file_name}"
