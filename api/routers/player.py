@@ -27,12 +27,14 @@ async def get_player_information(
     player_name: Optional[str] = None,
     player_id: Optional[int] = Query(None, ge=0),
     row_count: int = Query(100_000, ge=1),
-    page: int = Query(1, ge=1)
+    page: int = Query(1, ge=1),
 ):
-    '''
-        Select a player by name or id.
-    '''
-    await verify_token(token, verification='request_highscores', route='[GET]/v1/player')
+    """
+    Select a player by name or id.
+    """
+    await verify_token(
+        token, verification="request_highscores", route="[GET]/v1/player"
+    )
 
     # return exception if no param are given
     if None == player_name == player_id:
@@ -48,7 +50,7 @@ async def get_player_information(
         sql = sql.where(dbPlayer.id == player_id)
 
     # query pagination
-    sql = sql.limit(row_count).offset(row_count*(page-1))
+    sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # transaction
     async with get_session(EngineType.PLAYERDATA) as session:
@@ -67,21 +69,30 @@ async def get_bulk_player_data_from_the_plugin_database(
     label_id: Optional[int] = None,
     label_jagex: Optional[int] = None,
     row_count: int = Query(100_000, ge=1),
-    page: int = Query(1, ge=1)
-    ):
-    '''
-        Selects bulk player data from the plugin database.
-    '''
-    await verify_token(token, verification='request_highscores', route='[POST]/v1/player')
+    page: int = Query(1, ge=1),
+):
+    """
+    Selects bulk player data from the plugin database.
+    """
+    await verify_token(
+        token, verification="request_highscores", route="[POST]/v1/player"
+    )
 
     # return exception if no param are given
-    if None == possible_ban == confirmed_ban == confirmed_player == label_id == label_jagex:
+    if (
+        None
+        == possible_ban
+        == confirmed_ban
+        == confirmed_player
+        == label_id
+        == label_jagex
+    ):
         raise HTTPException(status_code=404, detail="No param given")
 
     # create query
     sql = select(dbPlayer)
 
-    # filters    
+    # filters
     # filters
     if not possible_ban is None:
         sql = sql.where(dbPlayer.possible_ban == possible_ban)
@@ -99,7 +110,7 @@ async def get_bulk_player_data_from_the_plugin_database(
         sql = sql.where(dbPlayer.label_jagex == label_jagex)
 
     # query pagination
-    sql = sql.limit(row_count).offset(row_count*(page-1))
+    sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # transaction
     async with get_session(EngineType.PLAYERDATA) as session:
@@ -111,16 +122,16 @@ async def get_bulk_player_data_from_the_plugin_database(
 
 @router.put("/v1/player", tags=["Player"])
 async def update_existing_player_data(player: Player, token: str):
-    '''
-        Update player & return updated player.
-    '''
-    await verify_token(token, verification='verify_ban')
+    """
+    Update player & return updated player.
+    """
+    await verify_token(token, verification="verify_ban")
 
     # param
     param = player.dict()
-    param['updated_at'] = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
+    param["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
 
-    player_id = param.pop('player_id')
+    player_id = param.pop("player_id")
 
     # sql
     sql_update = update(dbPlayer)
@@ -142,14 +153,14 @@ async def update_existing_player_data(player: Player, token: str):
 
 @router.post("/v1/player", tags=["Player"])
 async def insert_new_player_data_into_plugin_database(player_name: str, token: str):
-    '''
-        Insert new player & return player.
-    '''
-    await verify_token(token, verification='verify_ban', route='[POST]/v1/player')
+    """
+    Insert new player & return player.
+    """
+    await verify_token(token, verification="verify_ban", route="[POST]/v1/player")
 
     sql_insert = insert(dbPlayer)
     sql_insert = sql_insert.values(name=player_name)
-    sql_insert = sql_insert.prefix_with('ignore')
+    sql_insert = sql_insert.prefix_with("ignore")
 
     sql_select = select(dbPlayer)
     sql_select = sql_select.where(dbPlayer.name == player_name)

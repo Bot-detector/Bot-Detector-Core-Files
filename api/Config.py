@@ -1,8 +1,8 @@
-import warnings
 import json
 import logging
 import os
 import sys
+import warnings
 
 # import logging_loki
 from dotenv import find_dotenv, load_dotenv
@@ -11,13 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # load environment variables
 load_dotenv(find_dotenv(), verbose=True)
-sql_uri = os.environ.get('sql_uri')
-discord_sql_uri = os.environ.get('discord_sql_uri')
-token = os.environ.get('token')
+sql_uri = os.environ.get("sql_uri")
+discord_sql_uri = os.environ.get("discord_sql_uri")
+token = os.environ.get("token")
 
-loki_url = os.environ.get('loki_url')
-loki_user = os.environ.get('loki_user')
-loki_pw = os.environ.get('loki_pw')
+loki_url = os.environ.get("loki_url")
+loki_user = os.environ.get("loki_user")
+loki_pw = os.environ.get("loki_pw")
 
 # create application
 app = FastAPI()
@@ -39,39 +39,26 @@ app.add_middleware(
 
 
 # setup logging
-file_handler = logging.FileHandler(filename="logs/error.log", mode='a')
+file_handler = logging.FileHandler(filename="logs/error.log", mode="a")
 stream_handler = logging.StreamHandler(sys.stdout)
 # # log formatting
-formatter = logging.Formatter(json.dumps(
-    {
-        'ts': '%(asctime)s',
-        'name': '%(name)s',
-        'function': '%(funcName)s',
-        'level':'%(levelname)s',
-        'msg': json.dumps('%(message)s')
-    }
-))
+formatter = logging.Formatter(
+    json.dumps(
+        {
+            "ts": "%(asctime)s",
+            "name": "%(name)s",
+            "function": "%(funcName)s",
+            "level": "%(levelname)s",
+            "msg": json.dumps("%(message)s"),
+        }
+    )
+)
 
 
 file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
 
-handlers = [
-    file_handler,
-    stream_handler
-]
-
-
-# if not loki_url is None:
-#     loki_handler = logging_loki.LokiQueueHandler(
-#         Queue(-1),
-#         url=f"{loki_url}",  # https://my-loki-instance/loki/api/v1/push
-#         tags={"application": "api"},
-#         auth=(f"{loki_user}", f"{loki_pw}"),
-#         version="1",
-#     )
-#     loki_handler.setFormatter(formatter)
-#     handlers.append(loki_handler)
+handlers = [file_handler, stream_handler]
 
 logging.basicConfig(level=logging.DEBUG, handlers=handlers)
 
@@ -88,4 +75,4 @@ logging.getLogger("uvicorn.error").propagate = False
 
 # https://github.com/aio-libs/aiomysql/issues/103
 # https://github.com/coleifer/peewee/issues/2229
-warnings.filterwarnings('ignore', '.*Duplicate entry.*')
+warnings.filterwarnings("ignore", ".*Duplicate entry.*")

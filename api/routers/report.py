@@ -164,7 +164,7 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
     # can be used for name change
 
     sql = update(Report)
-    sql = sql.values(reportingID = new_user_id)
+    sql = sql.values(reportingID=new_user_id)
     sql = sql.where(Report.reportingID == old_user_id)
     sql = sql.prefix_with("ignore")
 
