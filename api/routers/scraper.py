@@ -16,6 +16,7 @@ from sqlalchemy.sql.expression import insert, update
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+
 class hiscore(BaseModel):
     Player_id: int
     total: int
@@ -81,14 +82,14 @@ class hiscore(BaseModel):
     kreearra: int
     kril_tsutsaroth: int
     mimic: int
-    nex: Optional[int]=None
+    nex: Optional[int] = None
     nightmare: int
     obor: int
-    phosanis_nightmare:Optional[int]=None
+    phosanis_nightmare: Optional[int] = None
     sarachnis: int
     scorpia: int
     skotizo: int
-    tempoross:int
+    tempoross: int
     the_gauntlet: int
     the_corrupted_gauntlet: int
     theatre_of_blood: int
@@ -103,6 +104,7 @@ class hiscore(BaseModel):
     zalcano: int
     zulrah: int
 
+
 class Player(BaseModel):
     id: int
     name: Optional[str]
@@ -112,40 +114,46 @@ class Player(BaseModel):
     label_id: Optional[int]
     label_jagex: Optional[int]
 
+
 class scraper(BaseModel):
     hiscores: Optional[hiscore]
     player: Player
 
+
 async def sql_get_players_to_scrape(page=1, amount=100_000):
-    sql = 'select * from playersToScrape WHERE 1 ORDER BY RAND()'
+    sql = "select * from playersToScrape WHERE 1 ORDER BY RAND()"
     data = await execute_sql(sql, page=page, row_count=amount)
     return data.rows2dict()
 
+
 @router.get("/scraper/players/{page}/{amount}/{token}", tags=["Business"])
-async def get_players_to_scrape(token, page:int=1, amount:int=100_000):
-    await verify_token(token, verification='verify_ban')
+async def get_players_to_scrape(token, page: int = 1, amount: int = 100_000):
+    await verify_token(token, verification="verify_ban")
     return await sql_get_players_to_scrape(page=page, amount=amount)
 
+
 async def handle_lock(function, data):
-    sleep = random.uniform(0.1,1.1)
-    logger.debug({
-        "message": "lock wait timeout exceeded",
-        "function": f"{function.__name__}",
-        "sleep": sleep
-    })
+    sleep = random.uniform(0.1, 1.1)
+    logger.debug(
+        {
+            "message": "lock wait timeout exceeded",
+            "function": f"{function.__name__}",
+            "sleep": sleep,
+        }
+    )
     await asyncio.sleep(sleep)
     await function(data)
 
 
 async def sqla_update_player(players: List):
-    logger.debug({"message":f'update players: {len(players)=}'})
+    logger.debug({"message": f"update players: {len(players)=}"})
 
     dbplayer = players.copy()
     try:
         async with get_session(EngineType.PLAYERDATA) as session:
             for player in players:
-                player_id = player.get('id')
-                sql = update(dbPlayer).values(player).where(dbPlayer.id==player_id)
+                player_id = player.get("id")
+                sql = update(dbPlayer).values(player).where(dbPlayer.id == player_id)
                 await session.execute(sql, player)
                 await session.commit()
                 dbplayer.remove(player)
@@ -153,10 +161,11 @@ async def sqla_update_player(players: List):
         await handle_lock(sqla_update_player, dbplayer)
     return
 
-async def sqla_insert_hiscore(hiscores:List):
-    logger.debug({"message":f'insert hiscores: {len(hiscores)=}'})
 
-    sql = insert(playerHiscoreData).prefix_with('ignore')
+async def sqla_insert_hiscore(hiscores: List):
+    logger.debug({"message": f"insert hiscores: {len(hiscores)=}"})
+
+    sql = insert(playerHiscoreData).prefix_with("ignore")
     dbhiscores = hiscores.copy()
     try:
         async with get_session(EngineType.PLAYERDATA) as session:
@@ -169,12 +178,15 @@ async def sqla_insert_hiscore(hiscores:List):
 
     return
 
+
 @router.post("/scraper/hiscores/{token}", tags=["Business"])
 async def receive_scraper_data(token, data: List[scraper]):
-    await verify_token(token, verification='verify_ban', route='[POST]/scraper/hiscores/token')
+    await verify_token(
+        token, verification="verify_ban", route="[POST]/scraper/hiscores/token"
+    )
     # background task will cause lots of duplicates
     asyncio.create_task(post_hiscores_to_db(data))
-    return {'detail': f'{len(data)} records to be inserted.'}
+    return {"detail": f"{len(data)} records to be inserted."}
 
 
 async def post_hiscores_to_db(data: List[scraper]):
@@ -183,20 +195,19 @@ async def post_hiscores_to_db(data: List[scraper]):
     players, hiscores = [], []
 
     for d in data:
-        player_dict = d['player']
-        hiscore_dict = d['hiscores']
+        player_dict = d["player"]
+        hiscore_dict = d["hiscores"]
 
         # add extra data
-        time_now = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
-        player_dict['updated_at'] = time_now
-        
+        time_now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        player_dict["updated_at"] = time_now
+
         players.append(player_dict)
 
         if hiscore_dict:
             hiscores.append(hiscore_dict)
-    
+
     # batchwise insert & update
     await batch_function(sqla_insert_hiscore, hiscores, batch_size=1000)
     await sqla_update_player(players)
     return
-  

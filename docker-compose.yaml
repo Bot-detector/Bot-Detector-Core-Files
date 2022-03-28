@@ -10,7 +10,7 @@ services:
       - MYSQL_USER=botssuck
       - MYSQL_PASSWORD=botdetector
     volumes:
-      - ../bot-detector-mysql/mount:/var/lib/mysql 
+      - ../bot-detector-mysql/mount:/var/lib/mysql
       - '../bot-detector-mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d'
     ports:
       - "3306:3306"
@@ -29,7 +29,7 @@ services:
       - sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/playerdata
       - discord_sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/discord
       - token=verify_ban
-    volumes: 
+    volumes:
       - '../Bot-Detector-Core-Files/api:/code/api'
     ports:
       - "5000:5000"

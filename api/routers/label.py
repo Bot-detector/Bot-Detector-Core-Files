@@ -7,38 +7,43 @@ from sqlalchemy.sql.expression import insert, select
 
 router = APIRouter()
 
+
 class label(BaseModel):
-    label_name:str
+    label_name: str
+
 
 @router.get("/v1/label/", tags=["Label"])
-async def get_labels_from_plugin_database(token:str):
-    '''
-        Selects all labels.
-    '''
-    await verify_token(token, verification='request_highscores', route='[GET]/v1/label/')
+async def get_labels_from_plugin_database(token: str):
+    """
+    Selects all labels.
+    """
+    await verify_token(
+        token, verification="request_highscores", route="[GET]/v1/label/"
+    )
 
     sql = select(dbLabel)
 
     async with get_session(EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
-    
+
     data = sqlalchemy_result(data)
     return data.rows2dict()
-    
+
+
 @router.post("/v1/label/", tags=["Label"])
-async def insert_label_into_plugin_database(token:str, label:label):
-    '''
-        Insert a new label & return the new label.
-    '''
-    await verify_token(token, verification='verify_ban', route='[POST]/v1/label/')
+async def insert_label_into_plugin_database(token: str, label: label):
+    """
+    Insert a new label & return the new label.
+    """
+    await verify_token(token, verification="verify_ban", route="[POST]/v1/label/")
 
     label_name = label.dict()
-    label_name = label_name['label_name']
+    label_name = label_name["label_name"]
 
     # insert query
     sql_insert = insert(dbLabel)
     sql_insert = sql_insert.values(label=label_name)
-    sql_insert = sql_insert.prefix_with('ignore')
+    sql_insert = sql_insert.prefix_with("ignore")
 
     # select query
     sql_select = select(dbLabel)
@@ -52,11 +57,12 @@ async def insert_label_into_plugin_database(token:str, label:label):
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
+
 @router.put("/v1/label/", tags=["Label"])
-async def update_a_currently_existing_label(token:str):
-    '''
-        Work in progress
-        Update an existing label.
-    '''
-    await verify_token(token, verification='verify_ban', route='[PUT]/v1/label/')
+async def update_a_currently_existing_label(token: str):
+    """
+    Work in progress
+    Update an existing label.
+    """
+    await verify_token(token, verification="verify_ban", route="[PUT]/v1/label/")
     return

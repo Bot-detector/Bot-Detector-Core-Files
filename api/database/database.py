@@ -1,8 +1,8 @@
+from contextlib import asynccontextmanager
 from enum import Enum, auto
 from typing import AsyncGenerator
 
 from api import Config
-from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
@@ -13,10 +13,10 @@ class EngineType(Enum):
     DISCORD = auto()
 
 
-class Engine():
+class Engine:
     def __init__(self, engine_type: EngineType = EngineType.PLAYERDATA):
         self.type = engine_type
-        
+
         if self.type == EngineType.PLAYERDATA:
             connection_string = Config.sql_uri
         elif self.type == EngineType.DISCORD:
@@ -25,15 +25,17 @@ class Engine():
             raise ValueError(f"Engine type {engine_type} not valid.")
 
         self.engine = create_async_engine(
-            connection_string, 
+            connection_string,
             poolclass=QueuePool,
             pool_pre_ping=True,
-            pool_size=100, 
+            pool_size=100,
             max_overflow=5000,
-            pool_recycle=3600
+            pool_recycle=3600,
         )
         # self.engine.echo = True
-        self.session = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=True)
+        self.session = sessionmaker(
+            self.engine, class_=AsyncSession, expire_on_commit=True
+        )
 
 
 """Our Database Engines"""
