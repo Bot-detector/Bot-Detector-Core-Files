@@ -47,11 +47,14 @@ spec:
             - name: nfs-volume
               mountPath: /project/exports
           livenessProbe:
+            failureThreshold: 3
             httpGet:
               path: /
               port: 4000
-            failureThreshold: 3
-            periodSeconds: 3
+              scheme: HTTP
             initialDelaySeconds: 15
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 15
       imagePullSecrets:
         - name: regcred
