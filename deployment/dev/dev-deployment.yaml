@@ -50,7 +50,7 @@ spec:
             failureThreshold: 3
             httpGet:
               path: /
-              port: 4000
+              port: 5000
               scheme: HTTP
             initialDelaySeconds: 15
             periodSeconds: 30
