@@ -51,7 +51,8 @@ spec:
               path: /
               port: 4000
             failureThreshold: 3
-            periodSeconds: 3
+            periodSeconds: 60
+            timeoutSeconds: 30
             initialDelaySeconds: 15
       imagePullSecrets:
         - name: regcred
