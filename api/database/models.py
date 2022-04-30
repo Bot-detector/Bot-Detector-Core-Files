@@ -717,3 +717,15 @@ class PlayerHiscoreDataXPChange(Base):
     zulrah = Column(Integer)
 
     Player = relationship("Player")
+
+class playerReports(Base):
+    __tablename__ = "playerReports"
+    reporting_id = Column(Integer, ForeignKey("Players.id"))
+    reported_id = Column(Integer, ForeignKey("Players.id"))
+
+    reporting_player = relationship(
+        "Player", primaryjoin="playerReports.reporting_id == Player.id"
+    )
+    reported_player = relationship(
+        "Player", primaryjoin="playerReports.reported_id == Player.id"
+    )
