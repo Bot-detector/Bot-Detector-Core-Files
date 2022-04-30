@@ -1,3 +1,4 @@
+import imp
 import logging
 import time
 from datetime import date
@@ -5,14 +6,14 @@ from typing import List, Optional
 
 import pandas as pd
 from api.database import functions
-from api.database.models import Player, Prediction, Report, ReportLatest, stgReport
+from api.database.models import (Player, Prediction, Report, ReportLatest,
+                                 playerReports, stgReport)
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 from pydantic.fields import Field
-from sqlalchemy import update
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
-from sqlalchemy.sql.expression import insert, select
+from sqlalchemy.sql.expression import Select, insert, select, update
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -342,112 +343,37 @@ async def get_report_by_prediction(
     return output
 
 
-@router.get("/v1/report/latest", tags=["Report"])
-async def get_latest_report_of_a_user(token: str, reported_id: int = Query(..., ge=0)):
 
-    """
-    Select the latest report data, by reported user
-    """
-
-    await functions.verify_token(
-        token, verification="verify_ban", route="[GET]/v1/report/latest"
-    )
-
-    sql = select(ReportLatest)
-
-    if not reported_id is None:
-        sql = sql.where(ReportLatest.reported_id == reported_id)
-
-    # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-
-    data = functions.sqlalchemy_result(data)
-    return data.rows2dict()
-
-
-@router.get("/v1/report/latest/bulk", tags=["Report"])
-async def get_bulk_latest_report_data(
-    token: str,
-    region_id: Optional[int] = Query(None, ge=0, le=25000),
-    timestamp: Optional[date] = None,
+@router.get("/v1/report/count", tags=["Report"])
+async def get_report_count(
+    name: str
 ):
     """
-    get the player count in bulk by region and or date
+    Get the calculated player report count
     """
-    await functions.verify_token(
-        token, verification="verify_ban", route="[GET]/v1/report/latest/bulk"
+    # query
+
+    voter:Player = aliased(Player, name="voter")
+    subject:Player = aliased(Player, name="subject")
+    sql:Select = select(
+        func.count(playerReports.reported_id),
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
     )
-
-    sql = select(ReportLatest)
-
-    if not timestamp is None:
-        sql = sql.where(func.date(ReportLatest.timestamp) == timestamp)
-
-    if not region_id is None:
-        sql = sql.where(ReportLatest.region_id == region_id)
-
-    # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-
-    data = functions.sqlalchemy_result(data)
-    return data.rows2dict()
-
-
-@router.get(
-    "/v1/report/count", status_code=status.HTTP_200_OK, tags=["Report", "Business"]
-)
-async def get_contributions(
-    user_name: str = Query(..., min_length=1, max_length=12),
-):
-    """
-    Allows for a player to see their contributions.
-    """
-
-    if not await functions.is_valid_rsn(user_name):
-        logger.debug(f"Bad Name passed for v1/report/count  | {user_name=}")
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Your name could not be processed. Contact plugin support on our Discord.",
-        )
-
-    user_name = await functions.to_jagex_name(user_name)
-
-    pl = aliased(Player, name="pl")
-    ban = aliased(Player, name="ban")
-
-    sql = select(
-        func.ifnull(Report.manual_detect, 0),
-        ban.confirmed_ban,
-        ban.possible_ban,
-        ban.confirmed_player,
-        func.count(Report.reportedID.distinct()),
-    )
-
-    sql = sql.where(pl.normalized_name == user_name)
+    sql = sql.join(voter, playerReports.reporting_id == voter.id)
+    sql = sql.join(subject, playerReports.reported_id == subject.id)
+    sql = sql.where(voter.name == name)
     sql = sql.group_by(
-        Report.manual_detect, ban.confirmed_ban, ban.possible_ban, ban.confirmed_player
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
     )
 
-    sql = sql.join(pl, pl.id == Report.reportingID)
-    sql = sql.join(ban, ban.id == Report.reportedID)
-
-    fields = [
-        "manual_detect",
-        "confirmed_ban",
-        "possible_ban",
-        "confirmed_player",
-        "count",
-    ]
+    keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
+    # execute query
     async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
         data = await session.execute(sql)
-    data = [{k: v for k, v in zip(fields, d)} for d in data]
+        data = [{k:v for k,v in zip(keys,d)} for d in data]
 
-    if len(data) == 0:
-        logger.debug(f"No Data found for {user_name=}.")
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"No Data found for {user_name}. Contact Plugin Support on our Discord.",
-        )
     return data

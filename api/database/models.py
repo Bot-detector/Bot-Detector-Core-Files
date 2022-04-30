@@ -720,8 +720,8 @@ class PlayerHiscoreDataXPChange(Base):
 
 class playerReports(Base):
     __tablename__ = "playerReports"
-    reporting_id = Column(Integer, ForeignKey("Players.id"))
-    reported_id = Column(Integer, ForeignKey("Players.id"))
+    reporting_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
+    reported_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
 
     reporting_player = relationship(
         "Player", primaryjoin="playerReports.reporting_id == Player.id"
