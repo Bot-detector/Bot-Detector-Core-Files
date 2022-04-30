@@ -1,4 +1,3 @@
-import imp
 import logging
 import time
 from datetime import date
@@ -6,7 +5,7 @@ from typing import List, Optional
 
 import pandas as pd
 from api.database import functions
-from api.database.models import (Player, Prediction, Report, ReportLatest,
+from api.database.models import (Player, Prediction, Report,
                                  playerReports, stgReport)
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
