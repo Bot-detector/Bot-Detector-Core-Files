@@ -241,25 +241,6 @@ class SentToJagex(Base):
     name = Column(Text, nullable=False)
 
 
-class LabelSubGroup(Base):
-    __tablename__ = "LabelSubGroup"
-
-    id = Column(Integer, primary_key=True)
-    parent_label = Column(
-        ForeignKey("Labels.id", ondelete="RESTRICT", onupdate="RESTRICT"),
-        nullable=False,
-        index=True,
-    )
-    child_label = Column(
-        ForeignKey("Labels.id", ondelete="RESTRICT", onupdate="RESTRICT"),
-        nullable=False,
-        index=True,
-    )
-
-    Label = relationship("Label", primaryjoin="LabelSubGroup.child_label == Label.id")
-    Label1 = relationship("Label", primaryjoin="LabelSubGroup.parent_label == Label.id")
-
-
 class Player(Base):
     __tablename__ = "Players"
 
