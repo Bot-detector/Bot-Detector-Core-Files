@@ -1,10 +1,9 @@
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import asynccontextmanager
 from enum import Enum, auto
 
 from api import Config
-from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
-                                    create_async_engine)
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 
 
@@ -22,7 +21,7 @@ class Engine:
 
     def __get_connection_string(self, type: EngineType) -> str:
         """
-            set class connection string
+        set class connection string
         """
         if type == EngineType.PLAYERDATA:
             connection_string = Config.sql_uri
@@ -45,17 +44,12 @@ class Engine:
 
     def __get_session_factory(self, engine) -> sessionmaker:
         # self.engine.echo = True
-        session = sessionmaker(
-            engine,
-            class_=AsyncSession,
-            expire_on_commit=False
-        )
+        session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
         return session
 
     @asynccontextmanager
     async def get_session(self):
         yield self.session()
-
 
 
 """Our Database Engines"""
