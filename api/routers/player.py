@@ -1,7 +1,9 @@
 import time
 from typing import List, Optional
 
-from api.database.database import Engine, EngineType, get_session
+from api.database.functions import PLAYERDATA_ENGINE
+from sqlalchemy.ext.asyncio import AsyncSession
+from api.database.database import Engine, EngineType
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import Player as dbPlayer
 from fastapi import APIRouter, HTTPException, Query
@@ -38,7 +40,7 @@ async def get_player_information(
 
     # return exception if no param are given
     if None == player_name == player_id:
-        raise HTTPException(status_code=404, detail="No valid parameters given")
+        raise HTTPException(status_code=422, detail="No valid parameters given")
 
     # create query
     sql = select(dbPlayer)
@@ -53,8 +55,10 @@ async def get_player_information(
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # transaction
-    async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
@@ -113,8 +117,10 @@ async def get_bulk_player_data_from_the_plugin_database(
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # transaction
-    async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
@@ -142,10 +148,12 @@ async def update_existing_player_data(player: Player, token: str):
     sql_select = sql_select.where(dbPlayer.id == player_id)
 
     # transaction
-    async with get_session(EngineType.PLAYERDATA) as session:
-        await session.execute(sql_update)
-        await session.commit()
-        data = await session.execute(sql_select)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            await session.execute(sql_update)
+            await session.commit()
+            data = await session.execute(sql_select)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
@@ -165,10 +173,12 @@ async def insert_new_player_data_into_plugin_database(player_name: str, token: s
     sql_select = select(dbPlayer)
     sql_select = sql_select.where(dbPlayer.name == player_name)
 
-    async with get_session(EngineType.PLAYERDATA) as session:
-        await session.execute(sql_insert)
-        await session.commit()
-        data = await session.execute(sql_select)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            await session.execute(sql_insert)
+            await session.commit()
+            data = await session.execute(sql_select)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()

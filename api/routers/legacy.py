@@ -9,7 +9,7 @@ from typing import List, Optional
 
 import pandas as pd
 from api import Config
-from api.database.database import EngineType
+from api.database.database import (DISCORD_ENGINE, PLAYERDATA_ENGINE, EngineType)
 from api.database.functions import execute_sql, list_to_string, verify_token
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
@@ -296,7 +296,7 @@ async def sql_get_discord_verification_status(player_name: str):
 
     param = {"player_name": player_name}
 
-    data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
+    data = await execute_sql(sql, param, engine=DISCORD_ENGINE)
     return data.rows2dict()
 
 
@@ -305,7 +305,7 @@ async def sql_get_discord_verification_attempts(player_id: int):
 
     param = {"player_id": player_id}
 
-    data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
+    data = await execute_sql(sql, param, engine=DISCORD_ENGINE)
     return data.rows2dict()
 
 
@@ -321,7 +321,7 @@ async def sql_insert_verification_request(
         "token": token_id,
     }
 
-    await execute_sql(sql, param, engine_type=EngineType.DISCORD)
+    await execute_sql(sql, param, engine=DISCORD_ENGINE)
 
     return
 
@@ -331,7 +331,7 @@ async def sql_get_discord_linked_accounts(discord_id: int):
 
     param = {"discord_id": discord_id}
 
-    data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
+    data = await execute_sql(sql, param, engine=DISCORD_ENGINE)
     return data.rows2dict() if data is not None else {}
 
 
@@ -407,7 +407,7 @@ async def insert_export_link(export_info: dict):
 
     sql = f"INSERT IGNORE INTO export_links ({columns}) VALUES ({values});"
 
-    await execute_sql(sql, param=export_info, engine_type=EngineType.DISCORD)
+    await execute_sql(sql, param=export_info, engine=DISCORD_ENGINE)
     return
 
 
@@ -416,7 +416,7 @@ async def get_export_link(url_text: str):
 
     param = {"url_text": url_text}
 
-    data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
+    data = await execute_sql(sql, param, engine=DISCORD_ENGINE)
 
     return data.rows2dict() if data is not None else {}
 
@@ -429,7 +429,7 @@ async def update_export_link(update_export: dict):
              WHERE id = :id
      """
 
-    await execute_sql(sql, param=update_export, engine_type=EngineType.DISCORD)
+    await execute_sql(sql, param=update_export, engine=DISCORD_ENGINE)
     return
 
 
@@ -927,7 +927,7 @@ async def sql_get_unverified_discord_user(player_id):
         """
 
     param = {"player_id": player_id}
-    data = await execute_sql(sql, param, engine_type=EngineType.DISCORD)
+    data = await execute_sql(sql, param, engine=DISCORD_ENGINE)
     return data.rows2tuple()
 
 
@@ -949,7 +949,7 @@ async def set_discord_verification(id, token):
     """
 
     param = {"id": id, "token": token}
-    await execute_sql(sql, param, engine_type=EngineType.DISCORD)
+    await execute_sql(sql, param, engine=DISCORD_ENGINE)
     return
 
 

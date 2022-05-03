@@ -1,7 +1,9 @@
 
 from typing import Optional
 
-from api.database.functions import (EngineType, get_session, sqlalchemy_result,
+from api.database.functions import PLAYERDATA_ENGINE
+from sqlalchemy.ext.asyncio import AsyncSession
+from api.database.functions import (EngineType, sqlalchemy_result,
                                     verify_token)
 from api.database.models import Player, PredictionsFeedback
 from fastapi import APIRouter, HTTPException, Query, status
@@ -48,8 +50,10 @@ async def get_feedback(
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # execute query
-    async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
@@ -83,9 +87,11 @@ async def get_feedback(
 
     keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
     # execute query
-    async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-        data = [{k:v for k,v in zip(keys,d)} for d in data]
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
+            data = [{k:v for k,v in zip(keys,d)} for d in data]
 
     return data
 
@@ -100,19 +106,20 @@ async def post_feedback(feedback: Feedback):
     sql_player = sql_player.where(Player.name == feedback.pop("player_name"))
     sql_insert = Insert(PredictionsFeedback).prefix_with("ignore")
 
-    async with get_session(EngineType.PLAYERDATA) as session:
-        player = await session.execute(sql_player)
-        player = sqlalchemy_result(player).rows2dict()
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            player = await session.execute(sql_player)
+            player = sqlalchemy_result(player).rows2dict()
 
-        try:
-            feedback["voter_id"] = player[0]["id"]
-        except IndexError:
-            raise HTTPException(
-                status_code=500, detail="Could not find voter in registry."
-            )
+            try:
+                feedback["voter_id"] = player[0]["id"]
+            except IndexError:
+                raise HTTPException(
+                    status_code=500, detail="Could not find voter in registry."
+                )
 
-        sql_insert = sql_insert.values(feedback)
-        await session.execute(sql_insert)
-        await session.commit()
+            sql_insert = sql_insert.values(feedback)
+            await session.execute(sql_insert)
 
     return {"OK": "OK"}

@@ -5,11 +5,12 @@ from typing import List, Optional
 
 import pandas as pd
 from api.database import functions
-from api.database.models import (Player, Prediction, Report,
-                                 playerReports, stgReport)
+from api.database.functions import PLAYERDATA_ENGINE
+from api.database.models import Player, Prediction, Report, playerReports, stgReport
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 from pydantic.fields import Field
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import Select, insert, select, update
@@ -31,24 +32,30 @@ async def sql_select_players(names: List[str]) -> List:
     sql = sql.where(
         Player.normalized_name.in_(tuple(await functions.jagexify_names_list(names)))
     )
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
     data = functions.sqlalchemy_result(data)
     return [] if not data else data.rows2dict()
 
 
 async def sql_insert_player(new_names: List[dict]) -> None:
     sql = insert(Player)
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        await session.execute(sql, new_names)
-        await session.commit()
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            await session.execute(sql, new_names)
+            await session.commit()
 
 
 async def sql_insert_report(param: dict) -> None:
     sql = insert(stgReport)
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        await session.execute(sql, param)
-        await session.commit()
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            await session.execute(sql, param)
+            await session.commit()
 
 
 async def parse_detection(data: dict) -> dict:
@@ -283,96 +290,34 @@ async def insert_report(
     return {"detail": "ok"}
 
 
-@router.get("/v1/report/prediction", tags=["Report", "Business"])
-async def get_report_by_prediction(
-    token: str,
-    label_jagex: int,
-    predicted_confidence: int,
-    prediction: Optional[str] = None,
-    real_player: Optional[int] = None,
-    crafting_bot: Optional[int] = None,
-    timestamp: Optional[date] = None,
-    region_id: Optional[int] = None,
-):
-    """
-    Gets account based upon the prediction features.
-    Business service: Twitter
-    """
-    await functions.verify_token(
-        token, verification="verify_ban", route="[GET]/v1/report/prediction"
-    )
-
-    sql = select(
-        Player.id, Prediction.Prediction, Prediction.Predicted_confidence
-    ).distinct()
-
-    sql = sql.where(Prediction.Predicted_confidence >= predicted_confidence)
-    sql = sql.where(Player.label_jagex == label_jagex)
-
-    if not prediction is None:
-        sql = sql.where(Prediction.Prediction == prediction)
-
-    if not real_player is None:
-        sql = sql.where(Prediction.Real_Player < real_player)
-
-    if not crafting_bot is None:
-        sql = sql.where(Prediction.Crafting_bot > crafting_bot)
-
-    if not timestamp is None:
-        sql = sql.where(func.date(Report.timestamp) == timestamp)
-
-    if not region_id is None:
-        sql = sql.where(Report.region_id == region_id)
-
-    sql = sql.join(Report, Player.id == Report.reportedID)
-    sql = sql.join(Prediction, Player.id == Prediction.id)
-
-    # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-
-    output = []
-    for row in data:
-        mydata = {}
-        mydata["id"] = row[0]
-        mydata["prediction"] = row[1]
-        mydata["Predicted_confidence"] = row[2]
-        output.append(mydata)
-
-    return output
-
-
-
 @router.get("/v1/report/count", tags=["Report"])
-async def get_report_count(
-    name: str
-):
+async def get_report_count(name: str):
     """
     Get the calculated player report count
     """
     # query
 
-    voter:Player = aliased(Player, name="voter")
-    subject:Player = aliased(Player, name="subject")
-    sql:Select = select(
+    voter: Player = aliased(Player, name="voter")
+    subject: Player = aliased(Player, name="subject")
+    sql: Select = select(
         func.count(playerReports.reported_id),
         subject.confirmed_ban,
         subject.possible_ban,
-        subject.confirmed_player
+        subject.confirmed_player,
     )
     sql = sql.join(voter, playerReports.reporting_id == voter.id)
     sql = sql.join(subject, playerReports.reported_id == subject.id)
     sql = sql.where(voter.name == name)
     sql = sql.group_by(
-        subject.confirmed_ban,
-        subject.possible_ban,
-        subject.confirmed_player
+        subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
     )
 
-    keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
+    keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
     # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-        data = [{k:v for k,v in zip(keys,d)} for d in data]
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
+            data = [{k: v for k, v in zip(keys, d)} for d in data]
 
     return data
