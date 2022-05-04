@@ -710,3 +710,17 @@ class playerReports(Base):
     reported_player = relationship(
         "Player", primaryjoin="playerReports.reported_id == Player.id"
     )
+
+class playerReportsManual(Base):
+    __tablename__ = "playerReportsManual"
+
+    created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
+    reporting_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
+    reported_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
+
+    reporting_player = relationship(
+        "Player", primaryjoin="playerReportsManual.reporting_id == Player.id"
+    )
+    reported_player = relationship(
+        "Player", primaryjoin="playerReportsManual.reported_id == Player.id"
+    )
