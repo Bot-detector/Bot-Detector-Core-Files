@@ -57,15 +57,6 @@ class Prediction(Base):
     Herblore_bot = Column(Float)
 
 
-class Clan(Base):
-    __tablename__ = "Clan"
-
-    id = Column(Integer, primary_key=True)
-    member_id = Column(BigInteger, nullable=False)
-    rank_id = Column(Integer, nullable=False)
-    killcount = Column(Integer)
-
-
 class LabelJagex(Base):
     __tablename__ = "LabelJagex"
 
@@ -78,19 +69,6 @@ class Label(Base):
 
     id = Column(Integer, primary_key=True)
     label = Column(VARCHAR(50), nullable=False, unique=True)
-
-
-class PlayerBotConfirmation(Base):
-    __tablename__ = "PlayerBotConfirmation"
-    __table_args__ = (
-        Index("Unique_player_label_bot", "player_id", "label_id", "bot", unique=True),
-    )
-
-    id = Column(Integer, primary_key=True)
-    ts = Column(TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    player_id = Column(Integer, nullable=False)
-    label_id = Column(Integer, nullable=False)
-    bot = Column(TINYINT(1), nullable=False)
 
 
 class PlayersChange(Base):
@@ -232,13 +210,6 @@ class ReportLatest(Base):
     equip_weapon_id = Column(Integer)
     equip_shield_id = Column(Integer)
     equip_ge_value = Column(BigInteger)
-
-
-class SentToJagex(Base):
-    __tablename__ = "sentToJagex"
-
-    entry = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)
 
 
 class Player(Base):
@@ -723,4 +694,29 @@ class playerReportsManual(Base):
     )
     reported_player = relationship(
         "Player", primaryjoin="playerReportsManual.reported_id == Player.id"
+    )
+
+class playerLocations(Base):
+    __tablename__ = "playerLocations"
+
+    region_id = Column(Integer, primary_key=True)
+    reported_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
+    times_seen = Column(Integer, default=0)
+
+    reported_player = relationship(
+        "Player", primaryjoin="playerLocations.reported_id == Player.id"
+    )
+
+class playerLocationsDetail(Base):
+    __tablename__ = "playerLocationsDetail"
+
+    created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
+    region_id = Column(Integer, primary_key=True)
+    reported_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
+    x_coord = Column(Integer)
+    y_coord = Column(Integer)
+    z_coord = Column(Integer)
+
+    reported_player = relationship(
+        "Player", primaryjoin="playerLocationsDetail.reported_id == Player.id"
     )
