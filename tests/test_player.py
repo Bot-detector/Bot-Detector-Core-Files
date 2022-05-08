@@ -3,37 +3,41 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-
+import pytest
 from api import app
 from api.Config import token
 from fastapi.testclient import TestClient
 
 client = TestClient(app.app)
 
+"""
+  Player get routes
+"""
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_get_player_information():
-    test_cases = [
-        {"player_id": 1, "status_code": 200, "detail": "valid player"},
-        {"player_id": -1, "status_code": 422, "detail": "invalid player id"},
-        {"player_id": "shoe", "status_code": 422, "detail": "invalid player id"},
-        {"player_id": None, "status_code": 422, "detail": "invalid player id"},
-    ]
+    test_case = (
+      ('ferrariic', 8, 200), # correct name, and correct ID 
+      ('ferrariic', -8, 422), # correct name, incorrect ID
+      (1,'ferrariic', 422), #juxtaposed player_id and player_name
+      ('shoe','shoe', 422), #invalid phrasing
+      (None, None, 422), # None entry
+    )
+    
+    for test, (player_name, player_id, response_code) in enumerate(test_case):
+      route_attempt = f"/v1/player?token={token}&player_name={player_name}&player_id={player_id}&row_count=100000&page=1"
+      response = client.get(route_attempt)
+      assert response.status_code == response_code, f'Test: {test} | Invalid response {response.status_code}'
+      if response.status_code == 200:
+        assert isinstance(response.json(), list), f'invalid response return type: {type(response.json())}'
 
-    for case in test_cases:
-        url = "/v1/player/"
-        param = {"player_id": case.get("player_id"), "token": token}
 
-        response = client.get(url, params=param)
+"""
+  Players post routes
+"""
 
-        print(response.url)
-        print(response.text)
-        print(case, param)
-        # status code check
-        status_code = case.get("status_code")
-        error = f"Invalid response, Received: {response.status_code}, expected {status_code}, {case}"
-        assert response.status_code == status_code, error
+if __name__ == "__main__":
+  '''get route'''
+  test_get_player_information()
 
-        # type check
-        if response.ok:
-            error = f"Invalid response return type, expected list[dict]"
-            assert isinstance(response.json(), list), error
+  '''post route'''

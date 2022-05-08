@@ -11,12 +11,12 @@ from typing import List
 # Although never directly used, the engines are imported to add a permanent reference
 # to these entities to prevent the
 # garbage collector from trying to dispose of our engines.
-from api.database.database import PLAYERDATA_ENGINE, Engine, EngineType
+from api.database.database import (DISCORD_ENGINE, PLAYERDATA_ENGINE, Engine,
+                                   EngineType, get_session)
 from api.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
 from fastapi import HTTPException
-from sqlalchemy import Text, text
+from sqlalchemy import text
 from sqlalchemy.exc import InternalError, OperationalError
-from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
 from sqlalchemy.sql.expression import insert, select
 
 logger = logging.getLogger(__name__)
@@ -39,12 +39,24 @@ async def jagexify_names_list(names: List[str]) -> List[str]:
     return [await to_jagex_name(n) for n in names if await is_valid_rsn(n)]
 
 
-async def parse_sql(
-    sql, param: dict, has_return: bool, row_count: int, page: int
-) -> tuple[Text, bool]:
-    if isinstance(sql, Text):
-        return sql
-    elif isinstance(sql, str):
+async def execute_sql(
+    sql,
+    param={},
+    debug=False,
+    engine_type=EngineType.PLAYERDATA,
+    row_count=100_000,
+    page=1,
+    is_retry=False,
+    has_return=None,
+    retry_attempt=0,
+):
+    # retry breakout
+    if retry_attempt >= 5:
+        logger.debug({"message": "Too many retries"})
+        return None
+    sleep = 5 * retry_attempt
+
+    if not is_retry:
         has_return = True if sql.strip().lower().startswith("select") else False
 
         if has_return:
@@ -60,67 +72,63 @@ async def parse_sql(
             param["row_count"] = row_count
 
         # parsing
-        sql: Text = text(sql)
-    return sql, has_return
-
-
-async def execute_sql(
-    sql,
-    param: dict = {},
-    debug: bool = False,
-    engine: Engine = PLAYERDATA_ENGINE,
-    row_count: int = 100_000,
-    page: int = 1,
-    has_return: bool = None,
-    retry_attempt: int = 0,
-):
-    # retry breakout
-    if retry_attempt >= 5:
-        logger.debug({"message": "Too many retries"})
-        return None
-
-    sleep = retry_attempt * 5
-    sql, has_return = await parse_sql(sql, param, has_return, row_count, page)
+        sql = text(sql)
 
     try:
-        async with engine.get_session() as session:
-            session: AsyncSession = session
-            async with session.begin():
-                rows = await session.execute(sql, param)
-                records = sql_cursor(rows) if has_return else None
+        async with get_session(engine_type) as session:
+            # execute session
+            rows = await session.execute(sql, param)
+            # parse data
+            records = sql_cursor(rows) if has_return else None
+            # commit session
+            await session.commit()
+
     # OperationalError = Deadlock, InternalError = lock timeout
-    except Exception as e:
-        if isinstance(e, InternalError):
-            e = e if debug else ""
-            logger.debug(
-                {"message": f"Lock, Retry Attempt: {retry_attempt}, retrying: {e}"}
-            )
-        elif isinstance(e, OperationalError):
-            e = e if debug else ""
-            logger.debug(
-                {"message": f"Deadlock, Retry Attempt: {retry_attempt}, retrying {e}"}
-            )
-        else:
-            logger.error({"message": "Unknown Error", "error": e})
-            logger.error(traceback.print_exc())
-            return None
+    except OperationalError as e:
+        e = e if debug else ""
+        logger.debug(
+            {"message": f"Deadlock, Retry Attempt: {retry_attempt}, retrying {e}"}
+        )
         await asyncio.sleep(random.uniform(0.1, sleep))
         records = await execute_sql(
             sql,
             param,
             debug,
-            engine,
+            engine_type,
             row_count,
             page,
+            is_retry=True,
             has_return=has_return,
             retry_attempt=retry_attempt + 1,
         )
+    except InternalError as e:
+        e = e if debug else ""
+        logger.debug(
+            {"message": f"Lock, Retry Attempt: {retry_attempt}, retrying: {e}"}
+        )
+        await asyncio.sleep(random.uniform(0.1, sleep))
+        records = await execute_sql(
+            sql,
+            param,
+            debug,
+            engine_type,
+            row_count,
+            page,
+            is_retry=True,
+            has_return=has_return,
+            retry_attempt=retry_attempt + 1,
+        )
+    except Exception as e:
+        logger.error({"message": "Unknown Error", "error": e})
+        logger.error(traceback.print_exc())
+        records = None
+
     return records
 
 
 class sql_cursor:
     def __init__(self, rows):
-        self.rows: AsyncResult = rows
+        self.rows = rows
 
     def rows2dict(self):
         return self.rows.mappings().all()
@@ -163,25 +171,24 @@ async def verify_token(token: str, verification: str, route: str = None) -> bool
         ApiUsage.timestamp >= datetime.utcnow() - timedelta(hours=1)
     )
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            api_user = await session.execute(sql)
-            usage_data = await session.execute(sql_usage)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        api_user = await session.execute(sql)
+        usage_data = await session.execute(sql_usage)
 
-            api_user = sqlalchemy_result(api_user)
-            usage_data = sqlalchemy_result(usage_data)
+        api_user = sqlalchemy_result(api_user)
+        usage_data = sqlalchemy_result(usage_data)
 
-            api_user = api_user.rows2dict()
-            usage_data = usage_data.rows2dict()
+        api_user = api_user.rows2dict()
+        usage_data = usage_data.rows2dict()
 
-            # Checks to see if there is a user ID
-            if not len(api_user) == 0:
-                insert_values = {}
-                insert_values["route"] = route
-                insert_values["user_id"] = api_user[0]["id"]
-                insert_usage = insert(ApiUsage).values(insert_values)
-                await session.execute(insert_usage)
+        # Checks to see if there is a user ID
+        if not len(api_user) == 0:
+            insert_values = {}
+            insert_values["route"] = route
+            insert_values["user_id"] = api_user[0]["id"]
+            insert_usage = insert(ApiUsage).values(insert_values)
+            await session.execute(insert_usage)
+            await session.commit()
 
     # If len api_user == 0; user does not have necessary permissions
     if len(api_user) == 0:
