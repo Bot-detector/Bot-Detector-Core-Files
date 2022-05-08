@@ -154,13 +154,12 @@ async def sqla_update_player(players: List):
     try:
         async with PLAYERDATA_ENGINE.get_session() as session:
             session: AsyncSession = session
-            async with session.begin():
-                for player in players:
+            for player in players:
+                async with session.begin():
                     player_id = player.get("id")
                     sql = update(dbPlayer).values(player).where(dbPlayer.id == player_id)
                     await session.execute(sql, player)
-                    await session.commit()
-                    dbplayer.remove(player)
+                dbplayer.remove(player)
     except (OperationalError, InternalError) as e:
         await handle_lock(sqla_update_player, dbplayer)
     return
@@ -174,11 +173,10 @@ async def sqla_insert_hiscore(hiscores: List):
     try:
         async with PLAYERDATA_ENGINE.get_session() as session:
             session: AsyncSession = session
-            async with session.begin():
-                for hiscore in hiscores:
+            for hiscore in hiscores:
+                async with session.begin():
                     await session.execute(sql, hiscore)
-                    await session.commit()
-                    dbhiscores.remove(hiscore)
+                dbhiscores.remove(hiscore)
     except (OperationalError, InternalError) as e:
         await handle_lock(sqla_insert_hiscore, dbhiscores)
 

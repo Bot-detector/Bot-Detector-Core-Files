@@ -48,7 +48,6 @@ async def sql_insert_player(new_names: List[dict]) -> None:
         session: AsyncSession = session
         async with session.begin():
             await session.execute(sql, new_names)
-            await session.commit()
 
 
 async def sql_insert_report(param: dict) -> None:
@@ -57,7 +56,6 @@ async def sql_insert_report(param: dict) -> None:
         session: AsyncSession = session
         async with session.begin():
             await session.execute(sql, param)
-            await session.commit()
 
 
 async def parse_detection(data: dict) -> dict:

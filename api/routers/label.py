@@ -57,7 +57,7 @@ async def insert_label_into_plugin_database(token: str, label: label):
         session: AsyncSession = session
         async with session.begin():
             data = await session.execute(sql_insert)
-            await session.commit()
+        async with session.begin():
             data = await session.execute(sql_select)
 
     data = sqlalchemy_result(data)

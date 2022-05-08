@@ -152,7 +152,7 @@ async def update_existing_player_data(player: Player, token: str):
         session: AsyncSession = session
         async with session.begin():
             await session.execute(sql_update)
-            await session.commit()
+        async with session.begin():
             data = await session.execute(sql_select)
 
     data = sqlalchemy_result(data)
@@ -177,7 +177,7 @@ async def insert_new_player_data_into_plugin_database(player_name: str, token: s
         session: AsyncSession = session
         async with session.begin():
             await session.execute(sql_insert)
-            await session.commit()
+        async with session.begin():
             data = await session.execute(sql_select)
 
     data = sqlalchemy_result(data)
