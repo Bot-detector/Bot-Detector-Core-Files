@@ -5,8 +5,10 @@ from typing import List, Optional
 
 import pandas as pd
 from api.database import functions
+
 from api.database.functions import PLAYERDATA_ENGINE
-from api.database.models import Player, Prediction, Report, playerReports, stgReport
+from api.database.models import (Player, Prediction, Report,
+                                 playerReports, playerReportsManual, stgReport)
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 from pydantic.fields import Field
@@ -322,5 +324,41 @@ async def get_report_count(name: str):
         async with session.begin():
             data = await session.execute(sql)
             data = [{k: v for k, v in zip(keys, d)} for d in data]
+
+    return data
+
+
+@router.get("/v1/report/manual/count", tags=["Report"])
+async def get_report_manual_count(
+    name: str
+):
+    """
+    Get the calculated player report count
+    """
+    # query
+
+    voter:Player = aliased(Player, name="voter")
+    subject:Player = aliased(Player, name="subject")
+
+    sql:Select = select(
+        func.count(playerReportsManual.reported_id),
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    )
+    sql = sql.join(voter, playerReportsManual.reporting_id == voter.id)
+    sql = sql.join(subject, playerReportsManual.reported_id == subject.id)
+    sql = sql.where(voter.name == name)
+    sql = sql.group_by(
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    )
+
+    keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
+    # execute query
+    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
+        data = [{k:v for k,v in zip(keys,d)} for d in data]
 
     return data
