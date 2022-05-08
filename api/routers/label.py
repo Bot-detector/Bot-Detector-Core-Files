@@ -1,9 +1,11 @@
-from api.database.database import EngineType, get_session
+from api.database.database import EngineType
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import Label as dbLabel
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
+from api.database.functions import PLAYERDATA_ENGINE
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -23,8 +25,10 @@ async def get_labels_from_plugin_database(token: str):
 
     sql = select(dbLabel)
 
-    async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
@@ -48,11 +52,13 @@ async def insert_label_into_plugin_database(token: str, label: label):
     # select query
     sql_select = select(dbLabel)
     sql_select = sql_select.where(dbLabel.label == label_name)
-
-    async with get_session(EngineType.PLAYERDATA) as session:
-        await session.execute(sql_insert)
-        await session.commit()
-        data = await session.execute(sql_select)
+    
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql_insert)
+        async with session.begin():
+            data = await session.execute(sql_select)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
