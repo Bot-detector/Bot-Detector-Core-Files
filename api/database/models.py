@@ -32,6 +32,7 @@ class Prediction(Base):
 
     Predicted_confidence = Column(Float)
     Real_Player = Column(Float)
+    Unknown_bot = Column(Float)
     PVM_Melee_bot = Column(Float)
     Smithing_bot = Column(Float)
     Magic_bot = Column(Float)
