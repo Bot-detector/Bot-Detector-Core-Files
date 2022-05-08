@@ -153,8 +153,10 @@ async def get_reports_from_plugin_database(
         sql = sql.where(Report.region_id == regionID)
 
     # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
     data = functions.sqlalchemy_result(data)
     return data.rows2dict()
@@ -175,11 +177,12 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
     sql = sql.where(Report.reportingID == old_user_id)
     sql = sql.prefix_with("ignore")
 
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        result = await session.execute(sql)
-        await session.commit()
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
-    return {"detail": f"{result.rowcount} rows updated to reportingID = {new_user_id}."}
+    return {"detail": f"{data.rowcount} rows updated to reportingID = {new_user_id}."}
 
 
 @router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
