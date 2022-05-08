@@ -357,8 +357,10 @@ async def get_report_manual_count(
 
     keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
     # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-        data = [{k:v for k,v in zip(keys,d)} for d in data]
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
+            data = [{k:v for k,v in zip(keys,d)} for d in data]
 
     return data
