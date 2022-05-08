@@ -1,8 +1,6 @@
 from typing import Optional
 
-from api.database.functions import PLAYERDATA_ENGINE
-from sqlalchemy.ext.asyncio import AsyncSession
-from api.database.database import EngineType
+from api.database.database import EngineType, get_session
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import (
     Player,
@@ -132,11 +130,9 @@ async def get_player_hiscore_data(
 
     # paging
     sql = sql.limit(row_count).offset(row_count * (page - 1))
-    
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
+
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
@@ -162,10 +158,8 @@ async def get_latest_hiscore_data_for_an_account(
     if not player_id == None:
         sql = sql.where(table.Player_id == player_id)
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
@@ -226,10 +220,8 @@ async def get_latest_hiscore_data_by_player_features(
     sql = sql.join(Player)
 
     # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
@@ -261,10 +253,8 @@ async def get_account_hiscore_xp_change(
     # paging
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
@@ -281,12 +271,11 @@ async def post_hiscore_data_to_database(hiscores: hiscore, token: str):
 
     # query
     table = playerHiscoreData
-    sql = insert(table).values(values)
-    sql = sql.prefix_with("ignore")
+    sql_insert = insert(table).values(values)
+    sql_insert = sql_insert.prefix_with("ignore")
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(sql_insert)
+        await session.commit()
 
     return {"ok": "ok"}

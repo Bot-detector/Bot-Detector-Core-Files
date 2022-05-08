@@ -1,9 +1,7 @@
 from operator import or_
 from typing import List, Optional
 
-from api.database.functions import PLAYERDATA_ENGINE
-from sqlalchemy.ext.asyncio import AsyncSession
-from api.database.database import EngineType
+from api.database.database import EngineType, get_session
 from api.database.functions import list_to_string, sqlalchemy_result, verify_token
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
@@ -59,10 +57,8 @@ async def get_account_prediction_result(name: str):
     sql = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     data = data.rows2dict()
@@ -91,10 +87,9 @@ async def insert_prediction_into_plugin_database(
     sql = f"""replace into Predictions ({columns}) values ({values})"""
     sql = text(sql)
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql, data)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        await session.execute(sql, data)
+        await session.commit()
 
     return {"ok": "ok"}
 
@@ -119,10 +114,8 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     sql = sql.limit(limit).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
 
     names, objs, output = [], [], []
     for d in data:
@@ -191,10 +184,8 @@ async def gets_predictions_by_player_features(
     sql = sql.join(Player)
 
     # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
+    async with get_session(EngineType.PLAYERDATA) as session:
+        data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()
