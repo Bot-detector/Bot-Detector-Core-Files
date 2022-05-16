@@ -55,6 +55,7 @@ class Prediction(Base):
     Vorkath_bot = Column(Float)
     Barrows_bot = Column(Float)
     Herblore_bot = Column(Float)
+    Unknown_bot = Column(Float)
 
 
 class Clan(Base):
