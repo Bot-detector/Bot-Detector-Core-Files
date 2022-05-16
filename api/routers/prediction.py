@@ -9,7 +9,7 @@ from api.database.functions import (
 )
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Select, select, text
@@ -72,6 +72,9 @@ async def get_account_prediction_result(name: str):
     data = [
         {k: float(v) / 100 if k not in keys else v for k, v in d.items()} for d in data
     ]
+    if len(data) == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Player not found")
+
     # formatting for cyborger
     data: dict = data[0]
     data = {
