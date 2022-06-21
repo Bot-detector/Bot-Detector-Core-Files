@@ -1,0 +1,22 @@
+version: '3'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        root_path: /
+        api_port: 5000
+    image: bot-detector/bd-api:latest
+    env_file:
+      - .env
+    volumes:
+      - '../Bot-Detector-Core-Files/api:/code/api'
+    ports:
+      - "5000:5000"
+    networks:
+      - botdetector-network
+
+networks:
+  botdetector-network:
+ 
