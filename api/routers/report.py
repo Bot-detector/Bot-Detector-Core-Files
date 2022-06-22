@@ -292,9 +292,39 @@ async def insert_report(
     await functions.batch_function(sql_insert_report, param)
     return {"detail": "ok"}
 
-
 @router.get("/v1/report/count", tags=["Report"])
-async def get_report_count(name: str):
+async def get_report_count_v1(name: str):
+    """
+    """
+    voter: Player = aliased(Player, name="voter")
+    subject: Player = aliased(Player, name="subject")
+
+    sql: Select = select(
+        func.count(Report.reportedID),
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player,
+    )
+    sql = sql.join(voter, Report.reportingID == voter.id)
+    sql = sql.join(subject, Report.reportedID == subject.id)
+    sql = sql.where(voter.name == name)
+    sql = sql.where(Report.manual_detect == 0)
+    sql = sql.group_by(
+        subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
+    )
+
+    keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
+    # execute query
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
+            data = [{k: v for k, v in zip(keys, d)} for d in data]
+
+    return data
+
+@router.get("/v2/report/count", tags=["Report"])
+async def get_report_count_v2(name: str):
     """
     Get the calculated player report count
     """
@@ -327,7 +357,46 @@ async def get_report_count(name: str):
 
 
 @router.get("/v1/report/manual/count", tags=["Report"])
-async def get_report_manual_count(
+async def get_report_manual_count_v1(
+    name: str
+):
+    """
+    Get the calculated player report count
+    """
+    # query
+
+    voter:Player = aliased(Player, name="voter")
+    subject:Player = aliased(Player, name="subject")
+
+    sql:Select = select(
+        func.count(Report.reportedID),
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    )
+    sql = sql.join(voter, Report.reportingID == voter.id)
+    sql = sql.join(subject, Report.reportedID == subject.id)
+    sql = sql.where(voter.name == name)
+    sql = sql.where(Report.manual_detect == 1)
+    sql = sql.group_by(
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    )
+
+    keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
+    # execute query
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
+            data = [{k:v for k,v in zip(keys,d)} for d in data]
+
+    return data
+
+
+@router.get("/v2/report/manual/count", tags=["Report"])
+async def get_report_manual_count_v2(
     name: str
 ):
     """
