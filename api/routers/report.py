@@ -125,8 +125,9 @@ async def get_report(
     token: str,
     reportedID: Optional[int] = Query(None, ge=0),
     reportingID: Optional[int] = Query(None, ge=0),
-    timestamp: Optional[date] = None,
+    timestamp: Optional[date] = Query(None),
     regionID: Optional[int] = Query(None, ge=0, le=100000),
+    manual_detect: Optional[bool] = Query(None)
 ):
     """
     Select report data.
@@ -139,11 +140,13 @@ async def get_report(
         "reportedID": reportedID,
         "reportingID": reportingID,
         "timestamp": timestamp,
-        "region_id": regionID
+        "region_id": regionID,
+        "manual_detect": manual_detect
     }
 
     # check if any value is given
-    if not any(v for k,v in params.items() if v is not None):
+    # if not any(v for k,v in params.items() if v is not None):
+    if reportedID == reportingID == None:
         raise HTTPException(
             status_code=404, detail="reportedID or reportingID must be given"
         )
@@ -151,7 +154,7 @@ async def get_report(
     # parse parameters
     params = {k:v for k,v in params.items() if v is not None}
     params = functions.parse_request(params)
-    
+
     sql = select(Report)
     sql = Lookup(Report, sql)
 
