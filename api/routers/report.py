@@ -6,10 +6,10 @@ from typing import List, Optional
 import pandas as pd
 from api.database import functions
 
-from api.database.functions import PLAYERDATA_ENGINE
+from api.database.functions import PLAYERDATA_ENGINE, Lookup
 from api.database.models import (Player, Prediction, Report,
                                  playerReports, playerReportsManual, stgReport)
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from pydantic.fields import Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -117,9 +117,11 @@ class detection(BaseModel):
     equipment: equipment
     equip_ge_value: int = Field(0, ge=0, le=int(upper_gear_cost))
 
+from api.database import functions
 
 @router.get("/v1/report", tags=["Report"])
-async def get_reports_from_plugin_database(
+async def get_report(
+    request:Request,
     token: str,
     reportedID: Optional[int] = Query(None, ge=0),
     reportingID: Optional[int] = Query(None, ge=0),
@@ -133,30 +135,35 @@ async def get_reports_from_plugin_database(
         token, verification="verify_ban", route="[GET]/v1/report/"
     )
 
-    if None == reportedID == reportingID:
+    params = {
+        "reportedID": reportedID,
+        "reportingID": reportingID,
+        "timestamp": timestamp,
+        "region_id": regionID
+    }
+
+    # check if any value is given
+    if not any(v for k,v in params.items() if v is not None):
         raise HTTPException(
             status_code=404, detail="reportedID or reportingID must be given"
         )
 
+    # parse parameters
+    params = {k:v for k,v in params.items() if v is not None}
+    params = functions.parse_request(params)
+    
     sql = select(Report)
+    sql = Lookup(Report, sql)
 
-    if not reportedID is None:
-        sql = sql.where(Report.reportedID == reportedID)
-
-    if not reportingID is None:
-        sql = sql.where(Report.reportingID == reportingID)
-
-    if not timestamp is None:
-        sql = sql.where(func.date(Report.timestamp) == timestamp)
-
-    if not regionID is None:
-        sql = sql.where(Report.region_id == regionID)
+    for param in params:
+        logger.debug(param)
+        sql = sql.lookup(*param)
 
     # execute query
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
         async with session.begin():
-            data = await session.execute(sql)
+            data = await session.execute(sql.inst)
 
     data = functions.sqlalchemy_result(data)
     return data.rows2dict()

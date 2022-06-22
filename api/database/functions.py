@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import operator
 import random
 import re
 import traceback
@@ -8,16 +9,13 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 from typing import List
 
-# Although never directly used, the engines are imported to add a permanent reference
-# to these entities to prevent the
-# garbage collector from trying to dispose of our engines.
 from api.database.database import PLAYERDATA_ENGINE, Engine, EngineType
 from api.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
 from fastapi import HTTPException
 from sqlalchemy import Text, text
 from sqlalchemy.exc import InternalError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
-from sqlalchemy.sql.expression import insert, select
+from sqlalchemy.sql.expression import Select, insert, select
 
 logger = logging.getLogger(__name__)
 
@@ -211,3 +209,51 @@ async def batch_function(function, data, batch_size=100):
     await asyncio.gather(*[create_task(function(batch)) for batch in batches])
 
     return
+
+def parse_request(params):
+    for (key, value )in params.items():
+        try:
+            field, oper = key.split("__")
+        except:
+            field, oper = key, "eq"
+        yield field, oper, value
+
+# based on https://youtu.be/RuzONK3UrrQ
+class Lookup(Select):
+    def __init__(self, model, inst) -> None:
+        self.model = model
+        self.inst = inst
+        self.field = None
+
+    def __lt__(self, other):
+        attr = getattr(self.model, self.field)
+        return self.inst.where(attr < other)
+
+    def __gt__(self, other):
+        attr = getattr(self.model, self.field)
+        return self.inst.where(attr > other)
+
+    def __ge__(self, other):
+        attr = getattr(self.model, self.field)
+        return self.inst.where(attr >= other)
+
+    def __le__(self, other):
+        attr = getattr(self.model, self.field)
+        return self.inst.where(attr <= other)
+
+    def __eq__(self, other):
+        attr = getattr(self.model, self.field)
+        return self.inst.where(attr == other)
+
+    def __ne__(self, other):
+        attr = getattr(self.model, self.field)
+        return self.inst.where(attr != other)
+
+    def __setattr__(self, key, value):
+        return super().__setattr__(key, value)
+
+    def lookup(self, field, operation, value):
+        self.field = field
+        operation = getattr(operator, operation)
+        lookup = operation(self, value)
+        return Lookup(self.model, lookup)
