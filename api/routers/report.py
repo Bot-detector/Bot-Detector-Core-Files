@@ -119,7 +119,7 @@ class detection(BaseModel):
 
 
 @router.get("/v1/report", tags=["Report"])
-async def get_reports_from_plugin_database(
+async def get_reports(
     token: str,
     reportedID: Optional[int] = Query(None, ge=0),
     reportingID: Optional[int] = Query(None, ge=0),
@@ -300,7 +300,7 @@ async def get_report_count_v1(name: str):
     subject: Player = aliased(Player, name="subject")
 
     sql: Select = select(
-        func.count(Report.reportedID),
+        func.count(Report.reportedID.distinct()),
         subject.confirmed_ban,
         subject.possible_ban,
         subject.confirmed_player,
@@ -333,7 +333,7 @@ async def get_report_count_v2(name: str):
     voter: Player = aliased(Player, name="voter")
     subject: Player = aliased(Player, name="subject")
     sql: Select = select(
-        func.count(playerReports.reported_id),
+        func.count(playerReports.reported_id.distinct()),
         subject.confirmed_ban,
         subject.possible_ban,
         subject.confirmed_player,
@@ -369,7 +369,7 @@ async def get_report_manual_count_v1(
     subject:Player = aliased(Player, name="subject")
 
     sql:Select = select(
-        func.count(Report.reportedID),
+        func.count(Report.reportedID.distinct()),
         subject.confirmed_ban,
         subject.possible_ban,
         subject.confirmed_player
@@ -408,7 +408,7 @@ async def get_report_manual_count_v2(
     subject:Player = aliased(Player, name="subject")
 
     sql:Select = select(
-        func.count(playerReportsManual.reported_id),
+        func.count(playerReportsManual.reported_id.distinct()),
         subject.confirmed_ban,
         subject.possible_ban,
         subject.confirmed_player
