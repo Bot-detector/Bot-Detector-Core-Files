@@ -55,6 +55,7 @@ class Prediction(Base):
     Vorkath_bot = Column(Float)
     Barrows_bot = Column(Float)
     Herblore_bot = Column(Float)
+    Unknown_bot = Column(Float)
 
 
 class Clan(Base):
@@ -239,25 +240,6 @@ class SentToJagex(Base):
 
     entry = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
-
-
-class LabelSubGroup(Base):
-    __tablename__ = "LabelSubGroup"
-
-    id = Column(Integer, primary_key=True)
-    parent_label = Column(
-        ForeignKey("Labels.id", ondelete="RESTRICT", onupdate="RESTRICT"),
-        nullable=False,
-        index=True,
-    )
-    child_label = Column(
-        ForeignKey("Labels.id", ondelete="RESTRICT", onupdate="RESTRICT"),
-        nullable=False,
-        index=True,
-    )
-
-    Label = relationship("Label", primaryjoin="LabelSubGroup.child_label == Label.id")
-    Label1 = relationship("Label", primaryjoin="LabelSubGroup.parent_label == Label.id")
 
 
 class Player(Base):
@@ -717,3 +699,29 @@ class PlayerHiscoreDataXPChange(Base):
     zulrah = Column(Integer)
 
     Player = relationship("Player")
+
+class playerReports(Base):
+    __tablename__ = "playerReports"
+    reporting_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
+    reported_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
+
+    reporting_player = relationship(
+        "Player", primaryjoin="playerReports.reporting_id == Player.id"
+    )
+    reported_player = relationship(
+        "Player", primaryjoin="playerReports.reported_id == Player.id"
+    )
+
+class playerReportsManual(Base):
+    __tablename__ = "playerReportsManual"
+
+    created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
+    reporting_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
+    reported_id = Column(Integer, ForeignKey("Players.id"), primary_key=True)
+
+    reporting_player = relationship(
+        "Player", primaryjoin="playerReportsManual.reporting_id == Player.id"
+    )
+    reported_player = relationship(
+        "Player", primaryjoin="playerReportsManual.reported_id == Player.id"
+    )

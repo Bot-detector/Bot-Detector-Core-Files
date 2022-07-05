@@ -28,3 +28,7 @@ app.include_router(legacy_debug.router)
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@app.get("/favicon")
+async def favicon():
+    return {}

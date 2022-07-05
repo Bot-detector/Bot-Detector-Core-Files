@@ -1,13 +1,18 @@
 from operator import or_
 from typing import List, Optional
 
-from api.database.database import EngineType, get_session
-from api.database.functions import list_to_string, sqlalchemy_result, verify_token
+from api.database.functions import (
+    PLAYERDATA_ENGINE,
+    list_to_string,
+    sqlalchemy_result,
+    verify_token,
+)
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy.sql.expression import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.expression import Select, select, text
 from sqlalchemy.sql.functions import func
 
 router = APIRouter()
@@ -54,18 +59,32 @@ async def get_account_prediction_result(name: str):
     Use: Used to determine the prediction of a player according to the prediction found in the prediction table.
     """
 
-    sql = select(dbPrediction)
+    sql: Select = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
 
-    async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
-    data = sqlalchemy_result(data)
-    data = data.rows2dict()
+    data = sqlalchemy_result(data).rows2dict()
     keys = ["name", "Prediction", "id", "created"]
     data = [
         {k: float(v) / 100 if k not in keys else v for k, v in d.items()} for d in data
     ]
+    if len(data) == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Player not found")
+
+    # formatting for cyborger
+    data: dict = data[0]
+    data = {
+        "player_id": data.pop("id"),
+        "player_name": data.pop("name"),
+        "prediction_label": data.pop("Prediction"),
+        "prediction_confidence": data.pop("Predicted_confidence"),
+        "created": data.pop("created"),
+        "predictions_breakdown": data,
+    }
     return data
 
 
@@ -87,9 +106,10 @@ async def insert_prediction_into_plugin_database(
     sql = f"""replace into Predictions ({columns}) values ({values})"""
     sql = text(sql)
 
-    async with get_session(EngineType.PLAYERDATA) as session:
-        await session.execute(sql, data)
-        await session.commit()
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql, data)
 
     return {"ok": "ok"}
 
@@ -103,7 +123,7 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     await verify_token(token, verification="request_highscores")
 
     # query
-    sql = select(columns=[PlayerHiscoreDataLatest, Player.name])
+    sql: Select = select(columns=[PlayerHiscoreDataLatest, Player.name])
     sql = sql.where(
         or_(
             func.date(dbPrediction.created) != func.curdate(),
@@ -114,8 +134,10 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     sql = sql.limit(limit).offset(0)
     sql = sql.join(Player).join(dbPrediction, isouter=True)
 
-    async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
     names, objs, output = [], [], []
     for d in data:
@@ -159,7 +181,7 @@ async def gets_predictions_by_player_features(
     ):
         raise HTTPException(status_code=404, detail="No param given")
     # query
-    sql = select(dbPrediction)
+    sql: Select = select(dbPrediction)
 
     # filters
     if not possible_ban is None:
@@ -184,8 +206,10 @@ async def gets_predictions_by_player_features(
     sql = sql.join(Player)
 
     # execute query
-    async with get_session(EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
     data = sqlalchemy_result(data)
     return data.rows2dict()

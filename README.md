@@ -111,9 +111,10 @@ Code must be linted prior to merging. We use `black`.
 Tests must be written where applicable.
 
 ## Naming conventions
-- Variable: `snake_case`
-- Function: `snake_case`
+- File: `snake_case`
 - Class: `camelCase`
+- Function: `snake_case`
+- Variable: `snake_case`
 - Table: `camelCase`
 - Route: `kebab-case`
 

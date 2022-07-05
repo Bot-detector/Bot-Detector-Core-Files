@@ -5,14 +5,17 @@ from typing import List, Optional
 
 import pandas as pd
 from api.database import functions
-from api.database.models import Player, Prediction, Report, ReportLatest, stgReport
+
+from api.database.functions import PLAYERDATA_ENGINE
+from api.database.models import (Player, Prediction, Report,
+                                 playerReports, playerReportsManual, stgReport)
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 from pydantic.fields import Field
-from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
-from sqlalchemy.sql.expression import insert, select
+from sqlalchemy.sql.expression import Select, insert, select, update
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -31,24 +34,28 @@ async def sql_select_players(names: List[str]) -> List:
     sql = sql.where(
         Player.normalized_name.in_(tuple(await functions.jagexify_names_list(names)))
     )
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
     data = functions.sqlalchemy_result(data)
     return [] if not data else data.rows2dict()
 
 
 async def sql_insert_player(new_names: List[dict]) -> None:
     sql = insert(Player)
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        await session.execute(sql, new_names)
-        await session.commit()
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            await session.execute(sql, new_names)
 
 
 async def sql_insert_report(param: dict) -> None:
     sql = insert(stgReport)
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        await session.execute(sql, param)
-        await session.commit()
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            await session.execute(sql, param)
 
 
 async def parse_detection(data: dict) -> dict:
@@ -112,7 +119,7 @@ class detection(BaseModel):
 
 
 @router.get("/v1/report", tags=["Report"])
-async def get_reports_from_plugin_database(
+async def get_reports(
     token: str,
     reportedID: Optional[int] = Query(None, ge=0),
     reportingID: Optional[int] = Query(None, ge=0),
@@ -146,8 +153,10 @@ async def get_reports_from_plugin_database(
         sql = sql.where(Report.region_id == regionID)
 
     # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
     data = functions.sqlalchemy_result(data)
     return data.rows2dict()
@@ -168,11 +177,12 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str):
     sql = sql.where(Report.reportingID == old_user_id)
     sql = sql.prefix_with("ignore")
 
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        result = await session.execute(sql)
-        await session.commit()
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
 
-    return {"detail": f"{result.rowcount} rows updated to reportingID = {new_user_id}."}
+    return {"detail": f"{data.rowcount} rows updated to reportingID = {new_user_id}."}
 
 
 @router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
@@ -282,172 +292,142 @@ async def insert_report(
     await functions.batch_function(sql_insert_report, param)
     return {"detail": "ok"}
 
-
-@router.get("/v1/report/prediction", tags=["Report", "Business"])
-async def get_report_by_prediction(
-    token: str,
-    label_jagex: int,
-    predicted_confidence: int,
-    prediction: Optional[str] = None,
-    real_player: Optional[int] = None,
-    crafting_bot: Optional[int] = None,
-    timestamp: Optional[date] = None,
-    region_id: Optional[int] = None,
-):
+@router.get("/v1/report/count", tags=["Report"])
+async def get_report_count_v1(name: str):
     """
-    Gets account based upon the prediction features.
-    Business service: Twitter
     """
-    await functions.verify_token(
-        token, verification="verify_ban", route="[GET]/v1/report/prediction"
-    )
+    voter: Player = aliased(Player, name="voter")
+    subject: Player = aliased(Player, name="subject")
 
-    sql = select(
-        Player.id, Prediction.Prediction, Prediction.Predicted_confidence
-    ).distinct()
-
-    sql = sql.where(Prediction.Predicted_confidence >= predicted_confidence)
-    sql = sql.where(Player.label_jagex == label_jagex)
-
-    if not prediction is None:
-        sql = sql.where(Prediction.Prediction == prediction)
-
-    if not real_player is None:
-        sql = sql.where(Prediction.Real_Player < real_player)
-
-    if not crafting_bot is None:
-        sql = sql.where(Prediction.Crafting_bot > crafting_bot)
-
-    if not timestamp is None:
-        sql = sql.where(func.date(Report.timestamp) == timestamp)
-
-    if not region_id is None:
-        sql = sql.where(Report.region_id == region_id)
-
-    sql = sql.join(Report, Player.id == Report.reportedID)
-    sql = sql.join(Prediction, Player.id == Prediction.id)
-
-    # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-
-    output = []
-    for row in data:
-        mydata = {}
-        mydata["id"] = row[0]
-        mydata["prediction"] = row[1]
-        mydata["Predicted_confidence"] = row[2]
-        output.append(mydata)
-
-    return output
-
-
-@router.get("/v1/report/latest", tags=["Report"])
-async def get_latest_report_of_a_user(token: str, reported_id: int = Query(..., ge=0)):
-
-    """
-    Select the latest report data, by reported user
-    """
-
-    await functions.verify_token(
-        token, verification="verify_ban", route="[GET]/v1/report/latest"
-    )
-
-    sql = select(ReportLatest)
-
-    if not reported_id is None:
-        sql = sql.where(ReportLatest.reported_id == reported_id)
-
-    # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-
-    data = functions.sqlalchemy_result(data)
-    return data.rows2dict()
-
-
-@router.get("/v1/report/latest/bulk", tags=["Report"])
-async def get_bulk_latest_report_data(
-    token: str,
-    region_id: Optional[int] = Query(None, ge=0, le=25000),
-    timestamp: Optional[date] = None,
-):
-    """
-    get the player count in bulk by region and or date
-    """
-    await functions.verify_token(
-        token, verification="verify_ban", route="[GET]/v1/report/latest/bulk"
-    )
-
-    sql = select(ReportLatest)
-
-    if not timestamp is None:
-        sql = sql.where(func.date(ReportLatest.timestamp) == timestamp)
-
-    if not region_id is None:
-        sql = sql.where(ReportLatest.region_id == region_id)
-
-    # execute query
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-
-    data = functions.sqlalchemy_result(data)
-    return data.rows2dict()
-
-
-@router.get(
-    "/v1/report/count", status_code=status.HTTP_200_OK, tags=["Report", "Business"]
-)
-async def get_contributions(
-    user_name: str = Query(..., min_length=1, max_length=12),
-):
-    """
-    Allows for a player to see their contributions.
-    """
-
-    if not await functions.is_valid_rsn(user_name):
-        logger.debug(f"Bad Name passed for v1/report/count  | {user_name=}")
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Your name could not be processed. Contact plugin support on our Discord.",
-        )
-
-    user_name = await functions.to_jagex_name(user_name)
-
-    pl = aliased(Player, name="pl")
-    ban = aliased(Player, name="ban")
-
-    sql = select(
-        func.ifnull(Report.manual_detect, 0),
-        ban.confirmed_ban,
-        ban.possible_ban,
-        ban.confirmed_player,
+    sql: Select = select(
         func.count(Report.reportedID.distinct()),
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player,
     )
-
-    sql = sql.where(pl.normalized_name == user_name)
+    sql = sql.join(voter, Report.reportingID == voter.id)
+    sql = sql.join(subject, Report.reportedID == subject.id)
+    sql = sql.where(voter.name == name)
+    sql = sql.where(Report.manual_detect == 0)
     sql = sql.group_by(
-        Report.manual_detect, ban.confirmed_ban, ban.possible_ban, ban.confirmed_player
+        subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
     )
 
-    sql = sql.join(pl, pl.id == Report.reportingID)
-    sql = sql.join(ban, ban.id == Report.reportedID)
+    keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
+    # execute query
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
+            data = [{k: v for k, v in zip(keys, d)} for d in data]
 
-    fields = [
-        "manual_detect",
-        "confirmed_ban",
-        "possible_ban",
-        "confirmed_player",
-        "count",
-    ]
-    async with functions.get_session(functions.EngineType.PLAYERDATA) as session:
-        data = await session.execute(sql)
-    data = [{k: v for k, v in zip(fields, d)} for d in data]
+    return data
 
-    if len(data) == 0:
-        logger.debug(f"No Data found for {user_name=}.")
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"No Data found for {user_name}. Contact Plugin Support on our Discord.",
-        )
+@router.get("/v2/report/count", tags=["Report"])
+async def get_report_count_v2(name: str):
+    """
+    Get the calculated player report count
+    """
+    # query
+
+    voter: Player = aliased(Player, name="voter")
+    subject: Player = aliased(Player, name="subject")
+    sql: Select = select(
+        func.count(playerReports.reported_id.distinct()),
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player,
+    )
+    sql = sql.join(voter, playerReports.reporting_id == voter.id)
+    sql = sql.join(subject, playerReports.reported_id == subject.id)
+    sql = sql.where(voter.name == name)
+    sql = sql.group_by(
+        subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
+    )
+
+    keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
+    # execute query
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
+            data = [{k: v for k, v in zip(keys, d)} for d in data]
+
+    return data
+
+
+@router.get("/v1/report/manual/count", tags=["Report"])
+async def get_report_manual_count_v1(
+    name: str
+):
+    """
+    Get the calculated player report count
+    """
+    # query
+
+    voter:Player = aliased(Player, name="voter")
+    subject:Player = aliased(Player, name="subject")
+
+    sql:Select = select(
+        func.count(Report.reportedID.distinct()),
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    )
+    sql = sql.join(voter, Report.reportingID == voter.id)
+    sql = sql.join(subject, Report.reportedID == subject.id)
+    sql = sql.where(voter.name == name)
+    sql = sql.where(Report.manual_detect == 1)
+    sql = sql.group_by(
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    )
+
+    keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
+    # execute query
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
+            data = [{k:v for k,v in zip(keys,d)} for d in data]
+
+    return data
+
+
+@router.get("/v2/report/manual/count", tags=["Report"])
+async def get_report_manual_count_v2(
+    name: str
+):
+    """
+    Get the calculated player report count
+    """
+    # query
+
+    voter:Player = aliased(Player, name="voter")
+    subject:Player = aliased(Player, name="subject")
+
+    sql:Select = select(
+        func.count(playerReportsManual.reported_id.distinct()),
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    )
+    sql = sql.join(voter, playerReportsManual.reporting_id == voter.id)
+    sql = sql.join(subject, playerReportsManual.reported_id == subject.id)
+    sql = sql.where(voter.name == name)
+    sql = sql.group_by(
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    )
+
+    keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
+    # execute query
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(sql)
+            data = [{k:v for k,v in zip(keys,d)} for d in data]
+
     return data

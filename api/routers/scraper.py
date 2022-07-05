@@ -4,7 +4,9 @@ import random
 import time
 from typing import List, Optional
 
-from api.database.database import EngineType, get_session
+from api.database.functions import PLAYERDATA_ENGINE
+from sqlalchemy.ext.asyncio import AsyncSession
+from api.database.database import EngineType
 from api.database.functions import batch_function, execute_sql, verify_token
 from api.database.models import Player as dbPlayer
 from api.database.models import playerHiscoreData
@@ -150,12 +152,13 @@ async def sqla_update_player(players: List):
 
     dbplayer = players.copy()
     try:
-        async with get_session(EngineType.PLAYERDATA) as session:
+        async with PLAYERDATA_ENGINE.get_session() as session:
+            session: AsyncSession = session
             for player in players:
-                player_id = player.get("id")
-                sql = update(dbPlayer).values(player).where(dbPlayer.id == player_id)
-                await session.execute(sql, player)
-                await session.commit()
+                async with session.begin():
+                    player_id = player.get("id")
+                    sql = update(dbPlayer).values(player).where(dbPlayer.id == player_id)
+                    await session.execute(sql, player)
                 dbplayer.remove(player)
     except (OperationalError, InternalError) as e:
         await handle_lock(sqla_update_player, dbplayer)
@@ -168,10 +171,11 @@ async def sqla_insert_hiscore(hiscores: List):
     sql = insert(playerHiscoreData).prefix_with("ignore")
     dbhiscores = hiscores.copy()
     try:
-        async with get_session(EngineType.PLAYERDATA) as session:
+        async with PLAYERDATA_ENGINE.get_session() as session:
+            session: AsyncSession = session
             for hiscore in hiscores:
-                await session.execute(sql, hiscore)
-                await session.commit()
+                async with session.begin():
+                    await session.execute(sql, hiscore)
                 dbhiscores.remove(hiscore)
     except (OperationalError, InternalError) as e:
         await handle_lock(sqla_insert_hiscore, dbhiscores)
