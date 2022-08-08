@@ -70,7 +70,11 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
     data = sqlalchemy_result(data).rows2dict()
     keys = ["name", "Prediction", "id", "created"]
     data = [
-        {k: float(v) / 100 if k not in keys else v for k, v in d.items()} for d in data
+        {
+            k: float(v) / 100 
+            if k not in keys else v 
+            for k, v in d.items()
+        } for d in data
     ]
     if len(data) == 0:
         raise HTTPException(
