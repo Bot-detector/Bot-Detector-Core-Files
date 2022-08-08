@@ -53,7 +53,7 @@ class Prediction(BaseModel):
 
 
 @router.get("/v1/prediction", tags=["Prediction"])
-async def get_account_prediction_result(name: str, breakdown: bool = False):
+async def get_account_prediction_result(name: str, breakdown: Optional[bool] = False):
     """
     Selects a player's prediction from the plugin database.\n
     Use: Used to determine the prediction of a player according to the prediction found in the prediction table.
