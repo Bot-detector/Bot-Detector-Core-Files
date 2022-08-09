@@ -15,7 +15,7 @@ from pydantic.fields import Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
-from sqlalchemy.sql.expression import Select, insert, select, update
+from sqlalchemy.sql.expression import Select, insert, select, update, Insert
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -43,7 +43,8 @@ async def sql_select_players(names: List[str]) -> List:
 
 
 async def sql_insert_player(new_names: List[dict]) -> None:
-    sql = insert(Player)
+    sql:Insert = insert(Player)
+    sql = sql.prefix_with("ignore")
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
         async with session.begin():
@@ -51,7 +52,8 @@ async def sql_insert_player(new_names: List[dict]) -> None:
 
 
 async def sql_insert_report(param: dict) -> None:
-    sql = insert(stgReport)
+    sql:Insert = insert(stgReport)
+    sql = sql.prefix_with("ignore")
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
         async with session.begin():
