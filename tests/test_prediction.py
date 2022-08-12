@@ -42,7 +42,7 @@ def test_prediction():
 
         # status code check
         status_code = case.get("status_code")
-        error = f"Invalid response, Received: {response.status_code}, expected {status_code}, {case}"
+        error = f"Invalid response, Received: {response.status_code}, expected {status_code}, {case=}"
         assert response.status_code == status_code, error
 
         # type check
@@ -51,5 +51,8 @@ def test_prediction():
             data: dict = response.json()
             assert isinstance(data, dict), error
 
-        if case.get("breakdown"):
-            assert data.get("predictions_breakdown") is not None, "expected a breakdown"
+            if case.get("breakdown"): # True
+                assert data.get("predictions_breakdown") is not None, f"expected a breakdown, {case=}"
+            else: #False
+                assert data.get("prediction_confidence") is None, f"expected no confidence, {case=}"
+                assert data.get("predictions_breakdown") is None, f"expected no breakdown, {case=}"
