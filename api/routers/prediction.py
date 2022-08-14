@@ -102,8 +102,12 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
     if prediction == "Stats_Too_Low":
         data["prediction_confidence"] = None
     
-    if not breakdown or prediction != "Stats_Too_Low":
+    if breakdown:
+        pass
+    elif prediction == "Stats_Too_Low":
         data["predictions_breakdown"] = None
+    else:
+        pass
 
     return data
 
