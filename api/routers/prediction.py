@@ -57,7 +57,7 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
     """
     Parameters:
         name: The name of the player to get the prediction for
-        breakdown: If True, return the breakdown of the prediction
+        breakdown: If True, always return breakdown, even if the prediction is Stats_Too_Low
 
     Returns:
         A dict containing the prediction data for the player
