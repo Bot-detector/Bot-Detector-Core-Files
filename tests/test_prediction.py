@@ -1,58 +1,91 @@
 import os
 import sys
+from typing import Union
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api import app
-from api.Config import token
 from fastapi.testclient import TestClient
+from pydantic import BaseModel
 
 client = TestClient(app.app)
 
+class Prediction(BaseModel):
+    player_id: int
+    player_name: str
+    prediction_label: str
+    prediction_confidence: Union[None, float]
+    created: str
+    predictions_breakdown: Union[None, dict]
 
+def check_response(response, param, code):
+    error = f"Invalid response, Received: {response.status_code}, expected 200, {param=}"
+    assert response.status_code == code, error
+
+def parse_response(response):
+    response = response.json()
+    try:
+        prediction = Prediction(**response)
+        return prediction
+    except Exception as e:
+        assert False, e
+    
 def test_prediction():
     url = "/v1/prediction/"
-    test_cases = [
-        # test name string check
-        {"name": None, "status_code": 422},
-        # test default breakdown
-        {"name": "3BA604236FB0319D5937E31388B0C64C", "status_code": 200},
-        # test breakdown true
+    breakdown_param = [
         {
-            "name": "2C09003E9EA22E5F245023B5555C0AD9",
-            "breakdown": True,
-            "status_code": 200,
+            "name": "3BA604236FB0319D5937E31388B0C64C"
         },
-        # test breakdown false
+                {
+            "name": "3BA604236FB0319D5937E31388B0C64C",
+            "breakdown": True
+        },
         {
-            "name": "2C09003E9EA22E5F245023B5555C0AD9",
-            "breakdown": False,
-            "status_code": 200,
-        },
-    ]
-    for case in test_cases:
-        param = {
-            "token": token,
-            "name": case.get("name"),
+            "name": "3BA604236FB0319D5937E31388B0C64C",
+            "breakdown": False
         }
-        if case.get("breakdown"):
-            param["breakdown"] = case.get("breakdown")
-
+    ]
+    for param in breakdown_param:
         response = client.get(url, params=param)
+        check_response(response, param, 200)
+        prediction = parse_response(response)
+        error = f"Expected prediction_confidence is not None, {param=}"
+        assert prediction.prediction_confidence is not None, error
+        error = f"Expected prediction_breakdown is not None, {param=}"
+        assert prediction.predictions_breakdown is not None, error
 
-        # status code check
-        status_code = case.get("status_code")
-        error = f"Invalid response, Received: {response.status_code}, expected {status_code}, {case=}"
-        assert response.status_code == status_code, error
+    no_breakdown_param = [
+        {
+            "name": "2C09003E9EA22E5F245023B5555C0AD9"
+        },
+        {
+            "name": "2C09003E9EA22E5F245023B5555C0AD9",
+            "breakdown": False
+        }
+    ]
+    for param in no_breakdown_param:
+        response = client.get(url, params=param)
+        check_response(response, param, 200)
+        prediction = parse_response(response)
+        error = f"Expected prediction_confidence is None, {param=}"
+        assert prediction.prediction_confidence is None, error
+        error = f"Expected prediction_breakdown is None, {param=}"
+        assert prediction.predictions_breakdown is None, error
 
-        # type check
-        if response.ok:
-            error = f"Invalid response return type, expected list[dict]"
-            data: dict = response.json()
-            assert isinstance(data, dict), error
+    param = {
+        "name": "2C09003E9EA22E5F245023B5555C0AD9",
+        "breakdown": True
+    }
+    response = client.get(url, params=param)
+    check_response(response, param, 200)
+    prediction = parse_response(response)
+    error = f"Expected prediction_confidence is None, {param=}"
+    assert prediction.prediction_confidence is None, error
+    error = f"Expected prediction_breakdown is not None, {param=}"
+    assert prediction.predictions_breakdown is not None, error
 
-            if case.get("breakdown"): # True
-                assert data.get("predictions_breakdown") is not None, f"expected a breakdown, {case=}"
-            else: #False
-                assert data.get("prediction_confidence") is None, f"expected no confidence, {case=}"
-                assert data.get("predictions_breakdown") is None, f"expected no breakdown, {case=}"
+    param = {
+        "name": None
+    }
+    response = client.get(url, params=param)
+    check_response(response, param, 422)

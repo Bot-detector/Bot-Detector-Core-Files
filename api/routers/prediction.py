@@ -63,7 +63,6 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
         A dict containing the prediction data for the player
     """
 
-
     sql: Select = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
 
@@ -75,11 +74,7 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
     data = sqlalchemy_result(data).rows2dict()
     keys = ["name", "Prediction", "id", "created"]
     data = [
-        {
-            k: float(v) / 100 
-            if k not in keys else v 
-            for k, v in d.items()
-        } for d in data
+        {k: float(v) / 100 if k not in keys else v for k, v in d.items()} for d in data
     ]
     if len(data) == 0:
         raise HTTPException(
@@ -98,16 +93,11 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
 
     prediction = data.get("prediction_label")
 
-    # never show confidence if stats to low
     if prediction == "Stats_Too_Low":
+        # never show confidence if stats to low
         data["prediction_confidence"] = None
-    
-    if breakdown:
-        pass
-    elif prediction == "Stats_Too_Low":
-        data["predictions_breakdown"] = None
-    else:
-        pass
+        if not breakdown:
+            data["predictions_breakdown"] = None
 
     return data
 
