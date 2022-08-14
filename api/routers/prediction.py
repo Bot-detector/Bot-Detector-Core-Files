@@ -55,8 +55,12 @@ class Prediction(BaseModel):
 @router.get("/v1/prediction", tags=["Prediction"])
 async def get_account_prediction_result(name: str, breakdown: Optional[bool] = False):
     """
-    Selects a player's prediction from the plugin database.\n
-    Use: Used to determine the prediction of a player according to the prediction found in the prediction table.
+    Parameters:
+        name: The name of the player to get the prediction for
+        breakdown: If True, always return breakdown, even if the prediction is Stats_Too_Low
+
+    Returns:
+        A dict containing the prediction data for the player
     """
 
     sql: Select = select(dbPrediction)
@@ -70,30 +74,31 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
     data = sqlalchemy_result(data).rows2dict()
     keys = ["name", "Prediction", "id", "created"]
     data = [
-        {
-            k: float(v) / 100 
-            if k not in keys else v 
-            for k, v in d.items()
-        } for d in data
+        {k: float(v) / 100 if k not in keys else v for k, v in d.items()} for d in data
     ]
     if len(data) == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
         )
 
-    # formatting for cyborger
     data: dict = data[0]
-    prediction = data.pop("Prediction")
     data = {
         "player_id": data.pop("id"),
         "player_name": data.pop("name"),
-        "prediction_label": prediction,
+        "prediction_label": data.pop("Prediction"),
         "prediction_confidence": data.pop("Predicted_confidence"),
         "created": data.pop("created"),
-        "predictions_breakdown": data
-        if breakdown or prediction != "Stats_Too_Low"
-        else None,
+        "predictions_breakdown": data,
     }
+
+    prediction = data.get("prediction_label")
+
+    if prediction == "Stats_Too_Low":
+        # never show confidence if stats to low
+        data["prediction_confidence"] = None
+        if not breakdown:
+            data["predictions_breakdown"] = None
+
     return data
 
 
