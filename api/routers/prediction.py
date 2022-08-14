@@ -55,9 +55,14 @@ class Prediction(BaseModel):
 @router.get("/v1/prediction", tags=["Prediction"])
 async def get_account_prediction_result(name: str, breakdown: Optional[bool] = False):
     """
-    Selects a player's prediction from the plugin database.\n
-    Use: Used to determine the prediction of a player according to the prediction found in the prediction table.
+    Parameters:
+        name: The name of the player to get the prediction for
+        breakdown: If True, return the breakdown of the prediction
+
+    Returns:
+        A dict containing the prediction data for the player
     """
+
 
     sql: Select = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
@@ -90,9 +95,14 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
         "created": data.pop("created"),
         "predictions_breakdown": data,
     }
+
     prediction = data.get("prediction_label")
-    if not breakdown or prediction != "Stats_Too_Low":
+
+    # never show confidence if stats to low
+    if prediction == "Stats_Too_Low":
         data["prediction_confidence"] = None
+    
+    if not breakdown or prediction != "Stats_Too_Low":
         data["predictions_breakdown"] = None
 
     return data
