@@ -55,8 +55,12 @@ class Prediction(BaseModel):
 @router.get("/v1/prediction", tags=["Prediction"])
 async def get_account_prediction_result(name: str, breakdown: Optional[bool] = False):
     """
-    Selects a player's prediction from the plugin database.\n
-    Use: Used to determine the prediction of a player according to the prediction found in the prediction table.
+    Parameters:
+        name: The name of the player to get the prediction for
+        breakdown: If True, always return breakdown, even if the prediction is Stats_Too_Low
+
+    Returns:
+        A dict containing the prediction data for the player
     """
 
     sql: Select = select(dbPrediction)
@@ -81,7 +85,6 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
             status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
         )
 
-    # formatting for cyborger
     data: dict = data[0]
     prediction = data.pop("Prediction")
     data = {
@@ -94,6 +97,15 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
         if breakdown or prediction != "Stats_Too_Low"
         else None,
     }
+
+    prediction = data.get("prediction_label")
+
+    if prediction == "Stats_Too_Low":
+        # never show confidence if stats to low
+        data["prediction_confidence"] = None
+        if not breakdown:
+            data["predictions_breakdown"] = None
+
     return data
 
 

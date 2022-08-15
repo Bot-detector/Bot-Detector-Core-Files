@@ -832,7 +832,7 @@ async def get_highscores(
     row_count: Optional[int] = 100_000,
     page: Optional[int] = 1,
 ):
-    await verify_token(token, verification="request_highscores")
+    await verify_token(token, verification="request_highscores", route="[GET]/site/highscores/")
 
     if ofInterest is None:
         sql = """
@@ -859,7 +859,7 @@ async def get_highscores(
 async def get_players(
     token: str, ofInterest: int = None, row_count: int = 100_000, page: int = 1
 ):
-    await verify_token(token, verification="request_highscores")
+    await verify_token(token, verification="request_highscores", route="[GET]/site/players/")
 
     # get data
     if ofInterest is None:
@@ -873,7 +873,7 @@ async def get_players(
 
 @router.get("/site/labels/{tokens}", tags=["Legacy"])
 async def get_labels(token):
-    await verify_token(token, verification="request_highscores")
+    await verify_token(token, verification="request_highscores", route="[GET]/site/labels/")
 
     sql = "select * from Labels"
     data = await execute_sql(sql)
@@ -882,7 +882,7 @@ async def get_labels(token):
 
 @router.post("/site/verify/{token}", tags=["Legacy"])
 async def verify_bot(token: str, bots: bots):
-    await verify_token(token, verification="verify_ban")
+    await verify_token(token, verification="verify_ban",route="[POST]/site/verify/")
 
     bots = bots.__dict__
     playerNames = bots["names"]
@@ -955,7 +955,7 @@ async def set_discord_verification(id, token):
 
 @router.post("/{version}/site/discord_user/{token}", tags=["Legacy"])
 async def verify_discord_user(token: str, discord: discord, version: str = None):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route=f"[POST]/{version}/site/discord_user/")
 
     verify_data = discord.dict()
 
@@ -1060,7 +1060,7 @@ async def get_prediction(player_name, version=None, token=None):
 ##
 @router.post("/discord/get_xp_gains/{token}", tags=["Legacy"])
 async def get_latest_xp_gains(player_info: PlayerName, token: str):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route="[POST]/discord/get_xp_gains/")
 
     player = player_info.dict()
     player_name = player.get("player_name")
@@ -1106,7 +1106,7 @@ async def get_latest_xp_gains(player_info: PlayerName, token: str):
     tags=["Legacy"],
 )
 async def get_discord_verification_status_by_name(token: str, player_name: str):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route=f"[GET]/discord/verify/player_rsn_discord_account_status/***/{player_name}")
 
     status_info = await sql_get_discord_verification_status(player_name)
 
@@ -1117,7 +1117,7 @@ async def get_discord_verification_status_by_name(token: str, player_name: str):
     "/discord/verify/get_verification_attempts/{token}/{player_name}", tags=["Legacy"]
 )
 async def get_discord_verification_attempts(token: str, player_name: str):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route=f"[GET]/discord/verify/get_verification_attempts/***/{player_name}")
 
     player = await sql_get_player(player_name)
 
@@ -1135,7 +1135,7 @@ async def get_discord_verification_attempts(token: str, player_name: str):
 async def post_verification_request_information(
     token: str, verify_info: DiscordVerifyInfo
 ):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route="[POST]/discord/verify/insert_player_dpc/***")
 
     info = verify_info.dict()
 
@@ -1160,7 +1160,7 @@ async def post_verification_request_information(
 
 @router.get("/discord/get_linked_accounts/{token}/{discord_id}", tags=["Legacy"])
 async def get_discord_linked_accounts(token: str, discord_id: int):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route=f"[GET]/discord/get_linked_accounts/***/{discord_id}")
 
     linked_accounts = await sql_get_discord_linked_accounts(discord_id)
 
@@ -1169,7 +1169,7 @@ async def get_discord_linked_accounts(token: str, discord_id: int):
 
 @router.post("/discord/get_latest_sighting/{token}", tags=["Legacy"])
 async def get_latest_sighting(token: str, player_info: PlayerName):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route=f"[POST]/discord/get_latest_sighting/***")
 
     player = player_info.dict()
     player_name = player.get("player_name")
@@ -1205,7 +1205,7 @@ async def get_latest_sighting(token: str, player_info: PlayerName):
 
 @router.post("/discord/region/{token}", tags=["Legacy"])
 async def get_region(token: str, region: RegionName):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route=f"[POST]/discord/region/***")
 
     region_info = region.dict()
     region_name = region_info.get("region_name")
@@ -1217,7 +1217,7 @@ async def get_region(token: str, region: RegionName):
 
 @router.post("/discord/heatmap/{token}", tags=["Legacy"])
 async def get_heatmap_data(token: str, region_id: RegionID):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route=f"[POST]/discord/heatmap/***")
 
     region_data = region_id.dict()
     id = region_data.get("region_id")
@@ -1240,7 +1240,7 @@ async def get_heatmap_data(token: str, region_id: RegionID):
 
 @router.post("/discord/player_bans/{token}", tags=["Legacy"])
 async def generate_excel_export(token: str, export_info: ExportInfo):
-    await verify_token(token, verification="verify_players")
+    await verify_token(token, verification="verify_players", route=f"[POST]/discord/player_bans/***")
     # get_ban_spreadsheet_data
 
     req_data = export_info.dict()

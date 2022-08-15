@@ -19,7 +19,7 @@ class Feedback(BaseModel):
     player_name: str
     vote: int
     prediction: str
-    confidence: float = Field(None, ge=0, le=1)
+    confidence: float = Field(default=0, ge=0, le=1)
     subject_id: int
     feedback_text: Optional[str] = None
     proposed_label: Optional[str] = None
