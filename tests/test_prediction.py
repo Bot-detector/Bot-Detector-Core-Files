@@ -10,6 +10,25 @@ from pydantic import BaseModel
 
 client = TestClient(app.app)
 
+class Prediction(BaseModel):
+    player_id: int
+    player_name: str
+    prediction_label: str
+    prediction_confidence: Union[None, float]
+    created: str
+    predictions_breakdown: Union[None, dict]
+
+def check_response(response, param, code):
+    error = f"Invalid response, Received: {response.status_code}, expected 200, {param=}"
+    assert response.status_code == code, error
+
+def parse_response(response):
+    response = response.json()
+    try:
+        prediction = Prediction(**response)
+        return prediction
+    except Exception as e:
+        assert False, e
 
 def test_prediction():
     url = "/v1/prediction/"
