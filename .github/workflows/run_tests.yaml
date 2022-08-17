@@ -9,7 +9,7 @@ concurrency: test-${{ github.sha }}
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     env:
       PYTHON_VERSION: "3.10"
@@ -17,6 +17,9 @@ jobs:
     steps:
       - name: Checks out repository
         uses: actions/checkout@v3
+        run: |
+          echo "${{ secrets.ASYNCMY_URI }}" > .env
+          echo "${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v3
