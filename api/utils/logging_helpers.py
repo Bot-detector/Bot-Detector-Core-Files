@@ -1,6 +1,5 @@
 from fastapi import Request
 from typing import List
-from functools import reduce
 
 
 def build_route_log_string(request: Request, censored_strings: List[str] = []) -> str:
