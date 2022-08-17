@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.database.database import Engine, EngineType
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import Player as dbPlayer
-from api.utils.logging_helpers import build_route_log_string
+from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select, update
@@ -37,7 +37,9 @@ async def get_player_information(
     Select a player by name or id.
     """
     await verify_token(
-        token, verification="request_highscores", route=build_route_log_string(request)
+        token,
+        verification="request_highscores",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     # return exception if no param are given
@@ -82,7 +84,9 @@ async def get_bulk_player_data_from_the_plugin_database(
     Selects bulk player data from the plugin database.
     """
     await verify_token(
-        token, verification="request_highscores", route=build_route_log_string(request)
+        token,
+        verification="request_highscores",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     # return exception if no param are given
@@ -134,7 +138,11 @@ async def update_existing_player_data(player: Player, token: str, request: Reque
     """
     Update player & return updated player.
     """
-    await verify_token(token, verification="verify_ban", route=build_route_log_string(request))
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     # param
     param = player.dict()
@@ -167,7 +175,11 @@ async def insert_new_player_data_into_plugin_database(player_name: str, token: s
     """
     Insert new player & return player.
     """
-    await verify_token(token, verification="verify_ban", route=build_route_log_string(request))
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     sql_insert = insert(dbPlayer)
     sql_insert = sql_insert.values(name=player_name)

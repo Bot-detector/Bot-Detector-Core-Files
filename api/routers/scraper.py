@@ -10,7 +10,7 @@ from api.database.database import EngineType
 from api.database.functions import batch_function, execute_sql, verify_token
 from api.database.models import Player as dbPlayer
 from api.database.models import playerHiscoreData
-from api.utils.logging_helpers import build_route_log_string
+from api.utils import logging_helpers
 from fastapi import APIRouter, BackgroundTasks, Request
 from pydantic import BaseModel
 from sqlalchemy.exc import InternalError, OperationalError
@@ -187,7 +187,9 @@ async def sqla_insert_hiscore(hiscores: List):
 @router.post("/scraper/hiscores/{token}", tags=["Business"])
 async def receive_scraper_data(token, data: List[scraper], request: Request):
     await verify_token(
-        token, verification="verify_ban", route=build_route_log_string(request)
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
     )
     # background task will cause lots of duplicates
     asyncio.create_task(post_hiscores_to_db(data))

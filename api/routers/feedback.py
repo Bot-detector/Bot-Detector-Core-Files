@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.database.functions import (EngineType, sqlalchemy_result,
                                     verify_token)
 from api.database.models import Player, PredictionsFeedback
-from api.utils.logging_helpers import build_route_log_string
+from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, status, Request
 from pydantic import BaseModel
 from pydantic.fields import Field
@@ -41,7 +41,11 @@ async def get_feedback(
     Get player feedback of a player
     """
     # verify token
-    await verify_token(token, verification="verify_ban", route=build_route_log_string(request))
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
 
     # query

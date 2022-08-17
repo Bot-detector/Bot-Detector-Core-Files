@@ -9,7 +9,7 @@ from api.database.functions import (
 )
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
-from api.utils.logging_helpers import build_route_log_string
+from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, status, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -113,7 +113,11 @@ async def insert_prediction_into_plugin_database(
     Posts a new prediction into the plugin database.\n
     Use: Can be used to insert a new prediction into the plugin database.
     """
-    await verify_token(token, verification="verify_ban", route=build_route_log_string(request))
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     data = [d.dict() for d in prediction]
 
@@ -186,7 +190,9 @@ async def gets_predictions_by_player_features(
     Get predictions by player features
     """
     await verify_token(
-        token, verification="request_highscores", route=build_route_log_string(request)
+        token,
+        verification="request_highscores",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     if (

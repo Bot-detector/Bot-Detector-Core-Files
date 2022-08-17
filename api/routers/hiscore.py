@@ -10,7 +10,7 @@ from api.database.models import (
     PlayerHiscoreDataXPChange,
     playerHiscoreData,
 )
-from api.utils.logging_helpers import build_route_log_string
+from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
@@ -122,7 +122,11 @@ async def get_player_hiscore_data(
     Select daily scraped hiscore data, by player_id
     """
     # verify token
-    await verify_token(token, verification="verify_ban", route=build_route_log_string(request))
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     # query
     table = playerHiscoreData
@@ -153,7 +157,9 @@ async def get_latest_hiscore_data_for_an_account(
     """
     # verify token
     await verify_token(
-        token, verification="verify_ban", route=build_route_log_string(request)
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     # query
@@ -190,7 +196,9 @@ async def get_latest_hiscore_data_by_player_features(
     """
     # verify token
     await verify_token(
-        token, verification="verify_ban", route=build_route_log_string(request)
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     if (
@@ -251,7 +259,9 @@ async def get_account_hiscore_xp_change(
     """
     # verify token
     await verify_token(
-        token, verification="verify_ban", route=build_route_log_string(request)
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     # query
@@ -279,7 +289,11 @@ async def post_hiscore_data_to_database(hiscores: hiscore, token: str, request: 
     """
     Insert hiscore data.
     """
-    await verify_token(token, verification="verify_ban", route=build_route_log_string(request))
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     values = hiscores.dict()
 

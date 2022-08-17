@@ -9,7 +9,7 @@ from api.database import functions
 from api.database.functions import PLAYERDATA_ENGINE
 from api.database.models import (Player, Prediction, Report,
                                  playerReports, playerReportsManual, stgReport)
-from api.utils.logging_helpers import build_route_log_string
+from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, status, Request
 from pydantic import BaseModel
 from pydantic.fields import Field
@@ -134,7 +134,9 @@ async def get_reports(
     Select report data.
     """
     await functions.verify_token(
-        token, verification="verify_ban", route=build_route_log_string(request)
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     if None == reportedID == reportingID:
@@ -172,7 +174,9 @@ async def update_reports(old_user_id: int, new_user_id: int, token: str, request
     Update the reports from one reporting user to another.
     """
     await functions.verify_token(
-        token, verification="verify_ban", route=build_route_log_string(request)
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
     )
     # can be used for name change
 
