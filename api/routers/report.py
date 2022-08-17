@@ -9,7 +9,8 @@ from api.database import functions
 from api.database.functions import PLAYERDATA_ENGINE
 from api.database.models import (Player, Prediction, Report,
                                  playerReports, playerReportsManual, stgReport)
-from fastapi import APIRouter, HTTPException, Query, status
+from api.utils.logging_helpers import build_route_log_string
+from fastapi import APIRouter, HTTPException, Query, status, Request
 from pydantic import BaseModel
 from pydantic.fields import Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -123,6 +124,7 @@ class detection(BaseModel):
 @router.get("/v1/report", tags=["Report"])
 async def get_reports(
     token: str,
+    request: Request,
     reportedID: Optional[int] = Query(None, ge=0),
     reportingID: Optional[int] = Query(None, ge=0),
     timestamp: Optional[date] = None,
@@ -132,7 +134,7 @@ async def get_reports(
     Select report data.
     """
     await functions.verify_token(
-        token, verification="verify_ban", route="[GET]/v1/report/"
+        token, verification="verify_ban", route=build_route_log_string(request)
     )
 
     if None == reportedID == reportingID:
@@ -165,12 +167,12 @@ async def get_reports(
 
 
 @router.put("/v1/report", tags=["Report"])
-async def update_reports(old_user_id: int, new_user_id: int, token: str):
+async def update_reports(old_user_id: int, new_user_id: int, token: str, request: Request):
     """
     Update the reports from one reporting user to another.
     """
     await functions.verify_token(
-        token, verification="verify_ban", route="[PUT]/v1/report/"
+        token, verification="verify_ban", route=build_route_log_string(request)
     )
     # can be used for name change
 
