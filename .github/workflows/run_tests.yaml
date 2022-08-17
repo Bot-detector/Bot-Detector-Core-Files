@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Checks out repository
       - uses: actions/checkout@v3
-        run: |
+      - run: |
           echo "${{ secrets.ASYNCMY_URI }}" > .env
           echo "${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
 
