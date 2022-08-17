@@ -24,8 +24,6 @@ def build_route_log_string(request: Request, censored_strings: List[str] = []) -
   """
   log_str = f"[{request.method}] Path: {request.url.path} Query Params: {request.query_params}"
 
-  print(log_str)
-
   return log_str if not censored_strings else censor_log_entry(log_str, censored_strings)
 
 
