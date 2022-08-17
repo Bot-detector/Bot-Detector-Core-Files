@@ -16,10 +16,13 @@ jobs:
 
     steps:
       - name: Checks out repository
-      - uses: actions/checkout@v3
-      - run: |
-          echo "${{ secrets.ASYNCMY_URI }}" > .env
-          echo "${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
+        uses: actions/checkout@v3
+
+      - name: Check out mysql repository
+        uses: actions/checkout@v3
+        with:
+          repository: Bot-detector/bot-detector-mysql
+          path: bot-detector-mysql
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v3
