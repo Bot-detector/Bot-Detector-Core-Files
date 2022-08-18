@@ -1,3 +1,7 @@
+# Fixtures defined in this file can be passed as parameters to tests without the need to import
+# this file. See the following link for more information:
+# https://www.tutorialspoint.com/pytest/pytest_conftest_py.htm
+
 import os
 import sys
 
