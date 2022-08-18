@@ -8,9 +8,7 @@ from api.Config import token
 from api.routers import legacy
 from api.utils import logging_helpers
 
-
 request_path = f"/discord/get_linked_accounts/{token}/1"
-
 
 def test_build_route_log_string(test_client):
     """
@@ -24,7 +22,6 @@ def test_build_route_log_string(test_client):
         expected_log_str = '[GET] Path: /discord/get_linked_accounts/***/1 Query Params: '
 
         mock.assert_called_once_with(token, verification="verify_players", route=expected_log_str)
-
 
 def test_censor_log_entry():
     """
