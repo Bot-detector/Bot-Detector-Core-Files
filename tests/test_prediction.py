@@ -4,12 +4,7 @@ from typing import Union
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api import app
-from fastapi.testclient import TestClient
 from pydantic import BaseModel
-
-client = TestClient(app.app)
-
 class Prediction(BaseModel):
     player_id: int
     player_name: str
@@ -30,7 +25,7 @@ def parse_response(response):
     except Exception as e:
         assert False, e
     
-def test_prediction():
+def test_prediction(test_client):
     url = "/v1/prediction/"
     breakdown_param = [
         {
@@ -46,7 +41,7 @@ def test_prediction():
         }
     ]
     for param in breakdown_param:
-        response = client.get(url, params=param)
+        response = test_client.get(url, params=param)
         check_response(response, param, 200)
         prediction = parse_response(response)
         error = f"Expected prediction_confidence is not None, {param=}"
@@ -64,7 +59,7 @@ def test_prediction():
         }
     ]
     for param in no_breakdown_param:
-        response = client.get(url, params=param)
+        response = test_client.get(url, params=param)
         check_response(response, param, 200)
         prediction = parse_response(response)
         error = f"Expected prediction_confidence is None, {param=}"
@@ -76,7 +71,7 @@ def test_prediction():
         "name": "2C09003E9EA22E5F245023B5555C0AD9",
         "breakdown": True
     }
-    response = client.get(url, params=param)
+    response = test_client.get(url, params=param)
     check_response(response, param, 200)
     prediction = parse_response(response)
     error = f"Expected prediction_confidence is None, {param=}"
@@ -87,5 +82,5 @@ def test_prediction():
     param = {
         "name": None
     }
-    response = client.get(url, params=param)
+    response = test_client.get(url, params=param)
     check_response(response, param, 422)
