@@ -8,22 +8,22 @@ on:
 concurrency: test-${{ github.sha }}
 
 jobs:
-  test:
+  checkout:
     runs-on: self-hosted
+    steps:
+      - name: Checks out repository
+        uses: actions/checkout@v3
+        run: |
+          echo "${{ secrets.ASYNCMY_URI_DEV }}" > .env
+          echo "${{ secrets.DISCORD_ASYNCMY_URI_DEV }}" >> .env
 
+  run-tests:
+    runs-on: self-hosted
+    needs: checkout
     env:
       PYTHON_VERSION: "3.10"
 
     steps:
-      - name: Checks out repository
-        uses: actions/checkout@v3
-
-      - name: Check out mysql repository
-        uses: actions/checkout@v3
-        with:
-          repository: Bot-detector/bot-detector-mysql
-          path: bot-detector-mysql
-
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v3
         with:
@@ -32,12 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest anyio
-          if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; fi
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Setup database container
-        run: docker-compose up
+          pip install -r requirements.txt
 
       - name: Run tests
         run: |
