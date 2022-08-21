@@ -11,17 +11,17 @@ jobs:
   checkout:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
       - name: Checks out repository
-        run: |
-          echo "${{ secrets.ASYNCMY_URI_DEV }}" > .env
-          echo "${{ secrets.DISCORD_ASYNCMY_URI_DEV }}" >> .env
+        uses: actions/checkout@v3
 
   run-tests:
     runs-on: self-hosted
     needs: checkout
     env:
       PYTHON_VERSION: "3.10"
+      sql_uri: ${{ secrets.ASYNCMY_URI_DEV }}
+      discord_sql_uri: ${{ secrets.DISCORD_ASYNCMY_URI_DEV }}
+      token: verify_ban
 
     steps:
       - name: Set up Python ${{ env.PYTHON_VERSION }}
