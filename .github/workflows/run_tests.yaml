@@ -16,21 +16,22 @@ jobs:
         with:
           repository: Bot-detector/bot-detector-mysql
           path: bot-detector-mysql
-  run-mysql:
+
+  mysql-up:
     runs-on: self-hosted
     needs: setup
     steps:
       - name: docker run mysql
         run: |
-          docker-compose up -f bot-detector-mysql/docker-compose-test.yml
+          docker-compose -f bot-detector-mysql/docker-compose-test.yml up
 
   run-tests:
     runs-on: self-hosted
-    needs: run-mysql
+    needs: mysql-up
     env:
       PYTHON_VERSION: "3.10"
-      sql_uri: mysql+asyncmy://root:root_bot_buster@localhost:33060/playerdata
-      discord_sql_uri: mysql+asyncmy://root:root_bot_buster@localhost:33060/discord
+      sql_uri: mysql+asyncmy://root:root_bot_buster@localhost:8999/playerdata
+      discord_sql_uri: mysql+asyncmy://root:root_bot_buster@localhost:8999/discord
       token: verify_ban
 
 
@@ -48,3 +49,11 @@ jobs:
       - name: Run tests
         run: |
           pytest tests
+
+  mysql-down:
+    runs-on: self-hosted
+    needs: run-tests
+    steps:
+      - name: docker run mysql
+        run: |
+          docker-compose -f bot-detector-mysql/docker-compose-test.yml down
