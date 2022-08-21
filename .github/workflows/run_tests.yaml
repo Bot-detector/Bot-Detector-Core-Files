@@ -31,7 +31,7 @@ jobs:
         run: |
           echo "sql_uri=${{ secrets.ASYNCMY_URI_DEV }}" > .env
           echo "discord_sql_uri=${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
-          echo "token=${{ secrets.TOKEN }}" >> .env
+          echo "${{ secrets.TOKEN }}" >> .env
 
       - name: Install dependencies
         run: |
