@@ -15,14 +15,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: Bot-detector/bot-detector-mysql
-          path: bot-detector-mysql
+          path: ../bot-detector-mysql
   run-mysql:
     runs-on: self-hosted
     needs: setup
     steps:
       - name: docker run mysql
         run: |
-          docker run bot-detector-mysql/Dockerfile -p 33060:3306
+          docker-compose up -f bot-detector-mysql/docker-compose-test.yml
 
   run-tests:
     runs-on: self-hosted
