@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.database.functions import (EngineType, sqlalchemy_result,
                                     verify_token)
 from api.database.models import Player, PredictionsFeedback
-from fastapi import APIRouter, HTTPException, Query, status
+from api.utils import logging_helpers
+from fastapi import APIRouter, HTTPException, Query, status, Request
 from pydantic import BaseModel
 from pydantic.fields import Field
 from sqlalchemy import func, select
@@ -19,7 +20,7 @@ class Feedback(BaseModel):
     player_name: str
     vote: int
     prediction: str
-    confidence: float = Field(None, ge=0, le=1)
+    confidence: float = Field(default=0, ge=0, le=1)
     subject_id: int
     feedback_text: Optional[str] = None
     proposed_label: Optional[str] = None
@@ -32,6 +33,7 @@ router = APIRouter()
 async def get_feedback(
     token: str,
     name: str,
+    request: Request,
     row_count: Optional[int] = Query(100_000, ge=1, le=100_000),
     page: Optional[int] = Query(1, ge=1),
 ):
@@ -39,7 +41,11 @@ async def get_feedback(
     Get player feedback of a player
     """
     # verify token
-    await verify_token(token, verification="verify_ban", route="[GET]/v1/feedback")
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
 
     # query

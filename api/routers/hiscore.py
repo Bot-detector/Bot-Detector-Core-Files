@@ -10,7 +10,8 @@ from api.database.models import (
     PlayerHiscoreDataXPChange,
     playerHiscoreData,
 )
-from fastapi import APIRouter, HTTPException, Query
+from api.utils import logging_helpers
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
 
@@ -112,6 +113,7 @@ class hiscore(BaseModel):
 @router.get("/v1/hiscore/", tags=["Hiscore"])
 async def get_player_hiscore_data(
     token: str,
+    request: Request,
     player_id: int = Query(..., ge=0),
     row_count: int = Query(100_000, ge=1),
     page: int = Query(1, ge=1),
@@ -120,7 +122,11 @@ async def get_player_hiscore_data(
     Select daily scraped hiscore data, by player_id
     """
     # verify token
-    await verify_token(token, verification="verify_ban", route="[GET]/v1/hiscore")
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     # query
     table = playerHiscoreData
@@ -144,14 +150,16 @@ async def get_player_hiscore_data(
 
 @router.get("/v1/hiscore/Latest", tags=["Hiscore"])
 async def get_latest_hiscore_data_for_an_account(
-    token: str, player_id: int = Query(..., ge=0)
+    token: str, request: Request, player_id: int = Query(..., ge=0)
 ):
     """
     Select the latest hiscore of a player.
     """
     # verify token
     await verify_token(
-        token, verification="verify_ban", route="[GET]/v1/hiscore/Latest"
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     # query
@@ -174,6 +182,7 @@ async def get_latest_hiscore_data_for_an_account(
 @router.get("/v1/hiscore/Latest/bulk", tags=["Hiscore"])
 async def get_latest_hiscore_data_by_player_features(
     token: str,
+    request: Request,
     row_count: int = Query(100_000, ge=1),
     page: int = Query(1, ge=1),
     possible_ban: Optional[int] = Query(None, ge=0, le=1),
@@ -187,7 +196,9 @@ async def get_latest_hiscore_data_by_player_features(
     """
     # verify token
     await verify_token(
-        token, verification="verify_ban", route="[GET]/v1/hiscore/Latest/bulk"
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     if (
@@ -238,6 +249,7 @@ async def get_latest_hiscore_data_by_player_features(
 @router.get("/v1/hiscore/XPChange", tags=["Hiscore"])
 async def get_account_hiscore_xp_change(
     token: str,
+    request: Request,
     player_id: int = Query(..., ge=0),
     row_count: int = Query(100_000, ge=1),
     page: int = Query(1, ge=1),
@@ -247,7 +259,9 @@ async def get_account_hiscore_xp_change(
     """
     # verify token
     await verify_token(
-        token, verification="verify_ban", route="[GET]/v1/hiscore/XPChange"
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     # query
@@ -271,11 +285,15 @@ async def get_account_hiscore_xp_change(
 
 
 @router.post("/v1/hiscore", tags=["Hiscore"])
-async def post_hiscore_data_to_database(hiscores: hiscore, token: str):
+async def post_hiscore_data_to_database(hiscores: hiscore, token: str, request: Request):
     """
     Insert hiscore data.
     """
-    await verify_token(token, verification="verify_ban", route="[POST]/v1/hiscore")
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     values = hiscores.dict()
 

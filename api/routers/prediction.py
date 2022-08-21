@@ -9,7 +9,8 @@ from api.database.functions import (
 )
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
-from fastapi import APIRouter, HTTPException, Query, status
+from api.utils import logging_helpers
+from fastapi import APIRouter, HTTPException, Query, status, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Select, select, text
@@ -55,8 +56,12 @@ class Prediction(BaseModel):
 @router.get("/v1/prediction", tags=["Prediction"])
 async def get_account_prediction_result(name: str, breakdown: Optional[bool] = False):
     """
-    Selects a player's prediction from the plugin database.\n
-    Use: Used to determine the prediction of a player according to the prediction found in the prediction table.
+    Parameters:
+        name: The name of the player to get the prediction for
+        breakdown: If True, always return breakdown, even if the prediction is Stats_Too_Low
+
+    Returns:
+        A dict containing the prediction data for the player
     """
 
     sql: Select = select(dbPrediction)
@@ -81,7 +86,6 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
             status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
         )
 
-    # formatting for cyborger
     data: dict = data[0]
     prediction = data.pop("Prediction")
     data = {
@@ -94,18 +98,33 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
         if breakdown or prediction != "Stats_Too_Low"
         else None,
     }
+
+    prediction = data.get("prediction_label")
+
+    if prediction == "Stats_Too_Low":
+        # never show confidence if stats to low
+        data["prediction_confidence"] = None
+        if not breakdown:
+            data["predictions_breakdown"] = None
+
     return data
 
 
 @router.post("/v1/prediction", tags=["Prediction"])
 async def insert_prediction_into_plugin_database(
-    token: str, prediction: List[Prediction]
+    token: str,
+    prediction: List[Prediction], 
+    request: Request
 ):
     """
     Posts a new prediction into the plugin database.\n
     Use: Can be used to insert a new prediction into the plugin database.
     """
-    await verify_token(token, verification="verify_ban", route="[POST]/v1/prediction/")
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     data = [d.dict() for d in prediction]
 
@@ -165,6 +184,7 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
 @router.get("/v1/prediction/bulk", tags=["Prediction"])
 async def gets_predictions_by_player_features(
     token: str,
+    request: Request,
     row_count: int = Query(100_000, ge=1),
     page: int = Query(1, ge=1),
     possible_ban: Optional[int] = Query(None, ge=0, le=1),
@@ -177,7 +197,9 @@ async def gets_predictions_by_player_features(
     Get predictions by player features
     """
     await verify_token(
-        token, verification="request_highscores", route="[GET]/v1/prediction/bulk"
+        token,
+        verification="request_highscores",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     if (
