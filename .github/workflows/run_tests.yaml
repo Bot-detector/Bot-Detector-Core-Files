@@ -24,6 +24,12 @@ jobs:
       token: verify_ban
 
     steps:
+      - name: Set Up ENV
+        run: |
+          echo "sql_uri=${{ secrets.ASYNCMY_URI_DEV }}" > .env
+          echo "discord_sql_uri=${{ secrets.DISCORD_ASYNCMY_URI_DEV }}" >> .env
+          echo "token=${{ secrets.TOKEN }}" >> .env
+
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v3
         with:
