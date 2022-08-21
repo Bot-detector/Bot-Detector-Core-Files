@@ -2,16 +2,11 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import time
 
 import pytest
-from api import app
 from api.Config import token
-from fastapi.testclient import TestClient
 
-client = TestClient(app.app)
-
-def test_report_count():
+def test_report_count(test_client):
     url = "/v1/report/count"
     test_cases = [
         {"name": "3BA604236FB0319D5937E31388B0C64C", "status_code": 200},
@@ -20,7 +15,7 @@ def test_report_count():
     for case in test_cases:
         param = {"token": token, "name": case.get("name")}
 
-        response = client.get(url, params=param)
+        response = test_client.get(url, params=param)
 
         print(response.url)
         print(response.text)

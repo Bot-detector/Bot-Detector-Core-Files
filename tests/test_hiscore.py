@@ -3,14 +3,9 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api import app
 from api.Config import token
-from fastapi.testclient import TestClient
 
-client = TestClient(app.app)
-
-
-def test_get_player_hiscore_data():
+def test_get_player_hiscore_data(test_client):
     test_cases = [
         {"player_id": 1, "status_code": 200, "detail": "valid player"},
         {"player_id": -1, "status_code": 422, "detail": "invalid player id"},
@@ -22,7 +17,7 @@ def test_get_player_hiscore_data():
         url = "/v1/hiscore/"
         param = {"player_id": case.get("player_id"), "token": token}
 
-        response = client.get(url, params=param)
+        response = test_client.get(url, params=param)
 
         print(response.url)
         print(response.text)
@@ -38,7 +33,7 @@ def test_get_player_hiscore_data():
             assert isinstance(response.json(), list), error
 
 
-def test_get_latest_hiscore_data_for_an_account():
+def test_get_latest_hiscore_data_for_an_account(test_client):
     test_cases = [
         {"player_id": 1, "status_code": 200, "detail": "valid player"},
         {"player_id": -1, "status_code": 422, "detail": "invalid player id"},
@@ -50,7 +45,7 @@ def test_get_latest_hiscore_data_for_an_account():
         url = "/v1/hiscore/Latest/"
         param = {"player_id": case.get("player_id"), "token": token}
 
-        response = client.get(url, params=param)
+        response = test_client.get(url, params=param)
 
         print(response.url)
         print(response.text)
@@ -67,7 +62,7 @@ def test_get_latest_hiscore_data_for_an_account():
 
 
 # TODO: cleanup
-def test_get_latest_hiscore_data_by_player_features():
+def test_get_latest_hiscore_data_by_player_features(test_client):
     test_case = (
         (1, 1, 0, 0, 2, 200),  # banned account
         (0, 0, 0, 0, 0, 200),  # normal player
@@ -84,7 +79,7 @@ def test_get_latest_hiscore_data_by_player_features():
         response_code,
     ) in enumerate(test_case):
         route_attempt = f"/v1/hiscore/Latest/bulk?token={token}&row_count=10&page=1&possible_ban={possible_ban}&confirmed_ban={confirmed_ban}&confirmed_player={confirmed_player}&label_id={label_id}&label_jagex={label_jagex}"
-        response = client.get(route_attempt)
+        response = test_client.get(route_attempt)
         assert (
             response.status_code == response_code
         ), f"Test: {test}| Invalid response {response.status_code}"
@@ -94,7 +89,7 @@ def test_get_latest_hiscore_data_by_player_features():
             ), f"invalid response return type: {type(response.json())}"
 
 
-def test_get_account_hiscore_xp_change():
+def test_get_account_hiscore_xp_change(test_client):
     test_cases = [
         {"player_id": 1, "status_code": 200, "detail": "valid player"},
         {"player_id": -1, "status_code": 422, "detail": "invalid player id"},
@@ -106,7 +101,7 @@ def test_get_account_hiscore_xp_change():
         url = "/v1/hiscore/XPChange"
         param = {"player_id": case.get("player_id"), "token": token}
 
-        response = client.get(url, params=param)
+        response = test_client.get(url, params=param)
 
         print(response.url)
         print(response.text)

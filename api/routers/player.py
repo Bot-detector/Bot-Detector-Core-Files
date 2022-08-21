@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.database.database import Engine, EngineType
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import Player as dbPlayer
-from fastapi import APIRouter, HTTPException, Query
+from api.utils import logging_helpers
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select, update
 
@@ -26,6 +27,7 @@ class Player(BaseModel):
 @router.get("/v1/player", tags=["Player"])
 async def get_player_information(
     token: str,
+    request: Request,
     player_name: Optional[str] = None,
     player_id: Optional[int] = Query(None, ge=0),
     row_count: int = Query(100_000, ge=1),
@@ -35,7 +37,9 @@ async def get_player_information(
     Select a player by name or id.
     """
     await verify_token(
-        token, verification="request_highscores", route="[GET]/v1/player"
+        token,
+        verification="request_highscores",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     # return exception if no param are given
@@ -67,6 +71,7 @@ async def get_player_information(
 @router.get("/v1/player/bulk", tags=["Player"])
 async def get_bulk_player_data_from_the_plugin_database(
     token: str,
+    request: Request,
     possible_ban: Optional[int] = None,
     confirmed_ban: Optional[int] = None,
     confirmed_player: Optional[int] = None,
@@ -79,7 +84,9 @@ async def get_bulk_player_data_from_the_plugin_database(
     Selects bulk player data from the plugin database.
     """
     await verify_token(
-        token, verification="request_highscores", route="[POST]/v1/player"
+        token,
+        verification="request_highscores",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     # return exception if no param are given
@@ -127,11 +134,15 @@ async def get_bulk_player_data_from_the_plugin_database(
 
 
 @router.put("/v1/player", tags=["Player"])
-async def update_existing_player_data(player: Player, token: str):
+async def update_existing_player_data(player: Player, token: str, request: Request):
     """
     Update player & return updated player.
     """
-    await verify_token(token, verification="verify_ban")
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     # param
     param = player.dict()
@@ -160,11 +171,15 @@ async def update_existing_player_data(player: Player, token: str):
 
 
 @router.post("/v1/player", tags=["Player"])
-async def insert_new_player_data_into_plugin_database(player_name: str, token: str):
+async def insert_new_player_data_into_plugin_database(player_name: str, token: str, request: Request):
     """
     Insert new player & return player.
     """
-    await verify_token(token, verification="verify_ban", route="[POST]/v1/player")
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     sql_insert = insert(dbPlayer)
     sql_insert = sql_insert.values(name=player_name)

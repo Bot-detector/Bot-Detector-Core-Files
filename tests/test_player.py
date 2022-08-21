@@ -3,15 +3,9 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-
-from api import app
 from api.Config import token
-from fastapi.testclient import TestClient
 
-client = TestClient(app.app)
-
-
-def test_get_player_information():
+def test_get_player_information(test_client):
     test_cases = [
         {"player_id": 1, "status_code": 200, "detail": "valid player"},
         {"player_id": -1, "status_code": 422, "detail": "invalid player id"},
@@ -23,7 +17,7 @@ def test_get_player_information():
         url = "/v1/player/"
         param = {"player_id": case.get("player_id"), "token": token}
 
-        response = client.get(url, params=param)
+        response = test_client.get(url, params=param)
 
         print(response.url)
         print(response.text)
