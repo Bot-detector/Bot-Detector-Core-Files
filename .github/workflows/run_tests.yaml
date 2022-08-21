@@ -16,7 +16,7 @@ jobs:
 
   run-tests:
     runs-on: self-hosted
-    needs: checkout
+    needs: setup
     env:
       PYTHON_VERSION: "3.10"
 
