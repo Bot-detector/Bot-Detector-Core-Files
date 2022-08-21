@@ -11,27 +11,26 @@ jobs:
   checkout:
     runs-on: self-hosted
     steps:
+      - uses: actions/checkout@v3
       - name: Checks out repository
-        uses: actions/checkout@v3
+        run: |
+          echo "sql_uri=${{ secrets.ASYNCMY_URI_DEV }}" > .env
+          echo "discord_sql_uri=${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
+          echo "${{ secrets.TOKEN }}" >> .env
+        
 
   run-tests:
     runs-on: self-hosted
     needs: checkout
     env:
       PYTHON_VERSION: "3.10"
-      sql_uri: ${{ secrets.ASYNCMY_URI_DEV }}
-      discord_sql_uri: ${{ secrets.DISCORD_ASYNCMY_URI_DEV }}
-      token: verify_ban
 
     steps:
-      - uses: actions/setup-python@v3
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        run: |
-          echo "sql_uri=${{ secrets.ASYNCMY_URI_DEV }}" > .env
-          echo "discord_sql_uri=${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
-          echo "${{ secrets.TOKEN }}" >> .env
+
 
       - name: Install dependencies
         run: |
