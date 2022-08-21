@@ -24,10 +24,14 @@ jobs:
       token: verify_ban
 
     steps:
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v3
+      - uses: actions/setup-python@v3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        run: |
+          echo "sql_uri=${{ secrets.ASYNCMY_URI_DEV }}" > .env
+          echo "discord_sql_uri=${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
+          echo "token=${{ secrets.TOKEN }}" >> .env
 
       - name: Install dependencies
         run: |
@@ -35,9 +39,5 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run tests
-        env: 
-          sql_uri: ${{ secrets.ASYNCMY_URI_DEV }}
-          discord_sql_uri: ${{ secrets.DISCORD_ASYNCMY_URI_DEV }}
-          token: ${{ secrets.TOKEN }}
         run: |
           pytest tests
