@@ -9,7 +9,8 @@ from api.database.functions import (
 )
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
-from fastapi import APIRouter, HTTPException, Query, status
+from api.utils import logging_helpers
+from fastapi import APIRouter, HTTPException, Query, status, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Select, select, text
@@ -104,13 +105,19 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
 
 @router.post("/v1/prediction", tags=["Prediction"])
 async def insert_prediction_into_plugin_database(
-    token: str, prediction: List[Prediction]
+    token: str,
+    prediction: List[Prediction], 
+    request: Request
 ):
     """
     Posts a new prediction into the plugin database.\n
     Use: Can be used to insert a new prediction into the plugin database.
     """
-    await verify_token(token, verification="verify_ban", route="[POST]/v1/prediction/")
+    await verify_token(
+        token,
+        verification="verify_ban",
+        route=logging_helpers.build_route_log_string(request)
+    )
 
     data = [d.dict() for d in prediction]
 
@@ -170,6 +177,7 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
 @router.get("/v1/prediction/bulk", tags=["Prediction"])
 async def gets_predictions_by_player_features(
     token: str,
+    request: Request,
     row_count: int = Query(100_000, ge=1),
     page: int = Query(1, ge=1),
     possible_ban: Optional[int] = Query(None, ge=0, le=1),
@@ -182,7 +190,9 @@ async def gets_predictions_by_player_features(
     Get predictions by player features
     """
     await verify_token(
-        token, verification="request_highscores", route="[GET]/v1/prediction/bulk"
+        token,
+        verification="request_highscores",
+        route=logging_helpers.build_route_log_string(request)
     )
 
     if (
