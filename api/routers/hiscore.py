@@ -100,6 +100,8 @@ class hiscore(BaseModel):
     theatre_of_blood: int
     theatre_of_blood_hard: int
     thermonuclear_smoke_devil: int
+    tombs_of_amascut: int 
+    tombs_of_amascut_expert: int
     tzkal_zuk: int
     tztok_jad: int
     venenatis: int
