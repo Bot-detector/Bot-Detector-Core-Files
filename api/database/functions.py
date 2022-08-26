@@ -123,9 +123,7 @@ async def execute_sql(
             await asyncio.sleep(1)
             # if the first item in the queue is our ID then we can execute it, else we wait
             if LOCK_QUEUE[0] == task_id:
-                logger.debug(
-                    f"executing task, {len(LOCK_QUEUE)=}"
-                )
+                logger.debug(f"executing task, {len(LOCK_QUEUE)=}")
                 # remove our task
                 LOCK_QUEUE.popleft()
 
