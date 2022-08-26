@@ -118,7 +118,6 @@ async def execute_sql(
 
         # check if the first task is our task
         while True:
-
             # sleep for a random time
             # await asyncio.sleep(random.uniform(0.1, sleep))
             await asyncio.sleep(1)
