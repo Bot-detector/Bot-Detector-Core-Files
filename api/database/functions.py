@@ -18,8 +18,13 @@ from sqlalchemy import Text, text
 from sqlalchemy.exc import InternalError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
 from sqlalchemy.sql.expression import insert, select
+from collections import deque
+import random
+
 
 logger = logging.getLogger(__name__)
+
+LOCK_QUEUE = deque()
 
 
 def list_to_string(l):
@@ -95,6 +100,7 @@ async def execute_sql(
             logger.debug(
                 {"message": f"Lock, Retry Attempt: {retry_attempt}, retrying: {e}"}
             )
+
         elif isinstance(e, OperationalError):
             e = e if debug else ""
             logger.debug(
@@ -104,17 +110,37 @@ async def execute_sql(
             logger.error({"message": "Unknown Error", "error": e})
             logger.error(traceback.print_exc())
             return None
-        await asyncio.sleep(random.uniform(0.1, sleep))
-        records = await execute_sql(
-            sql,
-            param,
-            debug,
-            engine,
-            row_count,
-            page,
-            has_return=has_return,
-            retry_attempt=retry_attempt + 1,
-        )
+
+        # random id not in our queue already
+        task_id = random.choice([x for x in range(1_000_000) if x not in LOCK_QUEUE])
+
+        LOCK_QUEUE.append(task_id)
+
+        # check if the first task is our task
+        while True:
+            logger.debug(
+                f"executing task, {len(LOCK_QUEUE)=}"
+            )
+            # sleep for a random time
+            # await asyncio.sleep(random.uniform(0.1, sleep))
+            await asyncio.sleep(1)
+            # if the first item in the queue is our ID then we can execute it, else we wait
+            if LOCK_QUEUE[0] == task_id:
+                # remove our task
+                LOCK_QUEUE.popleft()
+
+                # execute our task
+                records = await execute_sql(
+                    sql,
+                    param,
+                    debug,
+                    engine,
+                    row_count,
+                    page,
+                    has_return=has_return,
+                    retry_attempt=retry_attempt + 1,
+                )
+                break
     return records
 
 
