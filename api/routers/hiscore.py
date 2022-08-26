@@ -100,6 +100,8 @@ class hiscore(BaseModel):
     theatre_of_blood: int
     theatre_of_blood_hard: int
     thermonuclear_smoke_devil: int
+    tombs_of_amascut: int
+    tombs_of_amascut_expert: int
     tzkal_zuk: int
     tztok_jad: int
     venenatis: int
@@ -125,7 +127,7 @@ async def get_player_hiscore_data(
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     # query
@@ -138,7 +140,7 @@ async def get_player_hiscore_data(
 
     # paging
     sql = sql.limit(row_count).offset(row_count * (page - 1))
-    
+
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
         async with session.begin():
@@ -159,7 +161,7 @@ async def get_latest_hiscore_data_for_an_account(
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     # query
@@ -198,7 +200,7 @@ async def get_latest_hiscore_data_by_player_features(
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     if (
@@ -261,7 +263,7 @@ async def get_account_hiscore_xp_change(
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     # query
@@ -285,14 +287,16 @@ async def get_account_hiscore_xp_change(
 
 
 @router.post("/v1/hiscore", tags=["Hiscore"])
-async def post_hiscore_data_to_database(hiscores: hiscore, token: str, request: Request):
+async def post_hiscore_data_to_database(
+    hiscores: hiscore, token: str, request: Request
+):
     """
     Insert hiscore data.
     """
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     values = hiscores.dict()

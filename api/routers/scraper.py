@@ -98,6 +98,8 @@ class hiscore(BaseModel):
     theatre_of_blood: int
     theatre_of_blood_hard: int
     thermonuclear_smoke_devil: int
+    tombs_of_amascut: int
+    tombs_of_amascut_expert: int
     tzkal_zuk: int
     tztok_jad: int
     venenatis: int
@@ -158,7 +160,9 @@ async def sqla_update_player(players: List):
             for player in players:
                 async with session.begin():
                     player_id = player.get("id")
-                    sql = update(dbPlayer).values(player).where(dbPlayer.id == player_id)
+                    sql = (
+                        update(dbPlayer).values(player).where(dbPlayer.id == player_id)
+                    )
                     await session.execute(sql, player)
                 dbplayer.remove(player)
     except (OperationalError, InternalError) as e:
@@ -189,7 +193,7 @@ async def receive_scraper_data(token, data: List[scraper], request: Request):
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
     # background task will cause lots of duplicates
     asyncio.create_task(post_hiscores_to_db(data))
