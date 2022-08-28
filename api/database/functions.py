@@ -224,9 +224,9 @@ async def retry_on_deadlock(
                 async with session.begin():
                     return await session.execute(sql, data)
         except Exception as e:
+            attempts += 1
             if isinstance(e, InternalError) or isinstance(e, OperationalError):
                 if any(msg in e.message for msg in lock_messages_error):
-                    attempts += 1
                     await asyncio.sleep(random.uniform(0.1, attempts * 5))
                     return await retry_on_deadlock(
                         sql, engine, max_attempts, attempts, data
@@ -235,7 +235,7 @@ async def retry_on_deadlock(
                     error = True
             else:
                 error = True
-        if error:
-            logger.error({"message": "Unknown Error", "error": e})
-            logger.error(traceback.print_exc())
+            if error:
+                logger.error({"message": "Unknown Error", "error": e})
+                logger.error(traceback.print_exc())
     return None
