@@ -238,4 +238,5 @@ async def retry_on_deadlock(
             if error:
                 logger.error({"message": "Unknown Error", "error": e})
                 logger.error(traceback.print_exc())
+                return None
     return None
