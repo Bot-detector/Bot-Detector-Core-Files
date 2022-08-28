@@ -211,3 +211,31 @@ async def batch_function(function, data, batch_size=100):
     await asyncio.gather(*[create_task(function(batch)) for batch in batches])
 
     return
+
+
+async def retry_on_deadlock(
+    sql, engine: Engine, max_attempts: int = 5, attempts: int = 0, data=None
+):
+    lock_messages_error = ["Deadlock found", "Lock wait timeout exceeded"]
+    while attempts < max_attempts:
+        try:
+            async with engine.get_session() as session:
+                session: AsyncSession = session
+                async with session.begin():
+                    return await session.execute(sql, data)
+        except Exception as e:
+            if isinstance(e, InternalError) or isinstance(e, OperationalError):
+                if any(msg in e.message for msg in lock_messages_error):
+                    attempts += 1
+                    await asyncio.sleep(random.uniform(0.1, attempts * 5))
+                    return await retry_on_deadlock(
+                        sql, engine, max_attempts, attempts, data
+                    )
+                else:
+                    error = True
+            else:
+                error = True
+        if error:
+            logger.error({"message": "Unknown Error", "error": e})
+            logger.error(traceback.print_exc())
+    return None

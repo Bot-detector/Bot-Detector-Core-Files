@@ -1,4 +1,5 @@
 import time
+from tkinter.tix import Select
 from typing import List, Optional
 
 from api.database.functions import PLAYERDATA_ENGINE
@@ -9,7 +10,8 @@ from api.database.models import Player as dbPlayer
 from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
-from sqlalchemy.sql.expression import insert, select, update
+from sqlalchemy.sql.expression import insert, select, update, Select, Insert, Update
+from api.database import functions
 
 router = APIRouter()
 
@@ -47,7 +49,7 @@ async def get_player_information(
         raise HTTPException(status_code=422, detail="No valid parameters given")
 
     # create query
-    sql = select(dbPlayer)
+    sql:Select = select(dbPlayer)
 
     # filters
     if not player_name == None:
@@ -59,11 +61,7 @@ async def get_player_information(
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # transaction
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
@@ -101,7 +99,7 @@ async def get_bulk_player_data_from_the_plugin_database(
         raise HTTPException(status_code=404, detail="No param given")
 
     # create query
-    sql = select(dbPlayer)
+    sql:Select = select(dbPlayer)
 
     # filters
     # filters
@@ -124,11 +122,7 @@ async def get_bulk_player_data_from_the_plugin_database(
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # transaction
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
@@ -151,21 +145,16 @@ async def update_existing_player_data(player: Player, token: str, request: Reque
     player_id = param.pop("player_id")
 
     # sql
-    sql_update = update(dbPlayer)
+    sql_update:Update = update(dbPlayer)
     sql_update = sql_update.values(param)
     sql_update = sql_update.where(dbPlayer.id == player_id)
 
-    sql_select = select(dbPlayer)
+    sql_select:Select = select(dbPlayer)
     sql_select = sql_select.where(dbPlayer.id == player_id)
 
     # transaction
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            await session.execute(sql_update)
-        async with session.begin():
-            data = await session.execute(sql_select)
-
+    data = await functions.retry_on_deadlock(sql_update, PLAYERDATA_ENGINE)
+    data = await functions.retry_on_deadlock(sql_select, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
@@ -181,19 +170,15 @@ async def insert_new_player_data_into_plugin_database(player_name: str, token: s
         route=logging_helpers.build_route_log_string(request)
     )
 
-    sql_insert = insert(dbPlayer)
+    sql_insert:Insert = insert(dbPlayer)
     sql_insert = sql_insert.values(name=player_name)
     sql_insert = sql_insert.prefix_with("ignore")
 
-    sql_select = select(dbPlayer)
+    sql_select:Select = select(dbPlayer)
     sql_select = sql_select.where(dbPlayer.name == player_name)
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            await session.execute(sql_insert)
-        async with session.begin():
-            data = await session.execute(sql_select)
+    data = await functions.retry_on_deadlock(sql_insert, PLAYERDATA_ENGINE)
 
+    data = await functions.retry_on_deadlock(sql_select, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()

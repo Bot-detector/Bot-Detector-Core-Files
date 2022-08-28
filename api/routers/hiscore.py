@@ -1,19 +1,15 @@
 from typing import Optional
 
-from api.database.functions import PLAYERDATA_ENGINE
-from sqlalchemy.ext.asyncio import AsyncSession
-from api.database.database import EngineType
-from api.database.functions import sqlalchemy_result, verify_token
-from api.database.models import (
-    Player,
-    PlayerHiscoreDataLatest,
-    PlayerHiscoreDataXPChange,
-    playerHiscoreData,
-)
+from api.database import functions
+from api.database.functions import (PLAYERDATA_ENGINE, sqlalchemy_result,
+                                    verify_token)
+from api.database.models import (Player, PlayerHiscoreDataLatest,
+                                 PlayerHiscoreDataXPChange, playerHiscoreData)
 from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
-from sqlalchemy.sql.expression import insert, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.expression import Insert, Select, insert, select
 
 router = APIRouter()
 
@@ -132,7 +128,7 @@ async def get_player_hiscore_data(
 
     # query
     table = playerHiscoreData
-    sql = select(table)
+    sql:Select = select(table)
 
     # filters
     if not player_id == None:
@@ -141,11 +137,7 @@ async def get_player_hiscore_data(
     # paging
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
@@ -166,17 +158,13 @@ async def get_latest_hiscore_data_for_an_account(
 
     # query
     table = PlayerHiscoreDataLatest
-    sql = select(table)
+    sql:Select = select(table)
 
     # filters
     if not player_id == None:
         sql = sql.where(table.Player_id == player_id)
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
@@ -214,7 +202,7 @@ async def get_latest_hiscore_data_by_player_features(
         raise HTTPException(status_code=404, detail="No param given")
 
     # query
-    sql = select(PlayerHiscoreDataLatest)
+    sql:Select = select(PlayerHiscoreDataLatest)
 
     # filters
     if not possible_ban is None:
@@ -239,11 +227,7 @@ async def get_latest_hiscore_data_by_player_features(
     sql = sql.join(Player)
 
     # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
@@ -268,7 +252,7 @@ async def get_account_hiscore_xp_change(
 
     # query
     table = PlayerHiscoreDataXPChange
-    sql = select(table)
+    sql:Select = select(table)
 
     # filters
     if not player_id == None:
@@ -277,11 +261,7 @@ async def get_account_hiscore_xp_change(
     # paging
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
@@ -303,12 +283,8 @@ async def post_hiscore_data_to_database(
 
     # query
     table = playerHiscoreData
-    sql = insert(table).values(values)
+    sql:Insert = insert(table).values(values)
     sql = sql.prefix_with("ignore")
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     return {"ok": "ok"}

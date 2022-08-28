@@ -1,11 +1,11 @@
-from api.database.database import EngineType
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import Label as dbLabel
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlalchemy.sql.expression import insert, select
+from sqlalchemy.sql.expression import insert, select, Select, Insert
 from api.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
+from api.database import functions
 
 router = APIRouter()
 
@@ -23,13 +23,9 @@ async def get_labels_from_plugin_database(token: str):
         token, verification="request_highscores", route="[GET]/v1/label/"
     )
 
-    sql = select(dbLabel)
+    sql:Select = select(dbLabel)
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
@@ -45,21 +41,16 @@ async def insert_label_into_plugin_database(token: str, label: label):
     label_name = label_name["label_name"]
 
     # insert query
-    sql_insert = insert(dbLabel)
+    sql_insert:Insert = insert(dbLabel)
     sql_insert = sql_insert.values(label=label_name)
     sql_insert = sql_insert.prefix_with("ignore")
 
     # select query
-    sql_select = select(dbLabel)
+    sql_select:Select = select(dbLabel)
     sql_select = sql_select.where(dbLabel.label == label_name)
-    
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql_insert)
-        async with session.begin():
-            data = await session.execute(sql_select)
 
+    data = await functions.retry_on_deadlock(sql_insert, PLAYERDATA_ENGINE)
+    data = await functions.retry_on_deadlock(sql_select, PLAYERDATA_ENGINE)
     data = sqlalchemy_result(data)
     return data.rows2dict()
 

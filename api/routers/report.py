@@ -5,18 +5,22 @@ from typing import List, Optional
 
 import pandas as pd
 from api.database import functions
-
 from api.database.functions import PLAYERDATA_ENGINE
-from api.database.models import (Player, Prediction, Report,
-                                 playerReports, playerReportsManual, stgReport)
+from api.database.models import (
+    Player,
+    Report,
+    playerReports,
+    playerReportsManual,
+    stgReport,
+)
 from api.utils import logging_helpers
-from fastapi import APIRouter, HTTPException, Query, status, Request
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from pydantic.fields import Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
-from sqlalchemy.sql.expression import Select, insert, select, update, Insert
+from sqlalchemy.sql.expression import Insert, Select, Update, insert, select, update
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -31,34 +35,28 @@ upper_gear_cost = 1_000_000_000_000
 
 
 async def sql_select_players(names: List[str]) -> List:
-    sql = select(Player)
+    sql: Select = select(Player)
     sql = sql.where(
         Player.normalized_name.in_(tuple(await functions.jagexify_names_list(names)))
     )
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
+
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     data = functions.sqlalchemy_result(data)
     return [] if not data else data.rows2dict()
 
 
 async def sql_insert_player(new_names: List[dict]) -> None:
-    sql:Insert = insert(Player)
-    sql = sql.prefix_with("ignore")
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            await session.execute(sql, new_names)
+    sql: Insert = insert(Player)
+    sql = sql.prefix_with("ignore").values(new_names)
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
+    return
 
 
 async def sql_insert_report(param: dict) -> None:
-    sql:Insert = insert(stgReport)
-    sql = sql.prefix_with("ignore")
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            await session.execute(sql, param)
+    sql: Insert = insert(stgReport)
+    sql = sql.prefix_with("ignore").values(param)
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
+    return
 
 
 async def parse_detection(data: dict) -> dict:
@@ -136,7 +134,7 @@ async def get_reports(
     await functions.verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     if None == reportedID == reportingID:
@@ -144,7 +142,7 @@ async def get_reports(
             status_code=404, detail="reportedID or reportingID must be given"
         )
 
-    sql = select(Report)
+    sql: Select = select(Report)
 
     if not reportedID is None:
         sql = sql.where(Report.reportedID == reportedID)
@@ -159,37 +157,31 @@ async def get_reports(
         sql = sql.where(Report.region_id == regionID)
 
     # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     data = functions.sqlalchemy_result(data)
     return data.rows2dict()
 
 
 @router.put("/v1/report", tags=["Report"])
-async def update_reports(old_user_id: int, new_user_id: int, token: str, request: Request):
+async def update_reports(
+    old_user_id: int, new_user_id: int, token: str, request: Request
+):
     """
     Update the reports from one reporting user to another.
     """
     await functions.verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
     # can be used for name change
 
-    sql = update(Report)
+    sql:Update = update(Report)
     sql = sql.values(reportingID=new_user_id)
     sql = sql.where(Report.reportingID == old_user_id)
     sql = sql.prefix_with("ignore")
 
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
     return {"detail": f"{data.rowcount} rows updated to reportingID = {new_user_id}."}
 
 
@@ -300,10 +292,10 @@ async def insert_report(
     await functions.batch_function(sql_insert_report, param)
     return {"detail": "ok"}
 
+
 @router.get("/v1/report/count", tags=["Report"])
 async def get_report_count_v1(name: str):
-    """
-    """
+    """ """
     voter: Player = aliased(Player, name="voter")
     subject: Player = aliased(Player, name="subject")
 
@@ -323,13 +315,11 @@ async def get_report_count_v1(name: str):
 
     keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
     # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-            data = [{k: v for k, v in zip(keys, d)} for d in data]
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
+    data = [{k: v for k, v in zip(keys, d)} for d in data]
 
     return data
+
 
 @router.get("/v2/report/count", tags=["Report"])
 async def get_report_count_v2(name: str):
@@ -355,87 +345,66 @@ async def get_report_count_v2(name: str):
 
     keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
     # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-            data = [{k: v for k, v in zip(keys, d)} for d in data]
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
+    data = [{k: v for k, v in zip(keys, d)} for d in data]
     return data
 
 
 @router.get("/v1/report/manual/count", tags=["Report"])
-async def get_report_manual_count_v1(
-    name: str
-):
+async def get_report_manual_count_v1(name: str):
     """
     Get the calculated player report count
     """
     # query
 
-    voter:Player = aliased(Player, name="voter")
-    subject:Player = aliased(Player, name="subject")
+    voter: Player = aliased(Player, name="voter")
+    subject: Player = aliased(Player, name="subject")
 
-    sql:Select = select(
+    sql: Select = select(
         func.count(Report.reportedID.distinct()),
         subject.confirmed_ban,
         subject.possible_ban,
-        subject.confirmed_player
+        subject.confirmed_player,
     )
     sql = sql.join(voter, Report.reportingID == voter.id)
     sql = sql.join(subject, Report.reportedID == subject.id)
     sql = sql.where(voter.name == name)
     sql = sql.where(Report.manual_detect == 1)
     sql = sql.group_by(
-        subject.confirmed_ban,
-        subject.possible_ban,
-        subject.confirmed_player
+        subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
     )
 
-    keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
-    # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-            data = [{k:v for k,v in zip(keys,d)} for d in data]
-
+    keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
+    data = [{k: v for k, v in zip(keys, d)} for d in data]
     return data
 
 
 @router.get("/v2/report/manual/count", tags=["Report"])
-async def get_report_manual_count_v2(
-    name: str
-):
+async def get_report_manual_count_v2(name: str):
     """
     Get the calculated player report count
     """
     # query
 
-    voter:Player = aliased(Player, name="voter")
-    subject:Player = aliased(Player, name="subject")
+    voter: Player = aliased(Player, name="voter")
+    subject: Player = aliased(Player, name="subject")
 
-    sql:Select = select(
+    sql: Select = select(
         func.count(playerReportsManual.reported_id.distinct()),
         subject.confirmed_ban,
         subject.possible_ban,
-        subject.confirmed_player
+        subject.confirmed_player,
     )
     sql = sql.join(voter, playerReportsManual.reporting_id == voter.id)
     sql = sql.join(subject, playerReportsManual.reported_id == subject.id)
     sql = sql.where(voter.name == name)
     sql = sql.group_by(
-        subject.confirmed_ban,
-        subject.possible_ban,
-        subject.confirmed_player
+        subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
     )
 
-    keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
+    keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
     # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-            data = [{k:v for k,v in zip(keys,d)} for d in data]
-
+    data = await functions.retry_on_deadlock(sql, PLAYERDATA_ENGINE)
+    data = [{k: v for k, v in zip(keys, d)} for d in data]
     return data
