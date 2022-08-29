@@ -487,6 +487,8 @@ class playerHiscoreData(Base):
     theatre_of_blood = Column(Integer)
     theatre_of_blood_hard = Column(Integer)
     thermonuclear_smoke_devil = Column(Integer)
+    tombs_of_amascut = Column(Integer)
+    tombs_of_amascut_expert = Column(Integer)
     tzkal_zuk = Column(Integer)
     tztok_jad = Column(Integer)
     venenatis = Column(Integer)
@@ -588,6 +590,8 @@ class PlayerHiscoreDataLatest(Base):
     theatre_of_blood = Column(Integer)
     theatre_of_blood_hard = Column(Integer)
     thermonuclear_smoke_devil = Column(Integer)
+    tombs_of_amascut = Column(Integer)
+    tombs_of_amascut_expert = Column(Integer)
     tzkal_zuk = Column(Integer)
     tztok_jad = Column(Integer)
     venenatis = Column(Integer)
@@ -689,6 +693,8 @@ class PlayerHiscoreDataXPChange(Base):
     theatre_of_blood = Column(Integer)
     theatre_of_blood_hard = Column(Integer)
     thermonuclear_smoke_devil = Column(Integer)
+    tombs_of_amascut = Column(Integer)
+    tombs_of_amascut_expert = Column(Integer)
     tzkal_zuk = Column(Integer)
     tztok_jad = Column(Integer)
     venenatis = Column(Integer)
@@ -699,6 +705,7 @@ class PlayerHiscoreDataXPChange(Base):
     zulrah = Column(Integer)
 
     Player = relationship("Player")
+
 
 class playerReports(Base):
     __tablename__ = "playerReports"
@@ -711,6 +718,7 @@ class playerReports(Base):
     reported_player = relationship(
         "Player", primaryjoin="playerReports.reported_id == Player.id"
     )
+
 
 class playerReportsManual(Base):
     __tablename__ = "playerReportsManual"
