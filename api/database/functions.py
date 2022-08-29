@@ -226,7 +226,7 @@ async def retry_on_deadlock(
         except Exception as e:
             attempts += 1
             if isinstance(e, InternalError) or isinstance(e, OperationalError):
-                if any(msg in e.message for msg in lock_messages_error):
+                if any(msg in repr(e) for msg in lock_messages_error):
                     await asyncio.sleep(random.uniform(0.1, attempts * 5))
                     return await retry_on_deadlock(
                         sql, engine, max_attempts, attempts, data
