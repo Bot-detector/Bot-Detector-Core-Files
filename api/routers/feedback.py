@@ -1,17 +1,19 @@
-
 from typing import Optional
 
-from api.database.functions import PLAYERDATA_ENGINE
-from sqlalchemy.ext.asyncio import AsyncSession
-from api.database.functions import (EngineType, sqlalchemy_result,
-                                    verify_token)
+from api.database import functions
+from api.database.functions import (
+    PLAYERDATA_ENGINE,
+    sqlalchemy_result,
+    verify_token,
+)
 from api.database.models import Player, PredictionsFeedback
 from api.utils import logging_helpers
-from fastapi import APIRouter, HTTPException, Query, status, Request
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from pydantic.fields import Field
 from sqlalchemy import func, select
 from sqlalchemy.dialects.mysql import Insert
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.expression import Select, select
 
@@ -44,13 +46,14 @@ async def get_feedback(
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
+    name = await functions.to_jagex_name(name)
 
     # query
     table = PredictionsFeedback
-    sql:Select = select(table)
+    sql: Select = select(table)
     sql = sql.join(Player, PredictionsFeedback.voter_id == Player.id)
     sql = sql.where(Player.name == name)
     sql = sql.limit(row_count).offset(row_count * (page - 1))
@@ -64,42 +67,42 @@ async def get_feedback(
     data = sqlalchemy_result(data)
     return data.rows2dict()
 
+
 @router.get("/v1/feedback/count", tags=["Feedback"])
-async def get_feedback(
-    name: str
-):
+async def get_feedback(name: str):
     """
     Get the calculated player feedback of a player
     """
     # query
-    
-    voter:Player = aliased(Player, name="voter")
-    subject:Player = aliased(Player, name="subject")
 
-    sql:Select = select(
+    voter: Player = aliased(Player, name="voter")
+    subject: Player = aliased(Player, name="subject")
+
+    name = await functions.to_jagex_name(name)
+    
+    sql: Select = select(
         func.count(PredictionsFeedback.id),
         subject.confirmed_ban,
         subject.possible_ban,
-        subject.confirmed_player
+        subject.confirmed_player,
     )
     sql = sql.join(voter, PredictionsFeedback.voter_id == voter.id)
     sql = sql.join(subject, PredictionsFeedback.subject_id == subject.id)
     sql = sql.where(voter.name == name)
     sql = sql.group_by(
-        subject.confirmed_ban,
-        subject.possible_ban,
-        subject.confirmed_player
+        subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
     )
 
-    keys = ["count","confirmed_ban","possible_ban","confirmed_player"]
+    keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
     # execute query
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
         async with session.begin():
             data = await session.execute(sql)
-            data = [{k:v for k,v in zip(keys,d)} for d in data]
+            data = [{k: v for k, v in zip(keys, d)} for d in data]
 
     return data
+
 
 @router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["Feedback"])
 async def post_feedback(feedback: Feedback):
@@ -108,7 +111,7 @@ async def post_feedback(feedback: Feedback):
     """
     feedback = feedback.dict()
 
-    sql_player:Select = select(Player)
+    sql_player: Select = select(Player)
     sql_player = sql_player.where(Player.name == feedback.pop("player_name"))
     sql_insert = Insert(PredictionsFeedback).prefix_with("ignore")
 
