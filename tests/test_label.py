@@ -4,14 +4,9 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
-from api import app
 from api.Config import token
-from fastapi.testclient import TestClient
 
-client = TestClient(app.app)
-
-
-def test_get_labels():
+def test_get_labels(test_client):
     url = "/v1/label/"
     test_cases = [
         {"token": token, "status_code": 200},
@@ -21,7 +16,7 @@ def test_get_labels():
     for case in test_cases:
         param = {"token": case.get("token")}
 
-        response = client.get(url, params=param)
+        response = test_client.get(url, params=param)
 
         print(response.url)
         print(response.text)

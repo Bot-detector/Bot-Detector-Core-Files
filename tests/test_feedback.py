@@ -4,20 +4,16 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
-from api import app
-from fastapi.testclient import TestClient
 
-client = TestClient(app.app)
-
-def test_get_feedback():
+def test_get_feedback(test_client):
     url = "/v1/feedback/count/"
     test_cases = [
-        {"name":"extreme4all", "status_code": 200}
+        {"name":"3BA604236FB0319D5937E31388B0C64C", "status_code": 200}
     ]
     for case in test_cases:
         param = {"name": case.get("name")}
 
-        response = client.get(url, params=param)
+        response = test_client.get(url, params=param)
 
         print(response.url)
         print(response.text)
