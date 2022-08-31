@@ -249,7 +249,11 @@ async def insert_report(
     names.extend(df["reporter"].unique())
 
     # validate all names
-    valid_names = [name for name in names if await functions.is_valid_rsn(name)]
+    valid_names = [
+        await functions.to_jagex_name(name) 
+        for name in names 
+        if await functions.is_valid_rsn(name)
+    ]
 
     # Get IDs for all unique valid names
     data = await sql_select_players(valid_names)
@@ -260,7 +264,7 @@ async def insert_report(
 
     # Get new player id's
     if new_names:
-        param = [{"name": name, "nname": name} for name in new_names]
+        param = [{"name": name, "normalized_name": await functions.to_jagex_name(name) } for name in new_names]
         await functions.batch_function(sql_insert_player, param)
         data.extend(await sql_select_players(new_names))
 

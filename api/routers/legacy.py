@@ -10,6 +10,7 @@ from typing import List, Optional
 import pandas as pd
 from api import Config
 from api.database.database import (DISCORD_ENGINE, EngineType)
+from api.database import functions
 from api.database.functions import execute_sql, list_to_string, verify_token
 from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Request
@@ -112,7 +113,7 @@ class DiscordVerifyInfo(BaseModel):
 """
 
 
-async def sql_get_player(player_name):
+async def sql_get_player(player_name:str):
     """Attempts to get data for a player whose names matches player_name."""
     sql_player_id = "select * from Players where normalized_name = :normalized_name"
 
@@ -123,6 +124,9 @@ async def sql_get_player(player_name):
 
     try:
         player = player.rows2dict()
+        logger.info(
+            f"{player=}, {param=}"
+        )
     except AttributeError:
         raise HTTPException(status_code=405, detail="Player does not exist.")
 
@@ -1185,7 +1189,10 @@ async def post_verification_request_information(
 
     info = verify_info.dict()
 
-    player_name = info.get("player_name")
+    player_name = await functions.to_jagex_name(
+        info.get("player_name")
+    )
+    
     discord_id = info.get("discord_id")
     code = info.get("code")
 
