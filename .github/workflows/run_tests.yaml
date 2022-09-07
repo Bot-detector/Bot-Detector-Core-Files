@@ -18,12 +18,14 @@ jobs:
           path: bot-detector-mysql
 
   mysql-up:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: setup
     steps:
-      - name: docker run mysql
-        run: |
-          docker-compose -f bot-detector-mysql/docker-compose-test.yml up
+      - name: Sets up MySQL database
+        run: docker-compose -f bot-detector-mysql/docker-compose-test.yml up
+      - name: Sleep while setting up
+        run: sleep 60s
+        shell: bash
 
   run-tests:
     runs-on: self-hosted
@@ -33,7 +35,6 @@ jobs:
       sql_uri: mysql+asyncmy://root:root_bot_buster@localhost:8999/playerdata
       discord_sql_uri: mysql+asyncmy://root:root_bot_buster@localhost:8999/discord
       token: verify_ban
-
 
     steps:
       - name: Set up Python ${{ env.PYTHON_VERSION }}
