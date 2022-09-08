@@ -79,7 +79,7 @@ async def get_feedback(name: str):
     subject: Player = aliased(Player, name="subject")
 
     name = await functions.to_jagex_name(name)
-    
+
     sql: Select = select(
         func.count(PredictionsFeedback.id),
         subject.confirmed_ban,

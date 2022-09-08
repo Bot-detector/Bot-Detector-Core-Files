@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest
 from api.Config import token
 
+
 def test_report_count(test_client):
     url = "/v1/report/count"
     test_cases = [
@@ -20,7 +21,7 @@ def test_report_count(test_client):
         print(response.url)
         print(response.text)
         print(case, param)
-        
+
         # status code check
         status_code = case.get("status_code")
         error = f"Invalid response, Received: {response.status_code}, expected {status_code}, {case}"

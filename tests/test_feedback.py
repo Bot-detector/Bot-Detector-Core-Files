@@ -5,11 +5,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
 
+
 def test_get_feedback(test_client):
     url = "/v1/feedback/count/"
-    test_cases = [
-        {"name":"3BA604236FB0319D5937E31388B0C64C", "status_code": 200}
-    ]
+    test_cases = [{"name": "3BA604236FB0319D5937E31388B0C64C", "status_code": 200}]
     for case in test_cases:
         param = {"name": case.get("name")}
 

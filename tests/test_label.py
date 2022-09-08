@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest
 from api.Config import token
 
+
 def test_get_labels(test_client):
     url = "/v1/label/"
     test_cases = [
