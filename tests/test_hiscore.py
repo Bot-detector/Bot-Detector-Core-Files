@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api.Config import token
 
+
 def test_get_player_hiscore_data(test_client):
     test_cases = [
         {"player_id": 1, "status_code": 200, "detail": "valid player"},

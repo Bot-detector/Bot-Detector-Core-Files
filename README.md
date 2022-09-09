@@ -4,7 +4,7 @@
 ![Website](https://img.shields.io/website?down_color=lightgrey&down_message=down&up_color=green&up_message=up&url=https%3A%2F%2Fosrsbotdetector.com%2F)
 ![Discord](https://img.shields.io/discord/817916789668708384?label=discord)
 ![Twitter Follow](https://img.shields.io/twitter/follow/osrsbotdetector?style=social)
-    
+
 ## How does it work?
 The project is broken into 7 separate pieces:
 * API ← You are here
@@ -31,7 +31,7 @@ If you would like to join our community, get involved in development, join our c
 **Yes**. We're always welcoming new talent to the team. Many new faces like to join [our discord](https://discord.gg/3AB58CRmYs) to have a bit of guidance, however if that's not your cup of tea -- we've listed all of the steps necessary to start a development environment, and to help contribute to banning bots, below:
 
 # Core Files Setup
-This guide will take you through the necessary steps to start contributing to the server side components. 
+This guide will take you through the necessary steps to start contributing to the server side components.
 This will include the following repositories:
 * [API](https://github.com/Bot-detector/Bot-Detector-Core-Files)
 * [Database](https://github.com/Bot-detector/Bot-Detector-Core-Files)
@@ -70,15 +70,15 @@ cd Bot-Detector-Core-Files
 docker-compose up -d
 ```
 5. In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
-6. Test the api's: 
+6. Test the api's:
     * Core api: ```http://localhost:5000/```
 
 adding /docs at the end will give return the swagger documentation for the components `/docs`
 
 ## What contributions are needed?
-Features, and bugs are documented as issues in each repository. The project owners, review these, and select some as part of a [github project](https://github.com/orgs/Bot-detector/projects). 
+Features, and bugs are documented as issues in each repository. The project owners, review these, and select some as part of a [github project](https://github.com/orgs/Bot-detector/projects).
 
-## Merging your changes 
+## Merging your changes
 Changes to the project will have to submitted through the process of Merge Requests.  Github has good [documentation](https://docs.github.com/en/get-started/quickstart/contributing-to-projects) outlining this process and how it works, but to summarize it here briefly:
 1. Go to our repository and click `Fork`. ![image](https://user-images.githubusercontent.com/40169115/153728214-cd741e4e-b036-4d48-9f47-48c4dc9e99be.png)
 2. Clone your newly created repository to your local machine (into the `bot-detector\local` folder)

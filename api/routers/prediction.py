@@ -105,9 +105,7 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
 
 @router.post("/v1/prediction", tags=["Prediction"])
 async def insert_prediction_into_plugin_database(
-    token: str,
-    prediction: List[Prediction], 
-    request: Request
+    token: str, prediction: List[Prediction], request: Request
 ):
     """
     Posts a new prediction into the plugin database.\n
@@ -116,7 +114,7 @@ async def insert_prediction_into_plugin_database(
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     data = [d.dict() for d in prediction]
@@ -192,7 +190,7 @@ async def gets_predictions_by_player_features(
     await verify_token(
         token,
         verification="request_highscores",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     if (

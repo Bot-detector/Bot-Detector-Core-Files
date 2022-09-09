@@ -25,11 +25,13 @@ async def add_process_time_header(request: Request, call_next):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     error = json.loads(exc.json())
-    logger.warning({
-        "url_path": request.url.path,
-        "method": request.method,
-        "path_params": request.path_params,
-        "query_params": request.query_params,
-        "error": error
-    })
+    logger.warning(
+        {
+            "url_path": request.url.path,
+            "method": request.method,
+            "path_params": request.path_params,
+            "query_params": request.query_params,
+            "error": error,
+        }
+    )
     return JSONResponse(content={"detail": error}, status_code=422)

@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 
 from api.app import app
 
+
 @pytest.fixture
 def test_client():
     """Returns a Starlette test API instance"""
