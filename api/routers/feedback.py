@@ -109,10 +109,13 @@ async def post_feedback(feedback: Feedback):
     """
     Insert feedback into database
     """
-    feedback = feedback.dict()
+    feedback:dict = feedback.dict()
+
+    name = feedback.pop("player_name")
+    name = await functions.to_jagex_name(name)
 
     sql_player: Select = select(Player)
-    sql_player = sql_player.where(Player.name == feedback.pop("player_name"))
+    sql_player = sql_player.where(Player.name == name)
     sql_insert = Insert(PredictionsFeedback).prefix_with("ignore")
 
     async with PLAYERDATA_ENGINE.get_session() as session:
