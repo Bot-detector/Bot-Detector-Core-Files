@@ -31,7 +31,6 @@ def parse_response(response):
     except Exception as e:
         assert False, e
 
-
 def test_prediction(test_client):
     url = "/v1/prediction/"
     breakdown_param = [
