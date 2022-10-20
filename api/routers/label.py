@@ -52,7 +52,7 @@ async def insert_label_into_plugin_database(token: str, label: label):
     # select query
     sql_select = select(dbLabel)
     sql_select = sql_select.where(dbLabel.label == label_name)
-    
+
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
         async with session.begin():

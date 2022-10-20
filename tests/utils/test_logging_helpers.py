@@ -18,12 +18,17 @@ def test_build_route_log_string(test_client):
     gets called with the proper log string passed into it.
     """
 
-    with patch.object(hiscore, 'verify_token', return_value=None) as mock:
+    with patch.object(hiscore, "verify_token", return_value=None) as mock:
         test_client.get(request_path, params=request_params)
 
-        expected_log_str = '[GET] Path: /discord/get_linked_accounts/***/1 Query Params: '
+        expected_log_str = (
+            "[GET] Path: /discord/get_linked_accounts/***/1 Query Params: "
+        )
 
-        mock.assert_called_once_with(token, verification="verify_players", route=expected_log_str)
+        mock.assert_called_once_with(
+            token, verification="verify_players", route=expected_log_str
+        )
+
 
 def test_censor_log_entry():
     """

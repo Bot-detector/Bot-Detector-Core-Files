@@ -278,9 +278,9 @@ async def sql_get_contributions(contributors: List):
 
 async def sql_get_feedback_submissions(voters: List):
     sql = """
-        SELECT 
+        SELECT
             PredictionsFeedback.id
-        FROM PredictionsFeedback 
+        FROM PredictionsFeedback
         JOIN Players ON Players.id = PredictionsFeedback.voter_id
         WHERE 1=1
             AND Players.normalized_name IN :voters

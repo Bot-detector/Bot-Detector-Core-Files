@@ -12,4 +12,4 @@ COPY . /project/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host", "0.0.0.0"] 
+CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host", "0.0.0.0"]

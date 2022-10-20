@@ -48,3 +48,4 @@ tzlocal==4.1
 urllib3==1.26.8
 uvicorn==0.17.3
 XlsxWriter==3.0.2
+pre-commit==2.20.0

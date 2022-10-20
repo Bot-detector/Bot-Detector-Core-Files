@@ -39,7 +39,7 @@ async def get_player_information(
     await verify_token(
         token,
         verification="request_highscores",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     # return exception if no param are given
@@ -86,7 +86,7 @@ async def get_bulk_player_data_from_the_plugin_database(
     await verify_token(
         token,
         verification="request_highscores",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     # return exception if no param are given
@@ -141,7 +141,7 @@ async def update_existing_player_data(player: Player, token: str, request: Reque
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     # param
@@ -171,14 +171,16 @@ async def update_existing_player_data(player: Player, token: str, request: Reque
 
 
 @router.post("/v1/player", tags=["Player"])
-async def insert_new_player_data_into_plugin_database(player_name: str, token: str, request: Request):
+async def insert_new_player_data_into_plugin_database(
+    player_name: str, token: str, request: Request
+):
     """
     Insert new player & return player.
     """
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request)
+        route=logging_helpers.build_route_log_string(request),
     )
 
     sql_insert = insert(dbPlayer)

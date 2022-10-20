@@ -9,7 +9,8 @@ from typing import List, Optional
 
 import pandas as pd
 from api import Config
-from api.database.database import (DISCORD_ENGINE, EngineType)
+from api.database.database import DISCORD_ENGINE, EngineType
+from api.database import functions
 from api.database.functions import execute_sql, list_to_string, verify_token
 from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Request
@@ -112,7 +113,7 @@ class DiscordVerifyInfo(BaseModel):
 """
 
 
-async def sql_get_player(player_name):
+async def sql_get_player(player_name: str):
     """Attempts to get data for a player whose names matches player_name."""
     sql_player_id = "select * from Players where normalized_name = :normalized_name"
 
@@ -123,6 +124,7 @@ async def sql_get_player(player_name):
 
     try:
         player = player.rows2dict()
+        logger.info(f"{player=}, {param=}")
     except AttributeError:
         raise HTTPException(status_code=405, detail="Player does not exist.")
 
@@ -216,9 +218,9 @@ async def sql_get_contributions(contributors: List):
 
 async def sql_get_feedback_submissions(voters: List):
     sql = """
-        SELECT 
+        SELECT
             PredictionsFeedback.id
-        FROM PredictionsFeedback 
+        FROM PredictionsFeedback
         JOIN Players ON Players.id = PredictionsFeedback.voter_id
         WHERE 1=1
             AND Players.name IN :voters
@@ -264,10 +266,10 @@ async def sql_update_player(player: dict):
     values = list_to_string(values)
 
     sql = f"""
-        update Players 
+        update Players
         set
             {values}
-        where 
+        where
             id=:player_id;
     """
     select = "select * from Players where id=:player_id"
@@ -278,8 +280,8 @@ async def sql_update_player(player: dict):
 
 
 async def sql_get_latest_xp_gain(player_id: int):
-    sql = """          
-        SELECT * 
+    sql = """
+        SELECT *
         FROM playerHiscoreDataXPChange xp
         WHERE 1 = 1
             AND xp.Player_id = :player_id
@@ -358,7 +360,7 @@ async def sql_get_report_data_heatmap(region_id: int):
                 WHERE pls.confirmed_ban = 1
                 AND rpts.region_id = :region_id
         ORDER BY pls.id DESC
-                
+
     """
 
     param = {"region_id": region_id}
@@ -380,13 +382,13 @@ async def sql_region_search(region_name: str):
 
 async def get_ban_spreadsheet_data(player_name: str):
     sql = """
-        SELECT 
+        SELECT
             pl1.name reporter,
             lbl.label,
             hdl.*
         FROM Reports rp
         INNER JOIN Players pl1 ON (rp.reportingID = pl1.id)
-        INNER JOIN Players pl2 on (rp.reportedID = pl2.id) 
+        INNER JOIN Players pl2 on (rp.reportedID = pl2.id)
         INNER JOIN Labels lbl ON (pl2.label_id = lbl.id)
         INNER JOIN playerHiscoreDataLatest hdl on (pl2.id = hdl.Player_id)
         where 1=1
@@ -424,7 +426,7 @@ async def get_export_link(url_text: str):
 
 async def update_export_link(update_export: dict):
     sql = """UPDATE export_links
-             SET 
+             SET
                 time_redeemed = :time_redeemed,
                 is_redeemed = :is_redeemed
              WHERE id = :id
@@ -614,7 +616,7 @@ async def parse_contributors(
 
 
 """
-   
+
 """
 
 
@@ -817,7 +819,7 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
 
     sql = f"""
         insert ignore into PredictionsFeedback ({columns})
-        values ({values}) 
+        values ({values})
     """
 
     await execute_sql(sql, param=feedback_params)
@@ -837,23 +839,23 @@ async def get_highscores(
     await verify_token(
         token,
         verification="request_highscores",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     if ofInterest is None:
         sql = """
-            SELECT 
-                hdl.*, 
-                pl.name 
-            FROM playerHiscoreDataLatest hdl 
-            inner join Players pl on(hdl.Player_id=pl.id)    
+            SELECT
+                hdl.*,
+                pl.name
+            FROM playerHiscoreDataLatest hdl
+            inner join Players pl on(hdl.Player_id=pl.id)
         """
     else:
         sql = """
-            SELECT 
-                htl.*, 
-                poi.name 
-            FROM playerHiscoreDataLatest htl 
+            SELECT
+                htl.*,
+                poi.name
+            FROM playerHiscoreDataLatest htl
             INNER JOIN playersOfInterest poi ON (htl.Player_id = poi.id)
         """
 
@@ -867,12 +869,12 @@ async def get_players(
     request: Request,
     ofInterest: int = None,
     row_count: int = 100_000,
-    page: int = 1
+    page: int = 1,
 ):
     await verify_token(
         token,
         verification="request_highscores",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     # get data
@@ -888,7 +890,10 @@ async def get_players(
 @router.get("/site/labels/{token}", tags=["Legacy"])
 async def get_labels(token, request: Request):
     await verify_token(
-        token, verification="request_highscores", route=logging_helpers.build_route_log_string(request, [token]))
+        token,
+        verification="request_highscores",
+        route=logging_helpers.build_route_log_string(request, [token]),
+    )
 
     sql = "select * from Labels"
     data = await execute_sql(sql)
@@ -900,7 +905,7 @@ async def verify_bot(token: str, bots: bots, request: Request):
     await verify_token(
         token,
         verification="verify_ban",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     bots = bots.__dict__
@@ -939,9 +944,9 @@ async def verify_bot(token: str, bots: bots, request: Request):
 
 async def sql_get_unverified_discord_user(player_id):
     sql = """
-        SELECT * from discordVerification 
+        SELECT * from discordVerification
         WHERE 1=1
-            and Player_id = :player_id 
+            and Player_id = :player_id
             and Verified_status = 0
         """
 
@@ -974,15 +979,12 @@ async def set_discord_verification(id, token):
 
 @router.post("/{version}/site/discord_user/{token}", tags=["Legacy"])
 async def verify_discord_user(
-    token: str,
-    discord: discord,
-    request: Request,
-    version: str = None
+    token: str, discord: discord, request: Request, version: str = None
 ):
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     verify_data = discord.dict()
@@ -1091,7 +1093,7 @@ async def get_latest_xp_gains(player_info: PlayerName, token: str, request: Requ
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     player = player_info.dict()
@@ -1137,11 +1139,13 @@ async def get_latest_xp_gains(player_info: PlayerName, token: str, request: Requ
     "/discord/verify/player_rsn_discord_account_status/{token}/{player_name}",
     tags=["Legacy"],
 )
-async def get_discord_verification_status_by_name(token: str, player_name: str, request: Request):
+async def get_discord_verification_status_by_name(
+    token: str, player_name: str, request: Request
+):
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     status_info = await sql_get_discord_verification_status(player_name)
@@ -1152,11 +1156,15 @@ async def get_discord_verification_status_by_name(token: str, player_name: str, 
 @router.get(
     "/discord/verify/get_verification_attempts/{token}/{player_name}", tags=["Legacy"]
 )
-async def get_discord_verification_attempts(token: str, player_name: str, request: Request,):
+async def get_discord_verification_attempts(
+    token: str,
+    player_name: str,
+    request: Request,
+):
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     player = await sql_get_player(player_name)
@@ -1173,19 +1181,18 @@ async def get_discord_verification_attempts(token: str, player_name: str, reques
 
 @router.post("/discord/verify/insert_player_dpc/{token}", tags=["Legacy"])
 async def post_verification_request_information(
-    token: str,
-    verify_info: DiscordVerifyInfo,
-    request: Request
+    token: str, verify_info: DiscordVerifyInfo, request: Request
 ):
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     info = verify_info.dict()
 
-    player_name = info.get("player_name")
+    player_name = await functions.to_jagex_name(info.get("player_name"))
+
     discord_id = info.get("discord_id")
     code = info.get("code")
 
@@ -1209,7 +1216,7 @@ async def get_discord_linked_accounts(token: str, discord_id: int, request: Requ
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     linked_accounts = await sql_get_discord_linked_accounts(discord_id)
@@ -1222,7 +1229,7 @@ async def get_latest_sighting(token: str, player_info: PlayerName, request: Requ
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     player = player_info.dict()
@@ -1262,7 +1269,7 @@ async def get_region(token: str, region: RegionName, request: Request):
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     region_info = region.dict()
@@ -1278,7 +1285,7 @@ async def get_heatmap_data(token: str, region_id: RegionID, request: Request):
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     region_data = region_id.dict()
@@ -1305,7 +1312,7 @@ async def generate_excel_export(token: str, export_info: ExportInfo, request: Re
     await verify_token(
         token,
         verification="verify_players",
-        route=logging_helpers.build_route_log_string(request, [token])
+        route=logging_helpers.build_route_log_string(request, [token]),
     )
 
     # get_ban_spreadsheet_data

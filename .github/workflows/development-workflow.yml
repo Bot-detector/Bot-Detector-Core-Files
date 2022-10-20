@@ -22,7 +22,7 @@ jobs:
 
     - name: Tag Image
       run: docker tag bot-detector/bd-api:latest hub.osrsbotdetector.com/bot-detector/bd-api:latest
-      
+
     - name: Login to Docker Registry
       run: echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | docker login https://hub.osrsbotdetector.com -u "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin
 
