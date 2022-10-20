@@ -125,7 +125,8 @@ async def post_feedback(feedback: Feedback):
                 feedback["voter_id"] = player[0]["id"]
             except IndexError:
                 raise HTTPException(
-                    status_code=500, detail="Could not find voter in registry."
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
+                    detail="Could not find voter in registry."
                 )
 
             sql_insert = sql_insert.values(feedback)
