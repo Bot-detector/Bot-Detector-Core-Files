@@ -75,7 +75,11 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
     data = sqlalchemy_result(data).rows2dict()
     keys = ["name", "Prediction", "id", "created"]
     data = [
-        {k: float(v) / 100 if k not in keys else v for k, v in d.items()} for d in data
+        {
+            k: float(v) / 100 
+            if k not in keys else v 
+            for k, v in d.items()
+        } for d in data
     ]
     if len(data) == 0:
         raise HTTPException(
@@ -83,13 +87,16 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
         )
 
     data: dict = data[0]
+    prediction = data.pop("Prediction")
     data = {
         "player_id": data.pop("id"),
         "player_name": data.pop("name"),
-        "prediction_label": data.pop("Prediction"),
+        "prediction_label": prediction,
         "prediction_confidence": data.pop("Predicted_confidence"),
         "created": data.pop("created"),
-        "predictions_breakdown": data,
+        "predictions_breakdown": data
+        if breakdown or prediction != "Stats_Too_Low"
+        else None,
     }
 
     prediction = data.get("prediction_label")
