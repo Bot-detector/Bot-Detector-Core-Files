@@ -1,16 +1,13 @@
 from operator import or_
 from typing import List, Optional
 
-from api.database.functions import (
-    PLAYERDATA_ENGINE,
-    list_to_string,
-    sqlalchemy_result,
-    verify_token,
-)
+from api.database import functions
+from api.database.functions import (PLAYERDATA_ENGINE, list_to_string,
+                                    sqlalchemy_result, verify_token)
 from api.database.models import Player, PlayerHiscoreDataLatest
 from api.database.models import Prediction as dbPrediction
 from api.utils import logging_helpers
-from fastapi import APIRouter, HTTPException, Query, status, Request
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Select, select, text
@@ -63,7 +60,7 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
     Returns:
         A dict containing the prediction data for the player
     """
-
+    name = await functions.to_jagex_name(name)
     sql: Select = select(dbPrediction)
     sql = sql.where(dbPrediction.name == name)
 
