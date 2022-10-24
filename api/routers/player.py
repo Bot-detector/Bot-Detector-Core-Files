@@ -1,6 +1,7 @@
 import time
 from typing import List, Optional
 
+from api.database import functions
 from api.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.database.database import Engine, EngineType
@@ -51,6 +52,7 @@ async def get_player_information(
 
     # filters
     if not player_name == None:
+        player_name = await functions.to_jagex_name(player_name)
         sql = sql.where(dbPlayer.name == player_name)
     if not player_id == None:
         sql = sql.where(dbPlayer.id == player_id)
@@ -183,6 +185,8 @@ async def insert_new_player_data_into_plugin_database(
         route=logging_helpers.build_route_log_string(request),
     )
 
+    player_name = await functions.to_jagex_name(player_name)
+    
     sql_insert = insert(dbPlayer)
     sql_insert = sql_insert.values(name=player_name)
     sql_insert = sql_insert.prefix_with("ignore")
