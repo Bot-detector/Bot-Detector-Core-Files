@@ -356,6 +356,9 @@ async def get_report_count_v2(name: str):
 
     voter: Player = aliased(Player, name="voter")
     subject: Player = aliased(Player, name="subject")
+
+    name = await functions.to_jagex_name(name)
+
     sql: Select = select(
         func.count(playerReports.reported_id.distinct()),
         subject.confirmed_ban,
@@ -426,6 +429,8 @@ async def get_report_manual_count_v2(name: str):
 
     voter: Player = aliased(Player, name="voter")
     subject: Player = aliased(Player, name="subject")
+
+    name = await functions.to_jagex_name(name)
 
     sql: Select = select(
         func.count(playerReportsManual.reported_id.distinct()),
