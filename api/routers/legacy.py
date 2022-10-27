@@ -991,14 +991,12 @@ async def verify_discord_user(
 
     code = verify_data.get("code", "")
 
-    if len(code) == 4:
-        try:
-            provided_code = int(code)
-        except ValueError:
-            raise HTTPException(
-                status_code=400, detail=f"Please provide a 4 digit code."
-            )
-    else:
+    if len(code) != 4:
+        raise HTTPException(status_code=400, detail=f"Please provide a 4 digit code.")
+    
+    try:
+        provided_code = int(code)
+    except ValueError:
         raise HTTPException(status_code=400, detail=f"Please provide a 4 digit code.")
 
     player = await sql_get_player(verify_data["player_name"])
@@ -1012,15 +1010,17 @@ async def verify_discord_user(
     token_info = token_info[0]
     token_id = token_info.get("id")
 
-    if pending_discord:
-        for record in pending_discord:
-            pending_code = int(record.Code)
-
-            if pending_code == provided_code:
-                await set_discord_verification(id=record.Entry, token=token_id)
-                break
-    else:
+    if not pending_discord:
         raise HTTPException(status_code=400, detail=f"No pending links for this user.")
+
+    found_code = False
+    for record in pending_discord:
+        if int(record.Code) == provided_code:
+            await set_discord_verification(id=record.Entry, token=token_id)
+            break
+    if not(found_code):   
+        raise HTTPException(status_code=400, detail=f"Linking code is incorrect.")
+        
     return {"ok": "ok"}
 
 
