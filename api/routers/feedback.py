@@ -124,6 +124,13 @@ async def post_feedback(feedback: Feedback):
             player = await session.execute(sql_player)
             player = sqlalchemy_result(player).rows2dict()
 
+            if player == []:
+                # create anonymous user if not exists
+                if name.startswith('anonymoususer '):
+                    await session.execute(Insert(Player).values(name=name))
+                    player = await session.execute(sql_player)
+                    player = sqlalchemy_result(player).rows2dict()
+            # this could be an else statement
             try:
                 feedback["voter_id"] = player[0]["id"]
             except IndexError:
