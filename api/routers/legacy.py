@@ -1017,7 +1017,9 @@ async def verify_discord_user(
     for record in pending_discord:
         if int(record.Code) == provided_code:
             await set_discord_verification(id=record.Entry, token=token_id)
+            found_code = True
             break
+        
     if not(found_code):   
         raise HTTPException(status_code=400, detail=f"Linking code is incorrect.")
         
