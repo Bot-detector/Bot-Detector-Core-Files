@@ -7,13 +7,14 @@ services:
       args:
         root_path: /
         api_port: 5000
-    image: bot-detector/bd-api:latest
+    command:  uvicorn api.app:app --host 0.0.0.0 --reload --reload-include api/*
+    container_name: python-core-api
     env_file:
       - .env
     volumes:
-      - '../Bot-Detector-Core-Files/api:/code/api'
+      - ../Bot-Detector-Core-Files/api:/project/api
     ports:
-      - "5000:5000"
+      - 5000:5000
     networks:
       - botdetector-network
 
