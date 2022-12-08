@@ -21,6 +21,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: base
       args:
         root_path: /
         api_port: 5000

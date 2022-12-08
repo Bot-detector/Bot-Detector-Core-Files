@@ -20,8 +20,10 @@ COPY ./requirements.txt /project
 RUN pip install --no-cache-dir -r requirements.txt
 
 # copy the scripts to the folder
-COPY . /project
+COPY ./src /project/src
 
+# production image
+FROM base as production
 # Creates a non-root user with an explicit UID and adds permission to access the /project folder
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /project
 USER appuser
