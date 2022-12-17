@@ -20,7 +20,7 @@ COPY ./requirements.txt /project
 RUN pip install --no-cache-dir -r requirements.txt
 
 # copy the scripts to the folder
-COPY ./src /project/src
+COPY ./api /project/api
 
 # production image
 FROM base as production

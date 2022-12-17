@@ -39,7 +39,7 @@ app.add_middleware(
 
 
 # setup logging
-file_handler = logging.FileHandler(filename="logs/error.log", mode="a")
+file_handler = logging.FileHandler(filename="error.log", mode="a")
 stream_handler = logging.StreamHandler(sys.stdout)
 # # log formatting
 formatter = logging.Formatter(
