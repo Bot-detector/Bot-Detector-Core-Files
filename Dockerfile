@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # copy the scripts to the folder
 COPY ./api /project/api
+COPY ./.env /project/.env
 
 # production image
 FROM base as production
