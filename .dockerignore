@@ -3,3 +3,4 @@
 .vscode
 LICENSE
 *.md
+.env
