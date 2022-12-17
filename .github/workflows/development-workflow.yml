@@ -10,15 +10,15 @@ jobs:
     - uses: actions/checkout@v2
     - name: Set Up ENV
       run: |
-          echo "${{ secrets.ASYNCMY_URI }}" > .env
-          echo "${{ secrets.DISCORD_ASYNCMY_URI }}" >> .env
+          echo "${{ secrets.ASYNCMY_URI }}" > ./api/.env
+          echo "${{ secrets.DISCORD_ASYNCMY_URI }}" >> ./api/.env
 
   build-image:
     needs: setup
     runs-on: self-hosted
     steps:
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --build-arg api_port=5000 --build-arg root_path=/dev -t bot-detector/bd-api:latest
+      run: docker build . --file Dockerfile --build-arg api_port=5000 --build-arg root_path=/dev -t bot-detector/bd-api:latest --target production
 
     - name: Tag Image
       run: docker tag bot-detector/bd-api:latest hub.osrsbotdetector.com/bot-detector/bd-api:latest
