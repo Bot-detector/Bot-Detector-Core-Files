@@ -45,6 +45,17 @@ You can find other relevant repositories in our [organization's github](https://
 * An integrated development environment (IDE).
     * We recommend [VSCode](https://code.visualstudio.com), but any IDE will work.
 
+### setup pre-commit
+pre-commit is used to format your commit before committing it.
+```
+pre-commit --version
+pre-commit install
+```
+pre-commit runs automatically when you commit, but if it doesn't work.
+```
+pre-commit run --all-files
+```
+
 ### Setup:
 1. Open a terminal `cmd`
 2. Navigate `cd` to where you want to save our code.
@@ -67,7 +78,7 @@ git clone https://github.com/Bot-detector/bot-detector-mysql.git
 4. Now you can start the project, the command below will create the necessary docker containers, the first time might take a couple minutes. **Make sure docker desktop is running!**
 ```
 cd Bot-Detector-Core-Files
-docker-compose up -d
+docker-compose up --build
 ```
 5. In the terminal you will now see `/usr/sbin/mysqld: ready for connections.` this means the database is ready.
 6. Test the api's:

@@ -186,7 +186,7 @@ async def insert_new_player_data_into_plugin_database(
     )
 
     player_name = await functions.to_jagex_name(player_name)
-    
+
     sql_insert = insert(dbPlayer)
     sql_insert = sql_insert.values(name=player_name)
     sql_insert = sql_insert.prefix_with("ignore")
