@@ -202,7 +202,7 @@ async def update_reports(
 @router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
 async def insert_report(
     detections: List[detection],
-    manual_detect: int = Query(0, ge=0, le=1),
+    manual_detect: int = Query(None, ge=0, le=1),
 ):
     """
     Inserts detections into to the plugin database.
@@ -302,8 +302,9 @@ async def insert_report(
         return
 
     df["reporter_id"] = reporter_id[0]
-
-    df["manual_detect"] = manual_detect
+    
+    if manual_detect:
+        df["manual_detect"] = manual_detect
 
     # Parse data to param
     data = df.to_dict("records")
