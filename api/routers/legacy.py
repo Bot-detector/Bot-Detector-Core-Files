@@ -993,7 +993,7 @@ async def verify_discord_user(
 
     if len(code) != 4:
         raise HTTPException(status_code=400, detail=f"Please provide a 4 digit code.")
-    
+
     try:
         provided_code = int(code)
     except ValueError:
@@ -1019,10 +1019,10 @@ async def verify_discord_user(
             await set_discord_verification(id=record.Entry, token=token_id)
             found_code = True
             break
-        
-    if not(found_code):   
+
+    if not (found_code):
         raise HTTPException(status_code=400, detail=f"Linking code is incorrect.")
-        
+
     return {"ok": "ok"}
 
 
