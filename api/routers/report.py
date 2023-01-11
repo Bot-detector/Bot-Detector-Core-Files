@@ -302,7 +302,7 @@ async def insert_report(
         return
 
     df["reporter_id"] = reporter_id[0]
-    
+
     if manual_detect:
         df["manual_detect"] = manual_detect
 

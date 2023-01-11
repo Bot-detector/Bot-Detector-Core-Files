@@ -109,7 +109,7 @@ async def post_feedback(feedback: Feedback):
     """
     Insert feedback into database
     """
-    feedback:dict = feedback.dict()
+    feedback: dict = feedback.dict()
 
     name = feedback.pop("player_name")
     name = await functions.to_jagex_name(name)
@@ -126,7 +126,7 @@ async def post_feedback(feedback: Feedback):
 
             if player == []:
                 # create anonymous user if not exists
-                if name.startswith('anonymoususer '):
+                if name.startswith("anonymoususer "):
                     await session.execute(Insert(Player).values(name=name))
                     player = await session.execute(sql_player)
                     player = sqlalchemy_result(player).rows2dict()
@@ -135,8 +135,8 @@ async def post_feedback(feedback: Feedback):
                 feedback["voter_id"] = player[0]["id"]
             except IndexError:
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, 
-                    detail="Could not find voter in registry."
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Could not find voter in registry.",
                 )
 
             sql_insert = sql_insert.values(feedback)
