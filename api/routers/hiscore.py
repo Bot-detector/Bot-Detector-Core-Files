@@ -90,6 +90,7 @@ class hiscore(BaseModel):
     nightmare: int
     nex: int
     obor: int
+    phantom_muspah: int
     phosanis_nightmare: int
     sarachnis: int
     scorpia: int
