@@ -301,6 +301,10 @@ async def insert_report(
         logger.debug({"message": "No reporter in df_names", "detections": detections})
         return
 
+    if reporter_id[0] == 657248:
+        logger.debug({"message": "Temporary ignoring anonymous reporter"})
+        return
+
     df["reporter_id"] = reporter_id[0]
 
     if manual_detect:
