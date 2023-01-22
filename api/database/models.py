@@ -25,7 +25,7 @@ metadata = Base.metadata
 class Prediction(Base):
     __tablename__ = "Predictions"
 
-    name = Column(String(50), primary_key=True)
+    name = Column(VARCHAR(64), primary_key=True, nullable=True, unique=True)
     prediction = Column(VARCHAR(50))
     id = Column(ForeignKey("Players.id", ondelete="RESTRICT", onupdate="RESTRICT"))
     created = Column(TIMESTAMP)
@@ -48,6 +48,7 @@ class Prediction(Base):
     Wintertodt_bot = Column(Float)
     Runecrafting_bot = Column(Float)
     Zalcano_bot = Column(Float)
+    Zulrah_bot = Column(Float)
     Woodcutting_bot = Column(Float)
     Thieving_bot = Column(Float)
     Soul_Wars_bot = Column(Float)
@@ -96,6 +97,9 @@ class PlayerBotConfirmation(Base):
 
 class PlayersChange(Base):
     __tablename__ = "PlayersChanges"
+    __table_args__ = (
+        Index("FK_label_id", "label_id"),
+    )
 
     id = Column(Integer, primary_key=True)
     ChangeDate = Column(
@@ -108,7 +112,7 @@ class PlayersChange(Base):
     possible_ban = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
     confirmed_ban = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
     confirmed_player = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
-    label_id = Column(Integer, nullable=False, index=True, server_default=text("'0'"))
+    label_id = Column(Integer, nullable=False, server_default=text("'0'"))
     label_jagex = Column(Integer, nullable=False, server_default=text("'0'"))
 
 
@@ -165,7 +169,7 @@ class ApiUsage(Base):
     timestamp = Column(
         TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
-    route = Column(Text, nullable=False)
+    route = Column(Text, nullable=True)
 
     user = relationship("ApiUser")
 
@@ -250,6 +254,8 @@ class Player(Base):
     __tablename__ = "Players"
     __table_args__ = (
         Index("FK_label_id", "label_id"),
+        Index("confirmed_ban_idx", "confirmed_ban"),
+        Index("normal_name_index", "normalized_name"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -260,7 +266,7 @@ class Player(Base):
     updated_at = Column(DateTime)
     possible_ban = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
     confirmed_ban = Column(
-        TINYINT(1), nullable=False, index=True, server_default=text("'0'")
+        TINYINT(1), nullable=False, server_default=text("'0'")
     )
     confirmed_player = Column(TINYINT(1), nullable=False, server_default=text("'0'"))
     label_id = Column(
@@ -328,8 +334,9 @@ class Report(Base):
             "manual_detect",
             unique=True,
         ),
-        Index("ix_reportedID", "reportedID", "region_id"),
         Index("idx_reportingID", "reportingID"),
+        Index("idx_heatmap", "reportedID", "timestamp", "region_id"),
+        Index("idx_reportedID_regionDI", "reportedID", "region_id"),
     )
 
     ID = Column(BigInteger, primary_key=True)
@@ -339,24 +346,22 @@ class Report(Base):
     reportedID = Column(
         ForeignKey("Players.id", ondelete="RESTRICT", onupdate="RESTRICT"),
         nullable=False,
-        index=True,
     )
     reportingID = Column(
         ForeignKey("Players.id", ondelete="RESTRICT", onupdate="RESTRICT"),
         nullable=False,
-        index=True,
     )
     region_id = Column(Integer, nullable=False)
     x_coord = Column(Integer, nullable=False)
     y_coord = Column(Integer, nullable=False)
     z_coord = Column(Integer, nullable=False)
     timestamp = Column(
-        TIMESTAMP, nullable=False, index=True, server_default=text("CURRENT_TIMESTAMP")
+        TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
     manual_detect = Column(TINYINT(1))
     on_members_world = Column(Integer)
     on_pvp_world = Column(TINYINT)
-    world_number = Column(Integer, index=True)
+    world_number = Column(Integer)
     equip_head_id = Column(Integer)
     equip_amulet_id = Column(Integer)
     equip_torso_id = Column(Integer)
@@ -701,7 +706,7 @@ class PlayerHiscoreDataXPChange(Base):
     sarachnis = Column(Integer)
     scorpia = Column(Integer)
     skotizo = Column(Integer)
-    Tempoross = Column(Integer, nullable=False)
+    Tempoross = Column(Integer)
     the_gauntlet = Column(Integer)
     the_corrupted_gauntlet = Column(Integer)
     theatre_of_blood = Column(Integer)
