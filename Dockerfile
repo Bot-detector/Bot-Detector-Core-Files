@@ -12,8 +12,18 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
+ENV PATH "/home/default/.local/bin:$PATH"
+
+
 # set the working directory
 WORKDIR /project
+
+ARG USER_UID=1000
+RUN adduser --shell /bin/sh --system --group --uid "${USER_UID}" default
+
+RUN chown -R default /project
+
+USER default
 
 # install dependencies
 COPY ./requirements.txt /project
@@ -21,11 +31,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # copy the scripts to the folder
 COPY ./api /project/api
-
-# production image
-FROM base as production
-# Creates a non-root user with an explicit UID and adds permission to access the /project folder
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /project
-USER appuser
 
 CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host", "0.0.0.0"]

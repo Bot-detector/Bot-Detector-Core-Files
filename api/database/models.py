@@ -26,7 +26,7 @@ class Prediction(Base):
     __tablename__ = "Predictions"
 
     name = Column(String(50), primary_key=True)
-    Prediction = Column(String(50))
+    prediction = Column(VARCHAR(50))
     id = Column(ForeignKey("Players.id", ondelete="RESTRICT", onupdate="RESTRICT"))
     created = Column(TIMESTAMP)
 
@@ -153,12 +153,14 @@ class ApiUser(Base):
 
 class ApiUsage(Base):
     __tablename__ = "apiUsage"
+    __table_args__ = (
+        Index("FK_apiUsage_apiUser", "user_id"),
+    )
 
     id = Column(BigInteger, primary_key=True)
     user_id = Column(
         ForeignKey("apiUser.id", ondelete="RESTRICT", onupdate="RESTRICT"),
         nullable=False,
-        index=True,
     )
     timestamp = Column(
         TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP")
@@ -170,17 +172,19 @@ class ApiUsage(Base):
 
 class ApiUserPerm(Base):
     __tablename__ = "apiUserPerms"
+    __table_args__ = (
+        Index("FK_apiUserPerms_apiUser", "user_id"),
+        Index("FK_apiUserPerms_apiPermission", "permission_id"),
+    )
 
     id = Column(Integer, primary_key=True)
     user_id = Column(
         ForeignKey("apiUser.id", ondelete="RESTRICT", onupdate="RESTRICT"),
         nullable=False,
-        index=True,
     )
     permission_id = Column(
         ForeignKey("apiPermissions.id", ondelete="RESTRICT", onupdate="RESTRICT"),
         nullable=False,
-        index=True,
     )
 
     permission = relationship("ApiPermission")
@@ -244,9 +248,12 @@ class SentToJagex(Base):
 
 class Player(Base):
     __tablename__ = "Players"
+    __table_args__ = (
+        Index("FK_label_id", "label_id"),
+    )
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, unique=True)
+    name = Column(VARCHAR(255), nullable=False, unique=True)
     created_at = Column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
@@ -259,7 +266,6 @@ class Player(Base):
     label_id = Column(
         ForeignKey("Labels.id", ondelete="RESTRICT", onupdate="RESTRICT"),
         nullable=False,
-        index=True,
         server_default=text("'0'"),
     )
     label_jagex = Column(Integer, nullable=False, server_default=text("'0'"))
@@ -275,6 +281,9 @@ class PredictionsFeedback(Base):
     __tablename__ = "PredictionsFeedback"
     __table_args__ = (
         Index("Unique_Vote", "prediction", "subject_id", "voter_id", unique=True),
+        Index("Reviewer_ID", "reviewer_id"),
+        Index("Voter_ID", "voter_id"),
+        Index("Subject_ID", "subject_id"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -282,12 +291,10 @@ class PredictionsFeedback(Base):
     voter_id = Column(
         ForeignKey("Players.id", ondelete="RESTRICT", onupdate="RESTRICT"),
         nullable=False,
-        index=True,
     )
     subject_id = Column(
         ForeignKey("Players.id", ondelete="RESTRICT", onupdate="RESTRICT"),
         nullable=False,
-        index=True,
     )
     prediction = Column(String(50), nullable=False)
     confidence = Column(Float, nullable=False)
@@ -295,7 +302,7 @@ class PredictionsFeedback(Base):
     feedback_text = Column(TEXT)
     reviewed = Column(TINYINT, nullable=False, server_default=text("'0'"))
     reviewer_id = Column(
-        ForeignKey("Tokens.id", ondelete="RESTRICT", onupdate="RESTRICT"), index=True
+        ForeignKey("Tokens.id", ondelete="RESTRICT", onupdate="RESTRICT")
     )
     user_notified = Column(TINYINT, nullable=False, server_default=text("'0'"))
     proposed_label = Column(String(50))
@@ -309,6 +316,7 @@ class PredictionsFeedback(Base):
     )
 
 
+
 class Report(Base):
     __tablename__ = "Reports"
     __table_args__ = (
@@ -320,7 +328,8 @@ class Report(Base):
             "manual_detect",
             unique=True,
         ),
-        Index("reportedID", "reportedID", "region_id"),
+        Index("ix_reportedID", "reportedID", "region_id"),
+        Index("idx_reportingID", "reportingID"),
     )
 
     ID = Column(BigInteger, primary_key=True)
@@ -370,8 +379,8 @@ class stgReport(Base):
     created_at = Column(
         TIMESTAMP, nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
-    reportedID = Column(nullable=False)
-    reportingID = Column(nullable=False)
+    reportedID = Column(Integer, nullable=False)
+    reportingID = Column(Text, nullable=False)
     region_id = Column(Integer, nullable=False)
     x_coord = Column(Integer, nullable=False)
     y_coord = Column(Integer, nullable=False)
@@ -608,6 +617,9 @@ class PlayerHiscoreDataLatest(Base):
 
 class PlayerHiscoreDataXPChange(Base):
     __tablename__ = "playerHiscoreDataXPChange"
+    __table_args__ = (
+        Index("fk_phd_xp_pl", "Player_id"),
+    )
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(
@@ -617,7 +629,6 @@ class PlayerHiscoreDataXPChange(Base):
     Player_id = Column(
         ForeignKey("Players.id", ondelete="RESTRICT", onupdate="RESTRICT"),
         nullable=False,
-        index=True,
     )
     total = Column(BigInteger)
     attack = Column(Integer)
