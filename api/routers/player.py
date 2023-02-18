@@ -6,7 +6,7 @@ from api.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.database.database import Engine, EngineType
 from api.database.functions import sqlalchemy_result, verify_token
-from api.database.models import Player as dbPlayer
+from api.database.models import Players as dbPlayer
 from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel

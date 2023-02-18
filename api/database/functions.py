@@ -12,7 +12,7 @@ from typing import List
 # to these entities to prevent the
 # garbage collector from trying to dispose of our engines.
 from api.database.database import PLAYERDATA_ENGINE, Engine, EngineType
-from api.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
+from api.database.models import ApiPermissions, ApiUsage, ApiUser, ApiUserPerms
 from fastapi import HTTPException
 from sqlalchemy import Text, text
 from sqlalchemy.exc import InternalError, OperationalError
@@ -152,9 +152,9 @@ class sqlalchemy_result:
 async def verify_token(token: str, verification: str, route: str = None) -> bool:
     sql = select(ApiUser)
     sql = sql.where(ApiUser.token == token)
-    sql = sql.where(ApiPermission.permission == verification)
-    sql = sql.join(ApiUserPerm, ApiUser.id == ApiUserPerm.user_id)
-    sql = sql.join(ApiPermission, ApiUserPerm.permission_id == ApiPermission.id)
+    sql = sql.where(ApiPermissions.permission == verification)
+    sql = sql.join(ApiUserPerms, ApiUser.id == ApiUserPerms.user_id)
+    sql = sql.join(ApiPermissions, ApiUserPerms.permission_id == ApiPermissions.id)
 
     sql_usage = select(ApiUsage)
     sql_usage = sql_usage.where(ApiUser.id == ApiUsage.user_id)

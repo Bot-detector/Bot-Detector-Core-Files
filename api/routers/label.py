@@ -1,6 +1,6 @@
 from api.database.database import EngineType
 from api.database.functions import sqlalchemy_result, verify_token
-from api.database.models import Label as dbLabel
+from api.database.models import Labels as dbLabel
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select

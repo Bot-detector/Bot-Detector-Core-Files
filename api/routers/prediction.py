@@ -8,8 +8,8 @@ from api.database.functions import (
     sqlalchemy_result,
     verify_token,
 )
-from api.database.models import Player, PlayerHiscoreDataLatest
-from api.database.models import Prediction as dbPrediction
+from api.database.models import Players, PlayerHiscoreDataLatest
+from api.database.models import Predictions as dbPrediction
 from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
@@ -146,7 +146,7 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     await verify_token(token, verification="request_highscores")
 
     # query
-    sql: Select = select(columns=[PlayerHiscoreDataLatest, Player.name])
+    sql: Select = select(columns=[PlayerHiscoreDataLatest, Players.name])
     sql = sql.where(
         or_(
             func.date(dbPrediction.created) != func.curdate(),
@@ -155,7 +155,7 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     )
     sql = sql.order_by(func.rand())
     sql = sql.limit(limit).offset(0)
-    sql = sql.join(Player).join(dbPrediction, isouter=True)
+    sql = sql.join(Players).join(dbPrediction, isouter=True)
 
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
@@ -211,25 +211,25 @@ async def gets_predictions_by_player_features(
 
     # filters
     if not possible_ban is None:
-        sql = sql.where(Player.possible_ban == possible_ban)
+        sql = sql.where(Players.possible_ban == possible_ban)
 
     if not confirmed_ban is None:
-        sql = sql.where(Player.confirmed_ban == confirmed_ban)
+        sql = sql.where(Players.confirmed_ban == confirmed_ban)
 
     if not confirmed_player is None:
-        sql = sql.where(Player.confirmed_player == confirmed_player)
+        sql = sql.where(Players.confirmed_player == confirmed_player)
 
     if not label_id is None:
-        sql = sql.where(Player.label_id == label_id)
+        sql = sql.where(Players.label_id == label_id)
 
     if not label_jagex is None:
-        sql = sql.where(Player.label_jagex == label_jagex)
+        sql = sql.where(Players.label_jagex == label_jagex)
 
     # paging
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # join
-    sql = sql.join(Player)
+    sql = sql.join(Players)
 
     # execute query
     async with PLAYERDATA_ENGINE.get_session() as session:

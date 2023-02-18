@@ -6,7 +6,7 @@ from api.database.functions import (
     sqlalchemy_result,
     verify_token,
 )
-from api.database.models import Player, PredictionsFeedback
+from api.database.models import Players, PredictionsFeedback
 from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
@@ -54,8 +54,8 @@ async def get_feedback(
     # query
     table = PredictionsFeedback
     sql: Select = select(table)
-    sql = sql.join(Player, PredictionsFeedback.voter_id == Player.id)
-    sql = sql.where(Player.name == name)
+    sql = sql.join(Players, PredictionsFeedback.voter_id == Players.id)
+    sql = sql.where(Players.name == name)
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # execute query
@@ -75,8 +75,8 @@ async def get_feedback(name: str):
     """
     # query
 
-    voter: Player = aliased(Player, name="voter")
-    subject: Player = aliased(Player, name="subject")
+    voter: Players = aliased(Players, name="voter")
+    subject: Players = aliased(Players, name="subject")
 
     name = await functions.to_jagex_name(name)
 
@@ -114,8 +114,8 @@ async def post_feedback(feedback: Feedback):
     name = feedback.pop("player_name")
     name = await functions.to_jagex_name(name)
 
-    sql_player: Select = select(Player)
-    sql_player = sql_player.where(Player.name == name)
+    sql_player: Select = select(Players)
+    sql_player = sql_player.where(Players.name == name)
     sql_insert = Insert(PredictionsFeedback).prefix_with("ignore")
 
     async with PLAYERDATA_ENGINE.get_session() as session:
@@ -127,7 +127,7 @@ async def post_feedback(feedback: Feedback):
             if player == []:
                 # create anonymous user if not exists
                 if name.startswith("anonymoususer "):
-                    await session.execute(Insert(Player).values(name=name))
+                    await session.execute(Insert(Players).values(name=name))
                     player = await session.execute(sql_player)
                     player = sqlalchemy_result(player).rows2dict()
             # this could be an else statement

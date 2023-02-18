@@ -11,6 +11,7 @@ from sqlalchemy import (
     String,
     Text,
     text,
+    DECIMAL,
 )
 from sqlalchemy.dialects.mysql import TEXT, TINYINT, TINYTEXT, VARCHAR
 from sqlalchemy.orm import declarative_base, relationship
@@ -718,3 +719,60 @@ class PlayerHiscoreDataXPChange(Base):
     zulrah = Column(Integer)
 
     Player = relationship("Players", back_populates="playerHiscoreDataXPChange")
+
+
+class XXStats(Base):
+    __tablename__ = "xx_stats"
+    player_count = Column(BigInteger, nullable=False, server_default="0")
+    confirmed_ban = Column(TINYINT(1), nullable=False, server_default="0")
+    confirmed_player = Column(TINYINT(1), nullable=False, server_default="0")
+    created = Column(
+        DateTime, nullable=False, server_default="CURRENT_TIMESTAMP", primary_key=True
+    )
+
+
+class Predictions(Base):
+    __tablename__ = "Predictions"
+    table_args = (
+        ForeignKeyConstraint(
+            ["id"],
+            ["Players.id"],
+            ondelete="RESTRICT",
+            onupdate="RESTRICT",
+            name="FK_pred_player_id",
+        ),
+        Index("FK_pred_player_id", "id"),
+        Index("name", "name", unique=True),
+    )
+
+    name = Column(String(12))
+    prediction = Column(String(50))
+    id = Column(Integer, primary_key=True)
+    created = Column(TIMESTAMP)
+    Predicted_confidence = Column(DECIMAL(5, 2))
+    Real_Player = Column(DECIMAL(5, 2))
+    Unknown_bot = Column(DECIMAL(5, 2), server_default="0.00")
+    PVM_Melee_bot = Column(DECIMAL(5, 2))
+    Smithing_bot = Column(DECIMAL(5, 2))
+    Magic_bot = Column(DECIMAL(5, 2))
+    Fishing_bot = Column(DECIMAL(5, 2))
+    Mining_bot = Column(DECIMAL(5, 2))
+    Crafting_bot = Column(DECIMAL(5, 2))
+    PVM_Ranged_Magic_bot = Column(DECIMAL(5, 2))
+    PVM_Ranged_bot = Column(DECIMAL(5, 2))
+    Hunter_bot = Column(DECIMAL(5, 2))
+    Fletching_bot = Column(DECIMAL(5, 2))
+    Clue_Scroll_bot = Column(DECIMAL(5, 2))
+    LMS_bot = Column(DECIMAL(5, 2))
+    Agility_bot = Column(DECIMAL(5, 2))
+    Wintertodt_bot = Column(DECIMAL(5, 2))
+    Runecrafting_bot = Column(DECIMAL(5, 2))
+    Zalcano_bot = Column(DECIMAL(5, 2))
+    Woodcutting_bot = Column(DECIMAL(5, 2))
+    Thieving_bot = Column(DECIMAL(5, 2))
+    Soul_Wars_bot = Column(DECIMAL(5, 2))
+    Cooking_bot = Column(DECIMAL(5, 2))
+    Vorkath_bot = Column(DECIMAL(5, 2))
+    Barrows_bot = Column(DECIMAL(5, 2))
+    Herblore_bot = Column(DECIMAL(5, 2))
+    Zulrah_bot = Column(DECIMAL(5, 2))

@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.database.database import EngineType
 from api.database.functions import sqlalchemy_result, verify_token
 from api.database.models import (
-    Player,
+    Players,
     PlayerHiscoreDataLatest,
     PlayerHiscoreDataXPChange,
-    playerHiscoreData,
+    PlayerHiscoreData,
 )
 from api.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -132,7 +132,7 @@ async def get_player_hiscore_data(
     )
 
     # query
-    table = playerHiscoreData
+    table = PlayerHiscoreData
     sql = select(table)
 
     # filters
@@ -219,25 +219,25 @@ async def get_latest_hiscore_data_by_player_features(
 
     # filters
     if not possible_ban is None:
-        sql = sql.where(Player.possible_ban == possible_ban)
+        sql = sql.where(Players.possible_ban == possible_ban)
 
     if not confirmed_ban is None:
-        sql = sql.where(Player.confirmed_ban == confirmed_ban)
+        sql = sql.where(Players.confirmed_ban == confirmed_ban)
 
     if not confirmed_player is None:
-        sql = sql.where(Player.confirmed_player == confirmed_player)
+        sql = sql.where(Players.confirmed_player == confirmed_player)
 
     if not label_id is None:
-        sql = sql.where(Player.label_id == label_id)
+        sql = sql.where(Players.label_id == label_id)
 
     if not label_jagex is None:
-        sql = sql.where(Player.label_jagex == label_jagex)
+        sql = sql.where(Players.label_jagex == label_jagex)
 
     # paging
     sql = sql.limit(row_count).offset(row_count * (page - 1))
 
     # join
-    sql = sql.join(Player)
+    sql = sql.join(Players)
 
     # execute query
     async with PLAYERDATA_ENGINE.get_session() as session:
@@ -303,7 +303,7 @@ async def post_hiscore_data_to_database(
     values = hiscores.dict()
 
     # query
-    table = playerHiscoreData
+    table = PlayerHiscoreData
     sql = insert(table).values(values)
     sql = sql.prefix_with("ignore")
 

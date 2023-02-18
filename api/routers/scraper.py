@@ -8,8 +8,8 @@ from api.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.database.database import EngineType
 from api.database.functions import batch_function, execute_sql, verify_token
-from api.database.models import Player as dbPlayer
-from api.database.models import playerHiscoreData
+from api.database.models import Players as dbPlayer
+from api.database.models import PlayerHiscoreData
 from api.utils import logging_helpers
 from fastapi import APIRouter, BackgroundTasks, Request
 from pydantic import BaseModel
@@ -173,7 +173,7 @@ async def sqla_update_player(players: List):
 async def sqla_insert_hiscore(hiscores: List):
     logger.debug({"message": f"insert hiscores: {len(hiscores)=}"})
 
-    sql = insert(playerHiscoreData).prefix_with("ignore")
+    sql = insert(PlayerHiscoreData).prefix_with("ignore")
     dbhiscores = hiscores.copy()
     try:
         async with PLAYERDATA_ENGINE.get_session() as session:
