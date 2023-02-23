@@ -16,8 +16,10 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Select, select, text
 from sqlalchemy.sql.functions import func
+import logging
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class Prediction(BaseModel):
@@ -74,7 +76,7 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
             data = await session.execute(sql)
 
     data = sqlalchemy_result(data).rows2dict()
-    keys = ["name", "Prediction", "id", "created"]
+    keys = ["name", "prediction", "id", "created"]
     data = [
         {k: float(v) / 100 if k not in keys else v for k, v in d.items()} for d in data
     ]
@@ -84,7 +86,7 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
         )
 
     data: dict = data[0]
-    prediction = data.pop("Prediction")
+    prediction = data.pop("prediction")
     data = {
         "player_id": data.pop("id"),
         "player_name": data.pop("name"),
