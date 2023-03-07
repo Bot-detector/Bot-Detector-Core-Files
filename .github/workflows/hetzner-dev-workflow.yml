@@ -42,7 +42,7 @@ jobs:
         run: docker build . --file Dockerfile --network=host -t "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}"
     
       - name: login to registry
-        run: echo "${{ secrets.QUAY_REGISTRY_PASSWORD }}" | docker login -u="bot_detector+quay_robot" quay.io --password-stdin
+        run: echo "${{ secrets.QUAY_REGISTERY_PASSWORD }}" | docker login -u="bot_detector+quay_robot" quay.io --password-stdin
 
       - name: docker push image to registry
         run: docker push "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}"
