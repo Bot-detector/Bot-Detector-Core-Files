@@ -39,7 +39,7 @@ jobs:
 
       # Runs a command using the runners shell
       - name: docker build
-        run: docker build . --file Dockerfile --network=host -t "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" --target production
+        run: docker build . --file Dockerfile --network=host -t "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" --target production --build-arg api_port=5000 --build-arg root_path=/dev
 
       - name: login to registry
         run: echo "${{ secrets.QUAY_REGISTERY_PASSWORD }}" | docker login -u="bot_detector+quay_robot" quay.io --password-stdin
