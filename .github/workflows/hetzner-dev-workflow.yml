@@ -17,7 +17,7 @@ env:
   K8S_PATH: test
   REGISTRY: quay.io/bot_detector/bd-core-files
 
-    
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -39,8 +39,8 @@ jobs:
 
       # Runs a command using the runners shell
       - name: docker build
-        run: docker build . --file Dockerfile --network=host -t "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}"
-    
+        run: docker build . --file Dockerfile --network=host -t "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" --target production
+
       - name: login to registry
         run: echo "${{ secrets.QUAY_REGISTERY_PASSWORD }}" | docker login -u="bot_detector+quay_robot" quay.io --password-stdin
 
@@ -67,4 +67,3 @@ jobs:
             {
               "spec.template.spec.containers[0].image":"${{ steps.vars.outputs.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}"
             }
-
