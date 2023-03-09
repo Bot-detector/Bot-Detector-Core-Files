@@ -14,7 +14,7 @@ permissions: write-all
 
 
 env:
-  K8S_PATH: test
+  VALUE_FILE: bd-core-dvp/deployment.yaml
   REGISTRY: quay.io/bot_detector/bd-core-files
 
 
@@ -36,6 +36,7 @@ jobs:
         run: |
           echo "GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
           echo "REGISTRY=$REGISTRY" >> $GITHUB_OUTPUT
+          echo "VALUE_FILE=$VALUE_FILE" >> $GITHUB_OUTPUT
 
       # Runs a command using the runners shell
       - name: docker build
@@ -56,7 +57,7 @@ jobs:
         uses: fjogeleit/yaml-update-action@main
         with:
           repository: Bot-detector/bot-detector-k8s
-          valueFile: 'bd-core-files/deployment.yaml'
+          valueFile: "${{ steps.vars.outputs.VALUE_FILE }}"
           token: ${{ secrets.HETZNER_ACTIONS_RUNNER_TOKEN }}
           commitChange: true
           branch: "${{ steps.vars.outputs.GIT_HASH }}"
