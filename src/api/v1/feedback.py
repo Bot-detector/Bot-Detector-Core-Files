@@ -1,13 +1,13 @@
 from typing import Optional
 
-from api.database import functions
-from api.database.functions import (
+from src.database import functions
+from src.database.functions import (
     PLAYERDATA_ENGINE,
     sqlalchemy_result,
     verify_token,
 )
-from api.database.models import Player, PredictionsFeedback
-from api.utils import logging_helpers
+from src.database.models import Player, PredictionsFeedback
+from src.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from pydantic.fields import Field
@@ -31,7 +31,7 @@ class Feedback(BaseModel):
 router = APIRouter()
 
 
-@router.get("/v1/feedback/", tags=["Feedback"])
+@router.get("/feedback/", tags=["Feedback"])
 async def get_feedback(
     token: str,
     name: str,
@@ -68,7 +68,7 @@ async def get_feedback(
     return data.rows2dict()
 
 
-@router.get("/v1/feedback/count", tags=["Feedback"])
+@router.get("/feedback/count", tags=["Feedback"])
 async def get_feedback(name: str):
     """
     Get the calculated player feedback of a player
@@ -104,7 +104,7 @@ async def get_feedback(name: str):
     return data
 
 
-@router.post("/v1/feedback/", status_code=status.HTTP_201_CREATED, tags=["Feedback"])
+@router.post("/feedback/", status_code=status.HTTP_201_CREATED, tags=["Feedback"])
 async def post_feedback(feedback: Feedback):
     """
     Insert feedback into database

@@ -11,8 +11,8 @@ from typing import List
 # Although never directly used, the engines are imported to add a permanent reference
 # to these entities to prevent the
 # garbage collector from trying to dispose of our engines.
-from api.database.database import PLAYERDATA_ENGINE, Engine, EngineType
-from api.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
+from src.database.database import PLAYERDATA_ENGINE, Engine, EngineType
+from src.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
 from fastapi import HTTPException
 from sqlalchemy import Text, text
 from sqlalchemy.exc import InternalError, OperationalError

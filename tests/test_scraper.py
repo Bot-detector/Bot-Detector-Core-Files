@@ -3,7 +3,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api.Config import token
+from src.core.config import token
 
 
 def test_scraper_players(test_client):

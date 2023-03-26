@@ -8,11 +8,11 @@ import time
 from typing import List, Optional
 
 import pandas as pd
-from api import Config
-from api.database.database import DISCORD_ENGINE, EngineType
-from api.database import functions
-from api.database.functions import execute_sql, list_to_string, verify_token
-from api.utils import logging_helpers
+from src.core import config
+from src.database.database import DISCORD_ENGINE, EngineType
+from src.database import functions
+from src.database.functions import execute_sql, list_to_string, verify_token
+from src.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -479,7 +479,7 @@ async def custom_hiscore(detection):
     detection["reported"], bad_name = await name_check(detection["reported"])
 
     if bad_name:
-        Config.debug(
+        config.debug(
             f"bad name: reporter: {detection['reporter']} reported: {detection['reported']}"
         )
         return 0

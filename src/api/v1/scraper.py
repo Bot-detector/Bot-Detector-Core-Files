@@ -4,13 +4,13 @@ import random
 import time
 from typing import List, Optional
 
-from api.database.functions import PLAYERDATA_ENGINE
+from src.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
-from api.database.database import EngineType
-from api.database.functions import batch_function, execute_sql, verify_token
-from api.database.models import Player as dbPlayer
-from api.database.models import playerHiscoreData
-from api.utils import logging_helpers
+from src.database.database import EngineType
+from src.database.functions import batch_function, execute_sql, verify_token
+from src.database.models import Player as dbPlayer
+from src.database.models import playerHiscoreData
+from src.utils import logging_helpers
 from fastapi import APIRouter, BackgroundTasks, Request
 from pydantic import BaseModel
 from sqlalchemy.exc import InternalError, OperationalError
