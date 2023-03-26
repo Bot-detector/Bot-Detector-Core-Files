@@ -15,7 +15,7 @@ discord_sql_uri = os.environ.get("discord_sql_uri")
 token = os.environ.get("token")
 
 # setup logging
-file_handler = logging.FileHandler(filename="error.log", mode="a")
+# file_handler = logging.FileHandler(filename="./logs/error.log", mode="a")
 stream_handler = logging.StreamHandler(sys.stdout)
 # # log formatting
 formatter = logging.Formatter(
@@ -31,10 +31,13 @@ formatter = logging.Formatter(
 )
 
 
-file_handler.setFormatter(formatter)
+# file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
 
-handlers = [file_handler, stream_handler]
+handlers = [
+    # file_handler,
+    stream_handler
+]
 
 logging.basicConfig(level=logging.DEBUG, handlers=handlers)
 
