@@ -20,7 +20,7 @@ COPY ./requirements.txt /project
 RUN pip install --no-cache-dir -r requirements.txt
 
 # copy the scripts to the folder
-COPY ./api /project/api
+COPY ./src /project/src
 
 # production image
 FROM base as production
@@ -28,4 +28,4 @@ FROM base as production
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /project
 USER appuser
 
-CMD ["uvicorn", "api.app:app", "--proxy-headers", "--host", "0.0.0.0"]
+CMD ["uvicorn", "src.core.server:app", "--proxy-headers", "--host", "0.0.0.0"]

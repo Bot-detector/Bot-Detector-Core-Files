@@ -1,13 +1,13 @@
 import time
 from typing import List, Optional
 
-from api.database import functions
-from api.database.functions import PLAYERDATA_ENGINE
+from src.database import functions
+from src.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
-from api.database.database import Engine, EngineType
-from api.database.functions import sqlalchemy_result, verify_token
-from api.database.models import Player as dbPlayer
-from api.utils import logging_helpers
+from src.database.database import Engine, EngineType
+from src.database.functions import sqlalchemy_result, verify_token
+from src.database.models import Player as dbPlayer
+from src.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select, update
@@ -25,7 +25,7 @@ class Player(BaseModel):
     label_jagex: Optional[int]
 
 
-@router.get("/v1/player", tags=["Player"])
+@router.get("/player", tags=["Player"])
 async def get_player_information(
     token: str,
     request: Request,
@@ -70,7 +70,7 @@ async def get_player_information(
     return data.rows2dict()
 
 
-@router.get("/v1/player/bulk", tags=["Player"])
+@router.get("/player/bulk", tags=["Player"])
 async def get_bulk_player_data_from_the_plugin_database(
     token: str,
     request: Request,
@@ -135,7 +135,7 @@ async def get_bulk_player_data_from_the_plugin_database(
     return data.rows2dict()
 
 
-@router.put("/v1/player", tags=["Player"])
+@router.put("/player", tags=["Player"])
 async def update_existing_player_data(player: Player, token: str, request: Request):
     """
     Update player & return updated player.
@@ -172,7 +172,7 @@ async def update_existing_player_data(player: Player, token: str, request: Reque
     return data.rows2dict()
 
 
-@router.post("/v1/player", tags=["Player"])
+@router.post("/player", tags=["Player"])
 async def insert_new_player_data_into_plugin_database(
     player_name: str, token: str, request: Request
 ):

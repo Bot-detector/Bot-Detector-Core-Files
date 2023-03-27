@@ -25,11 +25,6 @@ spec:
                       values:
                         - bd-dev-api
                 topologyKey: kubernetes.io/hostname
-      volumes:
-        - name: nfs-volume-exports
-          nfs:
-            server: 51.68.207.197
-            path: /cluster/exports
       containers:
         - name: bd-dev-api
           image: hub.osrsbotdetector.com/bot-detector/bd-api:latest
@@ -43,9 +38,6 @@ spec:
             limits:
               cpu: "2000m"
               memory: "3000Mi"
-          volumeMounts:
-            - name: nfs-volume-exports
-              mountPath: /project/exports
           livenessProbe:
             httpGet:
               path: /

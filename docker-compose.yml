@@ -25,14 +25,14 @@ services:
       args:
         root_path: /
         api_port: 5000
-    command: uvicorn api.app:app --host 0.0.0.0 --reload --reload-include api/*
+    command: uvicorn src.core.server:app --host 0.0.0.0 --reload --reload-include src/*
     container_name: bd-dev-api
     environment:
       - sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/playerdata
       - discord_sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/discord
       - token=verify_ban
     volumes:
-      - ../Bot-Detector-Core-Files/api:/project/api:rw
+      - ../Bot-Detector-Core-Files/src:/project/src:rw
     ports:
       - 5000:5000
     networks:

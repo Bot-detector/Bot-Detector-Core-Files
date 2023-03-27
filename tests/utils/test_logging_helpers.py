@@ -4,9 +4,9 @@ from unittest.mock import patch
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api.Config import token
+from src.core.config import token
 from api.routers import hiscore
-from api.utils import logging_helpers
+from src.utils import logging_helpers
 
 request_path = f"/v1/hiscore/Latest"
 request_params = {"player_id": 1, "token": token}

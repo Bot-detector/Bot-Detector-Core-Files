@@ -1,16 +1,16 @@
 from operator import or_
 from typing import List, Optional
 
-from api.database import functions
-from api.database.functions import (
+from src.database import functions
+from src.database.functions import (
     PLAYERDATA_ENGINE,
     list_to_string,
     sqlalchemy_result,
     verify_token,
 )
-from api.database.models import Player, PlayerHiscoreDataLatest
-from api.database.models import Prediction as dbPrediction
-from api.utils import logging_helpers
+from src.database.models import Player, PlayerHiscoreDataLatest
+from src.database.models import Prediction as dbPrediction
+from src.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,7 +54,7 @@ class Prediction(BaseModel):
     Unknown_bot: Optional[float] = 0
 
 
-@router.get("/v1/prediction", tags=["Prediction"])
+@router.get("/prediction", tags=["Prediction"])
 async def get_account_prediction_result(name: str, breakdown: Optional[bool] = False):
     """
     Parameters:
@@ -107,7 +107,7 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
     return data
 
 
-@router.post("/v1/prediction", tags=["Prediction"])
+@router.post("/prediction", tags=["Prediction"])
 async def insert_prediction_into_plugin_database(
     token: str, prediction: List[Prediction], request: Request
 ):
@@ -137,7 +137,7 @@ async def insert_prediction_into_plugin_database(
     return {"ok": "ok"}
 
 
-@router.get("/v1/prediction/data", tags=["Business"])
+@router.get("/prediction/data", tags=["Business"])
 async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     """
     Select predictions where prediction data is not from today or null.
@@ -176,7 +176,7 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     return output
 
 
-@router.get("/v1/prediction/bulk", tags=["Prediction"])
+@router.get("/prediction/bulk", tags=["Prediction"])
 async def gets_predictions_by_player_features(
     token: str,
     request: Request,

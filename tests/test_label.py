@@ -4,7 +4,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
-from api.Config import token
+from src.core.config import token
 
 
 def test_get_labels(test_client):

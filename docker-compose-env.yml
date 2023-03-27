@@ -8,12 +8,12 @@ services:
       args:
         root_path: /
         api_port: 5000
-    command: uvicorn api.app:app --host 0.0.0.0 --reload --reload-include api/*
+    command: uvicorn src.core.server:app --host 0.0.0.0 --reload --reload-include src/*
     container_name: bd-dev-api
     env_file:
       - .env
     volumes:
-      - '../Bot-Detector-Core-Files/api:/project/api'
+      - '../Bot-Detector-Core-Files/src:/project/src'
     ports:
       - 5000:5000
     networks:
