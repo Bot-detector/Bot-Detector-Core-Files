@@ -1,10 +1,10 @@
-from api.database.database import EngineType
-from api.database.functions import sqlalchemy_result, verify_token
-from api.database.models import Label as dbLabel
+from src.database.database import EngineType
+from src.database.functions import sqlalchemy_result, verify_token
+from src.database.models import Label as dbLabel
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
-from api.database.functions import PLAYERDATA_ENGINE
+from src.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
@@ -14,7 +14,7 @@ class label(BaseModel):
     label_name: str
 
 
-@router.get("/v1/label/", tags=["Label"])
+@router.get("/label/", tags=["Label"])
 async def get_labels_from_plugin_database(token: str):
     """
     Selects all labels.
@@ -34,7 +34,7 @@ async def get_labels_from_plugin_database(token: str):
     return data.rows2dict()
 
 
-@router.post("/v1/label/", tags=["Label"])
+@router.post("/label/", tags=["Label"])
 async def insert_label_into_plugin_database(token: str, label: label):
     """
     Insert a new label & return the new label.
@@ -64,7 +64,7 @@ async def insert_label_into_plugin_database(token: str, label: label):
     return data.rows2dict()
 
 
-@router.put("/v1/label/", tags=["Label"])
+@router.put("/label/", tags=["Label"])
 async def update_a_currently_existing_label(token: str):
     """
     Work in progress

@@ -3,10 +3,9 @@ import logging
 import re
 import time
 from typing import List, Optional
-
+from src.core import server
 import pandas as pd
-from api.Config import app
-from api.database.functions import (
+from src.database.functions import (
     batch_function,
     execute_sql,
     list_to_string,
@@ -22,7 +21,7 @@ router = APIRouter()
 
 async def run_in_process(fn, *args):
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(app.state.executor, fn, *args)
+    return await loop.run_in_executor(server.app.state.executor, fn, *args)
 
 
 """DETECT ROUTE"""
@@ -245,7 +244,6 @@ class contributor(BaseModel):
 
 
 async def sql_get_contributions(contributors: List):
-
     query = """
         SELECT
             ifnull(rs.manual_detect,0) as detect,
@@ -286,7 +284,7 @@ async def sql_get_feedback_submissions(voters: List):
             AND Players.normalized_name IN :voters
      """
 
-    params = {"voters": tuple(await (jagexify_names_list(voters)))}
+    params = {"voters": tuple(await jagexify_names_list(voters))}
 
     data = await execute_sql(sql, param=params, row_count=100_000_000)
     return data.rows2dict()

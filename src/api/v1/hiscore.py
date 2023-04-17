@@ -1,16 +1,16 @@
 from typing import Optional
 
-from api.database.functions import PLAYERDATA_ENGINE
+from src.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
-from api.database.database import EngineType
-from api.database.functions import sqlalchemy_result, verify_token
-from api.database.models import (
+from src.database.database import EngineType
+from src.database.functions import sqlalchemy_result, verify_token
+from src.database.models import (
     Player,
     PlayerHiscoreDataLatest,
     PlayerHiscoreDataXPChange,
     playerHiscoreData,
 )
-from api.utils import logging_helpers
+from src.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.sql.expression import insert, select
@@ -113,7 +113,7 @@ class hiscore(BaseModel):
     zulrah: int
 
 
-@router.get("/v1/hiscore/", tags=["Hiscore"])
+@router.get("/hiscore/", tags=["Hiscore"])
 async def get_player_hiscore_data(
     token: str,
     request: Request,
@@ -151,7 +151,7 @@ async def get_player_hiscore_data(
     return data.rows2dict()
 
 
-@router.get("/v1/hiscore/Latest", tags=["Hiscore"])
+@router.get("/hiscore/Latest", tags=["Hiscore"])
 async def get_latest_hiscore_data_for_an_account(
     token: str, request: Request, player_id: int = Query(..., ge=0)
 ):
@@ -182,7 +182,7 @@ async def get_latest_hiscore_data_for_an_account(
     return data.rows2dict()
 
 
-@router.get("/v1/hiscore/Latest/bulk", tags=["Hiscore"])
+@router.get("/hiscore/Latest/bulk", tags=["Hiscore"])
 async def get_latest_hiscore_data_by_player_features(
     token: str,
     request: Request,
@@ -249,7 +249,7 @@ async def get_latest_hiscore_data_by_player_features(
     return data.rows2dict()
 
 
-@router.get("/v1/hiscore/XPChange", tags=["Hiscore"])
+@router.get("/hiscore/XPChange", tags=["Hiscore"])
 async def get_account_hiscore_xp_change(
     token: str,
     request: Request,
@@ -287,7 +287,7 @@ async def get_account_hiscore_xp_change(
     return data.rows2dict()
 
 
-@router.post("/v1/hiscore", tags=["Hiscore"])
+@router.post("/hiscore", tags=["Hiscore"])
 async def post_hiscore_data_to_database(
     hiscores: hiscore, token: str, request: Request
 ):

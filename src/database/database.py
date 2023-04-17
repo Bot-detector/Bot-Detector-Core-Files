@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from enum import Enum, auto
 
-from api import Config
+from src.core import config
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
@@ -24,9 +24,9 @@ class Engine:
         set class connection string
         """
         if type == EngineType.PLAYERDATA:
-            connection_string = Config.sql_uri
+            connection_string = config.sql_uri
         elif type == EngineType.DISCORD:
-            connection_string = Config.discord_sql_uri
+            connection_string = config.discord_sql_uri
         else:
             raise ValueError(f"Engine type {type} not valid.")
         return connection_string

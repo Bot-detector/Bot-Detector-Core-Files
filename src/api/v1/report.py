@@ -4,16 +4,16 @@ from datetime import date
 from typing import List, Optional
 
 import pandas as pd
-from api.database import functions
-from api.database.functions import PLAYERDATA_ENGINE
-from api.database.models import (
+from src.database import functions
+from src.database.functions import PLAYERDATA_ENGINE
+from src.database.models import (
     Player,
     Report,
     playerReports,
     playerReportsManual,
     stgReport,
 )
-from api.utils import logging_helpers
+from src.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from pydantic.fields import Field
@@ -125,7 +125,7 @@ class detection(BaseModel):
     equip_ge_value: int = Field(0, ge=0, le=int(upper_gear_cost))
 
 
-@router.get("/v1/report", tags=["Report"])
+@router.get("/report", tags=["Report"])
 async def get_reports(
     token: str,
     request: Request,
@@ -172,7 +172,7 @@ async def get_reports(
     return data.rows2dict()
 
 
-@router.put("/v1/report", tags=["Report"])
+@router.put("/report", tags=["Report"])
 async def update_reports(
     old_user_id: int, new_user_id: int, token: str, request: Request
 ):
@@ -199,7 +199,7 @@ async def update_reports(
     return {"detail": f"{data.rowcount} rows updated to reportingID = {new_user_id}."}
 
 
-@router.post("/v1/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
+@router.post("/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
 async def insert_report(
     detections: List[detection],
     manual_detect: int = Query(None, ge=0, le=1),
@@ -319,7 +319,7 @@ async def insert_report(
     return {"detail": "ok"}
 
 
-@router.get("/v1/report/count", tags=["Report"])
+@router.get("/report/count", tags=["Report"])
 async def get_report_count_v1(name: str):
     """ """
     voter: Player = aliased(Player, name="voter")
@@ -388,7 +388,7 @@ async def get_report_count_v2(name: str):
     return data
 
 
-@router.get("/v1/report/manual/count", tags=["Report"])
+@router.get("/report/manual/count", tags=["Report"])
 async def get_report_manual_count_v1(name: str):
     """
     Get the calculated player report count
