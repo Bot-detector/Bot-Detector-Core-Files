@@ -15,7 +15,9 @@ from fastapi import APIRouter, BackgroundTasks, Request
 from pydantic import BaseModel
 from sqlalchemy.exc import InternalError, OperationalError
 from sqlalchemy.sql.expression import insert, update
+from itertools import cycle
 
+offset = cycle([0, 1, 2, 4])
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -126,7 +128,7 @@ class scraper(BaseModel):
 
 
 async def sql_get_players_to_scrape(page=1, amount=100_000):
-    sql = "select * from playersToScrape WHERE 1 ORDER BY RAND()"
+    sql = "select * from playersToScrape"
     data = await execute_sql(sql, page=page, row_count=amount)
     return data.rows2dict()
 
@@ -134,6 +136,7 @@ async def sql_get_players_to_scrape(page=1, amount=100_000):
 @router.get("/scraper/players/{page}/{amount}/{token}", tags=["Business"])
 async def get_players_to_scrape(token, page: int = 1, amount: int = 100_000):
     await verify_token(token, verification="verify_ban")
+    page = next(offset)
     return await sql_get_players_to_scrape(page=page, amount=amount)
 
 
