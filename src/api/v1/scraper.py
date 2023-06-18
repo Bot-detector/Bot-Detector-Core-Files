@@ -136,7 +136,8 @@ async def sql_get_players_to_scrape(page=1, amount=100_000):
 @router.get("/scraper/players/{page}/{amount}/{token}", tags=["Business"])
 async def get_players_to_scrape(token, page: int = 1, amount: int = 100_000):
     await verify_token(token, verification="verify_ban")
-    page = round(random.randint(0,100_000)/amount,0)
+    page = int(round(random.randint(0,100_000)/amount,0))
+
     # page = next(offset)
     return await sql_get_players_to_scrape(page=page, amount=amount)
 
