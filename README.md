@@ -47,12 +47,12 @@ You can find other relevant repositories in our [organization's github](https://
 
 ### setup pre-commit
 pre-commit is used to format your commit before committing it.
-```
+```sh
 pre-commit --version
 pre-commit install
 ```
 pre-commit runs automatically when you commit, but if it doesn't work.
-```
+```sh
 pre-commit run --all-files
 ```
 

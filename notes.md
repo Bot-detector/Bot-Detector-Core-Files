@@ -18,13 +18,17 @@ git pull --rebase upstream develop
 git push
 ```
 # setup
+## windows
 creating a python venv to work in and install the project requirements
-```
-python -m venv .venv
-.venv\Scripts\activate
+```sh
+python -m venv venv\windows\.venv
+venv\windows\.venv\Scripts\activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
+## linux
+todo
+
 # for admin purposes saving & upgrading
 when you added some dependancies update the requirements
 ```
@@ -32,7 +36,7 @@ venv\Scripts\activate
 call pip freeze > requirements.txt
 ```
 when you want to upgrade the dependancies
-```
+```sh
 venv\Scripts\activate
 powershell "(Get-Content requirements.txt) | ForEach-Object { $_ -replace '==', '>=' } | Set-Content requirements.txt"
 call pip install -r requirements.txt --upgrade
