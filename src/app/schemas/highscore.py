@@ -6,9 +6,9 @@ from typing import Optional
 class PlayerHiscoreData(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
-    timestamp: datetime
-    ts_date: date
+    # id: int
+    timestamp: datetime = datetime.utcnow()
+    ts_date: date = date.today()
     Player_id: int
     total: int
     attack: int

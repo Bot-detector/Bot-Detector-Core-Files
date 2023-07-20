@@ -48,6 +48,7 @@ logging.getLogger("uvicorn").setLevel(logging.DEBUG)
 
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger("aiomysql").setLevel(logging.ERROR)
+logging.getLogger("aiokafka").setLevel(logging.WARNING)
 
 logging.getLogger("uvicorn.error").propagate = False
 
