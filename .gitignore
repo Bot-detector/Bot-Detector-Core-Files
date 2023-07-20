@@ -428,5 +428,4 @@ $RECYCLE.BIN/
 # used to store !excelban generated CSV files
 exports/*
 .env
-venv/linux/*
-venv/windows/*
+.venv*/*
