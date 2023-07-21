@@ -68,6 +68,10 @@ async def run_kafka_scraper_consumer():
 
             # reset sleep
             sleep = 1
+    except Exception as e:
+        logger.error(str(e))
+        await asyncio.sleep(1)
+        await run_kafka_scraper_consumer()
     finally:
         await consumer.stop()
 
