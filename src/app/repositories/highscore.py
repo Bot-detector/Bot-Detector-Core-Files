@@ -42,7 +42,7 @@ class PlayerHiscoreData:
                         )
                         # Execute the select query and check if the record exists
                         result: AsyncResult = await session.execute(sql_select)
-                        existing_record = result.scalars()
+                        existing_record = result.scalars().all()
 
                         if not existing_record:
                             # If the record does not exist, insert it
