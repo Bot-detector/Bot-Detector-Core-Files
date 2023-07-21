@@ -1,12 +1,14 @@
+import logging
+
 from pydantic import ValidationError
 from sqlalchemy import delete, insert, select, update
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
 from sqlalchemy.sql.expression import Delete, Insert, Select, Update, and_
 
 from src.app.schemas.player import Player as SchemaPlayer
 from src.database.database import PLAYERDATA_ENGINE
 from src.database.models import Player as dbPlayer
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -17,28 +19,31 @@ class Player:
 
     async def create(self, data: list[SchemaPlayer]):
         table = dbPlayer
+        try:
+            async with PLAYERDATA_ENGINE.get_session() as session:
+                session: AsyncSession = session
 
-        async with PLAYERDATA_ENGINE.get_session() as session:
-            session: AsyncSession = session
+                async with session.begin():
+                    insert_counter = 0
+                    for row in data:
+                        # Create the insert statement
+                        sql_insert: Insert = insert(table)
+                        sql_insert = sql_insert.values(row.model_dump())
 
-            async with session.begin():
-                insert_counter = 0
-                for row in data:
-                    # Create the insert statement
-                    sql_insert: Insert = insert(table)
-                    sql_insert = sql_insert.values(row.model_dump())
+                        # Create the select statement to check if the record exists
+                        sql_select: Select = select(table)
+                        sql_select = sql_select.where(dbPlayer.id == row.id)
+                        # Execute the select query and check if the record exists
+                        result: AsyncResult = await session.execute(sql_select)
+                        existing_record = result.scalars()
 
-                    # Create the select statement to check if the record exists
-                    sql_select: Select = select(table)
-                    sql_select = sql_select.where(dbPlayer.id == row.id)
-                    # Execute the select query and check if the record exists
-                    result: AsyncResult = await session.execute(sql_select)
-                    existing_record = result.scalars()
-
-                    if not existing_record:
-                        # If the record does not exist, insert it
-                        await session.execute(sql_insert)
-                        insert_counter += 1
+                        if not existing_record:
+                            # If the record does not exist, insert it
+                            await session.execute(sql_insert)
+                            insert_counter += 1
+        except OperationalError:
+            await self.create(data)
+            return
         logger.info(f"Received: {len(data)}, inserted: {insert_counter}")
         return
 
@@ -51,10 +56,14 @@ class Player:
         sql_select = sql_select.order_by(dbPlayer.id.desc())
         sql_select = sql_select.limit(page_size).offset((page - 1) * page_size)
 
-        async with PLAYERDATA_ENGINE.get_session() as session:
-            session: AsyncSession = session
-            # Execute the select query
-            result: AsyncResult = await session.execute(sql_select)
+        try:
+            async with PLAYERDATA_ENGINE.get_session() as session:
+                session: AsyncSession = session
+                # Execute the select query
+                result: AsyncResult = await session.execute(sql_select)
+        except OperationalError:
+            schema_data = await self.read(player_name, page, page_size)
+            return schema_data
 
         # Convert the query results to SchemaPlayerHiscoreData objects
         schema_data = []
@@ -67,18 +76,20 @@ class Player:
 
     async def update(self, data: list[SchemaPlayer]):
         table = dbPlayer
+        try:
+            async with PLAYERDATA_ENGINE.get_session() as session:
+                session: AsyncSession = session
 
-        async with PLAYERDATA_ENGINE.get_session() as session:
-            session: AsyncSession = session
-
-            async with session.begin():
-                for row in data:
-                    # Create the update statement
-                    sql_update: Update = update(table).where(dbPlayer.id == row.id)
-                    sql_update = sql_update.values(row.model_dump())
-                    # Execute the update query
-                    await session.execute(sql_update)
-
+                async with session.begin():
+                    for row in data:
+                        # Create the update statement
+                        sql_update: Update = update(table).where(dbPlayer.id == row.id)
+                        sql_update = sql_update.values(row.model_dump())
+                        # Execute the update query
+                        await session.execute(sql_update)
+        except OperationalError:
+            await self.update(data)
+            return
         logger.info(f"Updated {len(data)}")
         return
 
