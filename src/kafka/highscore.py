@@ -12,6 +12,7 @@ from src.app.repositories.player import Player as RepositoryPlayer
 from src.app.schemas.highscore import PlayerHiscoreData as SchemaPlayerHiscoreData
 from src.app.schemas.player import Player as SchemaPlayer
 from src.core import config
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ async def run_kafka_scraper_consumer():
 
     try:
         while True:
-            msgs = await consumer.getmany(max_records=500)
+            msgs = await consumer.getmany(max_records=500, timeout_ms=1000)
 
             # capped exponential sleep
             if msgs == {}:
@@ -42,7 +43,7 @@ async def run_kafka_scraper_consumer():
 
             # parsing all messages
             for topic, messages in msgs.items():
-                logger.info(f"{topic=}")
+                logger.info(f"{topic=}, {len(messages)=}")
                 data: list[dict] = [json.loads(msg.value.decode()) for msg in messages]
 
                 highscores = []
@@ -69,8 +70,10 @@ async def run_kafka_scraper_consumer():
             # reset sleep
             sleep = 1
     except Exception as e:
-        logger.error(str(e))
-        await asyncio.sleep(1)
+        logger.error(f"Caught Exception:\n {str(e)}")
+        # Add a random sleep time between 100ms to 1000ms (adjust as needed).
+        sleep_time_ms = random.randint(1000, 5000)
+        await asyncio.sleep(sleep_time_ms / 1000)
         await run_kafka_scraper_consumer()
     finally:
         await consumer.stop()
