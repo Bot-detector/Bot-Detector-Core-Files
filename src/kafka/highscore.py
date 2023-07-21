@@ -11,12 +11,13 @@ from src.app.repositories.player import Player as RepositoryPlayer
 
 from src.app.schemas.highscore import PlayerHiscoreData as SchemaPlayerHiscoreData
 from src.app.schemas.player import Player as SchemaPlayer
+from src.core import config
 
 logger = logging.getLogger(__name__)
 
 
 async def run_kafka_scraper_consumer():
-    bootstrap_servers = "localhost:9094"
+    bootstrap_servers = config.kafka_url
     group_id = "highscore-api"
     sleep = 1
 
