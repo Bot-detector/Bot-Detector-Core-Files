@@ -84,7 +84,8 @@ class Player:
                     # Execute the update query
                     await session.execute(sql_update)
 
-        logger.info(f"Updated {len(data)}")
+        player = await self.read(data[0].id)
+        logger.info(f"Updated {len(data)}, {player=}")
         return
 
     @handle_database_error
