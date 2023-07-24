@@ -10,6 +10,8 @@ from fastapi.responses import JSONResponse
 
 from src import api
 from src.core import config
+from src.kafka.highscore import run_kafka_scraper_consumer
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -83,3 +85,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         }
     )
     return JSONResponse(content={"detail": error}, status_code=422)
+
+
+@app.on_event("startup")
+async def startup_event():
+    # Call the Kafka consumer function
+    asyncio.ensure_future(run_kafka_scraper_consumer())

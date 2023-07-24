@@ -8,16 +8,17 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 from typing import List
 
-# Although never directly used, the engines are imported to add a permanent reference
-# to these entities to prevent the
-# garbage collector from trying to dispose of our engines.
-from src.database.database import PLAYERDATA_ENGINE, Engine, EngineType
-from src.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
 from fastapi import HTTPException
 from sqlalchemy import Text, text
 from sqlalchemy.exc import InternalError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
 from sqlalchemy.sql.expression import insert, select
+
+# Although never directly used, the engines are imported to add a permanent reference
+# to these entities to prevent the
+# garbage collector from trying to dispose of our engines.
+from src.database.database import PLAYERDATA_ENGINE, Engine, EngineType
+from src.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
 
 logger = logging.getLogger(__name__)
 
@@ -211,3 +212,19 @@ async def batch_function(function, data, batch_size=100):
     await asyncio.gather(*[create_task(function(batch)) for batch in batches])
 
     return
+
+
+def handle_database_error(func):
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except OperationalError as e:
+            # Handle the OperationalError here (you can log the error, retry, etc.)
+            logger.error(f"Caught OperationalError:\n{e}")
+            # Add a random sleep time between 100ms to 1000ms (adjust as needed).
+            sleep_time_ms = random.randint(100, 2000)
+            await asyncio.sleep(sleep_time_ms / 1000)
+            # Retry the operation by calling the wrapper again (could be recursive).
+            return await wrapper(*args, **kwargs)
+
+    return wrapper

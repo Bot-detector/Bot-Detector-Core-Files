@@ -13,6 +13,7 @@ load_dotenv(find_dotenv(), verbose=True)
 sql_uri = os.environ.get("sql_uri")
 discord_sql_uri = os.environ.get("discord_sql_uri")
 token = os.environ.get("token")
+kafka_url = os.environ.get("kafka_url", "localhost:9094")
 
 # setup logging
 # file_handler = logging.FileHandler(filename="./logs/error.log", mode="a")
@@ -48,6 +49,7 @@ logging.getLogger("uvicorn").setLevel(logging.DEBUG)
 
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger("aiomysql").setLevel(logging.ERROR)
+logging.getLogger("aiokafka").setLevel(logging.WARNING)
 
 logging.getLogger("uvicorn.error").propagate = False
 

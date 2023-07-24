@@ -49,7 +49,8 @@ class Engine:
 
     @asynccontextmanager
     async def get_session(self):
-        yield self.session()
+        async with self.session() as session:
+            yield session
 
 
 """Our Database Engines"""
