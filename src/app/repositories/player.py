@@ -82,9 +82,7 @@ class Player:
                     sql_update = sql_update.values(row.model_dump())
                     # Execute the update query
                     await session.execute(sql_update)
-
-        player = await self.read(data[0].id)
-        logger.info(f"Updated {len(data)}, {player=}")
+        logger.info(f"Updated {len(data)}")
         return
 
     @handle_database_error
