@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from src.api.v1 import feedback, hiscore, label, player, prediction, report, scraper
 
-router = APIRouter()
+router = APIRouter(tags=["v1"])
 router.include_router(feedback.router)
 router.include_router(hiscore.router)
 router.include_router(label.router)

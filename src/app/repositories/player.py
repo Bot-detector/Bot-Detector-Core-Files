@@ -52,7 +52,6 @@ class Player:
         sql_select: Select = select(table)
 
         sql_select = sql_select.where(dbPlayer.name == player_name)
-        sql_select = sql_select.order_by(dbPlayer.id.desc())
         sql_select = sql_select.limit(page_size).offset((page - 1) * page_size)
 
         async with PLAYERDATA_ENGINE.get_session() as session:
@@ -91,3 +90,24 @@ class Player:
     @handle_database_error
     async def delete(self, player_name: str):
         pass
+
+    @handle_database_error
+    async def read_many(self, page: int = 1, page_size: int = 10):
+        table = dbPlayer
+
+        sql_select: Select = select(table)
+        sql_select = sql_select.limit(page_size).offset((page - 1) * page_size)
+
+        async with PLAYERDATA_ENGINE.get_session() as session:
+            session: AsyncSession = session
+            # Execute the select query
+            result: AsyncResult = await session.execute(sql_select)
+
+        # Convert the query results to SchemaPlayerHiscoreData objects
+        schema_data = []
+        for row in result.scalars().all():
+            try:
+                schema_data.append(SchemaPlayer.model_validate(row))
+            except ValidationError as e:
+                print(e)
+        return schema_data
