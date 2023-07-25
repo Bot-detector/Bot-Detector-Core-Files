@@ -13,17 +13,39 @@ from src.app.schemas.highscore import PlayerHiscoreData as SchemaPlayerHiscoreDa
 from src.app.schemas.player import Player as SchemaPlayer
 from src.core import config
 import random
+import time
 
 logger = logging.getLogger(__name__)
+
+
+async def procces_scraper_consumer(data: list[dict]):
+    repo_highscore = RepositoryPlayerHiscoreData()
+    repo_player = RepositoryPlayer()
+
+    highscores = []
+    players = []
+    for row in data:
+        highscore = row.get("hiscores")
+        player = row.get("player")
+
+        if highscore:
+            highscore = SchemaPlayerHiscoreData(**highscore)
+            highscores.append(highscore)
+
+        player = SchemaPlayer(**player)
+        players.append(player)
+
+    await repo_highscore.create(data=highscores)
+    await repo_player.update(data=players)
+    return
 
 
 async def run_kafka_scraper_consumer():
     bootstrap_servers = config.kafka_url
     group_id = "highscore-api"
     sleep = 1
-
-    repo_highscore = RepositoryPlayerHiscoreData()
-    repo_player = RepositoryPlayer()
+    batch = []
+    send_time = time.time()
 
     consumer = AIOKafkaConsumer(bootstrap_servers=bootstrap_servers, group_id=group_id)
 
@@ -43,24 +65,14 @@ async def run_kafka_scraper_consumer():
 
             # parsing all messages
             for topic, messages in msgs.items():
-                logger.info(f"{topic=}, {len(messages)=}")
+                logger.info(f"{topic=}, {len(messages)=}, {len(batch)=}")
                 data: list[dict] = [json.loads(msg.value.decode()) for msg in messages]
+                batch.extend(data)
 
-                highscores = []
-                players = []
-                for row in data:
-                    highscore = row.get("hiscores")
-                    player = row.get("player")
-
-                    if highscore:
-                        highscore = SchemaPlayerHiscoreData(**highscore)
-                        highscores.append(highscore)
-
-                    player = SchemaPlayer(**player)
-                    players.append(player)
-
-                await repo_highscore.create(data=highscores)
-                await repo_player.update(data=players)
+                if len(batch) > 1000 or send_time + 60 < time.time():
+                    await procces_scraper_consumer(batch)
+                    batch = []
+                    send_time = time.time()
 
                 # commit the latest seen message
                 msg = messages[-1]
