@@ -90,10 +90,16 @@ class Player:
         pass
 
     @handle_database_error
-    async def read_many(self, page: int = 1, page_size: int = 10):
+    async def read_many(
+        self, names: list[str] = [], page: int = 1, page_size: int = 10
+    ) -> list[SchemaPlayer]:
         table = dbPlayer
 
         sql_select: Select = select(table)
+
+        if names:
+            sql_select = sql_select.where(dbPlayer.name.in_(names))
+
         sql_select = sql_select.limit(page_size).offset((page - 1) * page_size)
 
         async with PLAYERDATA_ENGINE.get_session() as session:
