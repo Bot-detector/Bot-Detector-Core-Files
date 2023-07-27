@@ -499,6 +499,16 @@ class playerHiscoreData(Base):
     zalcano = Column(Integer)
     zulrah = Column(Integer)
 
+    # New columns added
+    rifts_closed = Column(Integer, default=0)
+    artio = Column(Integer, default=0)
+    calvarion = Column(Integer, default=0)
+    duke_sucellus = Column(Integer, default=0)
+    spindel = Column(Integer, default=0)
+    the_leviathan = Column(Integer, default=0)
+    the_whisperer = Column(Integer, default=0)
+    vardorvis = Column(Integer, default=0)
+
     Player = relationship("Player")
 
 
