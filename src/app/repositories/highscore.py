@@ -32,9 +32,12 @@ class PlayerHiscoreData:
                 for row in data:
                     # Create the insert statement
                     sql_insert: Insert = insert(table)
-                    sql_insert = sql_insert.values(row.model_dump())
+                    sql_insert = sql_insert.values(row.model_dump()).prefix_with(
+                        "ignore"
+                    )
 
                     # Create the select statement to check if the record exists
+                    # TODO: does this work?
                     sql_select: Select = select(table)
                     sql_select = sql_select.where(
                         and_(
