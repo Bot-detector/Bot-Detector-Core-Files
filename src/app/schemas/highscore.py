@@ -74,10 +74,10 @@ class PlayerHiscoreData(BaseModel):
     kril_tsutsaroth: int
     mimic: int
     nightmare: int
-    nex: int | None
+    nex: int = 0
     phosanis_nightmare: int
     obor: int
-    phantom_muspah: int | None
+    phantom_muspah: int = 0
     sarachnis: int
     scorpia: int
     skotizo: int
@@ -85,10 +85,10 @@ class PlayerHiscoreData(BaseModel):
     the_gauntlet: int
     the_corrupted_gauntlet: int
     theatre_of_blood: int
-    theatre_of_blood_hard: int | None
+    theatre_of_blood_hard: int = 0
     thermonuclear_smoke_devil: int
-    tombs_of_amascut: int | None
-    tombs_of_amascut_expert: int | None
+    tombs_of_amascut: int = 0
+    tombs_of_amascut_expert: int = 0
     tzkal_zuk: int
     tztok_jad: int
     venenatis: int
@@ -97,3 +97,11 @@ class PlayerHiscoreData(BaseModel):
     wintertodt: int
     zalcano: int
     zulrah: int
+    rifts_closed: int = 0
+    artio: int = 0
+    calvarion: int = 0
+    duke_sucellus: int = 0
+    spindel: int = 0
+    the_leviathan: int = 0
+    the_whisperer: int = 0
+    vardorvis: int = 0
