@@ -46,13 +46,14 @@ logging.basicConfig(level=logging.DEBUG, handlers=handlers)
 logging.getLogger("requests").setLevel(logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.DEBUG)
 logging.getLogger("uvicorn").setLevel(logging.DEBUG)
-
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger("aiomysql").setLevel(logging.ERROR)
 logging.getLogger("aiokafka").setLevel(logging.WARNING)
 
-logging.getLogger("uvicorn.error").propagate = False
-
+uvicorn_error = logging.getLogger("uvicorn.error")
+uvicorn_error.disabled = True
+uvicorn_access = logging.getLogger("uvicorn.access")
+uvicorn_access.disabled = True
 
 # https://github.com/aio-libs/aiomysql/issues/103
 # https://github.com/coleifer/peewee/issues/2229
