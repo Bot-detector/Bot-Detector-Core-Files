@@ -79,5 +79,5 @@ jobs:
           createPR: true
           changes: |
             {
-              "spec.template.spec.containers[0].image": "${REGISTRY}:${{ steps.vars.outputs.GIT_HASH }}"
+              "spec.template.spec.containers[0].image": "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}"
             }

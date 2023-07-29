@@ -72,12 +72,12 @@ jobs:
           valueFile: ${{ env.VALUE_FILE }}
           token: "${{ secrets.HETZNER_ACTIONS_RUNNER_TOKEN }}"
           commitChange: true
-          title: "${{ env.VALUE_FILE }}-${{ steps.vars.outputs.GIT_HASH }}"
-          branch: "${{ env.VALUE_FILE }}${{ steps.vars.outputs.GIT_HASH }}"
+          title: "${{ env.VALUE_FILE }}_${{ steps.vars.outputs.GIT_HASH }}"
+          branch: "${{ env.VALUE_FILE }}_${{ steps.vars.outputs.GIT_HASH }}"
           targetBranch: develop
           masterBranchName: develop
           createPR: true
           changes: |
             {
-              "spec.template.spec.containers[0].image": "${REGISTRY}:${{ steps.vars.outputs.GIT_HASH }}"
+              "spec.template.spec.containers[0].image": "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}"
             }
