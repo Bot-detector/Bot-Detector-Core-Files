@@ -146,7 +146,8 @@ async def get_expired_predictions(token: str, limit: int = Query(50_000, ge=1)):
     await verify_token(token, verification="request_highscores")
 
     # query
-    sql: Select = select(columns=[PlayerHiscoreDataLatest, Player.name])
+    columns_to_select = [PlayerHiscoreDataLatest, Player.name]
+    sql: Select = select(*columns_to_select)
     sql = sql.where(
         or_(
             func.date(dbPrediction.created) != func.curdate(),
