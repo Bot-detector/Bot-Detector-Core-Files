@@ -30,7 +30,7 @@ class PlayerHiscoreData:
             # Define the condition to match the row's Player_id and ts_date with the database records.
             condition = and_(
                 dbPlayerHiscoreData.Player_id == row.Player_id,
-                dbPlayerHiscoreData.ts_date == row.ts_date,
+                dbPlayerHiscoreData.ts_date == row.timestamp.date(),
             )
             # Append the SELECT query with the condition to the list.
             select_queries.append(select(table).where(condition))
@@ -53,28 +53,38 @@ class PlayerHiscoreData:
 
     @handle_database_error
     async def create(self, data: list[SchemaHiscore]) -> list[SchemaHiscore]:
+        # Define the table to work with
         table = dbPlayerHiscoreData
 
-        existing_records = await self._get_unique(data)
+        existing_record = await self._get_unique(data)
+        unique = [f"{r.ts_date}-{r.Player_id}" for r in existing_record]
 
-        values = []
-        output = []
+        values: list[SchemaHiscore] = []
+
         for row in data:
-            pid = row.Player_id
-            ts = row.ts_date
-            if any(pid == r.Player_id and ts == r.ts_date for r in existing_records):
+            key = f"{row.timestamp.date()}-{row.Player_id}"
+            if key in unique:
                 continue
-            output.append(row)
-            values.append(row.model_dump())
+            values.append(row)
 
+        if not values:
+            logger.info(f"Received: {len(data)}, inserted: {len(values)}")
+            return values
+
+        # Get a session from the PLAYERDATA_ENGINE to perform the database operations
         async with PLAYERDATA_ENGINE.get_session() as session:
             session: AsyncSession = session
             async with session.begin():
                 sql_insert: Insert = insert(table)
-                sql_insert = sql_insert.values(values).prefix_with("ignore")
+                sql_insert = sql_insert.values([v.model_dump() for v in values])
+                sql_insert = sql_insert.prefix_with("ignore")
+
+                # Execute the insert statement within the session
                 await session.execute(sql_insert)
+
+        # Log the number of received and inserted data rows and return the rows that were inserted
         logger.info(f"Received: {len(data)}, inserted: {len(values)}")
-        return output
+        return values
 
     @handle_database_error
     async def read(self, player_name: str, page: int = 1, page_size: int = 10):

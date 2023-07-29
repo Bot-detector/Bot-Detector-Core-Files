@@ -70,19 +70,36 @@ class Player:
 
     @handle_database_error
     async def update(self, data: list[SchemaPlayer]):
+        # Select the database table to update.
         table = dbPlayer
 
+        # Get an asynchronous session from the PLAYERDATA_ENGINE.
         async with PLAYERDATA_ENGINE.get_session() as session:
+            # Cast the session as an AsyncSession for type hinting.
             session: AsyncSession = session
 
+            # Start a transaction within the session.
             async with session.begin():
+                # Iterate through the data list to update each row.
                 for row in data:
-                    # Create the update statement
+                    # Prepare the SQL UPDATE statement for the specific row using the row's ID.
                     sql_update: Update = update(table).where(dbPlayer.id == row.id)
-                    sql_update = sql_update.values(row.model_dump())
-                    # Execute the update query
+                    sql_update = sql_update.values(
+                        updated_at=row.updated_at,
+                        possible_ban=row.possible_ban,
+                        confirmed_ban=row.confirmed_ban,
+                        confirmed_player=row.confirmed_player,
+                        label_id=row.label_id,
+                        label_jagex=row.label_jagex,
+                    )
+
+                    # Execute the UPDATE statement within the session.
                     await session.execute(sql_update)
+
+        # Log the number of rows updated.
         logger.info(f"Updated {len(data)}")
+
+        # Return from the function.
         return
 
     @handle_database_error
