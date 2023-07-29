@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  VALUE_FILE: bd-core-dvp/deployment.yaml
+  VALUE_FILE: bd-core-prd/deployment.yaml
   REGISTRY: quay.io/bot_detector/bd-core-files
   ENVIRONMENT: prd
 
