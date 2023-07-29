@@ -43,7 +43,7 @@ jobs:
 
       - name: Tag image
         run: |
-          docker tag "${{ steps.vars.outputs.GIT_HASH }}" "${REGISTRY}:${ENVIRONMENT}"
+          docker tag "${REGISTRY}:${{ steps.vars.outputs.GIT_HASH }}" "${REGISTRY}:${ENVIRONMENT}"
 
       - name: Docker Push image to Quay registry
         run: |
