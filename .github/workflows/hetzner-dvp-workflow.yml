@@ -69,11 +69,11 @@ jobs:
         uses: fjogeleit/yaml-update-action@main
         with:
           repository: Bot-detector/bot-detector-k8s
-          valueFile: "${VALUE_FILE}"
+          valueFile: ${{ env.VALUE_FILE }}
           token: "${{ secrets.HETZNER_ACTIONS_RUNNER_TOKEN }}"
           commitChange: true
-          title: "${VALUE_FILE}-${{ steps.vars.outputs.GIT_HASH }}"
-          branch: "${VALUE_FILE}-${{ steps.vars.outputs.GIT_HASH }}"
+          title: "${{ env.VALUE_FILE }}-${{ steps.vars.outputs.GIT_HASH }}"
+          branch: "${{ env.VALUE_FILE }}${{ steps.vars.outputs.GIT_HASH }}"
           targetBranch: develop
           masterBranchName: develop
           createPR: true
