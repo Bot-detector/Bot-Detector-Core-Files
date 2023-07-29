@@ -221,7 +221,7 @@ def handle_database_error(func):
         except OperationalError as e:
             # Handle the OperationalError here (you can log the error, retry, etc.)
             # {traceback.format_exc()}
-            logger.error(f"Caught OperationalError:\n{e}\n")
+            logger.error(f"Caught OperationalError:\n{e}\n{traceback.format_exc()}è")
             # Add a random sleep time between 100ms to 1000ms (adjust as needed).
             sleep_time_ms = random.randint(100, 2000)
             await asyncio.sleep(sleep_time_ms / 1000)
