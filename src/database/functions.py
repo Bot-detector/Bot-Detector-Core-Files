@@ -102,8 +102,8 @@ async def execute_sql(
                 {"message": f"Deadlock, Retry Attempt: {retry_attempt}, retrying {e}"}
             )
         else:
-            logger.error({"message": "Unknown Error", "error": e})
-            logger.error(traceback.print_exc())
+            err = {"message": "Unknown Error", "error": e}
+            logger.error(f"{err}\n{traceback.format_exc()}")
             return None
         await asyncio.sleep(random.uniform(0.1, sleep))
         records = await execute_sql(
@@ -220,7 +220,8 @@ def handle_database_error(func):
             return await func(*args, **kwargs)
         except OperationalError as e:
             # Handle the OperationalError here (you can log the error, retry, etc.)
-            logger.error(f"Caught OperationalError:\n{e}")
+            # {traceback.format_exc()}
+            logger.error(f"Caught OperationalError:\n{e}\n")
             # Add a random sleep time between 100ms to 1000ms (adjust as needed).
             sleep_time_ms = random.randint(100, 2000)
             await asyncio.sleep(sleep_time_ms / 1000)

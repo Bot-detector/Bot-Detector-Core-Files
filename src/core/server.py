@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import time
@@ -10,8 +11,8 @@ from fastapi.responses import JSONResponse
 
 from src import api
 from src.core import config
-from src.kafka.highscore import run_kafka_scraper_consumer
-import asyncio
+from src.kafka.highscore import HiscoreConsumer, MessageProcessor
+from src.kafka.kafka import Kafka
 
 logger = logging.getLogger(__name__)
 
@@ -101,4 +102,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.on_event("startup")
 async def startup_event():
     # Call the Kafka consumer function
-    asyncio.ensure_future(run_kafka_scraper_consumer())
+    kafka_scraper = Kafka(
+        name="kafka_scraper",
+        message_processor=MessageProcessor(),
+        message_consumer=HiscoreConsumer(),
+    )
+    await kafka_scraper.initialize(group_id="highscore-api", topics=["scraper"])
+    asyncio.ensure_future(kafka_scraper.run())

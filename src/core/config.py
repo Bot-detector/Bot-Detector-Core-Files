@@ -16,7 +16,7 @@ token = os.environ.get("token")
 kafka_url = os.environ.get("kafka_url", "localhost:9094")
 
 # setup logging
-# file_handler = logging.FileHandler(filename="./logs/error.log", mode="a")
+file_handler = logging.FileHandler(filename="./error.log", mode="a")
 stream_handler = logging.StreamHandler(sys.stdout)
 # # log formatting
 formatter = logging.Formatter(
@@ -32,7 +32,7 @@ formatter = logging.Formatter(
 )
 
 
-# file_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
 
 handlers = [
