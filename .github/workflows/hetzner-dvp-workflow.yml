@@ -34,25 +34,28 @@ jobs:
       - name: Set vars
         id: vars
         run: |
-          echo "GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
-          echo "REGISTRY=$REGISTRY" >> $GITHUB_OUTPUT
-          echo "VALUE_FILE=$VALUE_FILE" >> $GITHUB_OUTPUT
+          echo "GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_ENV
+          echo "REGISTRY=$REGISTRY" >> $GITHUB_ENV
+          echo "VALUE_FILE=$VALUE_FILE" >> $GITHUB_ENV
 
-      # Runs a command using the runners shell
-      - name: docker build
-        run: docker build . --file Dockerfile --network=host -t "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" --target production --build-arg api_port=5000 --build-arg root_path=""
-
-      - name: login to registry
-        run: echo "${{ secrets.QUAY_REGISTERY_PASSWORD }}" | docker login -u="bot_detector+quay_robot" quay.io --password-stdin
-
-      - name: docker push image to registry
-        run: docker push "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}"
-
-      # Additional tags
-      - name: Add additional tags
+      - name: Docker Build
         run: |
-          docker tag "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" "$REGISTRY:dev"
-          docker tag "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" "$REGISTRY:latest"
+          docker build . --file Dockerfile --network=host -t "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}" --target production --build-arg api_port=5000 --build-arg root_path=""
+        working-directory: /path/to/your/dockerfile/directory
+
+      - name: Login to Quay registry
+        run: echo "${{ secrets.QUAY_REGISTRY_PASSWORD }}" | docker login -u "bot_detector+quay_robot" quay.io --password-stdin
+
+      - name: Tag image
+        run: |
+          docker tag "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}" "${{ env.REGISTRY }}:dev"
+          docker tag "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}" "${{ env.REGISTRY }}:latest"
+
+      - name: Docker Push image to Quay registry
+        run: |
+          docker push "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}"
+          docker push "${{ env.REGISTRY }}:dev"
+          docker push "${{ env.REGISTRY }}:latest"
 
       - name: Checkout Target Repository
         uses: actions/checkout@v3
@@ -66,7 +69,7 @@ jobs:
           valueFile: "${{ steps.vars.outputs.VALUE_FILE }}"
           token: ${{ secrets.HETZNER_ACTIONS_RUNNER_TOKEN }}
           commitChange: true
-          branch: "${{ steps.vars.outputs.GIT_HASH }}"
+          branch: "${{ steps.vars.outputs.VALUE_FILE }}-${{ steps.vars.outputs.GIT_HASH }}"
           targetBranch: develop
           masterBranchName: develop
           createPR: true

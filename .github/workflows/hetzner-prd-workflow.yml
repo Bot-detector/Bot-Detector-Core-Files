@@ -42,22 +42,23 @@ jobs:
       - name: docker build
         run: docker build . --file Dockerfile --network=host -t "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" --target production --build-arg api_port=5000 --build-arg root_path=""
 
-      - name: login to registry
-        run: echo "${{ secrets.QUAY_REGISTERY_PASSWORD }}" | docker login -u="bot_detector+quay_robot" quay.io --password-stdin
+      - name: Login to Quay registry
+        run: echo "${{ secrets.QUAY_REGISTRY_PASSWORD }}" | docker login -u "bot_detector+quay_robot" quay.io --password-stdin
 
-      - name: docker push image to registry
-        run: docker push "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}"
-
-      # Additional tags
-      - name: Add additional tags
+      - name: Tag image
         run: |
-          docker tag "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" "$REGISTRY:prd"
+          docker tag "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}" "${{ env.REGISTRY }}:prd"
+
+      - name: Docker Push image to Quay registry
+        run: |
+          docker push "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}"
+          docker push "${{ env.REGISTRY }}:prd"
 
       - name: Checkout Target Repository
         uses: actions/checkout@v3
         with:
           repository: Bot-detector/bot-detector-k8s
-
+          
       - name: Update Image Version
         uses: fjogeleit/yaml-update-action@main
         with:
@@ -65,7 +66,7 @@ jobs:
           valueFile: "${{ steps.vars.outputs.VALUE_FILE }}"
           token: ${{ secrets.HETZNER_ACTIONS_RUNNER_TOKEN }}
           commitChange: true
-          branch: "${{ steps.vars.outputs.GIT_HASH }}"
+          branch: "${{ steps.vars.outputs.VALUE_FILE }}-${{ steps.vars.outputs.GIT_HASH }}"
           targetBranch: develop
           masterBranchName: develop
           createPR: true
