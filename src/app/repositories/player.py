@@ -73,6 +73,11 @@ class Player:
         # Select the database table to update.
         table = dbPlayer
 
+        # check if we got some data
+        if not data:
+            logger.info(f"Updated {len(data)}")
+            return
+
         # Get an asynchronous session from the PLAYERDATA_ENGINE.
         async with PLAYERDATA_ENGINE.get_session() as session:
             # Cast the session as an AsyncSession for type hinting.

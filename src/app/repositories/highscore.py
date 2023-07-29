@@ -56,6 +56,10 @@ class PlayerHiscoreData:
         # Define the table to work with
         table = dbPlayerHiscoreData
 
+        if not data:
+            logger.info(f"Received: {len(data)}, inserted: {len(values)}")
+            return []
+
         existing_record = await self._get_unique(data)
         unique = [f"{r.ts_date}-{r.Player_id}" for r in existing_record]
 
@@ -69,7 +73,7 @@ class PlayerHiscoreData:
 
         if not values:
             logger.info(f"Received: {len(data)}, inserted: {len(values)}")
-            return values
+            return []
 
         # Get a session from the PLAYERDATA_ENGINE to perform the database operations
         async with PLAYERDATA_ENGINE.get_session() as session:
