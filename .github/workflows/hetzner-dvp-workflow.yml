@@ -23,7 +23,7 @@ jobs:
   # This workflow contains a single job called "build"
   build_image:
     # The type of runner that the job will run on
-    runs-on: [self-hosted,hetzner]
+    runs-on: [self-hosted, hetzner]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -47,6 +47,12 @@ jobs:
 
       - name: docker push image to registry
         run: docker push "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}"
+
+      # Additional tags
+      - name: Add additional tags
+        run: |
+          docker tag "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" "$REGISTRY:dev"
+          docker tag "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" "$REGISTRY:latest"
 
       - name: Checkout Target Repository
         uses: actions/checkout@v3

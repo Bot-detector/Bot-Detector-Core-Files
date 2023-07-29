@@ -48,6 +48,11 @@ jobs:
       - name: docker push image to registry
         run: docker push "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}"
 
+      # Additional tags
+      - name: Add additional tags
+        run: |
+          docker tag "$REGISTRY:${{ steps.vars.outputs.GIT_HASH }}" "$REGISTRY:prd"
+
       - name: Checkout Target Repository
         uses: actions/checkout@v3
         with:
