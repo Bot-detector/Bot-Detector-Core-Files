@@ -34,9 +34,7 @@ jobs:
       - name: Set vars
         id: vars
         run: |
-          echo "GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_ENV
-          echo "REGISTRY=$REGISTRY" >> $GITHUB_ENV
-          echo "VALUE_FILE=$VALUE_FILE" >> $GITHUB_ENV
+          echo "GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
 
       - name: Docker Build
         run: |
@@ -53,7 +51,7 @@ jobs:
 
       - name: Docker Push image to Quay registry
         run: |
-          docker push "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}"
+          docker push "${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH  }}"
           docker push "${{ env.REGISTRY }}:dev"
           docker push "${{ env.REGISTRY }}:latest"
 
@@ -66,10 +64,10 @@ jobs:
         uses: fjogeleit/yaml-update-action@main
         with:
           repository: Bot-detector/bot-detector-k8s
-          valueFile: "${{ steps.vars.outputs.VALUE_FILE }}"
+          valueFile: "${{ env.VALUE_FILE }}"
           token: ${{ secrets.HETZNER_ACTIONS_RUNNER_TOKEN }}
           commitChange: true
-          branch: "${{ steps.vars.outputs.VALUE_FILE }}-${{ steps.vars.outputs.GIT_HASH }}"
+          branch: "${{ env.VALUE_FILE }}-${{ steps.vars.outputs.GIT_HASH }}"
           targetBranch: develop
           masterBranchName: develop
           createPR: true

@@ -35,8 +35,6 @@ jobs:
         id: vars
         run: |
           echo "GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
-          echo "REGISTRY=$REGISTRY" >> $GITHUB_OUTPUT
-          echo "VALUE_FILE=$VALUE_FILE" >> $GITHUB_OUTPUT
 
       # Runs a command using the runners shell
       - name: docker build
@@ -63,14 +61,14 @@ jobs:
         uses: fjogeleit/yaml-update-action@main
         with:
           repository: Bot-detector/bot-detector-k8s
-          valueFile: "${{ steps.vars.outputs.VALUE_FILE }}"
+          valueFile: "${{ env.VALUE_FILE }}"
           token: ${{ secrets.HETZNER_ACTIONS_RUNNER_TOKEN }}
           commitChange: true
-          branch: "${{ steps.vars.outputs.VALUE_FILE }}-${{ steps.vars.outputs.GIT_HASH }}"
+          branch: "${{ env.VALUE_FILE }}-${{ steps.vars.outputs.GIT_HASH }}"
           targetBranch: develop
           masterBranchName: develop
           createPR: true
           changes: |
             {
-              "spec.template.spec.containers[0].image":"${{ steps.vars.outputs.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}"
+              "spec.template.spec.containers[0].image":"${{ env.REGISTRY }}:${{ steps.vars.outputs.GIT_HASH }}"
             }
