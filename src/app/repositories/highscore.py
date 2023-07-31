@@ -1,7 +1,8 @@
 import logging
 
 from pydantic import ValidationError
-from sqlalchemy import delete, insert, select, update, union_all
+from sqlalchemy import delete, select, update, union_all
+from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
 from sqlalchemy.sql.expression import Delete, Insert, Select, Update, and_
@@ -56,39 +57,20 @@ class PlayerHiscoreData:
         # Define the table to work with
         table = dbPlayerHiscoreData
 
-        if not data:
-            logger.info(f"Received: {len(data)}, inserted: {len(values)}")
-            return []
-
-        existing_record = await self._get_unique(data)
-        unique = [f"{r.ts_date}-{r.Player_id}" for r in existing_record]
-
-        values: list[SchemaHiscore] = []
-
-        for row in data:
-            key = f"{row.timestamp.date()}-{row.Player_id}"
-            if key in unique:
-                continue
-            values.append(row)
-
-        if not values:
-            logger.info(f"Received: {len(data)}, inserted: {len(values)}")
-            return []
-
         # Get a session from the PLAYERDATA_ENGINE to perform the database operations
         async with PLAYERDATA_ENGINE.get_session() as session:
             session: AsyncSession = session
             async with session.begin():
                 sql_insert: Insert = insert(table)
-                sql_insert = sql_insert.values([v.model_dump() for v in values])
+                sql_insert = sql_insert.values([d.model_dump() for d in data])
                 sql_insert = sql_insert.prefix_with("ignore")
 
                 # Execute the insert statement within the session
                 await session.execute(sql_insert)
 
         # Log the number of received and inserted data rows and return the rows that were inserted
-        logger.info(f"Received: {len(data)}, inserted: {len(values)}")
-        return values
+        logger.info(f"Received: {len(data)}, inserted: {len(data)}")
+        return data
 
     @handle_database_error
     async def read(self, player_name: str, page: int = 1, page_size: int = 10):
