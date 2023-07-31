@@ -73,13 +73,7 @@ class HiscoreConsumer(AbstractConsumer):
                 highscores.append(highscore)
 
         # Create new highscore records in the database using the repo_highscore
-        new_records = await self.repo_highscore.create(data=highscores)
-
-        # Extract the Player IDs from the newly created highscore records
-        player_ids = [r.Player_id for r in new_records]
-
-        # Filter the list of players to include only those with matching Player IDs
-        players = [p for p in players if p.id in player_ids]
+        _ = await self.repo_highscore.create(data=highscores)
 
         # Update player records in the database using the repo_player
         await self.repo_player.update(data=players)

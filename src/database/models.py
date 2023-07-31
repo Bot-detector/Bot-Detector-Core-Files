@@ -398,7 +398,7 @@ class stgReport(Base):
 class playerHiscoreData(Base):
     __tablename__ = "playerHiscoreData"
     __table_args__ = (
-        Index("Unique_player_time", "timestamp", "Player_id", unique=True),
+        Index("Unique_player_time", "Player_id", "timestamp", unique=True),
         Index("Unique_player_date", "Player_id", "ts_date", unique=True),
     )
 
