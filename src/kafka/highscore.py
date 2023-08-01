@@ -8,6 +8,7 @@ from src.app.repositories.player import Player as RepositoryPlayer
 from src.app.schemas.highscore import PlayerHiscoreData as SchemaHiscore
 from src.app.schemas.player import Player as SchemaPlayer
 from src.kafka.abc import AbstractConsumer, AbstractMP
+from src.database.models import playerHiscoreData as dbHiscore
 
 logger = logging.getLogger(__name__)
 
@@ -70,10 +71,17 @@ class HiscoreConsumer(AbstractConsumer):
             # If 'hiscores' data exists, create a SchemaHiscore object and append it to the list
             if highscore:
                 highscore = SchemaHiscore(**highscore)
+                highscore.ts_date = highscore.timestamp.date()
                 highscores.append(highscore)
 
         # Create new highscore records in the database using the repo_highscore
-        _ = await self.repo_highscore.create(data=highscores)
+        # _ = await self.repo_highscore.create(data=highscores)
+        await self.repo_highscore.insert_if_not_exist(
+            table=dbHiscore,
+            schema=SchemaHiscore,
+            unique_columns=["Player_id", "ts_date"],
+            values=highscores,
+        )
 
         # Update player records in the database using the repo_player
         await self.repo_player.update(data=players)

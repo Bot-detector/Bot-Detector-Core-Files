@@ -13,6 +13,7 @@ from src.database.database import PLAYERDATA_ENGINE
 from src.database.models import Player as dbPlayer
 from src.database.models import playerHiscoreData as dbPlayerHiscoreData
 from src.database.functions import handle_database_error
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,65 @@ class PlayerHiscoreData:
 
         # Return the list of results obtained from the database.
         return result
+
+    @handle_database_error
+    async def insert_if_not_exist(
+        self,
+        table,
+        schema: BaseModel,
+        unique_columns: list[str],
+        values: list[BaseModel],
+    ):
+        # Convert values into a dictionary of unique records based on unique_columns
+        unique_records = {
+            "-".join([str(getattr(v, c)) for c in unique_columns]): v for v in values
+        }
+
+        # Create a list of SQL queries to check for existing rows with unique values
+        queries = []
+        for v in unique_records.values():
+            sql_select: Select = select(table)
+            for c in unique_columns:
+                value = getattr(v, c)
+                column = getattr(table, c)
+                sql_select = sql_select.where(column == value)
+            queries.append(sql_select)
+
+        # Union all the queries to combine the results
+        final_query = union_all(*queries)
+
+        # Open a database session and begin a transaction
+        async with PLAYERDATA_ENGINE.get_session() as session:
+            session: AsyncSession = session
+            async with session.begin():
+                # Execute the final query to check for existing rows
+                existing_rows = await session.execute(final_query)
+                existing_rows = existing_rows.all()
+
+                # If existing rows are found, remove them from unique_records dictionary
+                if existing_rows:
+                    for row in existing_rows:
+                        row = schema.model_validate(row)
+                        unique_row = "-".join(
+                            [str(getattr(row, c)) for c in unique_columns]
+                        )
+                        unique_records.pop(unique_row, None)
+
+                # If there are remaining unique records, insert them into the database
+                if unique_records:
+                    # Create an insert statement with the unique records
+                    sql_insert: Insert = insert(table)
+                    sql_insert = sql_insert.values(
+                        [v.model_dump() for v in unique_records.values()]
+                    )
+                    sql_insert = sql_insert.prefix_with("ignore")
+
+                    # Execute the insert statement within the session
+                    await session.execute(sql_insert)
+
+        # Log the number of queries and inserted records
+        logger.info(f"Received: {len(queries)}, inserted: {len(unique_records)}")
+        return
 
     @handle_database_error
     async def create(self, data: list[SchemaHiscore]) -> list[SchemaHiscore]:
