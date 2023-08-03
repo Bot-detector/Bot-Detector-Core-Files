@@ -1,8 +1,7 @@
 import asyncio
 import logging
-import random
 import time
-import traceback
+from asyncio import Queue
 
 from aiokafka import AIOKafkaConsumer
 
@@ -18,19 +17,27 @@ class Kafka:
         name: str,
         message_processor: AbstractMP,
         message_consumer: AbstractConsumer,
+        topics: list,
+        group_id: str,
+        batch_size: int = 100,
     ) -> None:
+        # Initialize the Kafka instance with the provided parameters.
         self.message_processor = message_processor
         self.message_consumer = message_consumer
+        self.message_queue = Queue(maxsize=batch_size * 4)
+        self.batch_size = batch_size
         self.name = name
+        self.group_id = group_id
+        self.topics: list = topics
 
-    async def initialize(self, group_id: str, topics: list[str]):
+    async def initialize(self):
         # Log the initialization process.
         logger.info(f"{self.name} - initializing")
 
         # Create an instance of AIOKafkaConsumer with specific configurations.
         self.consumer = AIOKafkaConsumer(
             bootstrap_servers=config.kafka_url,
-            group_id=group_id,
+            group_id=self.group_id,
             max_poll_interval_ms=60_000,
             session_timeout_ms=60_000,
             heartbeat_interval_ms=1_000,
@@ -38,84 +45,62 @@ class Kafka:
         )
 
         # Subscribe the consumer to the provided list of topics.
-        self.consumer.subscribe(topics=topics)
-
-        # Start the consumer.
+        self.consumer.subscribe(topics=self.topics)
         await self.consumer.start()
         return
 
-    async def _handle_no_messages(self, sleep: int, delta: int = 0):
-        # Log that there are no messages, and sleep for a specified duration.
-        logger.info(f"{self.name} - no messages, sleeping {sleep}")
-        await asyncio.sleep(sleep)
-        return sleep + delta
-
-    async def _process_batch(self, batch) -> list:
-        now = time.time()
-        # If the time since the last batch processing is less than 60 seconds, return the batch as is.
-        # If the batch size is less than 100, return the batch as is.
-        if not (self.send_time + 60 < now or len(batch) >= 100):
-            return batch
-
-        # If both conditions are met, process the batch using the message_consumer's process method.
-        start_time = time.time()
-        await self.message_consumer.process(batch)
-        end_time = time.time()
-
-        # Log the time taken for processing the batch.
-        delta_time = end_time - start_time
-        logger.info(
-            f"Inserting: {len(batch)} took {delta_time:.2f} seconds, {len(batch)/delta_time:.2f} it/s,"
-        )
-
-        # Update the send_time with the end_time for the next batch processing.
-        self.send_time = end_time
-        return []
+    async def destroy(self):
+        # Perform cleanup tasks when destroying the Kafka instance.
+        pass
 
     async def run(self):
-        # Log that the Kafka consumer is running.
-        logger.info(f"{self.name} - running")
-
-        # Initialize a list to hold the batch of messages.
-        batch = []
-
-        # Initialize the send_time to the current time.
-        self.send_time = time.time()
-
-        # Set the initial sleep duration to 2.9 seconds.
-        sleep = 2.9
-
+        logger.debug(f"running {self.name}")
         try:
-            while True:
-                # Get a batch of messages from the consumer.
-                msgs = await self.consumer.getmany(max_records=100)
-
-                # If there are no messages in the batch, sleep for a specified duration and continue the loop.
-                if not msgs:
-                    sleep = await self._handle_no_messages(sleep, 0)
-                    continue
-
-                # Parse and commit the messages using the message_processor.
-                batch = await self.message_processor.parse_and_commit(
-                    consumer=self.consumer, msgs=msgs, batch=batch, name=self.name
-                )
-
-                # If the batch is empty after processing, continue the loop.
-                if not batch:
-                    continue
-
-                # Process the batch.
-                batch = await self._process_batch(batch)
+            # Run both tasks concurrently using asyncio.gather
+            await asyncio.gather(self.process_rows(), self.get_rows_from_kafka())
         except Exception as e:
-            # Log any exceptions caught during the consumer's execution.
-            logger.error(f"Caught Exception:\n {str(e)}\n{traceback.format_exc()}")
-
-            # Sleep for a random duration between 1 and 5 seconds before attempting to run again.
-            sleep_time_ms = random.randint(1000, 5000)
-            await asyncio.sleep(sleep_time_ms / 1000)
-
-            # Restart the consumer by calling the run method again.
-            await self.run()
+            logger.error(f"Error in asynchronous tasks: {e}")
         finally:
-            # Stop the consumer when the consumer loop exits.
+            logger.warning("destroying")
+            await self.destroy()
+
+    async def process_rows(self):
+        # Process Kafka rows from the message queue.
+        logger.info(f"{self.name} - start processing rows")
+        count = 1
+        start_time = int(time.time())
+        last_send_time = int(time.time())
+        batch = []
+        while True:
+            message: dict = await self.message_queue.get()
+            batch.append(message)
+            delta_send_time = int(time.time()) - last_send_time
+            delta_send_time = delta_send_time if delta_send_time != 0 else 1
+
+            if len(batch) > self.batch_size or delta_send_time > 60:
+                await self.message_consumer.process_batch(batch)
+                last_send_time = int(time.time())
+                qsize = self.message_queue.qsize()
+
+                logger.info(
+                    f"{self.name} - {qsize=} - {len(batch)/delta_send_time:.2f} it/s"
+                )
+                batch = []
+
+            self.message_queue.task_done()
+            await asyncio.sleep(0.01)
+
+    async def get_rows_from_kafka(self):
+        # Consume rows from Kafka and add them to the message queue.
+        logger.info(f"{self.name} - start consuming rows from kafka")
+        try:
+            async for message in self.consumer:
+                message = message.value.decode()
+                message = await self.message_processor.process_message(message)
+                await self.message_queue.put(message)
+                await self.consumer.commit()
+        except Exception as e:
+            logger.error(f"Error in asynchronous tasks: {e}")
+        finally:
+            logger.warning(f"{self.name} - stopping consumer")
             await self.consumer.stop()

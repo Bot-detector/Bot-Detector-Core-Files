@@ -101,11 +101,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.on_event("startup")
 async def startup_event():
+    logger.info("startup initiated")
     # Call the Kafka consumer function
     kafka_scraper = Kafka(
         name="kafka_scraper",
         message_processor=MessageProcessor(),
         message_consumer=HiscoreConsumer(),
+        group_id="highscore-api",
+        topics=["scraper"],
+        batch_size=100,
     )
-    await kafka_scraper.initialize(group_id="highscore-api", topics=["scraper"])
+    logger.info("kafka_scraper created")
+    await kafka_scraper.initialize()
     asyncio.ensure_future(kafka_scraper.run())
+    logger.info("startup done")

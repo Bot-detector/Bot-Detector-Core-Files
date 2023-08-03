@@ -1,20 +1,14 @@
 from abc import ABC, abstractmethod
-from aiokafka import AIOKafkaConsumer, TopicPartition, ConsumerRecord
+from aiokafka import ConsumerRecord
 
 
 class AbstractConsumer(ABC):
     @abstractmethod
-    async def process(self, data: list[dict]):
+    async def process_batch(self, batch: list[dict]):
         pass
 
 
 class AbstractMP(ABC):
     @abstractmethod
-    async def parse_and_commit(
-        self,
-        consumer: AIOKafkaConsumer,
-        msgs: dict[TopicPartition, list[ConsumerRecord]],
-        batch: list,
-        name: str,
-    ) -> list:
+    async def process_message(self, message: ConsumerRecord) -> dict:
         pass
