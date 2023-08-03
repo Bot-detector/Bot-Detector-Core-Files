@@ -14,32 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class MessageProcessor(AbstractMP):
-    def __init__(self):
-        pass
-
-    async def parse_and_commit(
-        self,
-        consumer: AIOKafkaConsumer,
-        msgs: dict[TopicPartition, list[ConsumerRecord]],
-        batch: list,
-        name: str,
-    ) -> list:
-        # Loop through each topic and its associated messages in the received batch.
-        for topic, messages in msgs.items():
-            # Log information about the current processing status for the topic.
-            logger.info(f"{name} - {topic=}, {len(messages)=}, {len(batch)=}")
-
-            # Convert the messages from bytes to JSON and add them to the batch.
-            data = [json.loads(msg.value.decode()) for msg in messages]
-            batch.extend(data)
-
-            # Commit the offset of the latest seen message in the topic to mark it as processed.
-            msg: ConsumerRecord = messages[-1]
-            tp = TopicPartition(msg.topic, msg.partition)
-            await consumer.commit({tp: msg.offset + 1})
-
-        # Return the updated batch after processing all topics.
-        return batch
+    async def process_message(self, message: ConsumerRecord) -> dict:
+        message = json.loads(message)
+        return message
 
 
 class HiscoreConsumer(AbstractConsumer):
@@ -47,13 +24,13 @@ class HiscoreConsumer(AbstractConsumer):
     repo_highscore = RepoHiscore()
     repo_player = RepositoryPlayer()
 
-    async def process(self, data: list[dict[str, dict]]):
+    async def process_batch(self, batch: list[dict]):
         # Lists to store processed highscores and players
         highscores: list[SchemaHiscore] = []
         players: list[SchemaPlayer] = []
 
         # Process each row of data containing 'hiscores' and 'player' information
-        for row in data:
+        for row in batch:
             # Extract 'hiscores' and 'player' dictionaries from the row
             highscore = row.get("hiscores")
             player = row.get("player")
