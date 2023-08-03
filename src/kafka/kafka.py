@@ -67,8 +67,6 @@ class Kafka:
     async def process_rows(self):
         # Process Kafka rows from the message queue.
         logger.info(f"{self.name} - start processing rows")
-        count = 1
-        start_time = int(time.time())
         last_send_time = int(time.time())
         batch = []
         while True:
@@ -76,6 +74,10 @@ class Kafka:
             batch.append(message)
             delta_send_time = int(time.time()) - last_send_time
             delta_send_time = delta_send_time if delta_send_time != 0 else 1
+
+            if not batch:
+                await asyncio.sleep(1)
+                continue
 
             if len(batch) > self.batch_size or delta_send_time > 60:
                 await self.message_consumer.process_batch(batch)
