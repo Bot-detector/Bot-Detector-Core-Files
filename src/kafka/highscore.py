@@ -53,13 +53,14 @@ class HiscoreConsumer(AbstractConsumer):
 
         # Create new highscore records in the database using the repo_highscore
         # _ = await self.repo_highscore.create(data=highscores)
-        await self.repo_highscore.insert_if_not_exist(
-            table=dbHiscore,
-            schema=SchemaHiscore,
-            unique_columns=["Player_id", "ts_date"],
-            values=highscores,
-        )
-
-        # Update player records in the database using the repo_player
-        await self.repo_player.update(data=players)
+        if highscores:
+            await self.repo_highscore.insert_if_not_exist(
+                table=dbHiscore,
+                schema=SchemaHiscore,
+                unique_columns=["Player_id", "ts_date"],
+                values=highscores,
+            )
+        if players:
+            # Update player records in the database using the repo_player
+            await self.repo_player.update(data=players)
         return
