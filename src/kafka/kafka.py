@@ -3,6 +3,7 @@ import logging
 import time
 from asyncio import Queue
 
+from aiokafka.errors import KafkaError
 from aiokafka import AIOKafkaConsumer
 from aiokafka.errors import CommitFailedError
 
@@ -50,22 +51,25 @@ class Kafka:
         await self.consumer.start()
         return
 
-    async def destroy(self):
-        # Perform cleanup tasks when destroying the Kafka instance.
-        pass
+    async def stop(self):
+        # Stop the consumer and cleanup resources
+        await self.consumer.stop()
 
     async def run(self):
-        logger.debug(f"running {self.name}")
-        try:
-            # Run both tasks concurrently using asyncio.gather
-            await asyncio.gather(self.process_rows(), self.get_rows_from_kafka())
-        except CommitFailedError as commit_error:
-            logger.error(f"CommitFailedError: {str(commit_error)}")
-        except Exception as e:
-            logger.error(f"Error: {str(e)}")
-        finally:
-            # After handling exceptions, continue running the loop
-            await self.run()
+        while True:
+            logger.debug(f"{self.name} - running")
+            try:
+                # Run both tasks concurrently using asyncio.gather
+                await asyncio.gather(self.process_rows(), self.get_rows_from_kafka())
+            except KafkaError as error:
+                error_type = type(error)
+                logger.error(f"{self.name} - {error_type.__name__}: {str(error)}")
+                await self.stop()
+                await self.initialize()
+            except Exception as error:
+                logger.error(f"{self.name} - {error_type.__name__}: {str(error)}")
+
+            await asyncio.sleep(30)
 
     async def process_rows(self):
         # Process Kafka rows from the message queue.
