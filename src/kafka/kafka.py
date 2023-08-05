@@ -4,6 +4,7 @@ import time
 from asyncio import Queue
 
 from aiokafka import AIOKafkaConsumer
+from aiokafka.errors import CommitFailedError
 
 from src.core import config
 from src.kafka.abc import AbstractConsumer, AbstractMP
@@ -58,11 +59,13 @@ class Kafka:
         try:
             # Run both tasks concurrently using asyncio.gather
             await asyncio.gather(self.process_rows(), self.get_rows_from_kafka())
+        except CommitFailedError as commit_error:
+            logger.error(f"CommitFailedError: {str(commit_error)}")
         except Exception as e:
-            logger.error(f"Error in asynchronous tasks: {e}")
+            logger.error(f"Error: {str(e)}")
         finally:
-            logger.warning("destroying")
-            await self.destroy()
+            # After handling exceptions, continue running the loop
+            await self.run()
 
     async def process_rows(self):
         # Process Kafka rows from the message queue.
