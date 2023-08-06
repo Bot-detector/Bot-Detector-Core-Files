@@ -7,30 +7,81 @@ from src.app.repositories.highscore import PlayerHiscoreData as RepoHiscore
 from src.app.repositories.player import Player as RepositoryPlayer
 from src.app.schemas.highscore import PlayerHiscoreData as SchemaHiscore
 from src.app.schemas.player import Player as SchemaPlayer
-from src.kafka.abc import AbstractConsumer, AbstractMP
 from src.database.models import playerHiscoreData as dbHiscore
+from src.kafka.modules.kafka_consumer import KafkaMessageConsumer
+from src.kafka.modules.kafka_producer import KafkaMessageProducer
+from asyncio import Queue
+import asyncio
+import time
+from src.core import config
 
 logger = logging.getLogger(__name__)
 
 
-class MessageProcessor(AbstractMP):
-    async def process_message(self, message: ConsumerRecord) -> dict:
-        message = json.loads(message)
-        return message
+class HighscoreProcessor:
+    def __init__(self, batch_size: int = 100) -> None:
+        self.repo_highscore = RepoHiscore()
+        self.repo_player = RepositoryPlayer()
+        self.message_queue = Queue(maxsize=batch_size * 2)
+        self.batch = []
 
+        self.batch_size = batch_size
 
-class HiscoreConsumer(AbstractConsumer):
-    # Initialize the repositories for highscores and players
-    repo_highscore = RepoHiscore()
-    repo_player = RepositoryPlayer()
+    async def initialize(self):
+        self.message_consumer = KafkaMessageConsumer(
+            bootstrap_servers=config.kafka_url,
+            consumer_topic="scraper",
+            group_id="highscore-api",
+            message_queue=self.message_queue,
+        )
 
-    async def process_batch(self, batch: list[dict]):
+    async def start(self):
+        logger.info("starting")
+        while True:
+            await self.initialize()
+            try:
+                await asyncio.gather(
+                    self.message_consumer.consume_messages_continuously(),
+                    self.process_messages(),
+                )
+            except Exception as error:
+                logger.error(f"Error occured: {str(error)}")
+            finally:
+                await self.message_consumer.stop()
+            await asyncio.sleep(5)
+
+    async def process_messages(self):
+        logger.info("start processing messages")
+        last_send = int(time.time())
+        while True:
+            message: dict = await self.message_queue.get()
+
+            self.batch.append(message)
+
+            delta_send_time = int(time.time()) - last_send
+            delta_send_time = delta_send_time if delta_send_time != 0 else 1
+
+            qsize = self.message_queue.qsize()
+
+            if len(self.batch) > self.batch_size or (
+                delta_send_time > 60 and self.batch and qsize == 0
+            ):
+                last_send = int(time.time())
+                await self.process_batch()
+
+                logger.info(f"{qsize=} - {len(self.batch)/delta_send_time:.2f} it/s")
+                self.batch = []
+
+            self.message_queue.task_done()
+
+    async def process_batch(self):
         # Lists to store processed highscores and players
         highscores: list[SchemaHiscore] = []
         players: list[SchemaPlayer] = []
 
         # Process each row of data containing 'hiscores' and 'player' information
-        for row in batch:
+        for row in self.batch:
+            row: dict
             # Extract 'hiscores' and 'player' dictionaries from the row
             highscore = row.get("hiscores")
             player = row.get("player")

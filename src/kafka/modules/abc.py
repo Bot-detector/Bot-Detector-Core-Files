@@ -8,7 +8,14 @@ class AbstractConsumer(ABC):
         pass
 
 
-class AbstractMP(ABC):
+class AbstractProcessor(ABC):
+    def __init__(self) -> None:
+        super().__init__()
+
     @abstractmethod
-    async def process_message(self, message: ConsumerRecord) -> dict:
+    async def process_batch(self) -> None:
+        pass
+
+    @abstractmethod
+    async def process_message(self):
         pass
