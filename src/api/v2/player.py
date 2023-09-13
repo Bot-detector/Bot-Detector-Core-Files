@@ -44,13 +44,13 @@ async def get_many_players_data(
     if not any([page, greater_than]):
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            detail="page or greater than required.",
+            detail=f"page or greater than required, received: {page=}, {greater_than=}",
         )
 
     if all([page, greater_than]):
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            detail="either page or greater than.",
+            detail=f"either page or greater than not both can be set, received: {page=}, {greater_than=}",
         )
 
     repo = RepositoryPlayer()
