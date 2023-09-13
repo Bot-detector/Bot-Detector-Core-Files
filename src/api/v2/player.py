@@ -41,7 +41,7 @@ async def get_many_players_data(
         route=logging_helpers.build_route_log_string(request),
     )
 
-    if not any([page, greater_than]):
+    if greater_than is None and page is None:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail=f"page or greater than required, received: {page=}, {greater_than=}",
