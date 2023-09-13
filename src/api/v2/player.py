@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Query, status, Header, Request
+from fastapi.exceptions import HTTPException
 from src.database.functions import verify_token
 from src.utils import logging_helpers
 from src.app.repositories.player import Player as RepositoryPlayer
 from src.app.schemas.player import Player as SchemaPlayer
-from pydantic import BaseModel
 
 router = APIRouter(tags=["Player"])
 
@@ -30,8 +30,9 @@ async def get_player_data(
 @router.get("/players", response_model=list[SchemaPlayer])
 async def get_many_players_data(
     request: Request,
-    page: int = Query(default=1, ge=1),
+    page: int = Query(default=None),
     page_size: int = Query(default=10, ge=1, le=10_000),
+    greater_than: int = Query(default=None),
     token: str = Header(...),
 ):
     await verify_token(
@@ -40,8 +41,22 @@ async def get_many_players_data(
         route=logging_helpers.build_route_log_string(request),
     )
 
+    if not any([page, greater_than]):
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="page or greater than required.",
+        )
+
+    if all([page, greater_than]):
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="either page or greater than.",
+        )
+
     repo = RepositoryPlayer()
-    data = await repo.read_many(page=page, page_size=page_size)
+    data = await repo.read_many(
+        page=page, page_size=page_size, greater_than=greater_than
+    )
     return data
 
 
