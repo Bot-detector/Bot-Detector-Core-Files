@@ -100,6 +100,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("startup initiated")
-    highscore_processor = HighscoreProcessor(batch_size=100)
-    asyncio.ensure_future(highscore_processor.start())
+    if config.env != "DEV":
+        logger.info("startup initiated")
+        highscore_processor = HighscoreProcessor(batch_size=100)
+        asyncio.ensure_future(highscore_processor.start())
