@@ -7,7 +7,8 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from pyinstrument import Profiler
 
 from src import api
 from src.core import config
@@ -104,3 +105,18 @@ async def startup_event():
         logger.info("startup initiated")
         highscore_processor = HighscoreProcessor(batch_size=100)
         asyncio.ensure_future(highscore_processor.start())
+
+
+if config.profiling and config.env == "DEV":
+
+    @app.middleware("http")
+    async def profile_request(request: Request, call_next):
+        profiling = request.query_params.get("profile", False)
+        if profiling:
+            profiler = Profiler(interval=0.01, async_mode="enabled")
+            profiler.start()
+            await call_next(request)
+            profiler.stop()
+            return HTMLResponse(profiler.output_html())
+        else:
+            return await call_next(request)

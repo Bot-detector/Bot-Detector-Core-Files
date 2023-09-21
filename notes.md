@@ -21,8 +21,8 @@ git push
 ## windows
 creating a python venv to work in and install the project requirements
 ```sh
-python -m venv .venv-win
-.venv-win\Scripts\activate
+python -m venv .venv
+.venv\Scripts\activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
