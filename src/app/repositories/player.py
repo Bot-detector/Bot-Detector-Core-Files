@@ -126,7 +126,7 @@ class Player:
             sql_select = sql_select.limit(page_size).offset((page - 1) * page_size)
 
         async with PLAYERDATA_ENGINE.get_session() as session:
-            session: AsyncSession = session
+            session: AsyncSession
             # Execute the select query
             result: AsyncResult = await session.execute(sql_select)
 

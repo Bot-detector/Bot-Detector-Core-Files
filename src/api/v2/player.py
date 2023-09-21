@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Query, status, Header, Request
+from fastapi import APIRouter, Header, Query, Request, status
 from fastapi.exceptions import HTTPException
-from src.database.functions import verify_token
-from src.utils import logging_helpers
+
 from src.app.repositories.player import Player as RepositoryPlayer
 from src.app.schemas.player import Player as SchemaPlayer
+from src.database.functions import verify_token
+from src.utils import logging_helpers
 
 router = APIRouter(tags=["Player"])
 

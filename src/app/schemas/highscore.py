@@ -81,7 +81,7 @@ class PlayerHiscoreData(BaseModel):
     sarachnis: int
     scorpia: int
     skotizo: int
-    tempoross: int
+    tempoross: int = 0
     the_gauntlet: int
     the_corrupted_gauntlet: int
     theatre_of_blood: int
