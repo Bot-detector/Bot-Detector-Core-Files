@@ -37,9 +37,8 @@ class Engine:
             poolclass=QueuePool,
             pool_pre_ping=True,
             pool_size=100,
-            max_overflow=1000,
-            pool_recycle=299,
-            pool_timeout=30,
+            max_overflow=5000,
+            pool_recycle=3600,
         )
         return engine
 
