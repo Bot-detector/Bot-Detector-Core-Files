@@ -98,9 +98,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(content={"detail": error}, status_code=422)
 
 
-@app.on_event("startup")
-async def startup_event():
-    if config.env != "DEV":
-        logger.info("startup initiated")
-        highscore_processor = HighscoreProcessor(batch_size=100)
-        asyncio.ensure_future(highscore_processor.start())
+# @app.on_event("startup")
+# async def startup_event():
+#     if config.env != "DEV":
+#         logger.info("startup initiated")
+#         highscore_processor = HighscoreProcessor(batch_size=100)
+#         asyncio.ensure_future(highscore_processor.start())
