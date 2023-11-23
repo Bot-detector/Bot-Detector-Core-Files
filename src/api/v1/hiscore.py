@@ -193,6 +193,7 @@ async def get_latest_hiscore_data_by_player_features(
     confirmed_player: Optional[int] = Query(None, ge=0, le=1),
     label_id: Optional[int] = Query(None, ge=0),
     label_jagex: Optional[int] = Query(None, ge=0, le=5),
+    greater_than: Optional[int] = Query(None, ge=0),
 ):
     """
     Select the latest hiscore data of multiple players by filtering on the player features.
@@ -211,6 +212,7 @@ async def get_latest_hiscore_data_by_player_features(
         == confirmed_player
         == label_id
         == label_jagex
+        == greater_than
     ):
         raise HTTPException(status_code=404, detail="No param given")
 
@@ -232,6 +234,9 @@ async def get_latest_hiscore_data_by_player_features(
 
     if not label_jagex is None:
         sql = sql.where(Player.label_jagex == label_jagex)
+
+    if not greater_than is None:
+        sql = sql.where(Player.id >= greater_than)
 
     # paging
     sql = sql.limit(row_count).offset(row_count * (page - 1))

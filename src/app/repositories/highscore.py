@@ -1,19 +1,17 @@
 import logging
 
-from pydantic import ValidationError
-from sqlalchemy import delete, select, update, union_all
+from pydantic import BaseModel, ValidationError
+from sqlalchemy import select, union_all
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
-from sqlalchemy.sql.expression import Delete, Insert, Select, Update, and_
+from sqlalchemy.sql.expression import Insert, Select, and_
 
 from src.app.schemas.highscore import PlayerHiscoreData as SchemaHiscore
-from src.app.schemas.player import Player as SchemaPlayer
 from src.database.database import PLAYERDATA_ENGINE
+from src.database.functions import handle_database_error
 from src.database.models import Player as dbPlayer
 from src.database.models import playerHiscoreData as dbPlayerHiscoreData
-from src.database.functions import handle_database_error
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +41,7 @@ class PlayerHiscoreData:
         # Get an async session from the PLAYERDATA_ENGINE.
         async with PLAYERDATA_ENGINE.get_session() as session:
             # Cast the session to AsyncSession for type hinting.
-            session: AsyncSession = session
+            session: AsyncSession
 
             # Execute the final_query and fetch the results.
             result: AsyncResult = await session.execute(final_query)

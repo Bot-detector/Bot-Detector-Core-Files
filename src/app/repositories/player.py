@@ -112,14 +112,21 @@ class Player:
         pass
 
     @handle_database_error
-    async def read_many(self, page: int = 1, page_size: int = 10):
+    async def read_many(
+        self, page: int = None, page_size: int = 10_000, greater_than: int = None
+    ):
         table = dbPlayer
 
         sql_select: Select = select(table)
-        sql_select = sql_select.limit(page_size).offset((page - 1) * page_size)
+
+        if greater_than:
+            sql_select = sql_select.where(table.id > greater_than).limit(page_size)
+
+        if page:
+            sql_select = sql_select.limit(page_size).offset((page - 1) * page_size)
 
         async with PLAYERDATA_ENGINE.get_session() as session:
-            session: AsyncSession = session
+            session: AsyncSession
             # Execute the select query
             result: AsyncResult = await session.execute(sql_select)
 
@@ -129,5 +136,5 @@ class Player:
             try:
                 schema_data.append(SchemaPlayer.model_validate(row))
             except ValidationError as e:
-                print(e)
+                logger.error(e)
         return schema_data
