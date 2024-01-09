@@ -36,9 +36,10 @@ class Engine:
             connection_string,
             poolclass=QueuePool,
             pool_pre_ping=True,
-            pool_size=100,
-            max_overflow=5000,
-            pool_recycle=3600,
+            pool_size=10,
+            max_overflow=90,
+            pool_timeout=30
+            pool_recycle=60,
         )
         return engine
 

@@ -2,7 +2,7 @@ import logging
 import time
 from datetime import date
 from typing import List, Optional
-
+import asyncio
 import pandas as pd
 from src.database import functions
 from src.database.functions import PLAYERDATA_ENGINE
@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import Insert, Select, insert, select, update
+from sqlalchemy import Text, text
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -198,6 +199,17 @@ async def update_reports(
 
     return {"detail": f"{data.rowcount} rows updated to reportingID = {new_user_id}."}
 
+async def insert_active_reporter(reporter: str):
+    try:
+        sql: Text = text("INSERT INTO activeReporters (name) VALUES (:reporter)")
+
+        async with PLAYERDATA_ENGINE.get_session() as session:
+            session: AsyncSession = session
+            async with session.begin():
+                await session.execute(sql, {"reporter": reporter})
+    except Exception as e:
+        logger.error(str(e))
+
 
 @router.post("/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
 async def insert_report(
@@ -300,6 +312,8 @@ async def insert_report(
     if len(reporter_id) == 0:
         logger.debug({"message": "No reporter in df_names", "detections": detections})
         return
+
+    asyncio.create_task(insert_active_reporter(reporter[0]))
 
     # if reporter_id[0] == 657248:
     #     logger.debug({"message": "Temporary ignoring anonymous reporter"})
