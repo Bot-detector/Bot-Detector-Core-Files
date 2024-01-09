@@ -38,7 +38,7 @@ class Engine:
             pool_pre_ping=True,
             pool_size=10,
             max_overflow=90,
-            pool_timeout=30
+            pool_timeout=30,
             pool_recycle=60,
         )
         return engine
