@@ -200,6 +200,8 @@ async def update_reports(
     return {"detail": f"{data.rowcount} rows updated to reportingID = {new_user_id}."}
 
 async def insert_active_reporter(reporter: str):
+    if 'anonymoususer' in reporter:
+        return
     try:
         sql: Text = text("INSERT INTO activeReporters (name) VALUES (:reporter)")
 
@@ -208,6 +210,9 @@ async def insert_active_reporter(reporter: str):
             async with session.begin():
                 await session.execute(sql, {"reporter": reporter})
     except Exception as e:
+        e = str(e)
+        if 'Duplicate entry' in e:
+            return
         logger.error(str(e))
 
 
