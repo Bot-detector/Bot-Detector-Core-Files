@@ -52,6 +52,8 @@ class Prediction(BaseModel):
     Herblore_bot: Optional[float] = 0
     Zulrah_bot: Optional[float] = 0
     Unknown_bot: Optional[float] = 0
+    Gauntlet_bot: Optional[float] = 0
+    Nex_bot: Optional[float] = 0
 
 
 @router.get("/prediction", tags=["Prediction"])
