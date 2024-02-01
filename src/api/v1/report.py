@@ -342,19 +342,6 @@ async def insert_report(
 @router.get("/report/count", tags=["Report"])
 async def get_report_count_v1(name: str):
     """
-    objective is to make this query
-    SELECT COUNT(*) AS `count_1`,
-       `subject` . `confirmed_ban`,
-       `subject` . `possible_ban`,
-       `subject` . `confirmed_player`
-    FROM (
-        SELECT DISTINCT `Reports` . `reportedID`
-        FROM `Reports`
-        INNER JOIN `Players` AS `voter` ON `Reports` . `reportingID` = `voter` . `id`
-        WHERE `voter` . `name` = ? AND `Reports` . `manual_detect` = ?
-    ) AS DistinctReports
-    INNER JOIN `Players` AS `subject` ON DistinctReports.`reportedID` = `subject` . `id`
-    GROUP BY `subject` . `confirmed_ban`, `subject` . `possible_ban`, `subject` . `confirmed_player`;
     """
     name = await functions.to_jagex_name(name)
 
@@ -384,14 +371,12 @@ async def get_report_count_v1(name: str):
     )
 
     keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
-    PLAYERDATA_ENGINE.engine.echo = True
     # execute query
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
         async with session.begin():
             data = await session.execute(sql)
             data = [{k: v for k, v in zip(keys, d)} for d in data]
-    PLAYERDATA_ENGINE.engine.echo = False
     return data
 
 
