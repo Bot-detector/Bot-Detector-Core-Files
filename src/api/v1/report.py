@@ -151,16 +151,16 @@ async def get_reports(
 
     sql = select(Report)
 
-    if not reportedID is None:
+    if reportedID is not None:
         sql = sql.where(Report.reportedID == reportedID)
 
-    if not reportingID is None:
+    if reportingID is not None:
         sql = sql.where(Report.reportingID == reportingID)
 
-    if not timestamp is None:
+    if timestamp is not None:
         sql = sql.where(func.date(Report.timestamp) == timestamp)
 
-    if not regionID is None:
+    if regionID is not None:
         sql = sql.where(Report.region_id == regionID)
 
     # execute query
@@ -199,8 +199,9 @@ async def update_reports(
 
     return {"detail": f"{data.rowcount} rows updated to reportingID = {new_user_id}."}
 
+
 async def insert_active_reporter(reporter: str):
-    if 'anonymoususer' in reporter:
+    if "anonymoususer" in reporter:
         return
     try:
         sql: Text = text("INSERT INTO activeReporters (name) VALUES (:reporter)")
@@ -211,7 +212,7 @@ async def insert_active_reporter(reporter: str):
                 await session.execute(sql, {"reporter": reporter})
     except Exception as e:
         e = str(e)
-        if 'Duplicate entry' in e:
+        if "Duplicate entry" in e:
             return
         logger.error(str(e))
 
@@ -340,22 +341,31 @@ async def insert_report(
 
 @router.get("/report/count", tags=["Report"])
 async def get_report_count_v1(name: str):
-    """ """
+    """
+    """
+    name = await functions.to_jagex_name(name)
+
     voter: Player = aliased(Player, name="voter")
     subject: Player = aliased(Player, name="subject")
 
-    name = await functions.to_jagex_name(name)
+    sub_query: Select = select(Report.reportedID.distinct().label("reportedID"))
+    sub_query = sub_query.join(voter, Report.reportingID == voter.id)
+    sub_query = sub_query.where(voter.name == name)
+    sub_query = sub_query.where(Report.manual_detect == 0)
+
+    # Create an alias for the subquery
+    sub_query_alias = sub_query.alias("DistinctReports")
 
     sql: Select = select(
-        func.count(Report.reportedID.distinct()),
+        func.count(subject.id),
         subject.confirmed_ban,
         subject.possible_ban,
         subject.confirmed_player,
     )
-    sql = sql.join(voter, Report.reportingID == voter.id)
-    sql = sql.join(subject, Report.reportedID == subject.id)
-    sql = sql.where(voter.name == name)
-    sql = sql.where(Report.manual_detect == 0)
+    sql = sql.select_from(sub_query_alias)
+    sql = sql.join(
+        subject, sub_query_alias.c.reportedID == subject.id
+    )  # Use c to access columns
     sql = sql.group_by(
         subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
     )
@@ -367,43 +377,6 @@ async def get_report_count_v1(name: str):
         async with session.begin():
             data = await session.execute(sql)
             data = [{k: v for k, v in zip(keys, d)} for d in data]
-
-    return data
-
-
-@router.get("/v2/report/count", tags=["Report"])
-async def get_report_count_v2(name: str):
-    """
-    Get the calculated player report count
-    """
-    # query
-
-    voter: Player = aliased(Player, name="voter")
-    subject: Player = aliased(Player, name="subject")
-
-    name = await functions.to_jagex_name(name)
-
-    sql: Select = select(
-        func.count(playerReports.reported_id.distinct()),
-        subject.confirmed_ban,
-        subject.possible_ban,
-        subject.confirmed_player,
-    )
-    sql = sql.join(voter, playerReports.reporting_id == voter.id)
-    sql = sql.join(subject, playerReports.reported_id == subject.id)
-    sql = sql.where(voter.name == name)
-    sql = sql.group_by(
-        subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
-    )
-
-    keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
-    # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-            data = [{k: v for k, v in zip(keys, d)} for d in data]
-
     return data
 
 
@@ -429,42 +402,6 @@ async def get_report_manual_count_v1(name: str):
     sql = sql.join(subject, Report.reportedID == subject.id)
     sql = sql.where(voter.name == name)
     sql = sql.where(Report.manual_detect == 1)
-    sql = sql.group_by(
-        subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
-    )
-
-    keys = ["count", "confirmed_ban", "possible_ban", "confirmed_player"]
-    # execute query
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-            data = [{k: v for k, v in zip(keys, d)} for d in data]
-
-    return data
-
-
-@router.get("/v2/report/manual/count", tags=["Report"])
-async def get_report_manual_count_v2(name: str):
-    """
-    Get the calculated player report count
-    """
-    # query
-
-    voter: Player = aliased(Player, name="voter")
-    subject: Player = aliased(Player, name="subject")
-
-    name = await functions.to_jagex_name(name)
-
-    sql: Select = select(
-        func.count(playerReportsManual.reported_id.distinct()),
-        subject.confirmed_ban,
-        subject.possible_ban,
-        subject.confirmed_player,
-    )
-    sql = sql.join(voter, playerReportsManual.reporting_id == voter.id)
-    sql = sql.join(subject, playerReportsManual.reported_id == subject.id)
-    sql = sql.where(voter.name == name)
     sql = sql.group_by(
         subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
     )
