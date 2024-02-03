@@ -385,23 +385,29 @@ async def get_report_manual_count_v1(name: str):
     """
     Get the calculated player report count
     """
-    # query
+    name = await functions.to_jagex_name(name)
 
     voter: Player = aliased(Player, name="voter")
     subject: Player = aliased(Player, name="subject")
 
-    name = await functions.to_jagex_name(name)
+    sub_query: Select = select(Report.reportedID.distinct().label("reportedID"))
+    sub_query = sub_query.join(voter, Report.reportingID == voter.id)
+    sub_query = sub_query.where(voter.name == name)
+    sub_query = sub_query.where(Report.manual_detect == 1)
+
+    # Create an alias for the subquery
+    sub_query_alias = sub_query.alias("DistinctReports")
 
     sql: Select = select(
-        func.count(Report.reportedID.distinct()),
+        func.count(subject.id),
         subject.confirmed_ban,
         subject.possible_ban,
         subject.confirmed_player,
     )
-    sql = sql.join(voter, Report.reportingID == voter.id)
-    sql = sql.join(subject, Report.reportedID == subject.id)
-    sql = sql.where(voter.name == name)
-    sql = sql.where(Report.manual_detect == 1)
+    sql = sql.select_from(sub_query_alias)
+    sql = sql.join(
+        subject, sub_query_alias.c.reportedID == subject.id
+    )  # Use c to access columns
     sql = sql.group_by(
         subject.confirmed_ban, subject.possible_ban, subject.confirmed_player
     )
