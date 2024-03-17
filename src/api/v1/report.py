@@ -273,6 +273,7 @@ async def insert_report(
         if await functions.is_valid_rsn(name)
     ]
     logger.debug(f"Valid names: {len(valid_names)}")
+    logger.info(valid_names)
 
     # Get IDs for all unique valid names
     data = await sql_select_players(valid_names)
@@ -280,8 +281,10 @@ async def insert_report(
 
     # Create entries for players that do not yet exist in Players table
     existing_names = [d["normalized_name"] for d in data]
+    logger.debug(f"{existing_names=}")
     new_names = set([name for name in valid_names]).difference(existing_names)
-    logger.debug(f"Found new names: {len(new_names)}")
+    logger.debug(f"{new_names=}")
+
     # Get new player id's
     if new_names:
         param = [
