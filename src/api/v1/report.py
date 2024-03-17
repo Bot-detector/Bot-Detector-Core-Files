@@ -281,7 +281,7 @@ async def insert_report(
     # Create entries for players that do not yet exist in Players table
     existing_names = [d["normalized_name"] for d in data]
     new_names = set([name for name in valid_names]).difference(existing_names)
-
+    logger.debug(f"Found new names: {len(new_names)}")
     # Get new player id's
     if new_names:
         param = [
