@@ -13,7 +13,7 @@ services:
     env_file:
       - .env
     volumes:
-      - '../Bot-Detector-Core-Files/src:/project/src'
+      - './src:/project/src'
     ports:
       - 5000:5000
     networks:

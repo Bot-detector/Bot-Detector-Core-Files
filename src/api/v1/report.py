@@ -230,7 +230,7 @@ async def insert_report(
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logger.debug({"message": "Too many reports."})
+        logger.warning({"message": "Too many reports."})
         return
 
     # data validation, checks for correct timing
@@ -241,7 +241,7 @@ async def insert_report(
     df_time = df.ts
     mask = (df_time > now_upper) | (df_time < now_lower)
     if len(df_time[mask].values) > 0:
-        logger.debug(
+        logger.warning(
             {
                 "message": "Data contains out of bounds time",
                 "reporter": df["reporter"].unique(),
@@ -292,7 +292,7 @@ async def insert_report(
     df_names = pd.DataFrame(data)
 
     if (len(df) == 0) or (len(df_names) == 0):
-        logger.debug(
+        logger.warning(
             {"message": "empty dataframe, before merge", "detections": detections}
         )
         return
@@ -300,7 +300,7 @@ async def insert_report(
     df = df.merge(df_names, left_on="reported", right_on="normalized_name")
 
     if len(df) == 0:
-        logger.debug(
+        logger.warning(
             {"message": "empty dataframe, after merge", "detections": detections}
         )
         return
@@ -308,13 +308,13 @@ async def insert_report(
     reporter = df["reporter"].unique()
 
     if len(reporter) != 1:
-        logger.debug({"message": "No reporter", "detections": detections})
+        logger.warning({"message": "No reporter", "detections": detections})
         return
 
     reporter_id = df_names.query(f"normalized_name == {reporter}")["id"].to_list()
 
     if len(reporter_id) == 0:
-        logger.debug({"message": "No reporter in df_names", "detections": detections})
+        logger.warning({"message": "No reporter in df_names", "detections": detections})
         return
 
     asyncio.create_task(insert_active_reporter(reporter[0]))

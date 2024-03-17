@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest
 from fastapi.testclient import TestClient
 
-from api.app import app
+from src.core.server import app
 
 
 @pytest.fixture

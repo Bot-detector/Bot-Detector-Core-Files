@@ -2,7 +2,7 @@ version: '3'
 services:
   mysql:
     build:
-      context: ../bot-detector-mysql
+      context: ../mysql
       dockerfile: Dockerfile
     image: bot-detector/bd-mysql:latest
     environment:

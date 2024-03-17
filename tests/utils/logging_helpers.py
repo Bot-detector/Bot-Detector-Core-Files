@@ -5,7 +5,7 @@ from unittest.mock import patch
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.core.config import token
-from api.routers import hiscore
+from src.api.routers import hiscore
 from src.utils import logging_helpers
 
 request_path = "/v1/hiscore/Latest"
