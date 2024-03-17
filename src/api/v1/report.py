@@ -281,7 +281,7 @@ async def insert_report(
     logger.debug(f"{data=}")
 
     # Create entries for players that do not yet exist in Players table
-    existing_names = [d["normalized_name"] for d in data]
+    existing_names = [d["name"] for d in data]
     logger.debug(f"{existing_names=}") # [NONE, NONE]
     new_names = set([name for name in valid_names]).difference(existing_names)
     logger.debug(f"{new_names=}")
@@ -313,7 +313,7 @@ async def insert_report(
         )
         return
 
-    df = df.merge(df_names, left_on="reported", right_on="normalized_name")
+    df = df.merge(df_names, left_on="reported", right_on="name")
 
     if len(df) == 0:
         logger.warning(
@@ -327,7 +327,7 @@ async def insert_report(
         logger.warning({"message": "No reporter", "detections": detections})
         return
 
-    reporter_id = df_names.query(f"normalized_name == {reporter}")["id"].to_list()
+    reporter_id = df_names.query(f"name == {reporter}")["id"].to_list()
 
     if len(reporter_id) == 0:
         logger.warning({"message": "No reporter in df_names", "detections": detections})
