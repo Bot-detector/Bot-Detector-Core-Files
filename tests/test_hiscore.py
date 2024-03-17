@@ -30,7 +30,7 @@ def test_get_player_hiscore_data(test_client):
 
         # type check
         if response.ok:
-            error = f"Invalid response return type, expected list[dict]"
+            error = "Invalid response return type, expected list[dict]"
             assert isinstance(response.json(), list), error
 
 
@@ -58,7 +58,7 @@ def test_get_latest_hiscore_data_for_an_account(test_client):
 
         # type check
         if response.ok:
-            error = f"Invalid response return type, expected list[dict]"
+            error = "Invalid response return type, expected list[dict]"
             assert isinstance(response.json(), list), error
 
 
@@ -114,7 +114,7 @@ def test_get_account_hiscore_xp_change(test_client):
 
         # type check
         if response.ok:
-            error = f"Invalid response return type, expected list[dict]"
+            error = "Invalid response return type, expected list[dict]"
             assert isinstance(response.json(), list), error
 
 

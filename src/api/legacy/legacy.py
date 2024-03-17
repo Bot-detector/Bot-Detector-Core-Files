@@ -9,7 +9,7 @@ from typing import List, Optional
 
 import pandas as pd
 from src.core import config
-from src.database.database import DISCORD_ENGINE, EngineType
+from src.database.database import DISCORD_ENGINE
 from src.database import functions
 from src.database.functions import execute_sql, list_to_string, verify_token
 from src.utils import logging_helpers
@@ -800,7 +800,7 @@ async def receive_plugin_feedback(feedback: Feedback, version: str = None):
         voter_data = await sql_insert_player(player_name)
 
     if not len(voter_data) > 0:
-        raise HTTPException(status_code=405, detail=f"Voter does not exist")
+        raise HTTPException(status_code=405, detail="Voter does not exist")
 
     feedback_params["voter_id"] = voter_data.get("id")
     exclude = ["player_name"]
@@ -914,13 +914,13 @@ async def verify_bot(token: str, bots: bots, request: Request):
     label = bots["label"]
 
     if len(playerNames) == 0:
-        raise HTTPException(status_code=405, detail=f"Invalid Parameters")
+        raise HTTPException(status_code=405, detail="Invalid Parameters")
 
     data = []
     for name in playerNames:
         user = await sql_get_player(name)
 
-        if user == None:
+        if user is None:
             continue
 
         p = dict()
@@ -992,17 +992,17 @@ async def verify_discord_user(
     code = verify_data.get("code", "")
 
     if len(code) != 4:
-        raise HTTPException(status_code=400, detail=f"Please provide a 4 digit code.")
+        raise HTTPException(status_code=400, detail="Please provide a 4 digit code.")
 
     try:
         provided_code = int(code)
     except ValueError:
-        raise HTTPException(status_code=400, detail=f"Please provide a 4 digit code.")
+        raise HTTPException(status_code=400, detail="Please provide a 4 digit code.")
 
     player = await sql_get_player(verify_data["player_name"])
 
-    if player == None:
-        raise HTTPException(status_code=400, detail=f"Could not find player")
+    if player is None:
+        raise HTTPException(status_code=400, detail="Could not find player")
 
     pending_discord = await sql_get_unverified_discord_user(player["id"])
 
@@ -1011,7 +1011,7 @@ async def verify_discord_user(
     token_id = token_info.get("id")
 
     if not pending_discord:
-        raise HTTPException(status_code=400, detail=f"No pending links for this user.")
+        raise HTTPException(status_code=400, detail="No pending links for this user.")
 
     found_code = False
     for record in pending_discord:
@@ -1021,7 +1021,7 @@ async def verify_discord_user(
             break
 
     if not (found_code):
-        raise HTTPException(status_code=400, detail=f"Linking code is incorrect.")
+        raise HTTPException(status_code=400, detail="Linking code is incorrect.")
 
     return {"ok": "ok"}
 

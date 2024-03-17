@@ -1,10 +1,9 @@
 import time
-from typing import List, Optional
+from typing import Optional
 
 from src.database import functions
 from src.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.database.database import Engine, EngineType
 from src.database.functions import sqlalchemy_result, verify_token
 from src.database.models import Player as dbPlayer
 from src.utils import logging_helpers
@@ -51,10 +50,10 @@ async def get_player_information(
     sql = select(dbPlayer)
 
     # filters
-    if not player_name == None:
+    if player_name is not None:
         player_name = await functions.to_jagex_name(player_name)
         sql = sql.where(dbPlayer.name == player_name)
-    if not player_id == None:
+    if player_id is not None:
         sql = sql.where(dbPlayer.id == player_id)
 
     # query pagination
@@ -107,19 +106,19 @@ async def get_bulk_player_data_from_the_plugin_database(
 
     # filters
     # filters
-    if not possible_ban is None:
+    if possible_ban is not None:
         sql = sql.where(dbPlayer.possible_ban == possible_ban)
 
-    if not confirmed_ban is None:
+    if confirmed_ban is not None:
         sql = sql.where(dbPlayer.confirmed_ban == confirmed_ban)
 
-    if not confirmed_player is None:
+    if confirmed_player is not None:
         sql = sql.where(dbPlayer.confirmed_player == confirmed_player)
 
-    if not label_id is None:
+    if label_id is not None:
         sql = sql.where(dbPlayer.label_id == label_id)
 
-    if not label_jagex is None:
+    if label_jagex is not None:
         sql = sql.where(dbPlayer.label_jagex == label_jagex)
 
     # query pagination

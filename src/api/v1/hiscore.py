@@ -2,7 +2,6 @@ from typing import Optional
 
 from src.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.database.database import EngineType
 from src.database.functions import sqlalchemy_result, verify_token
 from src.database.models import (
     Player,
@@ -136,7 +135,7 @@ async def get_player_hiscore_data(
     sql = select(table)
 
     # filters
-    if not player_id == None:
+    if player_id is not None:
         sql = sql.where(table.Player_id == player_id)
 
     # paging
@@ -170,7 +169,7 @@ async def get_latest_hiscore_data_for_an_account(
     sql = select(table)
 
     # filters
-    if not player_id == None:
+    if player_id is not None:
         sql = sql.where(table.Player_id == player_id)
 
     async with PLAYERDATA_ENGINE.get_session() as session:
@@ -220,22 +219,22 @@ async def get_latest_hiscore_data_by_player_features(
     sql = select(PlayerHiscoreDataLatest)
 
     # filters
-    if not possible_ban is None:
+    if possible_ban is not None:
         sql = sql.where(Player.possible_ban == possible_ban)
 
-    if not confirmed_ban is None:
+    if confirmed_ban is not None:
         sql = sql.where(Player.confirmed_ban == confirmed_ban)
 
-    if not confirmed_player is None:
+    if confirmed_player is not None:
         sql = sql.where(Player.confirmed_player == confirmed_player)
 
-    if not label_id is None:
+    if label_id is not None:
         sql = sql.where(Player.label_id == label_id)
 
-    if not label_jagex is None:
+    if label_jagex is not None:
         sql = sql.where(Player.label_jagex == label_jagex)
 
-    if not greater_than is None:
+    if greater_than is not None:
         sql = sql.where(Player.id >= greater_than)
 
     # paging
@@ -277,7 +276,7 @@ async def get_account_hiscore_xp_change(
     sql = select(table)
 
     # filters
-    if not player_id == None:
+    if player_id is not None:
         sql = sql.where(table.Player_id == player_id)
 
     # paging
@@ -315,6 +314,6 @@ async def post_hiscore_data_to_database(
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
         async with session.begin():
-            data = await session.execute(sql)
+            await session.execute(sql)
 
     return {"ok": "ok"}

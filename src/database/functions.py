@@ -17,14 +17,14 @@ from sqlalchemy.sql.expression import insert, select
 # Although never directly used, the engines are imported to add a permanent reference
 # to these entities to prevent the
 # garbage collector from trying to dispose of our engines.
-from src.database.database import PLAYERDATA_ENGINE, Engine, EngineType
+from src.database.database import PLAYERDATA_ENGINE, Engine
 from src.database.models import ApiPermission, ApiUsage, ApiUser, ApiUserPerm
 
 logger = logging.getLogger(__name__)
 
 
-def list_to_string(l):
-    string_list = ", ".join(str(item) for item in l)
+def list_to_string(str_list:list):
+    string_list = ", ".join(str(item) for item in str_list)
     return string_list
 
 
@@ -186,15 +186,15 @@ async def verify_token(token: str, verification: str, route: str = None) -> bool
 
     # If len api_user == 0; user does not have necessary permissions
     if len(api_user) == 0:
-        raise HTTPException(status_code=401, detail=f"Insufficent Permissions")
+        raise HTTPException(status_code=401, detail="Insufficent Permissions")
 
     api_user = api_user[0]
 
     if api_user["is_active"] != 1:
-        raise HTTPException(status_code=403, detail=f"Insufficent Permissions")
+        raise HTTPException(status_code=403, detail="Insufficent Permissions")
 
     if (len(usage_data) > api_user["ratelimit"]) and (api_user["ratelimit"] != -1):
-        raise HTTPException(status_code=429, detail=f"Your Ratelimit has been reached.")
+        raise HTTPException(status_code=429, detail="Your Ratelimit has been reached.")
 
     return True
 

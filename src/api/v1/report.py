@@ -9,8 +9,6 @@ from src.database.functions import PLAYERDATA_ENGINE
 from src.database.models import (
     Player,
     Report,
-    playerReports,
-    playerReportsManual,
     stgReport,
 )
 from src.utils import logging_helpers

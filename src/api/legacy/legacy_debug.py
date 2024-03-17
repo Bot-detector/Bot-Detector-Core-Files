@@ -56,7 +56,7 @@ class detection(BaseModel):
 
 async def is_valid_rsn(rsn: str) -> bool:
     output = re.fullmatch("[\w\d\s_-]{1,13}", rsn)
-    if output == False:
+    if not output: # output == False
         logger.debug({"message": f"Invalid {rsn=}"})
     return re.fullmatch("[\w\d\s_-]{1,13}", rsn)
 

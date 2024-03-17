@@ -11,7 +11,7 @@ from src.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from pydantic.fields import Field
-from sqlalchemy import func, select
+from sqlalchemy import func
 from sqlalchemy.dialects.mysql import Insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -69,7 +69,7 @@ async def get_feedback(
 
 
 @router.get("/feedback/count", tags=["Feedback"])
-async def get_feedback(name: str):
+async def get_feedback_count(name: str):
     """
     Get the calculated player feedback of a player
     """
