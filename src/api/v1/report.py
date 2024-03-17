@@ -36,10 +36,9 @@ upper_gear_cost = 1_000_000_000_000
 
 
 async def sql_select_players(names: List[str]) -> List:
+    _names = await functions.jagexify_names_list(names=names)
     sql = select(Player)
-    sql = sql.where(
-        Player.normalized_name.in_(tuple(await functions.jagexify_names_list(names)))
-    )
+    sql = sql.where(Player.name.in_(_names))
     async with PLAYERDATA_ENGINE.get_session() as session:
         session: AsyncSession = session
         async with session.begin():
@@ -232,7 +231,7 @@ async def insert_report(
 
     # data validation, there can only be one reporter, and it is unrealistic to send more then 5k reports.
     if len(df) > 5000 or df["reporter"].nunique() > 1:
-        logger.debug({"message": "Too many reports."})
+        logger.warning({"message": "Too many reports."})
         return
 
     # data validation, checks for correct timing
@@ -243,7 +242,7 @@ async def insert_report(
     df_time = df.ts
     mask = (df_time > now_upper) | (df_time < now_lower)
     if len(df_time[mask].values) > 0:
-        logger.debug(
+        logger.warning(
             {
                 "message": "Data contains out of bounds time",
                 "reporter": df["reporter"].unique(),
@@ -252,7 +251,7 @@ async def insert_report(
         )
         return
 
-    logger.debug({"message": f"Received: {len(df)} from: {df['reporter'].unique()}"})
+    logger.info({"message": f"Received: {len(df)} from: {df['reporter'].unique()}"})
 
     # Normalize names
     df["reporter"] = df["reporter"].apply(
@@ -272,13 +271,20 @@ async def insert_report(
         for name in names
         if await functions.is_valid_rsn(name)
     ]
+    # logger.debug(f"Valid names: {len(valid_names)}")
+    # logger.debug(f"{valid_names=}")
 
     # Get IDs for all unique valid names
     data = await sql_select_players(valid_names)
+    # logger.debug(f"Found players before insert: {len(data)}")
+    # logger.debug(f"{data=}")
 
     # Create entries for players that do not yet exist in Players table
-    existing_names = [d["normalized_name"] for d in data]
+    existing_names = [d["name"] for d in data]
+    # logger.debug(f"{existing_names=}")
+
     new_names = set([name for name in valid_names]).difference(existing_names)
+    # logger.debug(f"{new_names=}")
 
     # Get new player id's
     if new_names:
@@ -287,22 +293,30 @@ async def insert_report(
             for name in new_names
         ]
         await functions.batch_function(sql_insert_player, param)
-        data.extend(await sql_select_players(new_names))
+        players = await sql_select_players(new_names)
+        # logger.debug(f"Found players after insert: {len(players)=}, {len(new_names)=}")
+        data.extend(players)
 
     # Insert detections into Reports table with user ids
     # add reported & reporter id
     df_names = pd.DataFrame(data)
 
-    if (len(df) == 0) or (len(df_names) == 0):
-        logger.debug(
+    if len(df) == 0:
+        logger.warning(
             {"message": "empty dataframe, before merge", "detections": detections}
         )
         return
 
-    df = df.merge(df_names, left_on="reported", right_on="normalized_name")
+    if len(df_names) == 0:
+        logger.warning(
+            {"message": "empty dataframe names, before merge", "detections": detections}
+        )
+        return
+
+    df = df.merge(df_names, left_on="reported", right_on="name")
 
     if len(df) == 0:
-        logger.debug(
+        logger.warning(
             {"message": "empty dataframe, after merge", "detections": detections}
         )
         return
@@ -310,13 +324,13 @@ async def insert_report(
     reporter = df["reporter"].unique()
 
     if len(reporter) != 1:
-        logger.debug({"message": "No reporter", "detections": detections})
+        logger.warning({"message": "No reporter", "detections": detections})
         return
 
-    reporter_id = df_names.query(f"normalized_name == {reporter}")["id"].to_list()
+    reporter_id = df_names.query(f"name == {reporter}")["id"].to_list()
 
     if len(reporter_id) == 0:
-        logger.debug({"message": "No reporter in df_names", "detections": detections})
+        logger.warning({"message": "No reporter in df_names", "detections": detections})
         return
 
     asyncio.create_task(insert_active_reporter(reporter[0]))
