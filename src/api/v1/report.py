@@ -278,10 +278,11 @@ async def insert_report(
     # Get IDs for all unique valid names
     data = await sql_select_players(valid_names)
     logger.debug(f"Found players before insert: {len(data)}")
+    logger.debug(f"{data=}")
 
     # Create entries for players that do not yet exist in Players table
     existing_names = [d["normalized_name"] for d in data]
-    logger.debug(f"{existing_names=}")
+    logger.debug(f"{existing_names=}") # [NONE, NONE]
     new_names = set([name for name in valid_names]).difference(existing_names)
     logger.debug(f"{new_names=}")
 
