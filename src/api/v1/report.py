@@ -37,7 +37,6 @@ upper_gear_cost = 1_000_000_000_000
 
 async def sql_select_players(names: List[str]) -> List:
     _names = await functions.jagexify_names_list(names=names)
-    logger.debug(f"select_names: received {len(names)}, jagexify: {len(_names)}")
     sql = select(Player)
     sql = sql.where(Player.name.in_(_names))
     async with PLAYERDATA_ENGINE.get_session() as session:
@@ -252,7 +251,7 @@ async def insert_report(
         )
         return
 
-    logger.debug({"message": f"Received: {len(df)} from: {df['reporter'].unique()}"})
+    logger.info({"message": f"Received: {len(df)} from: {df['reporter'].unique()}"})
 
     # Normalize names
     df["reporter"] = df["reporter"].apply(
@@ -272,19 +271,20 @@ async def insert_report(
         for name in names
         if await functions.is_valid_rsn(name)
     ]
-    logger.debug(f"Valid names: {len(valid_names)}")
-    logger.info(valid_names)
+    # logger.debug(f"Valid names: {len(valid_names)}")
+    # logger.debug(f"{valid_names=}")
 
     # Get IDs for all unique valid names
     data = await sql_select_players(valid_names)
-    logger.debug(f"Found players before insert: {len(data)}")
-    logger.debug(f"{data=}")
+    # logger.debug(f"Found players before insert: {len(data)}")
+    # logger.debug(f"{data=}")
 
     # Create entries for players that do not yet exist in Players table
     existing_names = [d["name"] for d in data]
-    logger.debug(f"{existing_names=}") # [NONE, NONE]
+    # logger.debug(f"{existing_names=}")
+
     new_names = set([name for name in valid_names]).difference(existing_names)
-    logger.debug(f"{new_names=}")
+    # logger.debug(f"{new_names=}")
 
     # Get new player id's
     if new_names:
@@ -294,7 +294,7 @@ async def insert_report(
         ]
         await functions.batch_function(sql_insert_player, param)
         players = await sql_select_players(new_names)
-        logger.debug(f"Found players after insert: {len(data)}, new_names: {len(new_names)}")
+        # logger.debug(f"Found players after insert: {len(players)=}, {len(new_names)=}")
         data.extend(players)
 
     # Insert detections into Reports table with user ids
