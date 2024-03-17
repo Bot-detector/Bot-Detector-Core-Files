@@ -132,7 +132,7 @@ async def sql_get_player(player_name: str):
 
 
 async def sql_insert_player(player_name):
-    sql_insert = "insert into Players (name, normalized_name) values (:player_name, :normalized_name);"
+    sql_insert = "insert ignore into Players (name, normalized_name) values (:player_name, :normalized_name);"
 
     param = {
         "player_name": player_name,
