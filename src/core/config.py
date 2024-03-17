@@ -49,6 +49,7 @@ logging.getLogger("urllib3").setLevel(logging.DEBUG)
 logging.getLogger("uvicorn").setLevel(logging.DEBUG)
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger("aiomysql").setLevel(logging.ERROR)
+logging.getLogger("asyncmy").setLevel(logging.ERROR)
 logging.getLogger("aiokafka").setLevel(logging.WARNING)
 
 uvicorn_error = logging.getLogger("uvicorn.error")
