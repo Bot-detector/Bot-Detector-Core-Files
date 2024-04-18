@@ -98,15 +98,15 @@ async def parse_detection(data: dict) -> dict:
 
 
 class equipment(BaseModel):
-    equip_head_id: int = Field(None, ge=0)
-    equip_amulet_id: int = Field(None, ge=0)
-    equip_torso_id: int = Field(None, ge=0)
-    equip_legs_id: int = Field(None, ge=0)
-    equip_boots_id: int = Field(None, ge=0)
-    equip_cape_id: int = Field(None, ge=0)
-    equip_hands_id: int = Field(None, ge=0)
-    equip_weapon_id: int = Field(None, ge=0)
-    equip_shield_id: int = Field(None, ge=0)
+    equip_head_id: int = Field(0, ge=0)
+    equip_amulet_id: int = Field(0, ge=0)
+    equip_torso_id: int = Field(0, ge=0)
+    equip_legs_id: int = Field(0, ge=0)
+    equip_boots_id: int = Field(0, ge=0)
+    equip_cape_id: int = Field(0, ge=0)
+    equip_hands_id: int = Field(0, ge=0)
+    equip_weapon_id: int = Field(0, ge=0)
+    equip_shield_id: int = Field(0, ge=0)
 
 
 class detection(BaseModel):
