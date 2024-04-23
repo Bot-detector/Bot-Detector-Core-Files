@@ -235,8 +235,8 @@ async def insert_report(
     """
     Inserts detections into to the plugin database.
     """
-    if random.randint(1, 10) == 1:
-        asyncio.create_task(insert_report_v2(detections))
+    # if random.randint(1, 10) == 1:
+    #     asyncio.create_task(insert_report_v2(detections))
     # remove duplicates
     df = pd.DataFrame([d.dict() for d in detections])
     df.drop_duplicates(subset=["reporter", "reported", "region_id"], inplace=True)
