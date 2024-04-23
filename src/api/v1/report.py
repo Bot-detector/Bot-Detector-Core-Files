@@ -22,7 +22,8 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import Insert, Select, insert, select, update
 from sqlalchemy import Text, text
-
+import aiohttp
+import random
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -215,6 +216,16 @@ async def insert_active_reporter(reporter: str):
             return
         logger.error(str(e))
 
+async def insert_report_v2(detections: list[detection]):
+    try:
+        url = 'https://api.prd.osrsbotdetector.com/v2/report'
+        data = [d.model_dump() for d in detections]
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url=url,data=data) as response:
+                if not response.ok:
+                    logger.error(await response.text())
+    except Exception as e:
+        logger.error(e)
 
 @router.post("/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
 async def insert_report(
@@ -224,7 +235,8 @@ async def insert_report(
     """
     Inserts detections into to the plugin database.
     """
-
+    if random.randint(1, 10) == 1:
+        asyncio.create_task(insert_report_v2(detections))
     # remove duplicates
     df = pd.DataFrame([d.dict() for d in detections])
     df.drop_duplicates(subset=["reporter", "reported", "region_id"], inplace=True)
