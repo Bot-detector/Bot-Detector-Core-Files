@@ -218,7 +218,7 @@ async def insert_active_reporter(reporter: str):
 
 async def insert_report_v2(detections: list[detection]):
     try:
-        url = 'http://private-api-svc.bd-prd.svc:5000/v2/report'
+        url = 'http://public-api-svc.bd-prd.svc:5000/v2/report'
         data = [d.dict() for d in detections]
         async with aiohttp.ClientSession() as session:
             async with session.post(url=url, json=data) as response:
