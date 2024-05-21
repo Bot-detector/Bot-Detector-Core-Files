@@ -24,6 +24,8 @@ from sqlalchemy.sql.expression import Insert, Select, insert, select, update
 from sqlalchemy import Text, text
 import aiohttp
 import random
+import traceback
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -217,15 +219,22 @@ async def insert_active_reporter(reporter: str):
         logger.error(str(e))
 
 async def insert_report_v2(detections: list[detection]):
+    url = 'http://public-api-svc.bd-prd.svc:5000/v2/report'
     try:
-        url = 'http://public-api-svc.bd-prd.svc:5000/v2/report'
         data = [d.dict() for d in detections]
         async with aiohttp.ClientSession() as session:
             async with session.post(url=url, json=data) as response:
                 if not response.ok:
-                    logger.error(await response.text())
+                    response_text = await response.text()
+                    logger.warning(f"Request to {url} failed with status {response.status} and response: {response_text}")
+    except aiohttp.ClientError as e:
+        # Log client-specific errors with request details
+        logger.error(f"Client error during request to {url} with payload {data}: {str(e)}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
     except Exception as e:
-        logger.error(e)
+        # Log general exceptions with traceback
+        logger.error(f"Unexpected error during request to {url} with payload {data}: {str(e)}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
 
 @router.post("/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
 async def insert_report(
