@@ -1,17 +1,12 @@
 import logging
-import time
 from datetime import date
 from typing import List, Optional
 import asyncio
-import pandas as pd
 from src.database import functions
 from src.database.functions import PLAYERDATA_ENGINE
 from src.database.models import (
     Player,
     Report,
-    playerReports,
-    playerReportsManual,
-    stgReport,
 )
 from src.utils import logging_helpers
 from fastapi import APIRouter, HTTPException, Query, Request, status
@@ -20,10 +15,8 @@ from pydantic.fields import Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
-from sqlalchemy.sql.expression import Insert, Select, insert, select, update
-from sqlalchemy import Text, text
+from sqlalchemy.sql.expression import Select, select, update
 import aiohttp
-import random
 import traceback
 
 logger = logging.getLogger(__name__)

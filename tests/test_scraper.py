@@ -22,5 +22,5 @@ def test_scraper_players(test_client):
 
     # type check
     if response.ok:
-        error = f"Invalid response return type, expected list[dict]"
+        error = "Invalid response return type, expected list[dict]"
         assert isinstance(response.json(), list), error

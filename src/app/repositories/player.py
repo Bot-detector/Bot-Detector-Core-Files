@@ -1,9 +1,9 @@
 import logging
 
 from pydantic import ValidationError
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
-from sqlalchemy.sql.expression import Delete, Insert, Select, Update, and_
+from sqlalchemy.sql.expression import Insert, Select, Update
 
 from src.app.schemas.player import Player as SchemaPlayer
 from src.database.database import PLAYERDATA_ENGINE

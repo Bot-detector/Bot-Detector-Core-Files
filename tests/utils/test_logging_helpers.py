@@ -8,7 +8,7 @@ from src.core.config import token
 from api.routers import hiscore
 from src.utils import logging_helpers
 
-request_path = f"/v1/hiscore/Latest"
+request_path = "/v1/hiscore/Latest"
 request_params = {"player_id": 1, "token": token}
 
 

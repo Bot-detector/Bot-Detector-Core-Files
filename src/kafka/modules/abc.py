@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from aiokafka import ConsumerRecord
 
 
 class AbstractConsumer(ABC):
