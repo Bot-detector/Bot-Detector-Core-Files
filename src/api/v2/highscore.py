@@ -8,7 +8,6 @@ from src.app.repositories.highscore_latest import (
     PlayerHiscoreDataLatest as RepositoryPlayerHiscoreDataLatest,
 )
 from src.app.schemas.highscore import PlayerHiscoreData as SchemaPlayerHiscoreData
-from pydantic import BaseModel
 
 router = APIRouter(tags=["Hiscore"])
 

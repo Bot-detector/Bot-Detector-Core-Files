@@ -213,19 +213,19 @@ async def gets_predictions_by_player_features(
     sql: Select = select(dbPrediction)
 
     # filters
-    if not possible_ban is None:
+    if possible_ban is not None:
         sql = sql.where(Player.possible_ban == possible_ban)
 
-    if not confirmed_ban is None:
+    if confirmed_ban is not None:
         sql = sql.where(Player.confirmed_ban == confirmed_ban)
 
-    if not confirmed_player is None:
+    if confirmed_player is not None:
         sql = sql.where(Player.confirmed_player == confirmed_player)
 
-    if not label_id is None:
+    if label_id is not None:
         sql = sql.where(Player.label_id == label_id)
 
-    if not label_jagex is None:
+    if label_jagex is not None:
         sql = sql.where(Player.label_jagex == label_jagex)
 
     # paging

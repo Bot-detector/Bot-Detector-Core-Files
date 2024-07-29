@@ -3,7 +3,6 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
 from src.core.config import token
 
 
@@ -29,5 +28,5 @@ def test_report_count(test_client):
 
         # type check
         if response.ok:
-            error = f"Invalid response return type, expected list[dict]"
+            error = "Invalid response return type, expected list[dict]"
             assert isinstance(response.json(), list), error

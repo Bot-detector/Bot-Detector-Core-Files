@@ -3,7 +3,6 @@ import logging
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import select, union_all
 from sqlalchemy.dialects.mysql import insert
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncResult, AsyncSession
 from sqlalchemy.sql.expression import Insert, Select, and_
 

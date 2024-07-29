@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import time
@@ -10,8 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src import api
-from src.core import config
-from src.kafka.highscore import HighscoreProcessor
 
 logger = logging.getLogger(__name__)
 

@@ -6,12 +6,11 @@ from typing import List, Optional
 
 from src.database.functions import PLAYERDATA_ENGINE
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.database.database import EngineType
 from src.database.functions import batch_function, execute_sql, verify_token
 from src.database.models import Player as dbPlayer
 from src.database.models import playerHiscoreData
 from src.utils import logging_helpers
-from fastapi import APIRouter, BackgroundTasks, Request
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from sqlalchemy.exc import InternalError, OperationalError
 from sqlalchemy.sql.expression import insert, update
@@ -168,7 +167,7 @@ async def sqla_update_player(players: List):
                     )
                     await session.execute(sql, player)
                 dbplayer.remove(player)
-    except (OperationalError, InternalError) as e:
+    except (OperationalError, InternalError):
         await handle_lock(sqla_update_player, dbplayer)
     return
 
@@ -185,7 +184,7 @@ async def sqla_insert_hiscore(hiscores: List):
                 async with session.begin():
                     await session.execute(sql, hiscore)
                 dbhiscores.remove(hiscore)
-    except (OperationalError, InternalError) as e:
+    except (OperationalError, InternalError):
         await handle_lock(sqla_insert_hiscore, dbhiscores)
 
     return

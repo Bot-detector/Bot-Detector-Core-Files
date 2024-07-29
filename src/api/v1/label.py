@@ -1,4 +1,3 @@
-from src.database.database import EngineType
 from src.database.functions import sqlalchemy_result, verify_token
 from src.database.models import Label as dbLabel
 from fastapi import APIRouter

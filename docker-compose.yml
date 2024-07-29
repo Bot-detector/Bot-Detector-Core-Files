@@ -1,34 +1,28 @@
 version: '3'
 services:
   mysql:
+    container_name: database
     build:
-      context: ../bot-detector-mysql
-      dockerfile: Dockerfile
-    image: bot-detector/bd-mysql:latest
+      context: ./mysql
+    image: mysql
     environment:
       - MYSQL_ROOT_PASSWORD=root_bot_buster
-      - MYSQL_USER=botssuck
-      - MYSQL_PASSWORD=botdetector
     volumes:
-      - ../bot-detector-mysql/mount:/var/lib/mysql
-      - '../bot-detector-mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d'
+      - ./mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      # - ./mysql/mount:/var/lib/mysql # creates persistence
     ports:
-      - "3306:3306"
+      - 3307:3306
     networks:
       - botdetector-network
-  
-  kafka:
-      image: bitnami/kafka:latest
-      environment:
-        - ALLOW_PLAINTEXT_LISTENER=yes
-        - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-        - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-        - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
-        - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
-      ports:
-        - 9094:9094
-      networks:
-        - botdetector-network
+    healthcheck:
+      test: "mysqladmin ping -h localhost -u root -proot_bot_buster"
+      # during this period fails are not considered
+      start_period: 30s
+      # time between cmd
+      interval: 30s
+      # time given to the cmd
+      timeout: 5s
 
   api:
     build:
@@ -41,18 +35,17 @@ services:
     command: uvicorn src.core.server:app --host 0.0.0.0 --reload --reload-include src/*
     container_name: bd-dev-api
     environment:
-      - sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/playerdata
-      - discord_sql_uri=mysql+asyncmy://root:root_bot_buster@mysql:3306/discord
+      - sql_uri=mysql+asyncmy://root:root_bot_buster@mysql/playerdata
+      - discord_sql_uri=mysql+asyncmy://root:root_bot_buster@mysql/discord
       - token=verify_ban
     volumes:
-      - ../Bot-Detector-Core-Files/src:/project/src:rw
+      - ./src:/project/src:rw
     ports:
       - 5000:5000
     networks:
       - botdetector-network
     depends_on:
-      - mysql
-      - kafka
-
+      mysql:
+        condition: service_healthy
 networks:
   botdetector-network:

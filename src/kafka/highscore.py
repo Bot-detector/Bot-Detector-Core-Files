@@ -1,7 +1,5 @@
-import json
 import logging
 
-from aiokafka import AIOKafkaConsumer, ConsumerRecord, TopicPartition
 
 from src.app.repositories.highscore import PlayerHiscoreData as RepoHiscore
 from src.app.repositories.player import Player as RepositoryPlayer
@@ -9,7 +7,6 @@ from src.app.schemas.highscore import PlayerHiscoreData as SchemaHiscore
 from src.app.schemas.player import Player as SchemaPlayer
 from src.database.models import playerHiscoreData as dbHiscore
 from src.kafka.modules.kafka_consumer import KafkaMessageConsumer
-from src.kafka.modules.kafka_producer import KafkaMessageProducer
 from asyncio import Queue
 import asyncio
 import time
