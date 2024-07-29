@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from pydantic.fields import Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, text
 from sqlalchemy.sql.expression import Select, select, update
 import aiohttp
 import traceback
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 upper_gear_cost = 1_000_000_000_000
+
 
 # TODO: cleanup thse functions
 class equipment(BaseModel):
@@ -99,6 +100,7 @@ async def get_reports(
     data = functions.sqlalchemy_result(data)
     return data.rows2dict()
 
+
 @router.put("/report", tags=["Report"])
 async def update_reports(
     old_user_id: int, new_user_id: int, token: str, request: Request
@@ -125,23 +127,31 @@ async def update_reports(
 
     return {"detail": f"{data.rowcount} rows updated to reportingID = {new_user_id}."}
 
+
 async def insert_report_v2(detections: list[detection]):
-    url = 'http://public-api-svc.bd-prd.svc:5000/v2/report'
+    url = "http://public-api-svc.bd-prd.svc:5000/v2/report"
     try:
         data = [d.dict() for d in detections]
         async with aiohttp.ClientSession() as session:
             async with session.post(url=url, json=data) as response:
                 if not response.ok:
                     response_text = await response.text()
-                    logger.warning(f"Request to {url} failed with status {response.status} and response: {response_text}")
+                    logger.warning(
+                        f"Request to {url} failed with status {response.status} and response: {response_text}"
+                    )
     except aiohttp.ClientError as e:
         # Log client-specific errors with request details
-        logger.error(f"Client error during request to {url} with payload {data}: {str(e)}")
+        logger.error(
+            f"Client error during request to {url} with payload {data}: {str(e)}"
+        )
         logger.debug(f"Traceback: {traceback.format_exc()}")
     except Exception as e:
         # Log general exceptions with traceback
-        logger.error(f"Unexpected error during request to {url} with payload {data}: {str(e)}")
+        logger.error(
+            f"Unexpected error during request to {url} with payload {data}: {str(e)}"
+        )
         logger.debug(f"Traceback: {traceback.format_exc()}")
+
 
 @router.post("/report", status_code=status.HTTP_201_CREATED, tags=["Report"])
 async def insert_report(
@@ -154,7 +164,8 @@ async def insert_report(
     asyncio.create_task(insert_report_v2(detections))
     return {"detail": "ok"}
 
-async def select_report_count_v1(name:str, manual_detect:int):
+
+async def select_report_count_v1(name: str, manual_detect: int):
     name = await functions.to_jagex_name(name)
 
     voter: Player = aliased(Player, name="voter")
@@ -191,17 +202,84 @@ async def select_report_count_v1(name:str, manual_detect:int):
             data = [{k: v for k, v in zip(keys, d)} for d in data]
     return data
 
+
+async def select_or_insert_migration(name: str):
+    sql_select = """
+        SELECT 
+            migrated 
+        FROM report_migrated mg
+        JOIN Players pl ON mg.reporting_id = pl.id
+        WHERE pl.name = :name
+    """
+    sql_insert = """
+        INSERT report_migrated (reporting_id, migrated) 
+        SELECT id, 0 as migrated FROM Players pl where pl.name = :name
+    """
+
+    params = {"name": name}
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(text(sql_select), params=params)
+            result = data.mappings().first()
+            if not result:
+                logger.debug(f"start migration: {name}")
+                await session.execute(text(sql_insert), params=params)
+                data = await session.execute(text(sql_select), params=params)
+                result = data.mappings().first()
+    return result
+
+
+async def select_report_count_v2(name: str, manual_detect: int):
+    sql_select = """
+    select
+        count(sr.reporting_id) as count,
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    from report_sighting sr
+    join Players voter ON sr.reporting_id = voter.id
+    join Players subject ON sr.reported_id = subject.id
+    WHERE voter.name = :name and sr.manual_detect = :manual_detect
+    GROUP BY
+        subject.confirmed_ban,
+        subject.possible_ban,
+        subject.confirmed_player
+    """
+    params = {"name": name, "manual_detect": manual_detect}
+
+    async with PLAYERDATA_ENGINE.get_session() as session:
+        session: AsyncSession = session
+        async with session.begin():
+            data = await session.execute(text(sql_select), params=params)
+            result = data.mappings().all()
+    return result
+
 @router.get("/report/count", tags=["Report"])
 async def get_report_count_v1(name: str):
-    """
-    """
-    data = await select_report_count_v1(name=name, manual_detect=0)
+    """ """
+    migrated_record = await select_or_insert_migration(name=name)
+    is_migrated = migrated_record.get("migrated")
+    if is_migrated:
+        logger.debug("v2")
+        data = await select_report_count_v2(name=name, manual_detect=0)
+    else:
+        logger.debug("v1")
+        data = await select_report_count_v1(name=name, manual_detect=0)
     return data
+
 
 @router.get("/report/manual/count", tags=["Report"])
 async def get_report_manual_count_v1(name: str):
     """
     Get the calculated player report count
     """
-    data = await select_report_count_v1(name=name, manual_detect=1)
+    migrated_record = await select_or_insert_migration(name=name)
+    is_migrated = migrated_record.get("migrated")
+    if is_migrated:
+        logger.debug(f"v2 - {name=}")
+        data = await select_report_count_v2(name=name, manual_detect=1)
+    else:
+        logger.debug(f"v1 - {name=}")
+        data = await select_report_count_v1(name=name, manual_detect=1)
     return data
