@@ -279,7 +279,7 @@ async def get_report_manual_count_v1(name: str):
     Get the calculated player report count
     """
     migrated_record = await select_or_insert_migration(name=name)
-    migrated_record = migrated_record if migrated_record else {}
+    migrated_record = migrated_record if isinstance(migrated_record, dict) else {}
     is_migrated = migrated_record.get("migrated")
 
     if is_migrated:
