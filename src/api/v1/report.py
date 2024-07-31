@@ -203,7 +203,11 @@ async def select_report_count_v1(name: str, manual_detect: int):
     return data
 
 
+async def to_jagex_name(name: str) -> str:
+    return name.lower().replace("_", " ").replace("-", " ").strip()
+
 async def select_or_insert_migration(name: str):
+    name = await to_jagex_name(name=name)
     sql_select = """
         SELECT 
             migrated 
@@ -275,7 +279,9 @@ async def get_report_manual_count_v1(name: str):
     Get the calculated player report count
     """
     migrated_record = await select_or_insert_migration(name=name)
+    migrated_record = migrated_record if migrated_record else {}
     is_migrated = migrated_record.get("migrated")
+
     if is_migrated:
         logger.debug(f"v2 - {name=}")
         data = await select_report_count_v2(name=name, manual_detect=1)
