@@ -250,6 +250,7 @@ async def select_report_count_v2(name: str, manual_detect: int):
         subject.possible_ban,
         subject.confirmed_player
     """
+    name = await functions.to_jagex_name(name)
     params = {"name": name, "manual_detect": manual_detect}
 
     async with PLAYERDATA_ENGINE.get_session() as session:
