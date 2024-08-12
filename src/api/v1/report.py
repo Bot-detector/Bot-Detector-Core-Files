@@ -250,6 +250,7 @@ async def select_report_count_v2(name: str, manual_detect: int):
         subject.possible_ban,
         subject.confirmed_player
     """
+    name = await functions.to_jagex_name(name)
     params = {"name": name, "manual_detect": manual_detect}
 
     async with PLAYERDATA_ENGINE.get_session() as session:
@@ -279,7 +280,7 @@ async def get_report_manual_count_v1(name: str):
     Get the calculated player report count
     """
     migrated_record = await select_or_insert_migration(name=name)
-    migrated_record = migrated_record if migrated_record else {}
+    migrated_record = migrated_record if isinstance(migrated_record, dict) else {}
     is_migrated = migrated_record.get("migrated")
 
     if is_migrated:
