@@ -260,20 +260,25 @@ async def select_report_count_v2(name: str, manual_detect: int):
             result = data.mappings().all()
     return result
 
-@router.get("/report/count", tags=["Report"])
-async def get_report_count_v1(name: str):
-    """ """
+async def report_count(name:str, manual_detect:int):
     migrated_record = await select_or_insert_migration(name=name)
-    migrated_record = migrated_record if isinstance(migrated_record, dict) else {}
+    migrated_record = migrated_record if migrated_record is not None else {}
     is_migrated = migrated_record.get("migrated")
 
     if is_migrated:
         logger.debug(f"v2 - {name=}")
-        data = await select_report_count_v2(name=name, manual_detect=0)
+        data = await select_report_count_v2(name=name, manual_detect=manual_detect)
     else:
         logger.debug(f"v1 - {name=}")
-        data = await select_report_count_v1(name=name, manual_detect=0)
+        data = await select_report_count_v1(name=name, manual_detect=manual_detect)
     return data
+
+@router.get("/report/count", tags=["Report"])
+async def get_report_count_v1(name: str):
+    """
+    Get the calculated player report count
+    """
+    return await report_count(name=name, manual_detect=0)
 
 
 @router.get("/report/manual/count", tags=["Report"])
@@ -281,14 +286,4 @@ async def get_report_manual_count_v1(name: str):
     """
     Get the calculated player report count
     """
-    migrated_record = await select_or_insert_migration(name=name)
-    migrated_record = migrated_record if isinstance(migrated_record, dict) else {}
-    is_migrated = migrated_record.get("migrated")
-
-    if is_migrated:
-        logger.debug(f"v2 - {name=}")
-        data = await select_report_count_v2(name=name, manual_detect=1)
-    else:
-        logger.debug(f"v1 - {name=}")
-        data = await select_report_count_v1(name=name, manual_detect=1)
-    return data
+    return await report_count(name=name, manual_detect=1)
