@@ -264,12 +264,14 @@ async def select_report_count_v2(name: str, manual_detect: int):
 async def get_report_count_v1(name: str):
     """ """
     migrated_record = await select_or_insert_migration(name=name)
+    migrated_record = migrated_record if isinstance(migrated_record, dict) else {}
     is_migrated = migrated_record.get("migrated")
+
     if is_migrated:
-        logger.debug("v2")
+        logger.debug(f"v2 - {name=}")
         data = await select_report_count_v2(name=name, manual_detect=0)
     else:
-        logger.debug("v1")
+        logger.debug(f"v1 - {name=}")
         data = await select_report_count_v1(name=name, manual_detect=0)
     return data
 
