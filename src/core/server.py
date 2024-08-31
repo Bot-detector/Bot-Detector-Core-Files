@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from src import api
+from starlette_prometheus import metrics, PrometheusMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,8 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+app.add_middleware(PrometheusMiddleware)
+app.add_route("/metrics", metrics)
 
 
 @app.get("/")
