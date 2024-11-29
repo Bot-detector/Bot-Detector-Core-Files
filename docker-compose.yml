@@ -32,7 +32,7 @@ services:
       args:
         root_path: /
         api_port: 5000
-    command: uvicorn src.core.server:app --host 0.0.0.0 --reload --reload-include src/*
+    command: uvicorn src.core.server:app --host 0.0.0.0 --reload --reload-include src/* --log-level warning
     container_name: bd-dev-api
     environment:
       - sql_uri=mysql+asyncmy://root:root_bot_buster@mysql/playerdata
