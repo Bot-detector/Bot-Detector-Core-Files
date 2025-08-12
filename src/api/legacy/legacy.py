@@ -358,8 +358,8 @@ async def sql_get_report_data_heatmap(region_id: int):
             rl.region_id, 
             rl.x_coord, 
             rl.y_coord, 
-            rl.z_coord, 
-            pl.confirmed_ban
+            rl.z_coord,
+            1 as confirmed_ban
         from report as rp
         join report_location rl on rp.report_location_id = rl.report_location_id
         join report_sighting rs on rp.report_sighting_id = rs.report_sighting_id 
