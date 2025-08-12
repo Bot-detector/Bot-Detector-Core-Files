@@ -354,13 +354,18 @@ async def sql_get_user_latest_sighting(player_id: int):
 
 async def sql_get_report_data_heatmap(region_id: int):
     sql = """
-        SELECT region_id, x_coord, y_coord, z_coord, confirmed_ban
-            FROM Players pls
-            JOIN Reports rpts ON rpts.reportedID = pls.id
-                WHERE pls.confirmed_ban = 1
-                AND rpts.region_id = :region_id
-        ORDER BY pls.id DESC
-
+        select 
+            rl.region_id, 
+            rl.x_coord, 
+            rl.y_coord, 
+            rl.z_coord, 
+            pl.confirmed_ban
+        from report as rp
+        join report_location rl on rp.report_location_id = rl.report_location_id
+        join report_sighting rs on rp.report_sighting_id = rs.report_sighting_id 
+        join Players pl on rs.reported_id = pl.id
+        where rl.region_id = :region_id and pl.label_jagex = 2 and rp.created_at  > curdate() - interval 30 DAY 
+        ;
     """
 
     param = {"region_id": region_id}
