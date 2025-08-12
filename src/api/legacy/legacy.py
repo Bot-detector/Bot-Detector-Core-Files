@@ -364,8 +364,7 @@ async def sql_get_report_data_heatmap(region_id: int):
         join report_location rl on rp.report_location_id = rl.report_location_id
         join report_sighting rs on rp.report_sighting_id = rs.report_sighting_id 
         join Players pl on rs.reported_id = pl.id
-        where rl.region_id = :region_id and pl.label_jagex = 2 and rp.created_at  > curdate() - interval 30 DAY 
-        ;
+        where rl.region_id = :region_id and pl.label_jagex = 2 and rp.created_at  > curdate() - interval 30 DAY
     """
 
     param = {"region_id": region_id}
