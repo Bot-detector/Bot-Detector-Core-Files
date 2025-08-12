@@ -217,7 +217,7 @@ async def select_or_insert_migration(name: str):
     """
     sql_insert = """
         INSERT report_migrated (reporting_id, migrated) 
-        SELECT id, 0 as migrated FROM Players pl where pl.name = :name
+        SELECT id, 1 as migrated FROM Players pl where pl.name = :name
     """
 
     params = {"name": name}
@@ -278,7 +278,10 @@ async def get_report_count_v1(name: str):
     """
     Get the calculated player report count
     """
-    return await report_count(name=name, manual_detect=0)
+    # _count = report_count(name=name, manual_detect=0)
+    # _count = await select_report_count_v1(name=name, manual_detect=0)
+    _count = await select_report_count_v2(name=name, manual_detect=0)
+    return _count
 
 
 @router.get("/report/manual/count", tags=["Report"])
@@ -286,4 +289,7 @@ async def get_report_manual_count_v1(name: str):
     """
     Get the calculated player report count
     """
-    return await report_count(name=name, manual_detect=1)
+    # _count = report_count(name=name, manual_detect=1)
+    # _count = await select_report_count_v1(name=name, manual_detect=1)
+    _count = await select_report_count_v2(name=name, manual_detect=1)
+    return _count
