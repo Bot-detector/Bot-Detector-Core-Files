@@ -85,7 +85,7 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
         "prediction_label": prediction.pop("prediction_label"),
         "prediction_confidence": prediction.pop("prediction_confidence"),
         "created": prediction.pop("created"),
-        "predictions_breakdown": prediction
+        "predictions_breakdown": prediction.pop("predictions_breakdown")
         if breakdown or prediction != "Stats_Too_Low"
         else None,
     }
