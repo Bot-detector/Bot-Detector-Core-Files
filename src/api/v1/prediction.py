@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Select, select, text
 from sqlalchemy.sql.functions import func
+import aiohttp
 
 router = APIRouter()
 
@@ -55,7 +56,6 @@ class Prediction(BaseModel):
     Gauntlet_bot: Optional[float] = 0
     Nex_bot: Optional[float] = 0
 
-
 @router.get("/prediction", tags=["Prediction"])
 async def get_account_prediction_result(name: str, breakdown: Optional[bool] = False):
     """
@@ -67,33 +67,25 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
         A dict containing the prediction data for the player
     """
     name = await functions.to_jagex_name(name)
-    sql: Select = select(dbPrediction)
-    sql = sql.where(dbPrediction.name == name)
-
-    async with PLAYERDATA_ENGINE.get_session() as session:
-        session: AsyncSession = session
-        async with session.begin():
-            data = await session.execute(sql)
-
-    data = sqlalchemy_result(data).rows2dict()
-    keys = ["name", "Prediction", "id", "created"]
-    data = [
-        {k: float(v) / 100 if k not in keys else v for k, v in d.items()} for d in data
-    ]
-    if len(data) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
-        )
-
-    data: dict = data[0]
-    prediction = data.pop("Prediction")
+    url = "https://api-v2.prd.osrsbotdetector.com/v2/player/prediction"
+    params = {"name": name, "breakdown": str(breakdown)}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, params=params) as resp:
+            if resp.status == 404:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, 
+                    detail="Player not found",
+                )
+            predictions:list[dict] = await resp.json()
+    # [{"player_id":1,"player_name":"extreme4all","prediction_label":"real_player","prediction_confidence":0.988,"created":"2025-11-11T00:14:37","predictions_breakdown":{"LMS_bot":0.0,"Doom_bot":0.0,"Magic_bot":0.0,"Hunter_bot":0.0,"Mining_bot":0.0,"Zulrah_bot":0.004,"Barrows_bot":0.0,"Cooking_bot":0.0,"Fishing_bot":0.0,"Real_Player":0.988,"Vorkath_bot":0.0,"Crafting_bot":0.0,"Gauntlet_bot":0.0,"Smithing_bot":0.0,"Fletching_bot":0.0,"Blast_mine_bot":0.0,"Wildy_boss_bot":0.008,"Wintertodt_bot":0.0,"Woodcutting_bot":0.0,"Thieving_vyre_bot":0.0,"Thieving_master_farmer_bot":0.0}}]
+    prediction = predictions[0]
     data = {
-        "player_id": data.pop("id"),
-        "player_name": data.pop("name"),
-        "prediction_label": prediction,
-        "prediction_confidence": data.pop("Predicted_confidence"),
-        "created": data.pop("created"),
-        "predictions_breakdown": data
+        "player_id": prediction.pop("player_id"),
+        "player_name": prediction.pop("player_name"),
+        "prediction_label": prediction.pop("prediction_label"),
+        "prediction_confidence": prediction.pop("prediction_confidence"),
+        "created": prediction.pop("created"),
+        "predictions_breakdown": prediction
         if breakdown or prediction != "Stats_Too_Low"
         else None,
     }
@@ -105,8 +97,58 @@ async def get_account_prediction_result(name: str, breakdown: Optional[bool] = F
         data["prediction_confidence"] = None
         if not breakdown:
             data["predictions_breakdown"] = None
-
     return data
+# @router.get("/prediction", tags=["Prediction"])
+# async def get_account_prediction_result(name: str, breakdown: Optional[bool] = False):
+#     """
+#     Parameters:
+#         name: The name of the player to get the prediction for
+#         breakdown: If True, always return breakdown, even if the prediction is Stats_Too_Low
+
+#     Returns:
+#         A dict containing the prediction data for the player
+#     """
+#     name = await functions.to_jagex_name(name)
+#     sql: Select = select(dbPrediction)
+#     sql = sql.where(dbPrediction.name == name)
+
+#     async with PLAYERDATA_ENGINE.get_session() as session:
+#         session: AsyncSession = session
+#         async with session.begin():
+#             data = await session.execute(sql)
+
+#     data = sqlalchemy_result(data).rows2dict()
+#     keys = ["name", "Prediction", "id", "created"]
+#     data = [
+#         {k: float(v) / 100 if k not in keys else v for k, v in d.items()} for d in data
+#     ]
+#     if len(data) == 0:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
+#         )
+
+#     data: dict = data[0]
+#     prediction = data.pop("Prediction")
+#     data = {
+#         "player_id": data.pop("id"),
+#         "player_name": data.pop("name"),
+#         "prediction_label": prediction,
+#         "prediction_confidence": data.pop("Predicted_confidence"),
+#         "created": data.pop("created"),
+#         "predictions_breakdown": data
+#         if breakdown or prediction != "Stats_Too_Low"
+#         else None,
+#     }
+
+#     prediction = data.get("prediction_label")
+
+#     if prediction == "Stats_Too_Low":
+#         # never show confidence if stats to low
+#         data["prediction_confidence"] = None
+#         if not breakdown:
+#             data["predictions_breakdown"] = None
+
+#     return data
 
 
 @router.post("/prediction", tags=["Prediction"])
